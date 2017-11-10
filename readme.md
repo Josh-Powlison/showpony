@@ -33,7 +33,7 @@ Ponies are pretty light. Our Visual Novel/Kinetic Novel engine is less than 30 K
 
 ## Is it performant?
 
-It runs on my laptop. So yes.
+This doesn't just depend on the code but on the resources you use, but my bad laptop's handled it pretty well. Try it for your projects and see!
 
 ## Will it support older browsers?
 
