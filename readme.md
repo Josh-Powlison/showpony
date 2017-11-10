@@ -29,7 +29,15 @@ Absolutely! But you can't sell the code itself.
 
 ## How heavy is Showpony?
 
-Ponies are pretty light. Our Visual Novel/Kinetic Novel engine is less than 30 KB- uncompressed. For all of the engines (stil uncompressed) you're currently look at less than 40 KB. Obviously, that will go up as we add features, but it's already pretty feature-packed
+Ponies are pretty light. Our Visual Novel/Kinetic Novel engine is less than 30 KB- uncompressed. For all of the engines (stil uncompressed) you're currently look at less than 40 KB. Obviously, that will go up as we add features, but it will likely also go down as I condense and improve the code too.
+
+## Is it performant?
+
+It runs on my laptop. So yes.
+
+## Will it support older browsers?
+
+It's made to work with newer browsers. But most people into new media are also into new browsers, so you should be fine. If you find something that isn't working cross-browser email me at joshuapowlison@gmail.com
 
 ## Do I need PHP, MySQL, Python, etc on my website for this to work?
 
