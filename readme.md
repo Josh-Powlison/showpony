@@ -46,3 +46,7 @@ Email me at joshuapowlison@gmail.com
 ## Showpony's missing a feature I can't live without and now I am dead.
 
 Don't be dead! Email me at joshuapowlison@gmail.com
+
+## NOTES ##
+
+Included resources are either public domain or have a license file included. The license of this software does not extend to the included assets.
