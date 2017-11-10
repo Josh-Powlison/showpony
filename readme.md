@@ -42,3 +42,7 @@ If you use something like php-desktop you can, although I don't have an official
 ## I ran into a bug. I'm not a programmer. I am sad. Can you help?
 
 Email me at joshuapowlison@gmail.com
+
+## Showpony's missing a feature I can't live without and now I am dead.
+
+Don't be dead! Email me at joshuapowlison@gmail.com
