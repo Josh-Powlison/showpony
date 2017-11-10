@@ -11,7 +11,7 @@ I plan to add more media!
 
 ## How hard is it to add to my webpage?
 
-You only need 1 line of JS to add an engine to your existing page. If you want it to load on click on a div, you could use:
+You only need 1 line of JS to add an engine to your existing page. If you want a visual kovel to load on clicking a block, you could use:
 
 	<div onclick="new VisualNovel(this,['part-1','part-2','part-3'],'loadingClass');">
 		<h1>Click to play!</h1>
