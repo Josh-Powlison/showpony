@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<title>Readme</title>
+
+<style>
+pre{
+	white-space:pre-wrap;
+}
+</style>
+
+<h1>Documentation</h1>
+
+<p>Learn how to create stories in any medium!</p>
+
+<h2>Adding an Engine to your Webpage</h2>
+
+<p>You only need 1 line of code to add an engine to your existing webpage:</p>
+
+<pre>
+	&lt;div onclick="new Form(this, ['part-1','part-2','part-3'], loadingClass);">
+		&lt;p>Click me to play!&lt;/p>
+	&lt;/div>
+</pre>
+
+<p>"this" can be replaced with a reference to an element. </p>
+
+<h2>But I'm not a programmer! Even THAT's scary!!!</h2>
+
+<p>Have no fear, um... I'll figure something out!</p>
+
+<h2>Video/Audio</h2>
+
+<p>You don't need to do anything other than set up the element. The videos and audio will still go in your "stories" folder.</p>
+
+<h2>Interactive Fiction</h2>
+
+<h2>Visual/Kinetic Novels</h2>
+
+<h3>Basics</h3>
+
+Write text on a line for it to go to the main textbox.
+
+<h4>MSCE (Missy) Formatting</h4>
+
+<pre>{size <b>M</b>ultiplier,normal <b>S</b>peed,<b>C</b>olor,<b>E</b>ffect}</pre>
+
+<p>Put this anywhere in text to impact its display. For example:</p>
+
+<pre>
+I will look normal.{2,,blue,shake} But I will be twice as large, blue, and will shake! Notice that Speed is left blank; speed will be unaffected.{,,initial,} This will change the color back to its default value.
+</pre>
+
+<p>Will make all (M) following text 2x larger than normal; (S) a regular character take .1 seconds to display; (C) the characters blue; and (E) the following letters will have a shaky effect.
+
+<p>MSCE values reset at the beginning of each new line. If you want to reset it mid-line, use:</p>
+
+<pre>
+{}
+</pre>
+
+<p>If you want to adjust some values but not others, just leave them blank:</p>
+
+<pre>
+This text is normal.{,,rgba(256,256,256,.5),sing} This text will be semi-transparent and will sing!{} This text is normal again.
+</pre>
+
+<p>This will adjust the values for Color and Effects, but the other values will remain what they were. If you want to set some values back to defaults but not others, you can use the word "initial":</p>
+
+<pre>
+{,,initial,initial}
+</pre>
+
+<p>This will reset Color and Effects to their default MSCE values.</p>
+
+<p>Available effects include "bold", "italic", "underline", "shake", "sing", "shout", "fade", "smoke", and "blur".</p>
+<pre>
+[placeholder]
+</pre>
+
+<p>If you want to write out variables inside of the text, you can write the variable name surrounded with []. You can use placeholders on any line.</p>
+	
+	TIPS:
+	-You can use [placeholder]s on any lines- including @GO, @CH, @AU, @ST, @DS, and even @IF! This can let you do some pretty cool things.
+	-ANYTHING can go inside of placeholders- even entire functions!
+	-Store commonly used text effects inside of variables. Maybe you have a structure for character name display in the textbox; if so, save those blocks of text in variables so they're easy to edit across the board!
+
+<h3>Functions</h3>
+
+Text, any type of text not beginning with @
+	Add text to the main textbox. Will automatically wait for user input at the end before continuing, and will clear the textbox.
+
+<pre>
+@CH name(image) position
+</pre>
+	"CHaracter": Create or alter a character with this function. If you wanted to create Susie and start her with a sad image, you'd write out Susie(sad).
+	You can add a hash to a name if you have multiple characters with the same image folder. For example, if multiple characters use the "schoolgirl" folder for all of their images, you can use "schoolgirl#Beth" to separate Beth from "schoolgirl#Nancy".
+	If you don't specify a file type, it will assume ".png". But you can use any image type you want- including gifs.
+
+<pre>
+@BG name(image) z-index
+</pre>
+	"BackGround": Make or adjust a background. You can use any image you want in the "backgrounds" folder. "z-index" impacts where it ends up.
+	If you don't specify a file type, it will assume ".jpg". (NOT ".jpeg". Be aware of your exact file extensions)
+
+<pre>
+@WT seconds
+</pre>
+	"WaiT": Wait until seconds run out to automatically continue. If you don't have a seconds value (leave after @WT blank), you'll wait until user input. Alternatively, @WT 0 will allow transitions to play, while keeping things moving.
+
+<pre>
+@AU filename play loop pause stop
+</pre>
+	"AUdio": Add an audio file. It won't automatically play, but it will preload, so you can load a file early and lay it later. Play, loop, pause, and stop are optional values that make the audio do that thing.
+	If you don't specify a file type, it will assume ".mp3". But you can use any audio type you want.
+
+<pre>
+@TB name text
+</pre>
+	"TextBox": Make or adjust a textbox. This is more advanced than the default way of displaying text and allows you to do several more things: 1) have multiple textboxes, 2) use a custom @WT tag afterwards to determine how the text waits, and 3) append text to a textbox instead of replacing it, which can allow you to have animations happen in the middle of text displaying, wait for user input before showing all of the text, and more.
+
+<pre>
+@ST name{CSS styles}
+</pre>
+	"STyles": Apply any CSS styles to a character or background with the set name. You can also call the vn's window by using "window" as the name.
+	
+	TIPS:
+	-You can apply CSS filters to the window for easy fade in-out effects, as well as inverting colors, making the scene sepia or grayscale, blurring out the scene, and more!
+	
+<pre>
+@GO place
+</pre>
+
+<p>"GO": Go to the place with the label "place".</p>
+
+<h3>
+<pre>
+@DS variable value
+</pre>
+</h3>
+
+<p>"Data Set": Set "variable" to "value"</p>
+
+<pre>
+@DS cats 0
+</pre>
+
+<p>Set cats to 0.</p>
+
+<pre>
+@DS cats ++
+</pre>
+
+<p>Add 1 cat. Can also decrement (--).</p>
+
+<pre>
+@DS cats +10
+</pre>
+
+<p>Add 10 cats. Can also subtract (-10).</p>
+
+<pre>
+@IF variable
+val1	&lt;val2	>val3	&lt;=val4	>=val5	!val6
+go1	go2	go3	go4	go5	go6
+</pre>
+	If variable's value lines up with one of the ones stated below, go to the corresponding location. Variable can be anything. (You can only check <, >, <=, and >= with numbers. ! works with anything.)
+	You can add a failsafe easily by having ! at the end, with anything the variable will never be after it. This way you'll always go somewhere from the text.
+
+<pre>
+@IN
+-go1	text1
+-go2	text2
+-go3	text3
+</pre>
+	"Input Button": Create buttons with text "textx" that go to the place set by "gox".
+
+<pre>
+#Commenting!
+</pre>
+	Any line beginning with a "#" is a comment. It is only there for you to see some info; it won't appear inside of the novel at all.

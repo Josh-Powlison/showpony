@@ -1,0 +1,34 @@
+@AU little-idea loop play
+@BG forest(forest)
+@DS cats 0
+@DS susan {,0,magenta,bold}Susan{}#
+@DS ben {,0,aqua,bold}Ben{}#
+@ST window{filter:brightness(0);}
+
+@CH ben(scared)
+@CH ben(shock_blush)
+@CH ben(habit) 25%
+@CH susan(frown)
+@CH susan(smirk)
+@CH susan(angry) -100%
+
+@WT .1
+@ST window{transition:all 1s;filter:brightness(1);}
+
+@WT 1
+@CH susan() -25%
+[susan]{,,,underline}What are you doing out here?! Your own Birthday Party's started without you!
+@CH ben(shock_blush)
+@CH susan(frown)
+[ben]Um... well...
+[ben]{.5,,,}...Birthday cake gets me gassy.
+@CH susan(smirk)
+[susan]...what was that?
+@CH ben(scared)
+[ben]{,,,shake}Um, when I have Birthday cake, I fart a-
+[susan]Then don't eat it! Get back here!
+
+@ST window{filter:brightness(0);}
+@WT 1
+
+@EN

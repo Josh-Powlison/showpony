@@ -1,0 +1,81 @@
+@ST window{filter:brightness(0);}
+@DS cats 0
+@BG cat(kittens)
+@AU cats loop play
+@WT 0
+@ST window{transition:all 1s;filter:brightness(1);}
+{,,,shout}Welcome to the cat store, you crazy cat person!
+@GO store
+
+store
+@TB main
+@IF cats
+0	1	<5		<10		<20		<30		<40		<50		>=50
+hi0	hi1	hi5		hi10	hi20	hi30	hi40	hi50	hitop
+
+hi0
+@TB main You are presently catless. What can I getcha?
+@GO SHOP
+
+hi1
+@TB main You currently have 1 cat. And it's a cutie! What can I getcha?
+@GO SHOP
+
+hi5
+@TB main You currently have [cats] cats. Look at them play! What can I getcha?
+@GO SHOP
+
+hi10
+@TB main You currently have [cats] cats. Whoo, that's a lot of cats! What can I getcha?
+@GO SHOP
+
+hi20
+@TB main You currently have [cats] cats. Um... I gotta say I'm starting to get concerned about you. What can I getcha?
+@GO SHOP
+
+hi30
+@TB main You currently have [cats] cats. You sure you want another cat? You SURE? Okay, what can I getcha?
+@GO SHOP
+
+hi40
+@TB main You currently have [cats] cats. And you are certainly healthy in the head. What can I getcha?
+@GO SHOP
+
+hi50
+@TB main You currently have [cats] cats. I can already guess what you're going to do...
+@GO SHOP
+
+hitop
+I ain't selling you any more cats! [cats] is more than enough! Go home!
+@GO bye
+
+SHOP
+@IN
+-addcat		(Buy a cat)
+-minuscat	(Sell a cat)
+-bye		Goodbye!
+
+addcat
+@DS cats ++
+All right, that's another cat in your house!
+@GO store
+
+minuscat
+@IF cats
+<=0			>0
+catnone	cathas
+
+catnone
+You're already catless! What, what are you trying to pull? You evil person!
+@GO store
+
+cathas
+@DS cats --
+Um... okay! {.75,,,}What a cat-hater...
+@GO store
+
+bye
+{,,,sing}Bye bye, cat person!
+@ST window{filter:brightness(0);}
+@WT 1
+@EN
