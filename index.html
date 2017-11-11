@@ -16,6 +16,11 @@ body{
 	margin:10vh auto;
 }
 
+.story-container-webkit-full-screen{
+	width:100%;
+	height:100%;
+}
+
 .loading{
 	background-color:blue;
 }
@@ -47,26 +52,30 @@ body{
 
 </head>
 <body>
-	<div class="story-container" onclick="new InteractiveFiction(this,['hippo'],'loading')">
+	<h1>Beta</h1>
+
+	<div class="story-container" onclick="new InteractiveFiction(this,['interactive-fiction'],'loading')">
 		<div class="title-card">
 			<h1>Interactive Fiction (IF)</h1>
 			<p>Click to play!</p>
 		</div>
 	</div>
 
-	<div class="story-container vn" onclick="new VisualNovel(this,['missed-party'],'loading')">
+	<div class="story-container vn" onclick="new VisualNovel(this,['kinetic-novel'],'loading')">
 		<div class="title-card">
 			<h1>Kinetic Novel (KN)</h1>
 			<p>Click to play!</p>
 		</div>
 	</div>
 	
-	<div class="story-container vn" onclick="new VisualNovel(this,['cat-store'],'loading')">
+	<div class="story-container vn" onclick="new VisualNovel(this,['visual-novel'],'loading')">
 		<div class="title-card">
 			<h1>Visual Novel (VN)</h1>
 			<p>Click to play!</p>
 		</div>
 	</div>
+	
+	<h1>Alpha</h1>
 	
 	<div class="story-container" onclick="new MediaPlayer(this,['BnW.webm','Ideas.webm','New_England_.mp4','Rain-On-Me.webm'],'loading')">
 		<div class="title-card">
@@ -74,10 +83,68 @@ body{
 			<p>Click to play!</p>
 		</div>
 	</div>
+	
+	<div class="story-container" onclick="new MediaPlayer(this,['audio-1.mp3','audio-2.mp3'],'loading')">
+		<div class="title-card">
+			<h1>Audio</h1>
+			<p>Click to play!</p>
+		</div>
+	</div>
+	
+	<h1>Coming Soon</h1>
+	<div class="story-container">
+		<div class="title-card">
+			<h1>Infinite Vertical Scroll (Text)</h1>
+			<p>Coming Soon!</p>
+		</div>
+	</div>
+
+	<div class="story-container">
+		<div class="title-card">
+			<h1>Infinite Vertical Scroll (Comics)</h1>
+			<p>Coming Soon!</p>
+		</div>
+	</div>
+
+	<div class="story-container">
+		<div class="title-card">
+			<h1>Infinite Vertical Scroll (Text)</h1>
+			<p>Coming Soon!</p>
+		</div>
+	</div>
+
+	<div class="story-container">
+		<div class="title-card">
+			<h1>Page Turning (Text)</h1>
+			<p>Coming Soon!</p>
+		</div>
+	</div>
+	
+	<div class="story-container">
+		<div class="title-card">
+			<h1>Infinite Horizontal Scroll (Text)</h1>
+			<p>Coming Soon!</p>
+		</div>
+	</div>
+
+	<div class="story-container">
+		<div class="title-card">
+			<h1>Stageplay</h1>
+			<p>Coming Soon!</p>
+		</div>
+	</div>
+	
+	<div class="story-container">
+		<div class="title-card">
+			<h1>Screenplay</h1>
+			<p>Coming Soon!</p>
+		</div>
+	</div>
+
 </body>
 
-<script src="vn-engine.js"></script>
-<script src="if-engine.js"></script>
-<script src="mp-engine.js"></script>
+<script src="engines/interactive-fiction.js"></script>
+<script src="engines/visual-novel.js"></script>
+<script src="engines/media-player.js"></script>
 
 </html>
