@@ -17,8 +17,6 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 	eng.getMediaType=function(inputFile){
 		//NOTE: we gotta find a way to differentiate between video and audio oggs and mp4s
 		
-		//console.log(inputFile,inputFile.match(/\.[^.]+$/));
-		
 		//Check for video format; if it's not a video format, assume it's audio
 		switch(inputFile.match(/\.[^.]+$/)[0]){
 			case ".webm":
@@ -33,14 +31,10 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		return "audio";
 	}
 	
-	console.log(eng,inputElement);
-	
 	eng.sources=inputFiles;
 	eng.durations=[];
 	eng.totalDuration=0;
 	eng.currentSource=0;
-	
-	console.log(eng.window);
 	
 	eng.player=document.createElement(eng.getMediaType(eng.sources[0]));
 	eng.player.style.cssText=`
@@ -72,8 +66,6 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 			}
 		);
 		
-		//console.log(thisMedia);
-		
 	}
 	
 	//DEFAULT STYLES//
@@ -81,9 +73,6 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 	if(window.getComputedStyle(eng.window).getPropertyValue('position')=="static"){
 		eng.window.style.position="relative";
 	}
-	
-	console.log(eng.window);
-	//eng.window.innerHTML="";
 	
 	eng.overlay=document.createElement("div");
 	eng.overlay.style.cssText=`
@@ -101,7 +90,7 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 	eng.progress.style.cssText=`
 		position:absolute;
 		left:0;
-		top:0;
+		top:20%;
 		bottom:0;
 		width:.5em;
 		transform:translate(-.25em,0);
@@ -111,7 +100,7 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		pointer-events:none;
 	`;
 	
-	eng.overlayText=document.createElement("p");
+	eng.overlayText=document.createElement("div");
 	eng.overlayText.style.cssText=`
 		position:absolute;
 		left:0;
@@ -122,15 +111,29 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		text-align:center;
 		pointer-events:none;
 	`;
+
+	eng.overlay.appendChild(eng.progress);
+	eng.overlay.appendChild(eng.overlayText);
 	
-	eng.buttons=document.createElement("button");
-	eng.buttons.innerHTML="fullscreen";
+	//Fullscreen Button
+	eng.fullscreenButton=document.createElement("button");
+	eng.fullscreenButton.innerHTML="+/-";
 	
-	eng.buttons.addEventListener(
+	eng.fullscreenButton.style.cssText=`
+		position:absolute;
+		right:0;
+		background:none;
+		color:#fff;
+		font-size:2em;
+		font-weight:bold;
+		border:none;
+		padding:0 .25em;
+	`;
+	
+	eng.fullscreenButton.addEventListener(
 		"click"
 		,function(){
 			event.stopPropagation();
-			console.log("clicked!");
 			
 			if(!document.webkitFullscreenElement){
 				eng.window.webkitRequestFullscreen();
@@ -144,9 +147,41 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		}
 	);
 	
-	eng.overlay.appendChild(eng.progress);
-	eng.overlay.appendChild(eng.overlayText);
-	//eng.overlay.appendChild(eng.buttons);
+	eng.overlay.appendChild(eng.fullscreenButton);
+
+	//Captions Button
+	eng.captionsButton=document.createElement("button");
+	eng.captionsButton.innerHTML="cc";
+	
+	eng.captionsButton.style.cssText=`
+		position:absolute;
+		left:0;
+		background:none;
+		color:#fff;
+		font-size:2em;
+		font-weight:bold;
+		border:none;
+		padding:0 .25em;
+	`;
+
+	eng.captionsButton.addEventListener(
+		"click"
+		,function(){
+			event.stopPropagation();
+			/*
+			if(!document.webkitFullscreenElement){
+				eng.window.webkitRequestFullscreen();
+				eng.window.style.width="100%";
+				eng.window.style.height="100%";
+			}else{
+				document.webkitExitFullscreen();
+				eng.window.style.width=null;
+				eng.window.style.height=null;
+			}*/
+		}
+	);
+	
+	//eng.overlay.appendChild(eng.captionsButton);
 	
 	eng.window.appendChild(eng.overlay);
 	
@@ -162,8 +197,6 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		
 		//Set up the display for the overlay
 		eng.overlay.style.visibility="visible";
-		
-		//console.log(eng.player.currentTime,eng.totalDuration);
 		
 		var currentTime=eng.player.currentTime;
 		
@@ -182,9 +215,7 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		var minutes=Math.floor((inputSeconds % 3600) / 60);
 		var seconds=Math.floor(inputSeconds % 60);
 		
-		//console.log(inputSeconds,hours,minutes,seconds);
-		
-		return String(hours).padStart(2,'0')+'::'+String(minutes).padStart(2,'0')+'::'+String(seconds).padStart(2,'0');
+		return String(hours).padStart(2,'0')+':'+String(minutes).padStart(2,'0')+':'+String(seconds).padStart(2,'0');
 	}
 	
 	eng.stop=function(){
@@ -192,7 +223,6 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		eng.currentSource=0;
 		eng.player.src="stories/"+eng.sources[eng.currentSource];
 		eng.player.currentTime=0;
-		console.log("stop!");
 	}
 	
 	//When the player's finished with a file
@@ -201,7 +231,6 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		,function(){
 			//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
 			if(eng.overlay.style.visibility=="visible") return;
-			console.log("Ended!");
 			
 			if(eng.currentSource<eng.sources.length-1){
 				eng.currentSource++;
@@ -316,12 +345,7 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 	
 		//Look through the media for the right one
 		for(i=0;i<eng.durations.length;i++){
-			//console.log(eng.durations[i]);
-			
 			//If the duration's beyond this one, go to the next one (and subtract the duration from the total duration)
-			
-			//console.log(eng.durations,newTime,eng.durations[i],i);
-			
 			if(newTime>eng.durations[i]){
 				newTime-=eng.durations[i];
 			}
@@ -346,14 +370,12 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		
 		//Look through the videos for the right one
 		for(i=0;i<eng.currentSource;i++){
-			//console.log("Clips ",i);
 			currentTime+=eng.durations[i];
 		}
 		
-		//console.log(eng.secondsToTime(currentTime));
-		
 		//Set the overlay text (the current time)
-		eng.overlayText.innerHTML="<p>"+eng.secondsToTime(currentTime)+"<hr>"+eng.secondsToTime(eng.totalDuration)+"</p>";
+		eng.overlayText.innerHTML="<p>"+eng.secondsToTime(currentTime)+" | "+eng.secondsToTime(eng.totalDuration-currentTime)+"</p>";
+		//eng.overlayText.innerHTML="<p>"+eng.secondsToTime(currentTime)+"</p><hr><p>"+eng.secondsToTime(eng.totalDuration)+"</p>";
 	}
 	
 	eng.play();
