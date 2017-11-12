@@ -1,11 +1,13 @@
 //INTERACTIVE FICTION ENGINE//
 function InteractiveFiction(inputElement,inputFiles,inputLoading){
+	"use strict"; //Strict Mode
+	
 	//Need to set a variable to keep "this" separate from children's "this"
-	eng=this;
-	eng.currentFile=0;
+	var eng=this;
 
 	//Variables//
 	eng.window=inputElement;	
+	eng.currentFile=0;
 	//Save the original parent
 	eng.originalWindow=eng.window.cloneNode(true);
 	eng.data={};
@@ -48,7 +50,7 @@ function InteractiveFiction(inputElement,inputFiles,inputLoading){
 		
 		if(phMatch){
 			console.log(phMatch);
-			for(i=0;i<phMatch.length;i++){
+			for(var i=0;i<phMatch.length;i++){
 				//Get the var name
 				var varName=phMatch[i].match(/[^\[\]]+/);
 				
@@ -134,7 +136,7 @@ function InteractiveFiction(inputElement,inputFiles,inputLoading){
 				//If the object exists
 				if(typeof eng.data[checkVar]!=='undefined'){
 					//Go through all the values it could be and check for them (if none match, we're just displaying this line as text
-					for(i=0;i<checkValues.length;i++){
+					for(var i=0;i<checkValues.length;i++){
 						var goToLine=-1;
 						var check=false;
 						
@@ -174,6 +176,9 @@ function InteractiveFiction(inputElement,inputFiles,inputLoading){
 						if(goToLine>-1){
 							eng.currentLine=goToLine+1;
 							eng.run();
+							
+							//Exit the loop
+							break;
 						}
 					}
 				}
@@ -287,7 +292,4 @@ function InteractiveFiction(inputElement,inputFiles,inputLoading){
 	
 	//Start the interactive fiction by loading the first file
 	eng.loadFile(inputFiles[eng.currentFile]);
-	
-	//Global access for testing
-	TESTKN=eng;
 };

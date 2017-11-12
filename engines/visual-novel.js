@@ -1,17 +1,20 @@
 //VISUAL NOVEL ENGINE//
 function VisualNovel(inputElement,inputFiles,inputLoading){
+	"use strict"; //Strict Mode
+	
 	//Need to set a variable to keep "this" separate from children's "this"
 	var eng=this;
-	eng.currentFile=0;
 
 	//Variables//
 	eng.window=inputElement;	
+	eng.currentFile=0;
 	//Save the original parent
 	eng.originalWindow=eng.window.cloneNode(true);
 	eng.data={};
 		
 	//Remove the onclick event that set up this kn-engine
 	eng.window.onclick=null;
+	eng.window.style.cursor="pointer";
 	
 	//DEFAULT STYLES//
 	//If the window is statically positiond, set it to relative! (so positions of children work)
@@ -189,7 +192,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 		
 		if(phMatch){
 			console.log(phMatch);
-			for(i=0;i<phMatch.length;i++){
+			for(var i=0;i<phMatch.length;i++){
 				//Get the var name
 				var varName=phMatch[i].match(/[^\[\]]+/);
 				
@@ -235,7 +238,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 					//Get all the values (colors, etc) out of here as possible
 					imageNames=imageNames[0].slice(1,-1).match(/([^(,]+\([^\)]+\)|[^,]+)/g);
 					
-					for(i=0;i<imageNames.length;i++){
+					for(var i=0;i<imageNames.length;i++){
 						
 						if(type=="@CH")
 						{
@@ -272,7 +275,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 					if(type=="@CH"){
 						
 						//Go through each image and add a div
-						for(i=0;i<images.length;i++){
+						for(var i=0;i<images.length;i++){
 							//If the image already exists
 							var found=false;
 							
@@ -282,7 +285,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 								
 								var search=eng.objects[name].el.children[i].children;
 								
-								for(ii=0;ii<search.length;ii++){
+								for(var ii=0;ii<search.length;ii++){
 									
 									if(search[ii].style.backgroundImage==images[i]){
 										found=true;
@@ -367,7 +370,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 				}
 				
 				//Go through the passed parameters and apply them
-				for(i=1;i<values.length;i++){
+				for(var i=1;i<values.length;i++){
 					switch(values[i]){
 						case "loop":
 							eng.objects[name].el.loop=true;
@@ -482,7 +485,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 				//If the object exists
 				if(typeof eng.data[checkVar]!=='undefined'){
 					//Go through all the values it could be and check for them (if none match, we're just displaying this line as text
-					for(i=0;i<checkValues.length;i++){
+					for(var i=0;i<checkValues.length;i++){
 						var goToLine=-1;
 						var check=false;
 						
@@ -522,6 +525,9 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 						if(goToLine>-1){
 							eng.currentLine=goToLine+1;
 							eng.run();
+							
+							//Escape the loop
+							break;
 						}
 					}
 				}
@@ -597,7 +603,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 				var values=text.substring(4);
 				
 				//Get the current textbox
-				currentTextbox=values.match(/\S+/)[0];
+				var currentTextbox=values.match(/\S+/)[0];
 				
 				//If the textbox hasn't been created, create it!
 				if(!eng.textboxes[currentTextbox]){
@@ -667,7 +673,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 		//The total time we're waiting until x happens
 		var totalWait=0;
 		
-		for(i=0;i<text.length;i++){	
+		for(var i=0;i<text.length;i++){	
 			var waitTime=baseWaitTime;
 			
 			//Check the current character//
@@ -785,7 +791,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 
 		//Add animations that span the whole thing, so they're in sync
 		var e=eng.textboxes[currentTextbox].el.children;
-		for(i=0;i<e.length;i++){
+		for(var i=0;i<e.length;i++){
 			let localI=i;
 			
 			switch(e[i].dataset.animations){
@@ -885,7 +891,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 			//Go through each textbox and display all of its text
 			Object.keys(eng.textboxes).forEach(
 				function(key){
-					for(i=0;i<eng.textboxes[key].el.children.length;i++){
+					for(var i=0;i<eng.textboxes[key].el.children.length;i++){
 						//Remove the delay so they're displayed immediately
 						eng.textboxes[key].el.children[i].style.animationDelay="0s";
 					}
@@ -1076,7 +1082,4 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 	
 	//Start the kinetic novel by loading the first file
 	eng.loadFile(inputFiles[eng.currentFile]);
-	
-	//Global access for testing
-	TESTKN=eng;
 };

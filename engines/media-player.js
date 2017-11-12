@@ -1,10 +1,13 @@
 //MEDIA PLAYER ENGINE
 function MediaPlayer(inputElement,inputFiles,inputLoading){
+	"use strict"; //Strict Mode
+	
 	//Need to set a variable to keep "this" separate from children's "this"
 	var eng=this;
 	
 	//Variables//
 	eng.window=inputElement;	
+	eng.currentFile=0;
 	//Save the original parent
 	eng.originalWindow=eng.window.cloneNode(true);
 	eng.data={};
@@ -34,7 +37,6 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 	eng.sources=inputFiles;
 	eng.durations=[];
 	eng.totalDuration=0;
-	eng.currentSource=0;
 	
 	eng.player=document.createElement(eng.getMediaType(eng.sources[0]));
 	eng.player.style.cssText=`
@@ -44,7 +46,7 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		width:100%;
 		height:100%;
 	`;
-	eng.player.src="stories/"+eng.sources[eng.currentSource];
+	eng.player.src="stories/"+eng.sources[eng.currentFile];
 	eng.window.appendChild(eng.player);
 	
 	
@@ -201,7 +203,7 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		var currentTime=eng.player.currentTime;
 		
 		//Look through the videos for the right one
-		for(i=0;i<eng.currentSource;i++){
+		for(var i=0;i<eng.currentFile;i++){
 			currentTime+=eng.durations[i];
 		}
 		
@@ -220,8 +222,8 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 	
 	eng.stop=function(){
 		eng.player.pause();
-		eng.currentSource=0;
-		eng.player.src="stories/"+eng.sources[eng.currentSource];
+		eng.currentFile=0;
+		eng.player.src="stories/"+eng.sources[eng.currentFile];
 		eng.player.currentTime=0;
 	}
 	
@@ -232,9 +234,9 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 			//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
 			if(eng.overlay.style.visibility=="visible") return;
 			
-			if(eng.currentSource<eng.sources.length-1){
-				eng.currentSource++;
-				eng.player.src="stories/"+eng.sources[eng.currentSource];
+			if(eng.currentFile<eng.sources.length-1){
+				eng.currentFile++;
+				eng.player.src="stories/"+eng.sources[eng.currentFile];
 				eng.play();
 			}else{
 				eng.stop();
@@ -344,7 +346,7 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		eng.progress.style.left=(inputPercent*100)+"%";
 	
 		//Look through the media for the right one
-		for(i=0;i<eng.durations.length;i++){
+		for(var i=0;i<eng.durations.length;i++){
 			//If the duration's beyond this one, go to the next one (and subtract the duration from the total duration)
 			if(newTime>eng.durations[i]){
 				newTime-=eng.durations[i];
@@ -354,9 +356,9 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 				//Set it up to play
 				
 				//If we have to change the source
-				if(i!==eng.currentSource){
-					eng.currentSource=i;
-					eng.player.src="stories/"+eng.sources[eng.currentSource];
+				if(i!==eng.currentFile){
+					eng.currentFile=i;
+					eng.player.src="stories/"+eng.sources[eng.currentFile];
 				}
 			
 				break;
@@ -369,7 +371,7 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		var currentTime=eng.player.currentTime;
 		
 		//Look through the videos for the right one
-		for(i=0;i<eng.currentSource;i++){
+		for(var i=0;i<eng.currentFile;i++){
 			currentTime+=eng.durations[i];
 		}
 		
@@ -379,6 +381,4 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 	}
 	
 	eng.play();
-	
-	THIS=eng;
 }
