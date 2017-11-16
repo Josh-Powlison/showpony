@@ -187,44 +187,37 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 	
 	eng.window.appendChild(eng.overlay);
 	
+	//Player Functions
 	eng.play=function(){
-		eng.player.play();
 		eng.overlay.style.visibility="hidden";
+		eng.player.play();
 	}
 	
 	eng.pause=function(){
 		eng.player.pause();
-		
-		eng.moveBar=false;
-		
-		//Set up the display for the overlay
 		eng.overlay.style.visibility="visible";
-		
-		var currentTime=eng.player.currentTime;
-		
-		//Look through the videos for the right one
-		for(var i=0;i<eng.currentFile;i++){
-			currentTime+=eng.durations[i];
-		}
-		
-		eng.time(currentTime / eng.totalDuration);
+		eng.time();
+	}
+	
+	eng.stop=function(){
+		eng.pause();
+		eng.time(0);
 	}
 	
 	//Format is hh:mm:ss
 	eng.secondsToTime=function(inputSeconds){
-		
-		var hours=Math.floor(inputSeconds / 3600);
-		var minutes=Math.floor((inputSeconds % 3600) / 60);
-		var seconds=Math.floor(inputSeconds % 60);
-		
-		return String(hours).padStart(2,'0')+':'+String(minutes).padStart(2,'0')+':'+String(seconds).padStart(2,'0');
-	}
-	
-	eng.stop=function(){
-		eng.player.pause();
-		eng.currentFile=0;
-		eng.player.src="stories/"+eng.sources[eng.currentFile];
-		eng.player.currentTime=0;
+		return String(
+				Math.floor(inputSeconds / 3600) //Hours
+			).padStart(2,'0')
+			+':'
+			+String(
+				Math.floor((inputSeconds % 3600) / 60) //Minutes
+			).padStart(2,'0')
+			+':'
+			+String(
+				Math.floor(inputSeconds % 60) //Seconds
+			).padStart(2,'0')
+		;
 	}
 	
 	//When the player's finished with a file
@@ -244,6 +237,8 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		}
 	);
 	
+	eng.moveBar=false;
+	
 	//On clicking
 	eng.window.addEventListener(
 		"click"
@@ -260,9 +255,10 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 				? "play"
 				: "pause"
 			]();
+			
+			eng.moveBar=false;
 		}
 	);
-	eng.moveBar=false;
 	
 	//On mousedown, we prepare to move the cursor
 	eng.overlay.addEventListener(
@@ -338,6 +334,19 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 	
 	//Update the time by a percentage
 	eng.time=function(inputPercent){
+		//If no inputPercent was passed
+		if(typeof(inputPercent)==='undefined'){
+			var currentTime=eng.player.currentTime;
+			
+			//Look through the videos for the right one
+			for(var i=0;i<eng.currentFile;i++){
+				//Add the times of previous videos to get the actual time in the piece
+				currentTime+=eng.durations[i];
+			}
+			
+			var inputPercent=currentTime / eng.totalDuration;
+		}
+		
 		//Clamp inputPercent between 0 and 1
 		inputPercent= inputPercent <= 0 ? 0 : inputPercent >= 1 ? 1 : inputPercent;
 		
@@ -377,7 +386,6 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		
 		//Set the overlay text (the current time)
 		eng.overlayText.innerHTML="<p>"+eng.secondsToTime(currentTime)+" | "+eng.secondsToTime(eng.totalDuration-currentTime)+"</p>";
-		//eng.overlayText.innerHTML="<p>"+eng.secondsToTime(currentTime)+"</p><hr><p>"+eng.secondsToTime(eng.totalDuration)+"</p>";
 	}
 	
 	eng.play();
