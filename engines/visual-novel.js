@@ -162,7 +162,15 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 	eng.window.addEventListener("click",function(){eng.input(eng);});
 	
 	//Functions//
-	eng.run=function(){
+	eng.run=function(inputNum){
+		
+		//If a specific line isn't specified, go to the next one
+		if(typeof(inputNum)==='undefined'){
+			eng.currentLine++;
+		}else{
+			//If a line was specified, go to it
+			eng.currentLine=inputNum;
+		}
 		
 		//If we've ended manually or reached the end, stop running immediately and end it all
 		if(!eng || !eng.lines || eng.currentLine==eng.lines.length){
@@ -170,7 +178,8 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 			//If there's another file to play, play it!
 			if(eng.currentFile+1<inputFiles.length){
 				console.log("Ending!");
-				eng.next();
+				eng.currentFile++;
+				eng.loadFile(inputFiles[eng.currentFile]);
 			}else{ //If we have more files, end	
 				eng.end();
 			}
@@ -182,7 +191,6 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 		//Skip comment lines
 		if(text[0]=='#'){
 			//Go to the next line
-			eng.currentLine++;
 			eng.run();
 			return;
 		}
@@ -196,7 +204,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 				//Get the var name
 				var varName=phMatch[i].match(/[^\[\]]+/);
 				
-				//console.log(varName,eng.data[varName[0]]);
+				console.log(varName,eng.data[varName[0]]);
 				
 				//Replace the match with the data value
 				text=text.replace(
@@ -204,7 +212,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 					,eng.data[varName[0]]
 				);
 				
-				//console.log(text);
+				console.log(text);
 			}
 		}
 		
@@ -321,7 +329,6 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 				}
 				
 				//Go to the next line
-				eng.currentLine++;
 				eng.run();
 				return;
 				break;
@@ -353,7 +360,6 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 				}
 				
 				//Go to the next line
-				eng.currentLine++;
 				eng.run();
 				return;
 				break;
@@ -389,7 +395,6 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 				}
 				
 				//Go to the next line
-				eng.currentLine++;
 				eng.run();
 				return;
 				break;
@@ -409,7 +414,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 					console.log(waitTime);
 					
 					//Set a wait timer (continue after wait)
-					eng.waitTimer=setTimeout(function(){eng.currentLine++;eng.run();},waitTime);
+					eng.waitTimer=setTimeout(eng.run,waitTime);
 				}
 			
 				return;
@@ -420,20 +425,19 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 				
 				//If the line exists, go to it!
 				if(goToLine>-1){
-					eng.currentLine=goToLine+1;
-					eng.run();
+					eng.run(goToLine+1);
 					return;
 				}
 				
 				break;
 			//End the novel
 			case "@EN":
-				eng.currentLine=eng.lines.length;
-				eng.run();
+				eng.run(eng.lines.length);
 				return;
 				break;
 			//Set data
 			case "@DS":
+				//var values=text.substring(4).split(/\s+/g);
 				var values=text.substring(4).split(/\s+/g);
 				
 				//If the variable is already set, get its current value
@@ -469,7 +473,6 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 				console.log(eng.data);
 				
 				//Go to the next line
-				eng.currentLine++;
 				eng.run();
 				return;
 				
@@ -523,8 +526,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 						
 						//As long as that line exists, go to it (otherwise continue)
 						if(goToLine>-1){
-							eng.currentLine=goToLine+1;
-							eng.run();
+							eng.run(goToLine+1);
 							
 							//Escape the loop
 							break;
@@ -576,8 +578,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 						event.stopPropagation();
 						
 						//Progress
-						eng.currentLine=eng.lines.indexOf(cur)+1;
-						eng.run();
+						eng.run(eng.lines.indexOf(cur)+1);
 						
 						eng.choices=null;
 						
@@ -620,7 +621,6 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 				if(text==''){
 					eng.textboxes[currentTextbox].el.innerHTML="";
 					
-					eng.currentLine++;
 					eng.run();
 					return;
 				}
@@ -847,7 +847,6 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 					//If there are no more eng.objects to show
 					if(eng.charsHidden<1){
 						if(!eng.wait){
-							eng.currentLine++;
 							eng.run();
 						}
 					}
@@ -881,7 +880,6 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 	
 		//If all letters are displayed
 		if(eng.charsHidden<1){ //failsafe in case this value somehow goes negative
-			eng.currentLine++;
 			eng.run();
 		}
 		else //If some eng.objects have yet to be displayed
@@ -1044,7 +1042,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 						if(inputLoading) eng.window.classList.remove(inputLoading);
 						
 						//Start it up!
-						eng.run();
+						eng.run(0);
 					}else{
 						alert("Failed to load story "+inputFile);
 					}
@@ -1052,23 +1050,6 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 			}
 		);
 	};
-	
-	//Go to the next part
-	eng.next=function(){
-		eng.currentFile++;
-		eng.loadFile(inputFiles[eng.currentFile]);
-	}
-	
-	//Go to the previous part
-	eng.previous=function(){
-		eng.currentFile--;
-		eng.loadFile(inputFiles[eng.currentFile]);
-	}
-	
-	//Replay the current part part
-	eng.replay=function(){
-		eng.loadFile(inputFiles[eng.currentFile]);
-	}
 	
 	//End the kinetic novel
 	eng.end=function(){
@@ -1078,6 +1059,11 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 		eng.window.parentNode.replaceChild(eng.originalWindow,eng.window);
 		//Remove this object
 		eng=null;
+	}
+	
+	//Go to a specific place
+	eng.time=function(inputNum){
+		eng.run(inputNum);
 	}
 	
 	//Start the kinetic novel by loading the first file
