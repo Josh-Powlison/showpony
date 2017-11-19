@@ -1,12 +1,14 @@
 //VISUAL NOVEL ENGINE//
-function VisualNovel(inputElement,inputFiles,inputLoading){
+function VisualNovel(inputObject){
 	"use strict"; //Strict Mode
+	
+	console.log(inputObject);
 	
 	//Need to set a variable to keep "this" separate from children's "this"
 	var eng=this;
 
 	//Variables//
-	eng.window=inputElement;	
+	eng.window=inputObject.window;	
 	eng.currentFile=0;
 	//Save the original parent
 	eng.originalWindow=eng.window.cloneNode(true);
@@ -176,10 +178,10 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 		if(!eng || !eng.lines || eng.currentLine==eng.lines.length){
 			
 			//If there's another file to play, play it!
-			if(eng.currentFile+1<inputFiles.length){
+			if(eng.currentFile+1<inputObject.parts.length){
 				console.log("Ending!");
 				eng.currentFile++;
-				eng.loadFile(inputFiles[eng.currentFile]);
+				eng.loadFile(inputObject.parts[eng.currentFile]);
 			}else{ //If we have more files, end	
 				eng.end();
 			}
@@ -907,7 +909,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 		console.log(eng);
 		
 		//Add the loading class, if one was passed.
-		if(inputLoading) eng.window.classList.add(inputLoading);
+		if(inputObject.loadingClass) eng.window.classList.add(inputObject.loadingClass);
 		
 		eng.charsHidden=0;
 		eng.currentLine=0;
@@ -1039,7 +1041,7 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 						`;
 						
 						//Remove the loading class, if one was passed.
-						if(inputLoading) eng.window.classList.remove(inputLoading);
+						if(inputObject.loadingClass) eng.window.classList.remove(inputObject.loadingClass);
 						
 						//Start it up!
 						eng.run(0);
@@ -1067,5 +1069,5 @@ function VisualNovel(inputElement,inputFiles,inputLoading){
 	}
 	
 	//Start the kinetic novel by loading the first file
-	eng.loadFile(inputFiles[eng.currentFile]);
+	eng.loadFile(inputObject.parts[eng.currentFile]);
 };

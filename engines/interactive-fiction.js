@@ -1,12 +1,13 @@
 //INTERACTIVE FICTION ENGINE//
-function InteractiveFiction(inputElement,inputFiles,inputLoading){
+function InteractiveFiction(inputObject){
+	
 	"use strict"; //Strict Mode
 	
 	//Need to set a variable to keep "this" separate from children's "this"
 	var eng=this;
 
 	//Variables//
-	eng.window=inputElement;	
+	eng.window=inputObject.window;	
 	eng.currentFile=0;
 	//Save the original parent
 	eng.originalWindow=eng.window.cloneNode(true);
@@ -26,7 +27,7 @@ function InteractiveFiction(inputElement,inputFiles,inputLoading){
 		if(!eng || !eng.lines || eng.currentLine==eng.lines.length){
 			
 			//If there's another file to play, play it!
-			if(eng.currentFile+1<inputFiles.length){
+			if(eng.currentFile+1<inputObject.parts.length){
 				console.log("Ending!");
 				eng.next();
 			}else{ //If we have more files, end	
@@ -253,7 +254,7 @@ function InteractiveFiction(inputElement,inputFiles,inputLoading){
 		console.log(eng);
 		
 		//Add the loading class, if one was passed.
-		if(inputLoading) eng.window.classList.add(inputLoading);
+		if(inputObject.loadingClass) eng.window.classList.add(inputObject.loadingClass);
 		
 		eng.currentLine=0;
 		
@@ -270,7 +271,7 @@ function InteractiveFiction(inputElement,inputFiles,inputLoading){
 						eng.lines=ajax.responseText.match(/[^\r\n]+/g);
 						
 						//Remove the loading class
-						if(inputLoading) eng.window.classList.remove(inputLoading);
+						if(inputObject.loadingClass) eng.window.classList.remove(inputObject.loadingClass);
 						
 						//Start it up!
 						eng.run();
@@ -291,5 +292,5 @@ function InteractiveFiction(inputElement,inputFiles,inputLoading){
 	}
 	
 	//Start the interactive fiction by loading the first file
-	eng.loadFile(inputFiles[eng.currentFile]);
+	eng.loadFile(inputObject.parts[eng.currentFile]);
 };

@@ -1,18 +1,18 @@
 //MEDIA PLAYER ENGINE
-function MediaPlayer(inputElement,inputFiles,inputLoading){
+function MediaPlayer(inputObject){
 	"use strict"; //Strict Mode
 	
 	//Need to set a variable to keep "this" separate from children's "this"
 	var eng=this;
 	
 	//Variables//
-	eng.window=inputElement;	
+	eng.window=inputObject.window;	
 	eng.currentFile=0;
 	//Save the original parent
 	eng.originalWindow=eng.window.cloneNode(true);
 	eng.data={};
 		
-	//Remove the onclick event that set up this kn-engine
+	//Remove the onclick event that set up this media-player
 	eng.window.onclick=null;
 	eng.window.style.cursor="pointer";
 	
@@ -34,7 +34,7 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		return "audio";
 	}
 	
-	eng.sources=inputFiles;
+	eng.sources=inputObject.parts;
 	eng.durations=[];
 	eng.totalDuration=0;
 	
@@ -85,7 +85,10 @@ function MediaPlayer(inputElement,inputFiles,inputLoading){
 		bottom:0;
 		background-color:rgba(0,0,0,.75);
 		font-family:monospace;
+		-ms-user-select:none;
+		-moz-user-select:none;
 		-webkit-user-select:none;
+		user-select:none;
 	`;
 	
 	eng.progress=document.createElement("div");
