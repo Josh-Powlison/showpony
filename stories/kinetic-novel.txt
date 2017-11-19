@@ -29,5 +29,3 @@
 
 @ST window{filter:brightness(0);}
 @WT 1
-
-@EN

@@ -12,9 +12,10 @@ body{
 }
 
 .story-container{
-	width:80vw;
-	height:80vh;
-	margin:10vh auto;
+	width:40rem;
+	max-width:100%;
+	height:22.5rem;
+	margin:2rem auto;
 }
 
 .story-container-webkit-full-screen{
@@ -53,47 +54,58 @@ body{
 
 </head>
 <body>
-	<h1>Beta</h1>
-
-	<div class="story-container" onclick="new InteractiveFiction(this,['interactive-fiction'],'loading')">
+	<h1>Showpony (Demo)</h1>
+	<p>Showpony is a lightweight multimedia engine that will allow you to work in all popular (and mnay niche), media and upload them to your website quickly and easily.</p>
+	
+	<div class="story-container"
+	onclick="new InteractiveFiction(
+		{
+		'window':this
+		,'parts':['interactive-fiction']
+		,'loadingClass':'loading'
+		}
+	)">
 		<div class="title-card">
-			<h1>Interactive Fiction (IF)</h1>
+			<h1>Interactive Fiction</h1>
 			<p>Click to play!</p>
 		</div>
 	</div>
 
-	<div class="story-container vn" onclick="new VisualNovel(this,['kinetic-novel'],'loading')">
+	<div class="story-container vn" onclick="new VisualNovel({'window':this,'parts':['kinetic-novel'],'loadingClass':'loading'})">
 		<div class="title-card">
-			<h1>Kinetic Novel (KN)</h1>
+			<h1>Kinetic Novel</h1>
 			<p>Click to play!</p>
 		</div>
 	</div>
 	
-	<div class="story-container vn" onclick="new VisualNovel(this,['visual-novel'],'loading')">
+	<div class="story-container vn" onclick="new VisualNovel({'window':this,'parts':['visual-novel'],'loadingClass':'loading'})">
 		<div class="title-card">
-			<h1>Visual Novel (VN)</h1>
+			<h1>Visual Novel</h1>
 			<p>Click to play!</p>
 		</div>
 	</div>
 	
-	<h1>Alpha</h1>
-	
-	<div class="story-container" onclick="new MediaPlayer(this,['BnW.webm','Ideas.webm','New_England_.mp4','Rain-On-Me.webm'],'loading')">
+	<div class="story-container" onclick="new MediaPlayer({'window':this,'parts':['video.mp4'],'loadingClass':'loading'})">
 		<div class="title-card">
 			<h1>Video</h1>
 			<p>Click to play!</p>
 		</div>
 	</div>
 	
-	<div class="story-container" onclick="new MediaPlayer(this,['audio-1.mp3','audio-2.mp3'],'loading')">
+	<div class="story-container" onclick="new MediaPlayer({'window':this,'parts':['audio-1.mp3','audio-2.mp3'],'loadingClass':'loading'})">
 		<div class="title-card">
 			<h1>Audio</h1>
 			<p>Click to play!</p>
 		</div>
 	</div>
 	
-	<h1>Alpha</h1>
-	
+	<div class="story-container" onclick="new Book({'window':this,'parts':['0001.jpg','0002.jpg','0003.jpg','0004.jpg'],'path':'comic/','loadingClass':'loading'})">
+		<div class="title-card">
+			<h1>Comic Book</h1>
+			<p>Click to play!</p>
+		</div>
+	</div>
+	<!--
 	<h1>Coming Soon</h1>
 	<div class="story-container">
 		<div class="title-card">
@@ -135,10 +147,11 @@ body{
 			<h1>Screenplay</h1>
 			<p>Coming Soon!</p>
 		</div>
-	</div>
+	</div>!-->
 
 </body>
 
+<script src="engines/book.js"></script>
 <script src="engines/interactive-fiction.js"></script>
 <script src="engines/visual-novel.js"></script>
 <script src="engines/media-player.js"></script>
