@@ -4,11 +4,20 @@
 @DS ben {,0,aqua,bold}Ben{}#
 @ST window{filter:brightness(0);}
 
-@CH ben(scared)
 @CH ben(shock_blush)
+@CH ben(scared)
+@CH ben(shy_blush)
+@CH ben(shock)
+@CH ben(smirk)
+@CH ben(shy)
+@CH ben(sad)
+@CH ben(laugh)
 @CH ben(habit) 25%
 @CH susan(frown)
 @CH susan(smirk)
+@CH susan(grin)
+@CH susan(sad)
+@CH susan(cry)
 @CH susan(angry) -100%
 
 @WT .1
@@ -16,16 +25,56 @@
 
 @WT 1
 @CH susan() -25%
-[susan]{,,,underline}What are you doing out here?! Your own Birthday Party's started without you!
+[susan]{,,,shout}What are you doing out here?! Everyone's looking for you, it's time to sing you Happy Birthday!
 @CH ben(shock_blush)
 @CH susan(frown)
 [ben]Um... well...
-[ben]{.5,,,}...Birthday cake gets me gassy.
+[ben]{.5,,,}...I hate it when everyone sings me Happy Birthday.
 @CH susan(smirk)
-[susan]...what was that?
+[susan]{,1,,}...{}what was that?
 @CH ben(scared)
-[ben]{,,,shake}Um, when I have Birthday cake, I fart a-
-[susan]Then don't eat it! Get back here!
+[ben]{,,,shake}Um, when everyone sings Happy Birthday, I get all anxious and stuff.
+@CH susan(grin)
+[susan]{,,,sing}Then we'll sing something else!
+@CH ben(shy_blush)
+@TB main
+@TB main [ben]It's not that. They're all surrounding me, I get so claustrophobic, it's like I can hear them all breathing at once and I can feel the air around me get thick and it becomes hard to breathe and even think
+[susan]What do you want us to sing?
+@CH ben(habit)
+[ben]I don't want anyone to sing. I just want {,,#ffa533,bold}cake{}.
+@CH susan(angry)
+@CH ben(scared)
+[susan]So do I! And guess what, if you don't get your butt back to the party, {,,,italic}neither{} of us is getting {,,#ffa533,bold}cake{}!
+@CH ben(shock)
+@CH susan(frown)
+[ben]...
+@CH susan(sad)
+[susan]People are starting to leave. {,,,italic}Come on,{} Ben.
+@CH ben(smirk)
+[ben]...why don't we wait until they do?
+@CH susan(angry)
+[susan]{,,,shout}Augh, why do you have to be such an introvert?!
+@CH susan(frown)
+@CH ben(shy)
+[ben]...
+@CH susan(sad)
+[susan]Sorry. I just worked really hard on this {,,#ffa533,bold}cake{}, and I've {,,,shout}REALLY{} been looking forward to sharing it with you and all my friends! 
+@CH ben(sad)
+@CH susan(cry)
+@TB main But if you just want to relax today, I understand...
+@WT
+@CH ben(laugh)
+[ben]No you don't. You're just trying to guilt trip me right now.
+@CH susan(angry)
+@CH ben(scared)
+[susan]Dang it Ben!
+@TB main
+@CH susan() 100%
+@CH ben() 100%
+
+@WT 1
+@ST main{top:0;height:100%;text-align:center;}
+{,0,,fade}Writer#Josh Powlison##Characters#konett (cosmickonett.tumblr.com) (under CC-BY-3.0)##Showpony Kinetic Novel Demo
 
 @ST window{filter:brightness(0);}
 @WT 1
