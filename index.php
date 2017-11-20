@@ -12,6 +12,7 @@
 	<h1>Showpony (Demo)</h1>
 	<p>Showpony is a lightweight multimedia engine that will allow you to work in all popular (and mnay niche), media and upload them to your website quickly and easily.</p>
 	<p>You will likely run into bugs and some very unpretty things since this is still in development. Sorry, and please report bugs on the <a href="https://github.com/Josh-Powlison/showpony" target="_blank">GitHub</a> page, where you can also download Showpony!</p>
+	<p>Go to the top-left corner of the engine to access the menu. For now, the first 4 parts should work (comics); the rest is iffy, 'specially cross-browser, and under construction.</p>
 	
 	<div class="story-container" id="showpony"></div>
 	<script src="engine/showpony.js"></script>
