@@ -1,0 +1,243 @@
+@font-face {
+	font-family: "Fengardo Neue";
+	src: url("FengardoNeue_Black.otf");
+}
+
+/*The container*/
+.showpony{
+	
+}
+
+.showpony-overlay{
+	position:absolute;
+	left:0;
+	top:0;
+	right:0;
+	bottom:0;
+	background-color:rgba(0,0,0,.75);
+	visibility:hidden;
+	font-family:monospace;
+	-ms-user-select:none;
+	-moz-user-select:none;
+	-webkit-user-select:none;
+	user-select:none;
+	font-family:"Fengardo Neue";
+}
+
+.showpony-progress{
+	position:absolute;
+	left:0;
+	top:20%;
+	bottom:0;
+	width:.5em;
+	transform:translate(-.25em,0);
+	background-color:#fff;
+	z-index:1;
+	cursor:pointer;
+	pointer-events:none;
+}
+
+.showpony-progress::after{
+	content: " ";
+	display:block;
+	position:absolute;
+	border:solid white .5em;
+	border-radius:100%;
+	transform:translate(-.75em,-1.5em);
+	box-sizing:border-box;
+	width:2em;
+	height:2em;
+	pointer-events:none;
+}
+
+.showpony-overlaytext{
+	position:absolute;
+	left:0;
+	top:0;
+	bottom:0;
+	right:0;
+	color:white;
+	text-align:center;
+	pointer-events:none;
+}
+
+.showpony-menu-button
+,.showpony-fullscreen-button
+,.showpony-captions-button{
+	top:0;
+	position:absolute;
+	border:none;
+	width:3em;
+	height:3em;
+	cursor:pointer;
+	background-image:url('showpony.svg');
+	background-size:cover;
+	transition:opacity .5s;
+	background-color:rgba(0,0,0,0);
+}
+
+.showpony-fullscreen-button{
+	right:0;
+	background-position:0% 0%;
+}
+
+/*Showing the button without the overlay*/
+.showpony-button-preview{
+	background-color:rgba(0,0,0,.75);
+	opacity:0;
+}
+
+.showpony-button-preview:hover{
+	opacity:.75;
+}
+
+.showpony-menu-button{
+	left:0;
+	background-position:0% 50%;
+}
+
+.showpony-captions-button{
+	left:0;
+}
+
+.showpony-content{
+	width:100%;
+	height:100%;
+}
+
+.showpony-content-book{
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	width:100%;
+	height:100%;
+}
+
+.showpony-book{
+	left:0;
+	top:0;
+	max-width:100%;
+	max-height:100%;
+	margin:auto;
+	display:block;
+	cursor:pointer;
+}
+
+.showpony-player{
+	position:absolute;
+	left:0;
+	top:0;
+	width:100%;
+	height:100%;
+}
+
+/*Fullscreen display*/
+:-webkit-full-screen{
+	width:100%;
+	height:100%;
+}
+/*
+,:-moz-full-screen
+,:-ms-fullscreen
+,:full-screen
+,:fullscreen*/
+
+/*Text effects*/
+@keyframes kn-display{
+	0% {visibility:hidden;}
+	100% {visibility:visible;}
+}
+
+@keyframes kn-fade{
+	0% {opacity:0;}
+	100% {opacity:1;}
+}
+
+@keyframes kn-shout{
+	0% {transform:scale(2);}
+	100% {transform:scale(1);}
+}
+
+@keyframes kn-sing{
+	0% {transform:translate(0,-.2em);}
+	50% {transform:translate(0,.2em);}
+	100% {transform:translate(0,-.2em);}
+}
+
+@keyframes kn-shake{
+	0% {transform:translate(.05em,.125em);} 
+	25% {transform:translate(-.05em,-.125em);}
+	50% {transform:translate(-.05em,.125em);} 
+	75% {transform:translate(.05em,-.125em);} 
+	100% {transform:translate(.05em,.125em);}
+}
+
+@keyframes kn-smoke {
+  0% {
+	transform:
+	  translate(-.5em,-1.5em)
+	  rotate(-40deg)
+	  skewX(80deg)
+	  scale(2);
+	opacity: 0;
+	filter:blur(.5em);
+  }
+  to {
+	transform:none;
+	opacity:1;
+	filter:blur(0em);
+  }
+}
+
+@keyframes kn-blur {
+  0% {
+	opacity:0;
+	filter:blur(.5em);
+  }
+  to {
+	opacity:1;
+	filter:blur(0em);
+  }
+}
+
+@keyframes kn-smoke-mirror {
+  0% {
+	transform:
+	  translate(.5em,-1.5em)
+	  rotate(40deg) 
+	  skewX(-80deg)
+	  scale(2);
+	opacity: 0;
+	filter:blur(.5em)
+  }
+  to {
+	transform:none;
+	opacity:1;
+	filter:blur(0em);
+	}
+}
+
+@keyframes kn-glitch{
+	0% {transform:;}
+	100% {opacity:1;}
+}
+
+@keyframes scramble{
+	0%{content:'*';visibility:visible;}
+	10%{content:'1';}
+	20%{content:'/';}
+	30%{content:'0';}
+	40%{content:'?';}
+	50%{content:'1';}
+	60%{content:'@';}
+	70%{content:'!';}
+	80%{content:'&';}
+	90%{content:'$';}
+}
+
+.kn-scramble::before{
+	visibility:hidden;
+	content:'L';
+	animation:scramble 1s 1;
+	position:absolute;
+}
