@@ -73,6 +73,10 @@ Email me at joshuapowlison@gmail.com
 
 Don't be dead! Email me at joshuapowlison@gmail.com
 
+## What are Showpony's dependencies?
+
+Showpony has no dependencies!- not even jQuery!
+
 ## NOTES ##
 
 Included resources are either public domain or have a license file included. The license of this software does not extend to the included assets.
