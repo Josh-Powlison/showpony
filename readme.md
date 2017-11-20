@@ -77,6 +77,16 @@ Don't be dead! Email me at joshuapowlison@gmail.com
 
 Showpony has no dependencies!- not even jQuery!
 
+## How can I support Showpony's development?
+
+A few ways, no obligation:
+
+* State on your Showpony-using site that it's powered by Showpony and have a link come back here!
+* Tell others about Showpony
+* Test Showpony out and send me bug reports by email (joshuapowlison@gmail.com) or on Twitter (@joshpowlison)
+* Get involved as a programmer!
+* Send me money and let me know it's for Showpony, and I'll try to put more hours towards it (since I can't make any promises, view this as a donation, not as payment)! https://www.paypal.me/joshpowlison
+
 ## NOTES ##
 
 Included resources are either public domain or have a license file included. The license of this software does not extend to the included assets.
