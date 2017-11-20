@@ -1,55 +1,69 @@
 # What is Showpony?
 
-A collection of easy-to-use engines for various media, ranging from infinite-scroll novels to visual novel engines!
+An easy-to-use engine for telling stories in any medium and across any media!
 
-Currently I have the following working in a usable capacity:
+Currently Showpony can be used for the following media effectively:
 
-* Visual Novel/Kinetic Novels
+* Comics
+
+Engines in the works and testing phases are:
+
+* Visual/Kinetic Novel
+* Video
+* Audio
 * Interactive Fiction
-
-I plan to add more media!
+* Straight HTML files
 
 ## How hard is it to add to my webpage?
 
-You only need 1 line of JS to add an engine to your existing page. If you want a visual kovel to load on clicking a block, you could use:
+Don't you mean how EASY *wink* It's the same for every medium. Here's some sample code:
 
-	<div onclick="new VisualNovel(this,['part-1','part-2','part-3'],'loadingClass');">
-		<h1>Click to play!</h1>
-	</div>
+	var container=document.getElementById("showpony");
+	engine=new Showpony({
+		"window":container
+		,"parts":['0001.jpg','0002.png','0003.kn','0004.mp3']
+		,"path":"story-parts/"
+		,"loadingClass":"loading"
+		,"scrubLoad":false
+	});
 
 The setup is the same for every medium!
 
-## How hard is the syntax? I don't want to learn a new language.
+## How hard is the syntax for Interactive Fiction and/or Visual Novels? I don't want to learn a new language.
 
 Go into the stories folder and check out some of the ".txt" files. It's already very simple, but I'm working on simplifying it further too! Email me at joshuapowlison@gmail.com if you run into any problems or have any requests/suggestions for improvement.
 
 ## Can I use this on my website right now!
 
-Absolutely, although it's still very much a WIP, so be careful!
+Absolutely, although it's still very much a WIP, so be careful and test thoroughly! Email me if you run into any problems.
 
-## Can I sell or make money off works made with Showpony!
+## Can I sell or make money off works made with Showpony?
 
 Absolutely! But you can't sell the code itself.
 
 ## How heavy is Showpony?
 
-Our Visual Novel/Kinetic Novel engine is less than 30 KB uncompressed. For all of the engines (stil uncompressed) you're currently look at less than 40 KB. Obviously, that will go up as I add features, but it will likely also go down as I condense and improve the code too.
+Uncompressed it's less than 200 KB. BUT not counting the license and fonts I added in, it's less than 55 KB. You can whittle it down quite a bit from there still!
+
+This will obviously go up as I add features, but it will also go down as I make it more performant. So it'll probably stay around that amount (until/unless I add more media support).
 
 ## Is it performant?
 
 This doesn't just depend on the code but on the resources you use, but my bad laptop's handled it pretty well. Try it for your projects and see!
 
-## Will it support older browsers?
+## What's its browser support?
 
-It's made to work with newer browsers. But most people into new media are also into new browsers, so you should be fine. If you find something that isn't working cross-browser email me at joshuapowlison@gmail.com
+It's made to work with newer browsers, and I can test with the latest versions of Chrome, Firefox, Edge, and Chrome Mobile. Test it thoroughly for your own projects, and let me know if you run into any errors!
 
 ## Do I need PHP, MySQL, Python, etc on my website for this to work?
 
-Nope! It's all pure HTML, JS, and CSS (with some AJAX, if you want to count that as separate from JS).
+Nope! Some PHP can be used to make using it easier (you can quickly grab all the files with one line of code) but you can use Showpony with no backend programming on your part!
 
 ## I want to make desktop applications with Showpony. Can I do that?
 
-If you use something like php-desktop you can, although I don't have an official implementation out right now.
+If you use something like php-desktop you can, although I don't have an official implementation out right now. Also php-desktop is Windows-only.
+
+If you have any ideas for implementations or want to fork one, let me know!
 
 ## I ran into a bug. I'm not a programmer. I am sad. Can you help?
 
