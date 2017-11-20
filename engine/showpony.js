@@ -1,6 +1,17 @@
 function Showpony(input){
 	"use strict";
 	
+	/*
+	
+	input values:
+	window
+	parts
+	path
+	loadingClass
+	scrubLoad
+	
+	*/
+	
 	//Events
 	var eventTime=new Event('time');
 	
@@ -8,6 +19,8 @@ function Showpony(input){
 	var eng=this;
 	eng.data={};
 	eng.settings=input;
+	eng.durations=[];
+	eng.totalDuration=0;
 	
 	//If the window is statically positiond, set it to relative! (so positions of children work)
 	if(window.getComputedStyle(eng.settings.window).getPropertyValue('position')=="static"){
@@ -50,6 +63,8 @@ function Showpony(input){
 	
 	var content=document.createElement("div"); content.className="showpony-content";
 	var book=document.createElement("img"); book.className="showpony-book";
+	var audio=document.createElement("audio"); audio.className="showpony-player";
+	var video=document.createElement("video"); video.className="showpony-player";
 
 	//Empty the current window
 	eng.settings.window.innerHTML="";
@@ -67,6 +82,11 @@ function Showpony(input){
 	var prevType=null;
 	
 	eng.time=function(obj){
+		//If the user's scrubbing and we don't want to load on scrubbing, don't load
+		/*if(scrubLoad==false && moveBar===true){
+			return;
+		}*/
+		
 		//If inputPart is set
 		if(obj && typeof(obj.part)!==undefined){
 			//Use different options
@@ -124,6 +144,7 @@ function Showpony(input){
 			case ".png":
 			case ".gif":
 			case ".svg":
+			case ".tiff":
 				//If the previous type was different, empty the div and use this one
 				if(prevType!=newType){
 					content.innerHTML="";
@@ -144,6 +165,44 @@ function Showpony(input){
 				break;
 			//Video
 			case ".mp4":
+			case ".webm":
+				if(prevType!=newType){
+					content.innerHTML="";
+					content.appendChild(video);
+					video.addEventListener(
+						"click"
+						,function(){
+							eng.menu();
+						}
+					);
+					
+					//Use the general content class
+					content.className="showpony-content";
+				}
+				
+				//Adjust the source
+				video.src=eng.settings.path+eng.settings.parts[eng.currentFile];
+				break;
+			//Audio
+			case ".mp3":
+			case ".wav":
+				if(prevType!=newType){
+					content.innerHTML="";
+					content.appendChild(audio);
+					audio.addEventListener(
+						"click"
+						,function(){
+							eng.menu();
+						}
+					);
+					
+					//Use the general content class
+					content.className="showpony-content";
+				}
+				
+				//Adjust the source
+				audio.src=eng.settings.path+eng.settings.parts[eng.currentFile];
+				audio.play();
 				break;
 			//Interactive Fiction
 			case ".txt":
@@ -159,8 +218,6 @@ function Showpony(input){
 				var ajax=new XMLHttpRequest();
 				ajax.open("GET",eng.settings.path+eng.settings.parts[eng.currentFile]);
 				ajax.send();
-				
-				console.log(eng);
 				
 				//Add the loading class, if one was passed.
 				//if(inputObject.loadingClass) eng.settings.window.classList.add(inputObject.loadingClass);
@@ -183,6 +240,42 @@ function Showpony(input){
 								
 								//Start it up!
 								eng.run();
+							}else{
+								alert("Failed to load file called: "+eng.settings.path+eng.settings.parts[eng.currentFile]);
+							}
+						}
+					}
+				);
+				break;
+			//General file
+			case ".html":
+				//If the previous type was different, use the new type
+				if(prevType!=newType){
+					content.innerHTML="";
+				}
+				
+				//Use the general content class
+				content.className="showpony-content";
+			
+				//Load the file; on load, run the engine
+				var ajax=new XMLHttpRequest();
+				ajax.open("GET",eng.settings.path+eng.settings.parts[eng.currentFile]);
+				ajax.send();
+				
+				//Add the loading class, if one was passed.
+				//if(inputObject.loadingClass) eng.settings.window.classList.add(inputObject.loadingClass);
+
+				ajax.addEventListener(
+					"readystatechange"
+					,function(event){
+						if(ajax.readyState==4){
+							if(ajax.status==200){
+								//Get each line (taking into account and ignoring extra lines)
+								content.innerHTML=ajax.responseText;
+								
+								//Remove the loading class
+								//if(inputObject.loadingClass) eng.settings.window.classList.remove(inputObject.loadingClass);
+								
 							}else{
 								alert("Failed to load file called: "+eng.settings.path+eng.settings.parts[eng.currentFile]);
 							}
@@ -217,6 +310,17 @@ function Showpony(input){
 		
 		if(moveBar===true){
 			moveBar=false;
+		
+			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
+			if(eng.settings.scrubLoad==false){
+				//Load the part our cursor's on
+				eng.updateOverlay(
+					(event.clientX-eng.settings.window.getBoundingClientRect().left)
+					/
+					(eng.settings.window.getBoundingClientRect().width)
+				);
+			}
+			
 			return;
 		}
 		
@@ -229,10 +333,18 @@ function Showpony(input){
 			if(overlay.style.visibility=="visible"){
 				overlay.style.visibility="hidden";
 				menuButton.classList.add("showpony-button-preview");
+				
+				if(prevType==".mp3"){
+					audio.play();
+				}
 			}else{
 				eng.updateOverlay();
 				overlay.style.visibility="visible";
 				menuButton.classList.remove("showpony-button-preview");
+				
+				if(prevType==".mp3"){
+					audio.pause();
+				}
 			}
 			
 			/*MEDIA PLAYER
@@ -332,6 +444,16 @@ function Showpony(input){
 		"touchend"
 		,function(event){
 			moveBar=false;
+			
+			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
+			if(eng.settings.scrubLoad==false){
+				//Load the part our pointer's on
+				eng.updateOverlay(
+					(event.changedTouches[0].clientX-eng.settings.window.getBoundingClientRect().left)
+					/
+					(eng.settings.window.getBoundingClientRect().width)
+				);
+			}
 		}
 	);
 	
@@ -362,7 +484,6 @@ function Showpony(input){
 		
 		progress.style.left=(inputPercent*100)+"%";
 		
-		
 		//Keep within the range of files we've got
 		newFile= newFile>=eng.settings.parts.length ? eng.settings.parts.length-1 : newFile;
 		
@@ -372,8 +493,11 @@ function Showpony(input){
 		//Set the overlay text (the current time)
 		overlayText.innerHTML="<p>"+(newFile+1)+" | "+(eng.settings.parts.length-(newFile+1))+"</p>";
 		
-		if(newFile!=eng.currentFile){
-			eng.time({"part":newFile});
+		//If we allow scrubbing or we're not moving the bar, we can load the file
+		if(eng.settings.scrubLoad!==false || moveBar===false){
+			if(newFile!=eng.currentFile){
+				eng.time({"part":newFile});
+			}
 		}
 		
 		/*MEDIA PLAYER
@@ -432,7 +556,6 @@ function Showpony(input){
 		window.addEventListener(
 			"popstate"
 			,function(){
-				console.log("testing!");
 				var regex=new RegExp(eng.settings.query+'[^&]+','i');
 				
 				var page=window.location.href.match(regex);
@@ -447,8 +570,6 @@ function Showpony(input){
 		var regex=new RegExp(eng.settings.query+'[^&]+','i');
 		
 		var page=window.location.href.match(regex);
-		
-		console.log(page);
 		
 		if(page){
 			eng.time({"part":parseInt(page[0].split("=")[1])-1,"popstate":true});
@@ -666,20 +787,6 @@ function Showpony(input){
 	
 	/////MEDIA PLAYER/////
 	/*
-
-	eng.durations=[];
-	eng.totalDuration=0;
-	
-	eng.player=document.createElement(getMediaType(settings.parts[0]));
-	eng.player.style.cssText=`
-		position:absolute;
-		left:0;
-		top:0;
-		width:100%;
-		height:100%;
-	`;
-	eng.player.src="stories/"+settings.parts[eng.currentFile];
-	eng.settings.window.appendChild(eng.player);
 	
 	//Get lengths of all of the videos
 	for(let i=0;i<settings.parts.length;i++){		
@@ -713,16 +820,11 @@ function Showpony(input){
 		eng.time();
 	}
 	
-	eng.stop=function(){
-		eng.pause();
-		eng.time(0);
-	}
-	
 	//When the player's finished with a file
 	eng.player.addEventListener(
 		"ended"
 		,function(){
-			//If we're menubing the media, don't check for ended (this can trigger and interrupt our media menubing)
+			//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
 			if(overlay.style.visibility=="visible") return;
 			
 			if(eng.currentFile<settings.parts.length-1){
@@ -738,12 +840,6 @@ function Showpony(input){
 	
 	/////VISUAL NOVEL/////
 	/*
-
-	//DEFAULT STYLES//
-	//If the window is statically positiond, set it to relative! (so positions of children work)
-	if(window.getComputedStyle(eng.settings.window).getPropertyValue('position')=="static"){
-		eng.settings.window.style.position="relative";
-	}
 	
 	//Whether the player is choosing between choices or not.
 	eng.choices=false;
@@ -1670,12 +1766,5 @@ function Showpony(input){
 		);
 	};
 	
-	//Go to a specific place
-	eng.time=function(inputNum){
-		eng.run(inputNum);
-	}
-	
-	//Start the kinetic novel by loading the first file
-	eng.loadFile(inputObject.parts[eng.currentFile]);
 	*/
 }

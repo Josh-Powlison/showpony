@@ -28,6 +28,7 @@
 					,"parts":<?=json_encode(array_slice(scandir('stories'),2))?>
 					,"path":"stories/"
 					,"loadingClass":"loading"
+					,"scrubLoad":false
 				});
 			}
 		);
