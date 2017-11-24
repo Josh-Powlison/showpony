@@ -412,9 +412,6 @@ function Showpony(input){
 		"touchmove"
 		,function(event){
 			
-			//Only read mousemove over the overlay
-			//if(event.target!==this) return;
-			
 			if(moveBar===false){
 				moveBar=event.changedTouches[0].clientX;
 			}
@@ -443,17 +440,24 @@ function Showpony(input){
 	overlay.addEventListener(
 		"touchend"
 		,function(event){
-			moveBar=false;
 			
-			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
-			if(eng.settings.scrubLoad==false){
-				//Load the part our pointer's on
-				eng.updateOverlay(
-					(event.changedTouches[0].clientX-eng.settings.window.getBoundingClientRect().left)
-					/
-					(eng.settings.window.getBoundingClientRect().width)
-				);
+			//If we were scrubbing
+			if(moveBar===true){
+				moveBar=false;
+				console.log("We were scrubbing!");
+				//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
+				if(eng.settings.scrubLoad==false){
+					//Load the part our pointer's on
+					eng.updateOverlay(
+						(event.changedTouches[0].clientX-eng.settings.window.getBoundingClientRect().left)
+						/
+						(eng.settings.window.getBoundingClientRect().width)
+					);
+				}
 			}
+			
+			//moveBar needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
+			moveBar=false;
 		}
 	);
 	
