@@ -2,6 +2,14 @@
 
 An easy-to-use engine for telling stories in any medium and across any media!
 
+# Can you show me Showpony in action?
+
+[Game Plan! (Webmanga)](http://gameplanmanga.com/)
+
+If you use Showpony on your site too, let me know and I might link to it from here!
+
+# What media can I work in with Showpony?
+
 Currently Showpony can be used for the following media effectively:
 
 * Comics
