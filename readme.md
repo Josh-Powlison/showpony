@@ -16,18 +16,26 @@ Engines in the works and testing phases are:
 
 ## How hard is it to add to my webpage?
 
-Don't you mean how EASY *wink* It's the same for every medium. Here's some sample code:
+Don't you mean how EASY *wink* It's the same for every medium. If you have PHP, it's as easy as this line of code:
 
-	var container=document.getElementById("showpony");
-	engine=new Showpony({
-		"window":container
+	<?php include ("showpony/showpony-classes.php"); easyShowpony("path-to-files"); ?>
+
+Just make sure your showpony folder is accessible from the webpage, and you should be good to go!
+	
+Most webhosts will support php no problem-o; if you name your file "yourfile.php" and upload it to the server with the above code in it, things should work right away! It requires PHP 5.2 or greater, but you should be more than good.
+
+But Showpony doesn't require PHP to run, and you can create Showpony objects with raw JavaScript easily as well:
+
+	//Create a Showpony engine
+	var engine=new Showpony({
+		"window":document.getElementById("showpony");
 		,"parts":['0001.jpg','0002.png','0003.kn','0004.mp3']
 		,"path":"story-parts/"
 		,"loadingClass":"loading"
 		,"scrubLoad":false
 	});
 
-The setup is the same for every medium!
+The setup is the same for every medium, and you can have as many Showpony objects running at a time as you want!
 
 ## How hard is the syntax for Interactive Fiction and/or Visual Novels? I don't want to learn a new language.
 

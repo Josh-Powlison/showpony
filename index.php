@@ -5,7 +5,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale:1">
 	<link rel="stylesheet" href="styles.css">
-	<link rel="stylesheet" href="engine/showpony.css">
+	<link rel="stylesheet" href="showpony/showpony.css">
 </head>
 <body>
 	<p>Sorry this page is ugly, Showpony's under crazy construction!</p>
@@ -14,11 +14,11 @@
 	<p>You will likely run into bugs and some very unpretty things since this is still in development. Sorry, and please report bugs on the <a href="https://github.com/Josh-Powlison/showpony" target="_blank">GitHub</a> page, where you can also download Showpony!</p>
 	<p>Go to the top-left corner of the engine to access the menu. For now, the first 4 parts should work (comics); the rest is iffy, 'specially cross-browser, and under construction.</p>
 	
-	<?php include ('engine/showpony-classes.php'); easyShowpony("parts"); ?>
+	<?php include ('showpony/showpony-classes.php'); easyShowpony("parts"); ?>
 	
 	<!--
 	<div class="story-container" id="showpony"></div>
-	<script src="engine/showpony.js"></script>
+	<script src="showpony/showpony.js"></script>
 	<script>
 		var comic,engine;
 	
