@@ -16,7 +16,6 @@ function easyShowpony($dirName){
 						"window":showponyWindow
 						,"parts":<?php echo json_encode(array_slice(scandir($dirName),2));?>
 						,"path":"<?php echo $dirName; ?>/"
-						,"scrubLoad":false
 					});
 				}
 			);
