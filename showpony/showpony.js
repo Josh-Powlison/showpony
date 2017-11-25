@@ -7,7 +7,7 @@ function Showpony(input){
 	eng.settings={
 		"window":input.window || null
 		,"parts":input.parts || null
-		,"path":input.path || ''
+		,"path":input.path || ""
 		,"loadingClass":input.loadingClass || null
 		,"scrubLoad":input.scrubLoad || false
 		,"startAt":
@@ -15,10 +15,11 @@ function Showpony(input){
 			: input.startAt=="last" ? input.parts.length-1
 			: input.startAt!==undefined ? input.startAt
 			: input.parts.length-1
+		,"query": input.query!==undefined ? input.query 	: "part"
 	};
 	
 	//Events
-	var eventTime=new Event('time');
+	var eventTime=new Event("time");
 	
 	//Need to set a variable to keep "this" separate from children's "this"
 	eng.data={};
@@ -578,8 +579,12 @@ function Showpony(input){
 		
 		var page=window.location.href.match(regex);
 		
+		//If the value is already in the header
 		if(page){
 			eng.time({"part":parseInt(page[0].split("=")[1])-1,"popstate":true});
+		//If the value's not in the header, default
+		}else{
+			eng.time();
 		}
 	}else{
 		//Start

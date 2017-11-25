@@ -32,8 +32,9 @@
 					,"parts":<?=json_encode(array_slice(scandir('parts'),2))?>
 					,"path":"parts/"
 					,"loadingClass":"loading"
-					,"scrubLoad":true
-					,"startAt":"first"
+					,"scrubLoad":false
+					,"startAt":"last"
+					,"query":false
 				});
 			}
 		);
