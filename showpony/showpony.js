@@ -1,24 +1,27 @@
 function Showpony(input){
 	"use strict";
+
+	var eng=this;
 	
-	/*
-	
-	input values:
-	window
-	parts
-	path
-	loadingClass
-	scrubLoad
-	
-	*/
+	//Import settings (or use defaults)
+	eng.settings={
+		"window":input.window || null
+		,"parts":input.parts || null
+		,"path":input.path || ''
+		,"loadingClass":input.loadingClass || null
+		,"scrubLoad":input.scrubLoad || false
+		,"startAt":
+			input.startAt=="first" ? 0
+			: input.startAt=="last" ? input.parts.length-1
+			: input.startAt!==undefined ? input.startAt
+			: input.parts.length-1
+	};
 	
 	//Events
 	var eventTime=new Event('time');
 	
 	//Need to set a variable to keep "this" separate from children's "this"
-	var eng=this;
 	eng.data={};
-	eng.settings=input;
 	eng.durations=[];
 	eng.totalDuration=0;
 	
@@ -57,7 +60,7 @@ function Showpony(input){
 	);
 	
 	//Variables//
-	eng.currentFile=0;
+	eng.currentFile=eng.settings.startAt;
 	//Save the original parent
 	eng.originalWindow=eng.settings.window.cloneNode(true);
 	

@@ -14,9 +14,9 @@
 	<p>You will likely run into bugs and some very unpretty things since this is still in development. Sorry, and please report bugs on the <a href="https://github.com/Josh-Powlison/showpony" target="_blank">GitHub</a> page, where you can also download Showpony!</p>
 	<p>Go to the top-left corner of the engine to access the menu. For now, the first 4 parts should work (comics); the rest is iffy, 'specially cross-browser, and under construction.</p>
 	
-	<?php include ('showpony/showpony-classes.php'); easyShowpony("parts"); ?>
+	<?php # include ('showpony/showpony-classes.php'); easyShowpony("parts"); ?>
 	
-	<!--
+	
 	<div class="story-container" id="showpony"></div>
 	<script src="showpony/showpony.js"></script>
 	<script>
@@ -29,14 +29,15 @@
 				
 				engine=new Showpony({
 					"window":comic
-					,"parts":<?=json_encode(array_slice(scandir('stories'),2))?>
+					,"parts":<?=json_encode(array_slice(scandir('parts'),2))?>
 					,"path":"parts/"
 					,"loadingClass":"loading"
 					,"scrubLoad":true
+					,"startAt":"first"
 				});
 			}
 		);
-	</script>-->
+	</script>
 </body>
 
 </html>
