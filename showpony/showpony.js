@@ -81,7 +81,7 @@ function Showpony(input){
 	var video=document.createElement("video"); video.className="showpony-player";
 	
 	//Whether the player is choosing between choices or not.
-	var choices=false;
+	var waitForInput=false;
 	
 	//Objects
 	//Continue Notification
@@ -173,11 +173,6 @@ function Showpony(input){
 	var currentType=null;
 	
 	eng.time=function(obj){
-		//If the user's scrubbing and we don't want to load on scrubbing, don't load
-		/*if(scrubLoad==false && moveBar===true){
-			return;
-		}*/
-		
 		//If inputPart is set
 		if(obj && typeof(obj.part)!==undefined){
 			//Use different options
@@ -227,10 +222,13 @@ function Showpony(input){
 		
 		var newType=getMedium(eng.parts[eng.currentFile]);
 		
+		//Multimedia engine resets
 		eng.lines=null;
 		eng.charsHidden=0;
 		eng.currentLine=0;
 		eng.waitTimer=null;
+		content.style.cssText=null; //Remove any styles applied to the content
+		waitForInput=false;
 		
 		//Display the medium based on the file extension
 		switch(newType){
@@ -301,12 +299,12 @@ function Showpony(input){
 			case "multimedia":
 				console.log(currentType);
 			
-				//If the previous type was different, use the new type
-				if(currentType!=newType){
+				//If the previous type was different, use the new type (or if we're scrubbing and not moving along as normal)
+				//if(currentType!=newType || overlay.style.visibility=="visible"){
 					content.innerHTML="";
 					eng.objects={};
 					eng.textboxes={};
-				}
+				//}
 				
 				AJAX(
 					function(ajax){
@@ -1003,11 +1001,6 @@ function Showpony(input){
 				while(eng.lines[readLine] && eng.lines[readLine][0]=='-'){
 					var thisButton=document.createElement("button");
 					thisButton.className="kn-choice";
-					thisButton.style.cssText=`
-						font-size:1em;
-						width:10em;
-						max-width:100%;
-					`;
 					
 					console.log(readLine);
 					
@@ -1026,11 +1019,11 @@ function Showpony(input){
 						//Progress
 						eng.run(eng.lines.indexOf(cur)+1);
 						
-						choices=null;
+						waitForInput=false;
 					});
 				}
 				
-				choices=true;
+				waitForInput=true;
 				
 				return;
 				break;
@@ -1302,6 +1295,8 @@ function Showpony(input){
 	
 	//When the viewer inputs to Showpony (click, space, general action)
 	eng.input=function(){
+		console.log(currentType);
+		
 		//Function differently depending on medium
 		switch(currentType){
 			case "image":
@@ -1313,7 +1308,7 @@ function Showpony(input){
 				break;
 			case "multimedia":
 				//If the player is making choices right now
-				if(choices){
+				if(waitForInput){
 					return;
 				};
 			
