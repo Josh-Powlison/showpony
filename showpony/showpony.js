@@ -23,7 +23,7 @@ function Showpony(input){
 		,timeDisplay: input.timeDisplay || "[0pc] | [0pl]"
 		,data: input.data || {}
 		,durations:[]
-		,defaultDuration: input.defaultDuration || 10
+		,defaultDuration: input.defaultDuration || 20
 		,totalDuration:0
 		,originalWindow:input.window.cloneNode(true)
 	});
