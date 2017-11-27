@@ -489,7 +489,7 @@ function Showpony(input){
 				}
 			}else if(input[1]=="d"){
 				//Get the name, remove the parentheses
-				var date=eng.parts[newPart].match(/[^\(\.]+/);
+				var date=eng.parts[newPart].match(/^[^(]+(?!\()\S?/);
 				
 				//If there's a date, return it; otherwise, return blank space
 				if(date){
