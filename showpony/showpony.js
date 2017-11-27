@@ -20,22 +20,23 @@ function Showpony(input){
 			: input.parts.length-1
 		,query: input.query!==undefined ? input.query
 			: "part"
+		,timeDisplay: input.timeDisplay || "[0pc] | [0pl]"
 		,data: input.data || {}
 		,durations:[]
+		,defaultDuration: input.defaultDuration || 10
 		,totalDuration:0
 		,originalWindow:input.window.cloneNode(true)
 	});
 	
 	//Get lengths of all of the files
-	for(let i=0;i<eng.parts.length;i++){		
-		
+	for(let i in eng.parts){
 		switch(getMedium(eng.parts[i])){
 			case "video":
 			case "audio":
 				let thisMedia=document.createElement(getMedium(eng.parts[i]));
 			
-				thisMedia.src=eng.path+eng.parts[i];
 				thisMedia.preload="metadata";
+				thisMedia.src=eng.path+eng.parts[i];
 				
 				//Listen for media loading
 				thisMedia.addEventListener(
@@ -49,8 +50,8 @@ function Showpony(input){
 				
 				break;
 			default:
-				eng.durations[i]=10;
-				eng.totalDuration+=10;
+				eng.durations[i]=eng.defaultDuration;
+				eng.totalDuration+=eng.defaultDuration;
 		}
 	}
 	
@@ -61,13 +62,24 @@ function Showpony(input){
 	
 	eng.window.classList.add("showpony");
 	
-	//Elements
+	/* //////////IDEA TO REDUCE BELOW CODE
+	var ar=["overlay","progress","content"];
+	for(let i in ar){
+		eng[ar[i]]=document.createElement("div");
+		eng[ar[i]].className="showpony-"+ar[i];
+	}*/
+	
 	var overlay=document.createElement("div"); overlay.className="showpony-overlay";
 	var overlayText=document.createElement("div"); overlayText.className="showpony-overlaytext";
 	var progress=document.createElement("div"); progress.className="showpony-progress";
 	var menuButton=document.createElement("button"); menuButton.alt="Menu"; menuButton.className="showpony-menu-button showpony-button-preview";
 	var fullscreenButton=document.createElement("button"); fullscreenButton.alt="Fullscreen"; fullscreenButton.className="showpony-fullscreen-button showpony-button-preview";
 	var captionsButton=document.createElement("button"); captionsButton.alt="Closed Captions/Subtitles"; captionsButton.className="showpony-captions-button";
+	var content=document.createElement("div"); content.className="showpony-content";
+	var book=document.createElement("img"); book.className="showpony-book";
+	var audio=document.createElement("audio"); audio.className="showpony-player";
+	var video=document.createElement("video"); video.className="showpony-player";
+	
 	//Whether the player is choosing between choices or not.
 	var choices=false;
 	
@@ -148,22 +160,17 @@ function Showpony(input){
 		content.appendChild(this.el);
 	};
 	
-	overlay.appendChild(progress);
-	overlay.appendChild(overlayText);
-	
-	var content=document.createElement("div"); content.className="showpony-content";
-	var book=document.createElement("img"); book.className="showpony-book";
-	var audio=document.createElement("audio"); audio.className="showpony-player";
-	var video=document.createElement("video"); video.className="showpony-player";
-
 	//Empty the current window
 	eng.window.innerHTML="";
+	
+	overlay.appendChild(progress);
+	overlay.appendChild(overlayText);
 	eng.window.appendChild(content);
 	eng.window.appendChild(overlay);
 	eng.window.appendChild(menuButton);
 	eng.window.appendChild(fullscreenButton);
 	
-	var prevType=null;
+	var currentType=null;
 	
 	eng.time=function(obj){
 		//If the user's scrubbing and we don't want to load on scrubbing, don't load
@@ -229,7 +236,7 @@ function Showpony(input){
 		switch(newType){
 			case "image":
 				//If the previous type was different, empty the div and use this one
-				if(prevType!=newType){
+				if(currentType!=newType){
 					content.innerHTML="";
 					content.appendChild(book);
 					
@@ -241,7 +248,7 @@ function Showpony(input){
 				book.src=eng.path+eng.parts[eng.currentFile];
 				break;
 			case "video":
-				if(prevType!=newType){
+				if(currentType!=newType){
 					content.innerHTML="";
 					content.appendChild(video);
 					
@@ -266,7 +273,7 @@ function Showpony(input){
 				);
 				break;
 			case "audio":
-				if(prevType!=newType){
+				if(currentType!=newType){
 					content.innerHTML="";
 					content.appendChild(audio);
 					
@@ -292,10 +299,10 @@ function Showpony(input){
 				break;
 			//Visual Novels/Kinetic Novels/Interactive Fiction
 			case "multimedia":
-				console.log(prevType);
+				console.log(currentType);
 			
 				//If the previous type was different, use the new type
-				if(prevType!=newType){
+				if(currentType!=newType){
 					content.innerHTML="";
 					eng.objects={};
 					eng.textboxes={};
@@ -319,7 +326,7 @@ function Showpony(input){
 				content.className="showpony-content";
 				
 				AJAX(
-					function(){
+					function(ajax){
 						content.innerHTML=ajax.responseText;
 					}
 				);
@@ -330,7 +337,7 @@ function Showpony(input){
 		}
 		
 		//Track the file type used here for when we next switch
-		prevType=getMedium(eng.parts[eng.currentFile]);
+		currentType=getMedium(eng.parts[eng.currentFile]);
 	}
 	
 	var moveBar=false;
@@ -366,9 +373,9 @@ function Showpony(input){
 				menuButton.classList.add("showpony-button-preview");
 				fullscreenButton.classList.add("showpony-button-preview");
 				
-				if(prevType=="audio"){
+				if(currentType=="audio"){
 					audio.play();
-				}else if(prevType=="video"){
+				}else if(currentType=="video"){
 					video.play();
 				}
 			}else{
@@ -377,9 +384,9 @@ function Showpony(input){
 				menuButton.classList.remove("showpony-button-preview");
 				fullscreenButton.classList.remove("showpony-button-preview");
 				
-				if(prevType=="audio"){
+				if(currentType=="audio"){
 					audio.pause();
-				}else if(prevType=="video"){
+				}else if(currentType=="video"){
 					video.pause();
 				}
 			}
@@ -402,9 +409,9 @@ function Showpony(input){
 		if(typeof(inputPercent)==='undefined'){
 			//var inputPercent=eng.currentFile / eng.parts.length;
 			
-			if(prevType=="video"){
+			if(currentType=="video"){
 				var currentTime=video.currentTime;
-			}else if(prevType=="audio"){
+			}else if(currentType=="audio"){
 				var currentTime=audio.currentTime;
 			}else currentTime=0;
 		
@@ -427,6 +434,8 @@ function Showpony(input){
 		var newTime=eng.totalDuration*inputPercent;
 		progress.style.left=(inputPercent*100)+"%";
 
+		var newPart=0;
+		
 		//Look through the media for the right one
 		for(var i=0;i<eng.durations.length;i++){
 			//If the duration's beyond this one, go to the next one (and subtract the duration from the total duration)
@@ -446,19 +455,67 @@ function Showpony(input){
 				
 				if(i==eng.currentFile){
 					//Set the time properly
-					if(prevType=="video"){
+					if(currentType=="video"){
 						video.currentTime=newTime;
-					}else if(prevType=="audio"){
+					}else if(currentType=="audio"){
 						audio.currentTime=newTime;
 					}
 				}
+				newPart=i;
 			
 				break;
 			}
 		}
 		
+		var current=Math.floor(inputPercent*eng.totalDuration);
+		var left=eng.totalDuration-Math.floor(inputPercent*eng.totalDuration);
+		
+		function adjustReplace(input){
+			//Part numbers
+			if(input[2]=="p"){
+				//Pass a calculation based on whether the number of parts left, total, or the number of the current part was asked for
+				var floorValue=
+					input[3]=="l" ? eng.parts.length-(newPart+1)
+					: input[3]=="t" ? eng.parts.length
+					: newPart+1
+				;
+			}
+			else //Times
+			{
+				//Total times
+				if(input[3]=="t"){
+					//Pass a calculation based on whether hours, minutes, or seconds were asked for
+					var floorValue=
+						input[2]=="h" ? eng.totalDuration / 3600
+						: input[2]=="m" ? (eng.totalDuration % 3600) / 60
+						: eng.totalDuration % 60
+					;
+				}else{ //Current time or time left
+					var val=
+						input[3]=="l"
+						? left
+						: current
+					;
+					
+					//Pass a calculation based on whether hours, minutes, or seconds were asked for
+					var floorValue=
+						input[2]=="h" ? val / 3600
+						: input[2]=="m" ? (val % 3600) / 60
+						: val % 60
+					;
+				}
+			}
+			
+			//Return the value
+			return String(
+				Math.floor(floorValue)
+			).padStart(input[1],'0');
+		}
+		
 		//Set the overlay text (the current time)
-		overlayText.innerHTML="<p>"+secondsToTime(Math.floor(inputPercent*eng.totalDuration))+" | "+secondsToTime(eng.totalDuration-Math.floor(inputPercent*eng.totalDuration))+"</p>";
+		overlayText.innerHTML="<p>"
+			+eng.timeDisplay.replace(/\[[^\]]*\]/g,adjustReplace)
+		+"</p>";
 	}
 	
 	//Close ShowPony
@@ -502,24 +559,6 @@ function Showpony(input){
 	}else{
 		//Start
 		eng.time();
-	}
-	
-	//LOCAL FUNCTIONS
-
-	//Format is hh:mm:ss
-	function secondsToTime(inputSeconds){
-		return String(
-				Math.floor(inputSeconds / 3600) //Hours
-			).padStart(2,'0')
-			+':'
-			+String(
-				Math.floor((inputSeconds % 3600) / 60) //Minutes
-			).padStart(2,'0')
-			+':'
-			+String(
-				Math.floor(inputSeconds % 60) //Seconds
-			).padStart(2,'0')
-		;
 	}
 	
 	//Toggle fullscreen
@@ -972,23 +1011,6 @@ function Showpony(input){
 			//Input Button (players choose between several button options)
 			case "@IN":
 				
-				//Make a container for the choices
-				var container=document.createElement("div");
-				/*
-				container.style.cssText=`
-					position:absolute;
-					left:0;
-					right:0;
-					top:0;
-					bottom:2em;
-					display:flex;
-					flex-direction:column;
-					align-items:center;
-					align-content:center;
-					justify-content:center;
-					z-index:1000;
-				`;*/
-				
 				var readLine=eng.currentLine+1;
 				
 				//While the line has a dash before it
@@ -1006,6 +1028,10 @@ function Showpony(input){
 					var values=eng.lines[readLine].substr(1).split(/\s+(.+)/);
 					
 					let cur=values[0];
+					thisButton.innerHTML=values[1];
+					eng.textboxes["main"].el.appendChild(thisButton);
+					
+					readLine++;
 					
 					//On clicking a button, go to the right place
 					thisButton.addEventListener("click",function(event){
@@ -1015,16 +1041,7 @@ function Showpony(input){
 						eng.run(eng.lines.indexOf(cur)+1);
 						
 						choices=null;
-						
-						//Get rid of the buttons
-						//content.removeChild(container);
 					});
-					
-					thisButton.innerHTML=values[1];
-					
-					eng.textboxes["main"].el.appendChild(thisButton);
-					
-					readLine++;
 				}
 				
 				choices=true;
@@ -1300,7 +1317,7 @@ function Showpony(input){
 	//When the viewer inputs to Showpony (click, space, general action)
 	eng.input=function(){
 		//Function differently depending on medium
-		switch(prevType){
+		switch(currentType){
 			case "image":
 				eng.time({"part":"next"});
 				break;

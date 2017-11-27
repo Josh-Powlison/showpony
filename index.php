@@ -8,31 +8,28 @@
 	<link rel="stylesheet" href="showpony/showpony.css">
 </head>
 <body>
-	<p>Sorry this page is ugly, Showpony's under crazy construction!</p>
-	<h1>Showpony (Demo)</h1>
+	<h1>Showpony</h1>
 	<p>Showpony is a lightweight multimedia engine that will allow you to work in all popular (and mnay niche), media and upload them to your website quickly and easily.</p>
 	<p>You will likely run into bugs and some very unpretty things since this is still in development. Sorry, and please report bugs on the <a href="https://github.com/Josh-Powlison/showpony" target="_blank">GitHub</a> page, where you can also download Showpony!</p>
-	<p>Go to the top-left corner of the engine to access the menu. For now, the first 4 parts should work (comics); the rest is iffy, 'specially cross-browser, and under construction.</p>
+	<p>Go to the top-left corner of the engine to access the menu.</p>
 	
 	<?php # include ('showpony/showpony-classes.php'); easyShowpony("parts"); ?>
-	
 	
 	<div class="story-container" id="showpony"></div>
 	<script src="showpony/showpony.js"></script>
 	<script>
-		var comic,engine;
-	
+		var showpony;
+
 		window.addEventListener(
 			"load"
 			,function(){
-				comic=document.getElementById("showpony");
-				
-				engine=new Showpony({
-					"window":comic
+				showpony=new Showpony({
+					"window":document.getElementById("showpony")
 					,"parts":<?=json_encode(array_slice(scandir('parts'),2))?>
 					,"path":"parts/"
 					,"scrubLoad":false
 					,"startAt":"first"
+					,"timeDisplay":"[3hc]:[2mc]:[2sc] | [3hl]:[2ml]:[2sl]<br>[0pc]/[0pt] [3pl]<br>[0ht]:[0mt]:[0st]"
 					,"query":false
 				});
 			}
