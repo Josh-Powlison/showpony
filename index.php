@@ -31,9 +31,8 @@
 					"window":comic
 					,"parts":<?=json_encode(array_slice(scandir('parts'),2))?>
 					,"path":"parts/"
-					,"loadingClass":"loading"
 					,"scrubLoad":false
-					,"startAt":"last"
+					,"startAt":"first"
 					,"query":false
 				});
 			}
