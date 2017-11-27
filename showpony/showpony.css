@@ -5,7 +5,8 @@
 
 /*The container*/
 .showpony{
-	
+	background-color:#000;
+	overflow:hidden;
 }
 
 .showpony-overlay{
@@ -113,6 +114,17 @@
 	height:100%;
 }
 
+.showpony-content-multimedia{
+	font-size:2em;
+	overflow:hidden;
+	cursor:pointer;
+	position:absolute;
+	left:0;
+	top:0;
+	bottom:0;
+	right:0;
+}
+
 .showpony-book{
 	left:0;
 	top:0;
@@ -130,6 +142,72 @@
 	top:0;
 	width:100%;
 	height:100%;
+}
+
+.showpony-button{
+	width:10em;
+	max-width:100%;
+	display:block;
+	text-align:left;
+	margin:auto;
+}
+
+.showpony-textbox{
+	width:100%;
+	background-color:rgba(0,0,0,.8);
+	box-sizing:border-box;
+	color:#fff;
+	font-family:Arial;
+	z-index:100;
+	position:absolute;
+	bottom:0;
+	padding:1em;
+	height:5em;
+	max-height:100%;
+	overflow:auto;
+	opacity:1;
+	transition:all 1s;
+	
+	user-select:none;
+	-webkit-user-select:none;
+	-ms-user-select:none;
+	-moz-user-select:none;
+}
+
+.showpony-background{
+	width:100%;
+	height:100%;
+	z-index:-100;
+	position:absolute;
+	background-position:50% 50%;
+	background-repeat:no-repeat;
+	background-size:cover;
+	transition:all 1s;
+}
+
+.showpony-character{
+	width:100%;
+	height:90%;
+	bottom:0%;
+	left:0%;
+	position:absolute;
+	transition:1s left;
+	z-index:0;
+}
+
+.showpony-character div{
+	width:100%;
+	height:100%;
+	position:absolute;
+}
+
+.showpony-continue{
+	color:white;
+	background-color:red;
+	position:fixed;
+	right:0;
+	bottom:0;
+	z-index:1000;
 }
 
 /*Fullscreen display*/

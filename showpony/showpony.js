@@ -2,68 +2,154 @@ function Showpony(input){
 	"use strict";
 
 	var eng=this;
+
+	//Events
+	var eventTime=new Event("time");
 	
-	//Import settings (or use defaults)
-	eng.settings={
-		"window":input.window || null
-		,"parts":input.parts || null
-		,"path":input.path || ""
-		,"loadingClass":input.loadingClass || null
-		,"scrubLoad":input.scrubLoad || false
-		,"startAt":
+	//Set settings for the engine
+	Object.assign(eng,{
+		window:input.window
+		,parts:input.parts || null
+		,path:input.path || ""
+		,loadingClass:input.loadingClass || null
+		,scrubLoad:input.scrubLoad || false
+		,currentFile:
 			input.startAt=="first" ? 0
 			: input.startAt=="last" ? input.parts.length-1
 			: input.startAt!==undefined ? input.startAt
 			: input.parts.length-1
-		,"query": input.query!==undefined ? input.query 	: "part"
-	};
+		,query: input.query!==undefined ? input.query
+			: "part"
+		,data: input.data || {}
+		,durations:[]
+		,totalDuration:0
+		,originalWindow:input.window.cloneNode(true)
+	});
 	
-	//Events
-	var eventTime=new Event("time");
-	
-	//Need to set a variable to keep "this" separate from children's "this"
-	eng.data={};
-	eng.durations=[];
-	eng.totalDuration=0;
-	
-	//If the window is statically positiond, set it to relative! (so positions of children work)
-	if(window.getComputedStyle(eng.settings.window).getPropertyValue('position')=="static"){
-		eng.settings.window.style.position="relative";
+	//Get lengths of all of the files
+	for(let i=0;i<eng.parts.length;i++){		
+		
+		switch(getMedium(eng.parts[i])){
+			case "video":
+			case "audio":
+				let thisMedia=document.createElement(getMedium(eng.parts[i]));
+			
+				thisMedia.src=eng.path+eng.parts[i];
+				thisMedia.preload="metadata";
+				
+				//Listen for media loading
+				thisMedia.addEventListener(
+					"loadedmetadata"
+					,function(){
+						//Want to round up for later calculations
+						eng.durations[i]=thisMedia.duration;
+						eng.totalDuration+=thisMedia.duration;
+					}
+				);
+				
+				break;
+			default:
+				eng.durations[i]=10;
+				eng.totalDuration+=10;
+		}
 	}
 	
-	eng.settings.window.classList.add("showpony");
+	//If the window is statically positiond, set it to relative! (so positions of children work)
+	if(window.getComputedStyle(eng.window).getPropertyValue('position')=="static"){
+		eng.window.style.position="relative";
+	}
+	
+	eng.window.classList.add("showpony");
 	
 	//Elements
 	var overlay=document.createElement("div"); overlay.className="showpony-overlay";
 	var overlayText=document.createElement("div"); overlayText.className="showpony-overlaytext";
 	var progress=document.createElement("div"); progress.className="showpony-progress";
 	var menuButton=document.createElement("button"); menuButton.alt="Menu"; menuButton.className="showpony-menu-button showpony-button-preview";
-	var fullscreenButton=document.createElement("button"); fullscreenButton.alt="Fullscreen"; fullscreenButton.className="showpony-fullscreen-button";
+	var fullscreenButton=document.createElement("button"); fullscreenButton.alt="Fullscreen"; fullscreenButton.className="showpony-fullscreen-button showpony-button-preview";
 	var captionsButton=document.createElement("button"); captionsButton.alt="Closed Captions/Subtitles"; captionsButton.className="showpony-captions-button";
+	//Whether the player is choosing between choices or not.
+	var choices=false;
+	
+	//Objects
+	//Continue Notification
+	eng.continue=document.createElement("div");
+	eng.continue.style.innerHTML="...";
+	eng.continue.className="showpony-continue";
+	
+	function Textbox(){
+		this.el=document.createElement("div");
+		this.el.className="showpony-textbox";
+	}
+	
+	function Character(){
+		var cha=this;
+		cha.el=document.createElement("div");
+
+		//DEFAULT STYLES//
+		cha.el.className="showpony-character";
+		
+		//Add a backgroundImage
+		cha.imgDiv=function(inputLayer,inputBackground){
+			var thisImg=document.createElement("div");
+			
+			thisImg.style.cssText=`
+				background-image:`+inputBackground+`;
+				background-position:50% -20%;
+				background-repeat:no-repeat;
+				background-size:contain;
+				opacity:1;
+			`;
+			
+			//If the layer doesn't exist, add it in
+			if(!cha.el.children[inputLayer]){
+				var newLayer=document.createElement("div");				
+				cha.el.appendChild(newLayer);
+			}
+			
+			cha.el.children[inputLayer].appendChild(thisImg);
+		}
+		
+		/*
+		//Go through the file and add in all of the images
+		for(let i=0;i<eng.lines.length;i++){
+			if(eng.lines[i].match(/@CH ben/)){
+				console.log(eng.lines[i]);
+				//cha.imgDiv(i,images[i]);
+			}
+		}*/
+		
+		content.appendChild(cha.el);
+	};
+	
+	function Background(){
+		this.el=document.createElement("div");
+		this.el.className="showpony-background";
+		content.appendChild(this.el);
+	};
+	
+	//A general-use object that doesn't fit anywhere else. Created if you call @ST on an uncreated element.
+	function General(){
+		this.el=document.createElement("div");
+		content.appendChild(this.el);
+	};
+	
+	function Audio(inputString){
+		this.el=document.createElement("audio");
+		
+		//If an extension isn't specified, assume .mp3
+		if(!inputString.match(/\.[^.]+$/)){
+			inputString+=".mp3";
+		}
+		
+		//DEFAULT eng.settings//
+		this.el.src="resources/audio/"+inputString;
+		this.el.preload=true;
+		content.appendChild(this.el);
+	};
 	
 	overlay.appendChild(progress);
 	overlay.appendChild(overlayText);
-	overlay.appendChild(fullscreenButton);
-	
-	fullscreenButton.addEventListener(
-		"click"
-		,function(event){
-			event.stopPropagation();
-			eng.fullscreen();
-		}
-	);
-
-	captionsButton.addEventListener(
-		"click"
-		,function(){
-			
-		}
-	);
-	
-	//Variables//
-	eng.currentFile=eng.settings.startAt;
-	//Save the original parent
-	eng.originalWindow=eng.settings.window.cloneNode(true);
 	
 	var content=document.createElement("div"); content.className="showpony-content";
 	var book=document.createElement("img"); book.className="showpony-book";
@@ -71,17 +157,11 @@ function Showpony(input){
 	var video=document.createElement("video"); video.className="showpony-player";
 
 	//Empty the current window
-	eng.settings.window.innerHTML="";
-	eng.settings.window.appendChild(content);
-	eng.settings.window.appendChild(overlay);
-	eng.settings.window.appendChild(menuButton);
-	
-	menuButton.addEventListener(
-		"click"
-		,function(){
-			eng.menu();
-		}
-	);
+	eng.window.innerHTML="";
+	eng.window.appendChild(content);
+	eng.window.appendChild(overlay);
+	eng.window.appendChild(menuButton);
+	eng.window.appendChild(fullscreenButton);
 	
 	var prevType=null;
 	
@@ -98,7 +178,7 @@ function Showpony(input){
 				case "first": eng.currentFile=0; break;
 				case "prev": eng.currentFile--; break;
 				case "next": eng.currentFile++; break;
-				case "last": eng.currentFile=eng.settings.parts.length-1; break;
+				case "last": eng.currentFile=eng.parts.length-1; break;
 				default:
 					//Get the part, or 0 if it's undefined
 					eng.currentFile=parseInt(obj.part ? obj.part : 0);
@@ -107,8 +187,8 @@ function Showpony(input){
 		}
 		
 		//If we're at the end, return
-		if(eng.currentFile>=eng.settings.parts.length){
-			eng.currentFile=eng.settings.parts.length-1;
+		if(eng.currentFile>=eng.parts.length){
+			eng.currentFile=eng.parts.length-1;
 			return;
 		}
 		
@@ -118,172 +198,129 @@ function Showpony(input){
 		}
 		
 		//If we're using queries
-		if(eng.settings.query && (!obj || !obj.popstate)){
+		if(eng.query && (!obj || !obj.popstate)){
 			history.pushState(
 				{}
 				,""
 				,(document.location.href)
 					.split(/\#|\?/)[0] //Get text before any existing hashes or querystrings
-					+'?'+eng.settings.query+'='+(eng.currentFile+1) //Append the search query in the header (adding 1 so it looks more normal to users)
+					+'?'+eng.query+'='+(eng.currentFile+1) //Append the search query in the header (adding 1 so it looks more normal to users)
 			);
 		}
 		
-		eng.settings.window.dispatchEvent(eventTime);
+		eng.window.dispatchEvent(eventTime);
 		
 		//If we aren't moving the bar, update the overlay
 		if(eng.moveBar===false){
-			eng.updateOverlay();
+			eng.scrub();
 		}
 		
 		//Go to the top of the page
-		eng.settings.window.scrollIntoView();
+		eng.window.scrollIntoView();
 		
-		var newType=eng.settings.parts[eng.currentFile].match(/\.[^.]+$/)[0];
+		var newType=getMedium(eng.parts[eng.currentFile]);
+		
+		eng.lines=null;
+		eng.charsHidden=0;
+		eng.currentLine=0;
+		eng.waitTimer=null;
 		
 		//Display the medium based on the file extension
 		switch(newType){
-			//Image
-			case ".jpg":
-			case ".jpeg":
-			case ".png":
-			case ".gif":
-			case ".svg":
-			case ".tiff":
+			case "image":
 				//If the previous type was different, empty the div and use this one
 				if(prevType!=newType){
 					content.innerHTML="";
 					content.appendChild(book);
-					book.addEventListener(
-						"click"
-						,function(){
-							eng.time({"part":"next"});
-						}
-					);
 					
 					//Use the content class for books
 					content.className="showpony-content-book";
 				}
 				
 				//Adjust the source
-				book.src=eng.settings.path+eng.settings.parts[eng.currentFile];
+				book.src=eng.path+eng.parts[eng.currentFile];
 				break;
-			//Video
-			case ".mp4":
-			case ".webm":
+			case "video":
 				if(prevType!=newType){
 					content.innerHTML="";
 					content.appendChild(video);
-					video.addEventListener(
-						"click"
-						,function(){
-							eng.menu();
-						}
-					);
 					
 					//Use the general content class
 					content.className="showpony-content";
 				}
 				
 				//Adjust the source
-				video.src=eng.settings.path+eng.settings.parts[eng.currentFile];
-				break;
-			//Audio
-			case ".mp3":
-			case ".wav":
-				if(prevType!=newType){
-					content.innerHTML="";
-					content.appendChild(audio);
-					audio.addEventListener(
-						"click"
-						,function(){
-							eng.menu();
-						}
-					);
-					
-					//Use the general content class
-					content.className="showpony-content";
-				}
+				video.src=eng.path+eng.parts[eng.currentFile];
 				
-				//Adjust the source
-				audio.src=eng.settings.path+eng.settings.parts[eng.currentFile];
-				audio.play();
-				break;
-			//Interactive Fiction
-			case ".txt":
-				//If the previous type was different, use the new type
-				if(prevType!=newType){
-					content.innerHTML="";
-				}
+				if(overlay.style.visibility=="hidden") video.play();
 				
-				//Use the general content class
-				content.className="showpony-content";
-			
-				//Load the file; on load, run the engine
-				var ajax=new XMLHttpRequest();
-				ajax.open("GET",eng.settings.path+eng.settings.parts[eng.currentFile]);
-				ajax.send();
-				
-				//Add the loading class, if one was passed.
-				//if(inputObject.loadingClass) eng.settings.window.classList.add(inputObject.loadingClass);
-				
-				eng.currentLine=0;
-				eng.objects={};
-				eng.textboxes={};
-				eng.waitTimer=null;
-
-				ajax.addEventListener(
-					"readystatechange"
-					,function(event){
-						if(ajax.readyState==4){
-							if(ajax.status==200){
-								//Get each line (taking into account and ignoring extra lines)
-								eng.lines=ajax.responseText.match(/[^\r\n]+/g);
-								
-								//Remove the loading class
-								//if(inputObject.loadingClass) eng.settings.window.classList.remove(inputObject.loadingClass);
-								
-								//Start it up!
-								eng.run();
-							}else{
-								alert("Failed to load file called: "+eng.settings.path+eng.settings.parts[eng.currentFile]);
-							}
-						}
+				//When the player's finished with a file
+				video.addEventListener(
+					"ended"
+					,function(){
+						//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
+						if(overlay.style.visibility=="visible") return;
+						
+						eng.time({"part":"next"});
 					}
 				);
 				break;
-			//General file
-			case ".html":
+			case "audio":
+				if(prevType!=newType){
+					content.innerHTML="";
+					content.appendChild(audio);
+					
+					//Use the general content class
+					content.className="showpony-content";
+				}
+				
+				//Adjust the source
+				audio.src=eng.path+eng.parts[eng.currentFile];
+				
+				if(overlay.style.visibility=="hidden") audio.play();
+				
+				//When the player's finished with a file
+				audio.addEventListener(
+					"ended"
+					,function(){
+						//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
+						if(overlay.style.visibility=="visible") return;
+						
+						eng.time({"part":"next"});
+					}
+				);
+				break;
+			//Visual Novels/Kinetic Novels/Interactive Fiction
+			case "multimedia":
+				console.log(prevType);
+			
 				//If the previous type was different, use the new type
 				if(prevType!=newType){
 					content.innerHTML="";
+					eng.objects={};
+					eng.textboxes={};
 				}
+				
+				AJAX(
+					function(ajax){
+						//Get each line (taking into account and ignoring extra lines)
+						eng.lines=ajax.responseText.match(/[^\r\n]+/g);
+						
+						content.className="showpony-content-multimedia";
+						
+						eng.run(0);
+					}
+				);
+				break;
+			case "text":
+				content.innerHTML="";
 				
 				//Use the general content class
 				content.className="showpony-content";
-			
-				//Load the file; on load, run the engine
-				var ajax=new XMLHttpRequest();
-				ajax.open("GET",eng.settings.path+eng.settings.parts[eng.currentFile]);
-				ajax.send();
 				
-				//Add the loading class, if one was passed.
-				//if(inputObject.loadingClass) eng.settings.window.classList.add(inputObject.loadingClass);
-
-				ajax.addEventListener(
-					"readystatechange"
-					,function(event){
-						if(ajax.readyState==4){
-							if(ajax.status==200){
-								//Get each line (taking into account and ignoring extra lines)
-								content.innerHTML=ajax.responseText;
-								
-								//Remove the loading class
-								//if(inputObject.loadingClass) eng.settings.window.classList.remove(inputObject.loadingClass);
-								
-							}else{
-								alert("Failed to load file called: "+eng.settings.path+eng.settings.parts[eng.currentFile]);
-							}
-						}
+				AJAX(
+					function(){
+						content.innerHTML=ajax.responseText;
 					}
 				);
 				break;
@@ -293,18 +330,8 @@ function Showpony(input){
 		}
 		
 		//Track the file type used here for when we next switch
-		prevType=eng.settings.parts[eng.currentFile].match(/\.[^.]+$/)[0];
+		prevType=getMedium(eng.parts[eng.currentFile]);
 	}
-	
-	/*
-	eng.settings.window.addEventListener(
-		"click"
-		,function(){
-		//console.log("Click!");
-		
-		eng.currentFile++;
-		eng.time();
-	});*/
 	
 	var moveBar=false;
 	
@@ -316,12 +343,12 @@ function Showpony(input){
 			moveBar=false;
 		
 			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
-			if(eng.settings.scrubLoad==false){
+			if(eng.scrubLoad==false){
 				//Load the part our cursor's on
-				eng.updateOverlay(
-					(event.clientX-eng.settings.window.getBoundingClientRect().left)
+				eng.scrub(
+					(event.clientX-eng.window.getBoundingClientRect().left)
 					/
-					(eng.settings.window.getBoundingClientRect().width)
+					(eng.window.getBoundingClientRect().width)
 				);
 			}
 			
@@ -337,17 +364,23 @@ function Showpony(input){
 			if(overlay.style.visibility=="visible"){
 				overlay.style.visibility="hidden";
 				menuButton.classList.add("showpony-button-preview");
+				fullscreenButton.classList.add("showpony-button-preview");
 				
-				if(prevType==".mp3"){
+				if(prevType=="audio"){
 					audio.play();
+				}else if(prevType=="video"){
+					video.play();
 				}
 			}else{
-				eng.updateOverlay();
+				eng.scrub();
 				overlay.style.visibility="visible";
 				menuButton.classList.remove("showpony-button-preview");
+				fullscreenButton.classList.remove("showpony-button-preview");
 				
-				if(prevType==".mp3"){
+				if(prevType=="audio"){
 					audio.pause();
+				}else if(prevType=="video"){
+					video.pause();
 				}
 			}
 			
@@ -363,116 +396,17 @@ function Showpony(input){
 		moveBar=false;
 	};
 	
-	//On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
-	window.addEventListener(
-		"click"
-		,function(event){
-			event.stopPropagation();
-			eng.menu(event);
-		}
-	);
-	
-	//On mousedown, we prepare to move the cursor
-	overlay.addEventListener(
-		"mousedown"
-		,function(event){
-			//Only read mousemove over the overlay
-			if(event.target!==this) return;
-			
-			moveBar=event.clientX;
-		}
-	);
-	
-	//On dragging
-	window.addEventListener(
-		"mousemove"
-		,function(event){
-			
-			//Only read mousemove over the overlay
-			//if(event.target!==this) return;
-			
-			if(moveBar===false){
-				return;
-			}
-			
-			if(moveBar!==true){
-				if(Math.abs(moveBar-event.clientX)>screen.width/100){
-					moveBar=true;
-				}else{
-					return;
-				}
-			}
-			
-			eng.updateOverlay(
-				(event.clientX-eng.settings.window.getBoundingClientRect().left)
-				/
-				(eng.settings.window.getBoundingClientRect().width)
-			);
-		}
-	);
-	
-	//On dragging
-	overlay.addEventListener(
-		"touchmove"
-		,function(event){
-			
-			if(moveBar===false){
-				moveBar=event.changedTouches[0].clientX;
-			}
-			
-			//You have to swipe farther than you move the cursor to adjust the position
-			if(moveBar!==true){
-				if(Math.abs(moveBar-event.changedTouches[0].clientX)>screen.width/20){
-					moveBar=true;
-				}else{
-					return;
-				}
-			}
-			
-			//Don't want the users to accidentally swipe to another page!
-			event.preventDefault();
-			
-			eng.updateOverlay(
-				(event.changedTouches[0].clientX-eng.settings.window.getBoundingClientRect().left)
-				/
-				(eng.settings.window.getBoundingClientRect().width)
-			);
-		}
-	);
-	
-	//On touch end, don't keep moving the bar to the user's touch
-	overlay.addEventListener(
-		"touchend"
-		,function(event){
-			
-			//If we were scrubbing
-			if(moveBar===true){
-				moveBar=false;
-				console.log("We were scrubbing!");
-				//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
-				if(eng.settings.scrubLoad==false){
-					//Load the part our pointer's on
-					eng.updateOverlay(
-						(event.changedTouches[0].clientX-eng.settings.window.getBoundingClientRect().left)
-						/
-						(eng.settings.window.getBoundingClientRect().width)
-					);
-				}
-			}
-			
-			//moveBar needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
-			moveBar=false;
-		}
-	);
-	
 	//Update the time by a percentage
-	eng.updateOverlay=function(inputPercent){
+	eng.scrub=function(inputPercent){
 		//If no inputPercent was passed
 		if(typeof(inputPercent)==='undefined'){
-			var inputPercent=eng.currentFile / eng.settings.parts.length;
+			//var inputPercent=eng.currentFile / eng.parts.length;
 			
-			/*MEDIA PLAYER
-			var currentTime=eng.player.currentTime;
+			if(prevType=="video"){
+				var currentTime=video.currentTime;
+			}else if(prevType=="audio"){
+				var currentTime=audio.currentTime;
+			}else currentTime=0;
 		
 			//Look through the videos for the right one
 			for(var i=0;i<eng.currentFile;i++){
@@ -481,34 +415,14 @@ function Showpony(input){
 			}
 			
 			var inputPercent=currentTime / eng.totalDuration;
-			*/
+			
+			console.log(inputPercent);
 		}
 		
 		//Clamp inputPercent between 0 and 1
 		inputPercent= inputPercent <= 0 ? 0 : inputPercent >= 1 ? 1 : inputPercent;
 		
-		//Go to the time
-		var newFile=Math.floor(eng.settings.parts.length*inputPercent);
-		
-		progress.style.left=(inputPercent*100)+"%";
-		
-		//Keep within the range of files we've got
-		newFile= newFile>=eng.settings.parts.length ? eng.settings.parts.length-1 : newFile;
-		
-		//Get the part name, if one is set
-		var partName=eng.settings.parts[newFile].match(/\([^)]+/);
-		
-		//Set the overlay text (the current time)
-		overlayText.innerHTML="<p>"+(newFile+1)+" | "+(eng.settings.parts.length-(newFile+1))+"</p>";
-		
-		//If we allow scrubbing or we're not moving the bar, we can load the file
-		if(eng.settings.scrubLoad!==false || moveBar===false){
-			if(newFile!=eng.currentFile){
-				eng.time({"part":newFile});
-			}
-		}
-		
-		/*MEDIA PLAYER
+		//MEDIA PLAYER
 		//Go to the time
 		var newTime=eng.totalDuration*inputPercent;
 		progress.style.left=(inputPercent*100)+"%";
@@ -521,31 +435,30 @@ function Showpony(input){
 			}
 			else
 			{ //If this is the media!
-				//Set it up to play
+				//If we allow scrubbing or we're not moving the bar, we can load the file
+				if(eng.scrubLoad!==false || moveBar===false){
+					if(i!==eng.currentFile){
+						eng.time({"part":i});
+					}else{
+						
+					}
+				}
 				
-				//If we have to change the source
-				if(i!==eng.currentFile){
-					eng.currentFile=i;
-					eng.player.src="stories/"+settings.parts[eng.currentFile];
+				if(i==eng.currentFile){
+					//Set the time properly
+					if(prevType=="video"){
+						video.currentTime=newTime;
+					}else if(prevType=="audio"){
+						audio.currentTime=newTime;
+					}
 				}
 			
 				break;
 			}
 		}
 		
-		//Set the time properly
-		eng.player.currentTime=newTime;
-		
-		var currentTime=eng.player.currentTime;
-		
-		//Look through the videos for the right one
-		for(var i=0;i<eng.currentFile;i++){
-			currentTime+=eng.durations[i];
-		}
-		
 		//Set the overlay text (the current time)
-		overlayText.innerHTML="<p>"+eng.secondsToTime(currentTime)+" | "+eng.secondsToTime(eng.totalDuration-currentTime)+"</p>";
-		*/
+		overlayText.innerHTML="<p>"+secondsToTime(Math.floor(inputPercent*eng.totalDuration))+" | "+secondsToTime(eng.totalDuration-Math.floor(inputPercent*eng.totalDuration))+"</p>";
 	}
 	
 	//Close ShowPony
@@ -553,18 +466,18 @@ function Showpony(input){
 		//Replace the container with the original element
 		
 		//Reset the window to what it was before
-		eng.settings.window.parentNode.replaceChild(eng.originalWindow,eng.settings.window);
+		eng.window.parentNode.replaceChild(eng.originalWindow,eng.window);
 		//Remove this object
 		eng=null;
 	}
 	
 	//If querystrings are in use, consider the querystring in the URL
-	if(eng.settings.query){
+	if(eng.query){
 		
 		window.addEventListener(
 			"popstate"
 			,function(){
-				var regex=new RegExp(eng.settings.query+'[^&]+','i');
+				var regex=new RegExp(eng.query+'[^&]+','i');
 				
 				var page=window.location.href.match(regex);
 				
@@ -575,7 +488,7 @@ function Showpony(input){
 			}
 		);
 		
-		var regex=new RegExp(eng.settings.query+'[^&]+','i');
+		var regex=new RegExp(eng.query+'[^&]+','i');
 		
 		var page=window.location.href.match(regex);
 		
@@ -591,130 +504,10 @@ function Showpony(input){
 		eng.time();
 	}
 	
-	eng.run=function(){
-		//If we've ended manually or reached the end, stop running immediately
-		if(!eng || !eng.lines || eng.currentLine==eng.lines.length){
-			//If there's another file to play, play it!
-			if(eng.currentFile+1<eng.settings.parts.length){
-				console.log("Ending!");
-				eng.time({"part":"next"});
-			}else{ //If we don't have more files, end	
-				eng.end();
-			}
-			return;
-		}
-
-		var text=eng.lines[eng.currentLine];
-		
-		//Skip comment lines
-		if(text[0]=='#'){
-			//Go to the next line
-			eng.currentLine++;
-			eng.run();
-			return;
-		}
-		
-		//Replace any variable placeholders with their values
-		var phMatch=text.match(/\[[^\]]+\]/g);
-		
-		if(phMatch){
-			console.log(phMatch);
-			for(var i=0;i<phMatch.length;i++){
-				//Get the var name
-				var varName=phMatch[i].match(/[^\[\]]+/);
-				
-				//Replace the match with the data value
-				text=text.replace(
-					phMatch[i]
-					,eng.data[varName[0]]
-				);
-				
-				//console.log(text);
-			}
-		}
-		
-		//Consider special text calls
-		switch(text.substring(0,3)){
-			//Go to a place
-			case "@GO":
-				var goToLine=eng.lines.indexOf(text.substring(4));
-				
-				//If the line exists, go to it!
-				if(goToLine>-1){
-					eng.currentLine=goToLine+1;
-					eng.run();
-					return;
-				}
-				
-				break;
-			//End the novel
-			case "@EN":
-				eng.end();
-				return;
-				break;
-			//Input Button (players choose between several button options)
-			case "@IN":
-				
-				//Make a container for the choices
-				var container=document.createElement("div");
-				
-				var readLine=eng.currentLine+1;
-				
-				//While the line has a dash before it
-				while(eng.lines[readLine] && eng.lines[readLine][0]=='-'){
-					var thisButton=document.createElement("button");
-					thisButton.style.cssText=`
-						width:10em;
-						max-width:100%;
-						display:block;
-						text-align:left;
-						margin:auto;
-					`;
-					
-					console.log(readLine);
-					
-					var values=eng.lines[readLine].substr(1).split(/\s+(.+)/);
-					
-					let cur=values[0];
-					
-					//On clicking a button, go to the right place
-					thisButton.addEventListener("click",function(){
-						//Get rid of the buttons
-						container.innerHTML=this.innerHTML;
-						
-						//Styles for player choices
-						container.style.cssText=`
-							font-weight:bold;
-						`;
-
-						//Progress
-						eng.currentLine=eng.lines.indexOf(cur)+1;
-						eng.run();
-					});
-					
-					thisButton.innerHTML=values[1];
-					
-					container.appendChild(thisButton);
-					
-					readLine++;
-				}
-				
-				content.appendChild(container);
-				
-				return;
-				break;
-			default:
-				content.insertAdjacentHTML('beforeend','<p>'+text+'</p>');
-				eng.currentLine++;
-				eng.run();
-			break;
-		}
-	}
-	
 	//LOCAL FUNCTIONS
 
 	//Format is hh:mm:ss
-	var secondsToTime=function(inputSeconds){
+	function secondsToTime(inputSeconds){
 		return String(
 				Math.floor(inputSeconds / 3600) //Hours
 			).padStart(2,'0')
@@ -729,67 +522,49 @@ function Showpony(input){
 		;
 	}
 	
-	//Get the media type of a file
-	var getMediaType=function(inputFile){
-		//NOTE: we gotta find a way to differentiate between video and audio oggs and mp4s
-		
-		//Check for video format; if it's not a video format, assume it's audio
-		switch(inputFile.match(/\.[^.]+$/)[0]){
-			case ".webm":
-			case ".mp4":
-				return "video";
-				break;
-			default:
-				break;
-		}
-		
-		//If we don't find a video format, assume it's audio.
-		return "audio";
-	}
-	
 	//Toggle fullscreen
 	eng.fullscreen=function(type){
 		
 		//Normal
-		if(eng.settings.window.requestFullscreen){
+		if(eng.window.requestFullscreen){
 			if(document.fullscreenElement){
 				document.exitFullscreen();
 			}else{
-				eng.settings.window.requestFullscreen();
+				eng.window.requestFullscreen();
 			}
 			
 			return;
 		}
 		
 		//Webkit
-		if(eng.settings.window.webkitRequestFullscreen){
+		if(eng.window.webkitRequestFullscreen){
 			console.log("First check...");
 			if(document.webkitFullscreenElement){
 				document.webkitExitFullscreen();
 			}else{
-				eng.settings.window.webkitRequestFullscreen();
+				eng.window.webkitRequestFullscreen();
 			}
 			
 			return;
 		}
 		
 		//Mozilla
-		if(eng.settings.window.mozRequestFullScreen){
+		if(eng.window.mozRequestFullScreen){
 			if(document.mozFullScreenElement){
 				document.mozCancelFullScreen();
 			}else{
-				eng.settings.window.mozRequestFullScreen();
+				eng.window.mozRequestFullScreen();
 			}
 			
 			return;
 		}
 		
 		//IE
-		if(eng.settings.window.msRequestFullscreen){
+		if(eng.window.msRequestFullscreen){
 			if(document.msFullscreenElement){
 				document.mozCancelFullScreen();
 			}else{
-				eng.settings.window.msRequestFullscreen();
+				eng.window.msRequestFullscreen();
 			}
 			
 			return;
@@ -797,200 +572,34 @@ function Showpony(input){
 		
 	}
 	
-	/////MEDIA PLAYER/////
-	/*
-	
-	//Get lengths of all of the videos
-	for(let i=0;i<settings.parts.length;i++){		
-		//Keep thisMedia local to this for loop
-		let thisMedia=document.createElement(getMediaType(settings.parts[i]));
+	//Make an AJAX call
+	function AJAX(onSuccess,onFail){
+		//Add loadingClass
+		if(eng.loadingClass){
+			eng.window.classList.add(eng.loadingClass);
+		}
 		
-		thisMedia.src="stories/"+settings.parts[i];
-		thisMedia.preload="metadata";
+		var ajax=new XMLHttpRequest();
+		ajax.open("GET",eng.path+eng.parts[eng.currentFile]);
+		ajax.send();
 		
-		//Listen for media loading
-		thisMedia.addEventListener(
-			"loadedmetadata"
-			,function(){
-				//Want to round up for later calculations
-				eng.durations[i]=thisMedia.duration;
-				eng.totalDuration+=thisMedia.duration;
+		ajax.addEventListener(
+			"readystatechange"
+			,function(event){
+				if(ajax.readyState==4){
+					if(ajax.status==200){
+						onSuccess(ajax);
+						//Remove loadingClass
+						if(eng.loadingClass){
+							content.classList.remove(eng.loadingClass);
+						}
+					}else{
+						alert("Failed to load file called: "+eng.path+eng.parts[eng.currentFile]);
+					}
+				}
 			}
 		);
-		
 	}
-	
-	//Player Functions
-	eng.play=function(){
-		overlay.style.visibility="hidden";
-		eng.player.play();
-	}
-	
-	eng.pause=function(){
-		eng.player.pause();
-		overlay.style.visibility="visible";
-		eng.time();
-	}
-	
-	//When the player's finished with a file
-	eng.player.addEventListener(
-		"ended"
-		,function(){
-			//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
-			if(overlay.style.visibility=="visible") return;
-			
-			if(eng.currentFile<settings.parts.length-1){
-				eng.currentFile++;
-				eng.player.src="stories/"+settings.parts[eng.currentFile];
-				eng.play();
-			}else{
-				eng.stop();
-			}
-		}
-	);
-	*/
-	
-	/////VISUAL NOVEL/////
-	/*
-	
-	//Whether the player is choosing between choices or not.
-	eng.choices=false;
-	
-	//Continue Notification
-	eng.continue=document.createElement("div");
-	eng.continue.style.innerHTML="...";
-	eng.continue.style.cssText=`
-		color:white;
-		background-color:red;
-		position:fixed;
-		right:0;
-		bottom:0;
-		z-index:1000;
-	`;
-	
-	//eng.objects//
-	function Textbox(){
-		var tb=this;
-		
-		tb.el=document.createElement("div");
-		
-		tb.el.style.cssText=`
-			width:100%;
-			background-color:rgba(0,0,0,.8);
-			box-sizing:border-box;
-			color:#fff;
-			font-family:Arial;
-			z-index:100;
-			position:absolute;
-			bottom:0;
-			padding:1em;
-			height:5em;
-			max-height:100%;
-			overflow:auto;
-			opacity:1;
-			transition:all 1s;
-			
-			user-select:none;
-			-webkit-user-select:none;
-			-ms-user-select:none;
-			-moz-user-select:none;
-		`;
-	}
-	
-	function Character(){
-		var cha=this;
-		
-		//On initial creation, set up eng.settings and put into doc
-		
-		cha.el=document.createElement("div");
-
-		//DEFAULT STYLES//
-		cha.el.style.cssText=`
-			width:100%;
-			height:90%;
-			bottom:0%;
-			left:0%;
-			position:absolute;
-			transition:1s left;
-			z-index:0;
-		`;
-		
-		//Add a backgroundImage
-		cha.imgDiv=function(inputLayer,inputBackground){
-			var thisImg=document.createElement("div");
-			
-			thisImg.style.cssText=`
-				width:100%;
-				height:100%;
-				position:absolute;
-				background-image:`+inputBackground+`;
-				background-position:50% -20%;
-				background-repeat:no-repeat;
-				background-size:contain;
-				opacity:1;
-			`;
-			
-			//If the layer doesn't exist, add it in
-			if(!cha.el.children[inputLayer]){
-				var newLayer=document.createElement("div");
-				newLayer.style.cssText=`
-					width:100%;
-					height:100%;
-					position:absolute;
-				`;
-				
-				cha.el.appendChild(newLayer);
-			}
-			
-			cha.el.children[inputLayer].appendChild(thisImg);
-		}
-		
-		eng.settings.window.appendChild(cha.el);
-	};
-	
-	function Background(){
-		var bg=this;
-		bg.el=document.createElement("div");
-		
-		//DEFAULT STYLES//
-		bg.el.style.cssText=`
-			width:100%;
-			height:100%;
-			z-index:-100;
-			position:absolute;
-			background-position:50% 50%;
-			background-repeat:no-repeat;
-			background-size:cover;
-			transition:all 1s;
-		`;
-		
-		eng.settings.window.appendChild(bg.el);
-	};
-	
-	//A general-use object that doesn't fit anywhere else. Created if you call @ST on an uncreated element.
-	function General(){
-		var ge=this;
-		ge.el=document.createElement("div");
-		eng.settings.window.appendChild(ge.el);
-	};
-	
-	function Audio(inputString){
-		var au=this;
-		au.el=document.createElement("audio");
-		
-		//If an extension isn't specified, assume .mp3
-		if(!inputString.match(/\.[^.]+$/)){
-			inputString+=".mp3";
-		}
-		
-		//DEFAULT eng.settings//
-		au.el.src="resources/audio/"+inputString;
-		au.el.preload=true;
-		eng.settings.window.appendChild(au.el);
-	};
-	
-	//Event Listeners//
-	eng.settings.window.addEventListener("click",function(){eng.input(eng);});
 	
 	//Functions//
 	eng.run=function(inputNum){
@@ -1004,16 +613,9 @@ function Showpony(input){
 		}
 		
 		//If we've ended manually or reached the end, stop running immediately and end it all
-		if(!eng || !eng.lines || eng.currentLine==eng.lines.length){
-			
-			//If there's another file to play, play it!
-			if(eng.currentFile+1<inputObject.parts.length){
-				console.log("Ending!");
-				eng.currentFile++;
-				eng.loadFile(inputObject.parts[eng.currentFile]);
-			}else{ //If we have more files, end	
-				eng.end();
-			}
+		if(eng.currentLine>=eng.lines.length){
+			console.log("Ending!");
+			eng.time({"part":"next"});
 			return;
 		}
 
@@ -1187,7 +789,7 @@ function Showpony(input){
 					}
 					type[name].el.style.cssText+=values.match(/\{[^}]+/)[0].replace('{','');
 				}else{ //They're adjusting window styles
-					eng.settings.window.style.cssText+=values.match(/\{[^}]+/)[0].replace('{','');
+					content.style.cssText+=values.match(/\{[^}]+/)[0].replace('{','');
 				}
 				
 				//Go to the next line
@@ -1372,6 +974,7 @@ function Showpony(input){
 				
 				//Make a container for the choices
 				var container=document.createElement("div");
+				/*
 				container.style.cssText=`
 					position:absolute;
 					left:0;
@@ -1384,7 +987,7 @@ function Showpony(input){
 					align-content:center;
 					justify-content:center;
 					z-index:1000;
-				`;
+				`;*/
 				
 				var readLine=eng.currentLine+1;
 				
@@ -1411,22 +1014,20 @@ function Showpony(input){
 						//Progress
 						eng.run(eng.lines.indexOf(cur)+1);
 						
-						eng.choices=null;
+						choices=null;
 						
 						//Get rid of the buttons
-						eng.settings.window.removeChild(container);
+						//content.removeChild(container);
 					});
 					
 					thisButton.innerHTML=values[1];
 					
-					container.appendChild(thisButton);
+					eng.textboxes["main"].el.appendChild(thisButton);
 					
 					readLine++;
 				}
 				
-				eng.choices=container;
-				
-				eng.settings.window.appendChild(container);
+				choices=true;
 				
 				return;
 				break;
@@ -1691,92 +1292,220 @@ function Showpony(input){
 		
 		//STEP 3: Format the text//
 		//Nothing tricky here, the browser will automatically lay it out. We just have to put the textbox where it goes:
-		eng.settings.window.appendChild(eng.textboxes[currentTextbox].el);
+		content.appendChild(eng.textboxes[currentTextbox].el);
 
 		//STEP 4: Display the text//
 	}
 	
-	//When the viewer inputs for the story to progress
+	//When the viewer inputs to Showpony (click, space, general action)
 	eng.input=function(){
-		//If the player is making choices right now
-		if(eng.choices){
-			return;
-		};
-	
-		//If a wait timer was going, stop it.
-		if(eng.waitTimer!=null){
-			clearTimeout(eng.waitTimer);
-			eng.waitTimer=null;
-		}
-	
-		//If all letters are displayed
-		if(eng.charsHidden<1){ //failsafe in case this value somehow goes negative
-			eng.run();
-		}
-		else //If some eng.objects have yet to be displayed
-		{
-			console.log(eng.textboxes);
+		//Function differently depending on medium
+		switch(prevType){
+			case "image":
+				eng.time({"part":"next"});
+				break;
+			case "audio":
+			case "video":
+				eng.menu();
+				break;
+			case "multimedia":
+				//If the player is making choices right now
+				if(choices){
+					return;
+				};
 			
-			//Go through each textbox and display all of its text
-			Object.keys(eng.textboxes).forEach(
-				function(key){
-					for(var i=0;i<eng.textboxes[key].el.children.length;i++){
-						//Remove the delay so they're displayed immediately
-						eng.textboxes[key].el.children[i].style.animationDelay="0s";
-					}
+				//If a wait timer was going, stop it.
+				if(eng.waitTimer!=null){
+					clearTimeout(eng.waitTimer);
+					eng.waitTimer=null;
 				}
-			);
+			
+				//If all letters are displayed
+				if(eng.charsHidden<1){ //failsafe in case this value somehow goes negative
+					eng.run();
+				}
+				else //If some eng.objects have yet to be displayed
+				{
+					console.log(eng.textboxes);
+					
+					//Go through each textbox and display all of its text
+					Object.keys(eng.textboxes).forEach(
+						function(key){
+							for(var i=0;i<eng.textboxes[key].el.children.length;i++){
+								//Remove the delay so they're displayed immediately
+								eng.textboxes[key].el.children[i].style.animationDelay="0s";
+							}
+						}
+					);
+				}
+				break;
 		}
 	}
 	
-	eng.loadFile=function(inputFile){
-		//Load the file; on load, run the engine
-		var ajax=new XMLHttpRequest();
-		ajax.open("GET","stories/"+inputFile+".txt");
-		ajax.send();
-		
-		console.log(eng);
-		
-		//Add the loading class, if one was passed.
-		if(inputObject.loadingClass) eng.settings.window.classList.add(inputObject.loadingClass);
-		
-		eng.charsHidden=0;
-		eng.currentLine=0;
-		
-		eng.objects={};
-		eng.textboxes={};
-		eng.waitTimer=null;
-		
-		eng.settings.window.appendChild(eng.continue);
-
-		ajax.addEventListener(
-			"readystatechange"
-			,function(event){
-				if(ajax.readyState==4){
-					if(ajax.status==200){
-						
-						//Get each line (taking into account and ignoring extra lines)
-						eng.lines=ajax.responseText.match(/[^\r\n]+/g);
-						
-						//Make text bigger than normal
-						eng.settings.window.style.cssText+=`
-							font-size:2em;
-							overflow:hidden;
-							cursor:pointer;
-						`;
-						
-						//Remove the loading class, if one was passed.
-						//if(inputObject.loadingClass) eng.settings.window.classList.remove(inputObject.loadingClass);
-						
-						//Start it up!
-						eng.run(0);
-					}else{
-						alert("Failed to load story "+inputFile);
-					}
+	//Get the medium from the file extensions
+	function getMedium(inputFileType){
+		switch(inputFileType.match(/\.[^.]+$/)[0]){
+			case ".jpg":
+			case ".jpeg":
+			case ".png":
+			case ".gif":
+			case ".svg":
+			case ".tiff":
+				return "image";
+				break;
+			case ".mp4":
+			case ".webm":
+				return "video";
+				break;
+			case ".mp3":
+			case ".wav":
+				return "audio";
+				break;
+			case ".if":
+			case ".vn":
+			case ".kn":
+				return "multimedia";
+				break;
+			case ".html":
+				return "text";
+				break;
+			default:
+				return null
+				break;
+		}
+	}
+	
+	//EVENT LISTENERS//
+	//On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
+	window.addEventListener(
+		"click"
+		,function(event){
+			event.stopPropagation();
+			eng.menu(event);
+		}
+	);
+	
+	//On mousedown, we prepare to move the cursor
+	overlay.addEventListener(
+		"mousedown"
+		,function(event){
+			//Only read mousemove over the overlay
+			if(event.target!==this) return;
+			
+			moveBar=event.clientX;
+		}
+	);
+	
+	//On dragging
+	window.addEventListener(
+		"mousemove"
+		,function(event){
+			
+			//Only read mousemove over the overlay
+			//if(event.target!==this) return;
+			
+			if(moveBar===false){
+				return;
+			}
+			
+			if(moveBar!==true){
+				if(Math.abs(moveBar-event.clientX)>screen.width/100){
+					moveBar=true;
+				}else{
+					return;
 				}
 			}
-		);
-	};
+			
+			eng.scrub(
+				(event.clientX-eng.window.getBoundingClientRect().left)
+				/
+				(eng.window.getBoundingClientRect().width)
+			);
+		}
+	);
 	
-	*/
+	//On dragging
+	overlay.addEventListener(
+		"touchmove"
+		,function(event){
+			
+			if(moveBar===false){
+				moveBar=event.changedTouches[0].clientX;
+			}
+			
+			//You have to swipe farther than you move the cursor to adjust the position
+			if(moveBar!==true){
+				if(Math.abs(moveBar-event.changedTouches[0].clientX)>screen.width/20){
+					moveBar=true;
+				}else{
+					return;
+				}
+			}
+			
+			//Don't want the users to accidentally swipe to another page!
+			event.preventDefault();
+			
+			eng.scrub(
+				(event.changedTouches[0].clientX-eng.window.getBoundingClientRect().left)
+				/
+				(eng.window.getBoundingClientRect().width)
+			);
+		}
+	);
+	
+	//On touch end, don't keep moving the bar to the user's touch
+	overlay.addEventListener(
+		"touchend"
+		,function(event){
+			
+			//If we were scrubbing
+			if(moveBar===true){
+				moveBar=false;
+				console.log("We were scrubbing!");
+				//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
+				if(eng.scrubLoad==false){
+					//Load the part our pointer's on
+					eng.scrub(
+						(event.changedTouches[0].clientX-eng.window.getBoundingClientRect().left)
+						/
+						(eng.window.getBoundingClientRect().width)
+					);
+				}
+			}
+			
+			//moveBar needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
+			moveBar=false;
+		}
+	);
+	
+	menuButton.addEventListener(
+		"click"
+		,function(event){
+			event.stopPropagation();
+			eng.menu();
+		}
+	);
+	
+	
+	fullscreenButton.addEventListener(
+		"click"
+		,function(event){
+			event.stopPropagation();
+			eng.fullscreen();
+		}
+	);
+
+	captionsButton.addEventListener(
+		"click"
+		,function(){
+			
+		}
+	);
+	
+	content.addEventListener(
+		"click"
+		,function(){
+			eng.input();
+		}
+	);
 }
