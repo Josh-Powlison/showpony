@@ -426,7 +426,7 @@ function Showpony(input){
 		//Look through the media for the right one
 		for(var i=0;i<eng.durations.length;i++){
 			//If the duration's beyond this one, go to the next one (and subtract the duration from the total duration)
-			if(newTime>eng.durations[i]){
+			if(newTime>=eng.durations[i]){
 				newTime-=eng.durations[i];
 			}
 			else
