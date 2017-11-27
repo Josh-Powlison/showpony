@@ -26,6 +26,13 @@ function Showpony(input){
 		,defaultDuration: input.defaultDuration || 20
 		,totalDuration:0
 		,originalWindow:input.window.cloneNode(true)
+		,dateFormat:input.dateFormat || {
+				year:"numeric"
+				,month:"numeric"
+				,day:"numeric"
+				,hour:"numeric"
+				,minute:"numeric"
+			}
 	});
 	
 	//Get lengths of all of the files
@@ -395,13 +402,16 @@ function Showpony(input){
 	
 	//Update the time by a percentage
 	eng.scrub=function(inputPercent){
-		//If no inputPercent was passed
+		//If no inputPercent was passed, estimate it
 		if(typeof(inputPercent)==='undefined'){
+			var currentTime=0;
+			
+			//Set currentTime differently if we can measure it
 			if(currentType=="video"){
-				var currentTime=video.currentTime;
+				currentTime=video.currentTime;
 			}else if(currentType=="audio"){
-				var currentTime=audio.currentTime;
-			}else currentTime=0;
+				currentTime=audio.currentTime;
+			}
 		
 			//Look through the videos for the right one
 			for(var i=0;i<eng.currentFile;i++){
@@ -410,56 +420,109 @@ function Showpony(input){
 			}
 			
 			var inputPercent=currentTime / eng.totalDuration;
-		}
-		
-		//Clamp inputPercent between 0 and 1
-		inputPercent= inputPercent <= 0 ? 0 : inputPercent >= 1 ? 1 : inputPercent;
-		
-		//Go to the time
-		var newTime=eng.totalDuration*inputPercent;
-		progress.style.left=(inputPercent*100)+"%";
-
-		var newPart=0;
-		
-		//Look through the media for the right one
-		for(var i=0;i<eng.durations.length;i++){
-			//If the duration's beyond this one, go to the next one (and subtract the duration from the total duration)
-			if(newTime>=eng.durations[i]){
-				newTime-=eng.durations[i];
-			}
-			else
-			{ //If this is the media!
-				//If we allow scrubbing or we're not moving the bar, we can load the file
-				if(eng.scrubLoad!==false || moveBar===false){
-					if(i!==eng.currentFile){
-						eng.time({"part":i});
-					}else{
-						
-					}
-				}
-				
-				if(i==eng.currentFile){
-					//Set the time properly
-					if(currentType=="video"){
-						video.currentTime=newTime;
-					}else if(currentType=="audio"){
-						audio.currentTime=newTime;
-					}
-				}
-				newPart=i;
+			console.log(currentTime);
 			
-				break;
+			var newPart=eng.currentFile;
+		}
+		else //if inputPercent WAS passed
+		{
+		
+			//Clamp inputPercent between 0 and 1
+			inputPercent= inputPercent <= 0 ? 0 : inputPercent >= 1 ? 1 : inputPercent;
+			
+			//Go to the time
+			var newTime=eng.totalDuration*inputPercent;
+			progress.style.left=(inputPercent*100)+"%";
+
+			var newPart=0;
+			
+			//Look through the media for the right one
+			for(var i=0;i<eng.durations.length;i++){
+				//If the duration's beyond this one, go to the next one (and subtract the duration from the total duration)
+				if(newTime>=eng.durations[i]){
+					console.log("Different media!");
+					newTime-=eng.durations[i];
+				}
+				else
+				{ //If this is the media!
+					console.log("Same media!");
+			
+					//If we allow scrubbing or we're not moving the bar, we can load the file
+					if(eng.scrubLoad!==false || moveBar===false){
+						if(i!==eng.currentFile){
+							eng.time({"part":i});
+						}else{
+							
+						}
+					}
+					
+					if(i==eng.currentFile){
+						//Set the time properly
+						if(currentType=="video"){
+							video.currentTime=newTime;
+						}else if(currentType=="audio"){
+							audio.currentTime=newTime;
+						}
+					}
+					newPart=i;
+				
+					break;
+				}
 			}
 		}
 		
 		var current=Math.floor(inputPercent*eng.totalDuration);
 		var left=eng.totalDuration-Math.floor(inputPercent*eng.totalDuration);
+		var floorValue=1;
 		
 		function adjustReplace(input){
+			//Name
+			if(input[1]=="n"){
+				//Get the name, remove the parentheses
+				var name=eng.parts[newPart].match(/\(.*\)/);
+				
+				//If there's a name, return it; otherwise, return blank space
+				if(name){
+					return name[0].replace(/(\(|\))/g,'');
+				}else{
+					return "";
+				}
+			}else if(input[1]=="d"){
+				//Get the name, remove the parentheses
+				var date=eng.parts[newPart].match(/[^\(\.]+/);
+				
+				//If there's a date, return it; otherwise, return blank space
+				if(date){
+					date=date[0].split(/[\s-]+/);
+					
+					date=new Date(
+						date[0]			//Year
+						,date[1]-1 || 0	//Month
+						,date[2] || 0	//Date
+						,date[3] || 0	//Hours
+						,date[4] || 0	//Minutes
+						,date[5] || 0	//Seconds
+						,date[6] || 0	//Milliseconds
+					); //+" 00:00:00 UTC"
+					
+					return new Intl.DateTimeFormat(
+						"default"
+						,eng.dateFormat
+						).format(date);
+				}else{
+					return "";
+				}
+				
+				
+			}
+			//Percentage complete
+			if(input[2]=="%"){
+				floorValue=(inputPercent*100);
+			}else
 			//Part numbers
 			if(input[2]=="p"){
 				//Pass a calculation based on whether the number of parts left, total, or the number of the current part was asked for
-				var floorValue=
+				floorValue=
 					input[3]=="l" ? eng.parts.length-(newPart+1)
 					: input[3]=="t" ? eng.parts.length
 					: newPart+1
@@ -470,7 +533,7 @@ function Showpony(input){
 				//Total times
 				if(input[3]=="t"){
 					//Pass a calculation based on whether hours, minutes, or seconds were asked for
-					var floorValue=
+					floorValue=
 						input[2]=="h" ? eng.totalDuration / 3600
 						: input[2]=="m" ? (eng.totalDuration % 3600) / 60
 						: eng.totalDuration % 60
@@ -483,7 +546,7 @@ function Showpony(input){
 					;
 					
 					//Pass a calculation based on whether hours, minutes, or seconds were asked for
-					var floorValue=
+					floorValue=
 						input[2]=="h" ? val / 3600
 						: input[2]=="m" ? (val % 3600) / 60
 						: val % 60
