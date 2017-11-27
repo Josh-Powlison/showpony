@@ -29,7 +29,7 @@
 					,"path":"parts/"
 					,"scrubLoad":false
 					,"startAt":"first"
-					,"timeDisplay":"[3hc]:[2mc]:[2sc] | [3hl]:[2ml]:[2sl]<br>[0pc]/[0pt] [3pl]<br>[0ht]:[0mt]:[0st]"
+					,"timeDisplay":"[1mc]:[2sc] | [1ml]:[2sl]"
 					,"query":false
 				});
 			}
