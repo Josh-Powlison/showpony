@@ -51,6 +51,8 @@ function getFiles($dirName){
 			#If its launch time is before now, make it live
 			if(strtotime($date[0])<time()){
 				rename($dirName.'/'.$file,$dirName.'/'.substr($file,1));
+				#Change the file name in the array
+				$passFiles[$i]=substr($file,1);
 			} #Otherwise, don't include it in the array
 			else
 			{
