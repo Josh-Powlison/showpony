@@ -390,14 +390,6 @@ function Showpony(input){
 					video.pause();
 				}
 			}
-			
-			/*MEDIA PLAYER
-			//If paused, then play; if playing, then pause.
-			eng[
-				eng.player.paused
-				? "play"
-				: "pause"
-			]();*/
 		}
 		
 		moveBar=false;
@@ -407,8 +399,6 @@ function Showpony(input){
 	eng.scrub=function(inputPercent){
 		//If no inputPercent was passed
 		if(typeof(inputPercent)==='undefined'){
-			//var inputPercent=eng.currentFile / eng.parts.length;
-			
 			if(currentType=="video"){
 				var currentTime=video.currentTime;
 			}else if(currentType=="audio"){
@@ -422,14 +412,11 @@ function Showpony(input){
 			}
 			
 			var inputPercent=currentTime / eng.totalDuration;
-			
-			console.log(inputPercent);
 		}
 		
 		//Clamp inputPercent between 0 and 1
 		inputPercent= inputPercent <= 0 ? 0 : inputPercent >= 1 ? 1 : inputPercent;
 		
-		//MEDIA PLAYER
 		//Go to the time
 		var newTime=eng.totalDuration*inputPercent;
 		progress.style.left=(inputPercent*100)+"%";
@@ -612,7 +599,7 @@ function Showpony(input){
 	}
 	
 	//Make an AJAX call
-	function AJAX(onSuccess,onFail){
+	function AJAX(onSuccess){
 		//Add loadingClass
 		if(eng.loadingClass){
 			eng.window.classList.add(eng.loadingClass);
@@ -624,7 +611,7 @@ function Showpony(input){
 		
 		ajax.addEventListener(
 			"readystatechange"
-			,function(event){
+			,function(){
 				if(ajax.readyState==4){
 					if(ajax.status==200){
 						onSuccess(ajax);
@@ -909,7 +896,6 @@ function Showpony(input){
 				break;
 			//Set data
 			case "@DS":
-				//var values=text.substring(4).split(/\s+/g);
 				var values=text.substring(4).split(/\s+/g);
 				
 				//If the variable is already set, get its current value
