@@ -432,7 +432,6 @@ function Showpony(input){
 			
 			//Go to the time
 			var newTime=eng.totalDuration*inputPercent;
-			progress.style.left=(inputPercent*100)+"%";
 
 			var newPart=0;
 			
@@ -470,6 +469,9 @@ function Showpony(input){
 				}
 			}
 		}
+		
+		//Move the progress bar
+		progress.style.left=(inputPercent*100)+"%";
 		
 		var current=Math.floor(inputPercent*eng.totalDuration);
 		var left=eng.totalDuration-Math.floor(inputPercent*eng.totalDuration);
