@@ -14,13 +14,13 @@ function easyShowpony($dirName){
 				,function(){
 					engine=new Showpony({
 						"window":showponyWindow
-						,"parts":<?php echo getFiles($dirName);?>
-						,"path":"<?php echo $dirName; ?>/"
+						,"parts":<?php echo json_encode(getFiles($dirName));?>
+						,"path":"<?php echo $dirName;?>/"
 					});
 				}
 			);
 		</script>
-	<?
+	<?php
 }
 
 #Get files and protect others
@@ -30,8 +30,6 @@ function getFiles($dirName){
 	#Run through the files (backwards, so we can splice the array and keep going back
 	for($i=count($passFiles)-1;$i>=0;$i--){
 		$file=$passFiles[$i];
-		
-		#echo $file."<br>";
 		
 		#Check if it's a folder, htaccess file, or other hidden file
 		if($file[0]=="."){
@@ -72,9 +70,9 @@ function getFiles($dirName){
 		}
 	}
 	
-	return json_encode($passFiles);
+	return $passFiles;
 }
 
-#echo getFiles('../parts');
+
 
 ?>

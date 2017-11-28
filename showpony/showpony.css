@@ -5,7 +5,7 @@
 
 /*The container*/
 .showpony{
-	background-color:#000;
+	/*background-color:#000;*/
 	overflow:hidden;
 }
 
@@ -52,7 +52,7 @@
 	pointer-events:none;
 }
 
-.showpony-overlaytext{
+.showpony-overlay-text{
 	position:absolute;
 	left:0;
 	top:0;
@@ -90,7 +90,8 @@
 	opacity:0;
 }
 
-.showpony-button-preview:hover{
+.showpony-button-preview:hover
+,.showpony-button-preview:focus{
 	opacity:.75;
 }
 
@@ -117,7 +118,6 @@
 }
 
 .showpony-content-multimedia{
-	font-size:2em;
 	overflow:hidden;
 	cursor:pointer;
 	position:absolute;
@@ -174,6 +174,7 @@
 	-webkit-user-select:none;
 	-ms-user-select:none;
 	-moz-user-select:none;
+	font-size:2em;
 }
 
 .showpony-background{
@@ -338,3 +339,40 @@
 	background-color:#fff;
 	color:#000;
 }
+
+.showpony-kn-char{
+	visibility:hidden;
+	font-size:1em;
+	color:inherit;
+	font-weight:inherit;
+	font-style:inherit;
+}
+
+.showpony-kn-char-shout{
+	animation:kn-shout .1s linear forwards;
+}
+
+.showpony-kn-char-fade{
+	animation:kn-fade 1s linear forwards;
+}
+
+.showpony-kn-char-blur{
+	animation:kn-blur 1s linear forwards;
+}
+
+.showpony-kn-char-glitch{
+	animation:kn-glitch 1s linear infinite;
+}
+
+.showpony-kn-char-smoke{
+	animation:kn-smoke 1s ease forwards;
+}
+
+.showpony-kn-char-sing{
+	animation:kn-sing 1.5s ease-in-out infinite;
+}
+
+.showpony-kn-char-shake{
+	animation:kn-shake .2s linear infinite;
+}
+
