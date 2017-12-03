@@ -375,9 +375,10 @@
 	
 	background-color:red;
 	position:absolute;
-	top:0;
+	bottom:0;
 	height:20%;
 	width:100%;
+	z-index:10000;
 }
 
 .showpony-editor .showpony-editor-ui{

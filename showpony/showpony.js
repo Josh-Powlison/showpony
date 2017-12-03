@@ -1394,6 +1394,15 @@ overlay.addEventListener(
 	}
 );
 
+window.addEventListener(
+	"mouseup"
+	,function(){
+		//If mouse goes up and we aren't scrubbing, set scrubbing to false.
+		//Otherwise, right-clicks can be read wrong
+		if(scrubbing!==true) scrubbing=false;
+	}
+);
+
 //On dragging
 window.addEventListener(
 	"mousemove"
@@ -1532,7 +1541,7 @@ if(eng.admin){
 	);
 	
 	//Edit/adjust file details
-	content.addEventListener(
+	eng.window.addEventListener(
 		"contextmenu"
 		,function(event){
 			event.preventDefault();
@@ -1576,6 +1585,7 @@ if(eng.admin){
 				
 				if(response.success){
 					eng.files[eng.currentFile]=response.file;
+					eng.scrub();
 				}else{
 					alert(response.message);
 				}
