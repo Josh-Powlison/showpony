@@ -110,15 +110,19 @@ eng.time=function(obj){
 		content.className="showpony-content-"+newType;
 	}
 	
+	var src=(eng.files[eng.currentFile][0]=="x" ? "showpony/showpony-get-file.php?path="+eng.path+"&get="+eng.files[eng.currentFile] : eng.path+eng.files[eng.currentFile]);
+	
 	//Display the medium based on the file extension
 	switch(newType){
 		case "image":
 			//Adjust the source
-			thisType.src=eng.path+eng.files[eng.currentFile];
+			thisType.src=src;
 			break;
 		case "video":
 			//Adjust the source
-			thisType.src=eng.path+eng.files[eng.currentFile];
+			thisType.src=src;
+			
+			console.log(thisType.src);
 			
 			!overlay.classList.contains("showpony-overlay-visible") && thisType.play();
 			
@@ -135,7 +139,7 @@ eng.time=function(obj){
 			break;
 		case "audio":
 			//Adjust the source
-			thisType.src=eng.path+eng.files[eng.currentFile];
+			thisType.src=src;
 			
 			!overlay.classList.contains("showpony-overlay-visible") && thisType.play();
 			
@@ -186,6 +190,7 @@ eng.time=function(obj){
 	
 	//Track the file type used here for when we next switch
 	currentType=getMedium(eng.files[eng.currentFile]);
+	console.log(currentType);
 	
 	eng.window.dispatchEvent(eventTime);
 }
@@ -240,13 +245,12 @@ eng.scrub=function(inputPercent){
 	//If no inputPercent was passed, estimate it
 	if(typeof(inputPercent)==='undefined'){
 		//Use the currentTime of the object, if it has one
-		//console.log("a "+types[currentType],"b "+types,"c "+currentType);
 		var currentTime=types[currentType] && types[currentType].currentTime || 0;
-	
+		
 		//Look through the videos for the right one
 		var l=eng.currentFile;
 		for(var i=0;i<l;i++){
-			//Add the times of previous videos to get the actual time in the piece
+			//Add the times of previous videos 7to get the actual time in the piece
 			currentTime+=eng.durations[i];
 		}
 		
@@ -270,13 +274,10 @@ eng.scrub=function(inputPercent){
 		for(var i=0;i<l;i++){
 			//If the duration's beyond this one, go to the next one (and subtract the duration from the total duration)
 			if(newTime>=eng.durations[i]){
-				console.log("Different media!");
 				newTime-=eng.durations[i];
 			}
 			else
 			{ //If this is the media!
-				console.log("Same media!");
-		
 				//If we allow scrubbing or we're not moving the bar, we can load the file
 				if(eng.scrubLoad!==false || scrubbing===false){
 					if(i!==eng.currentFile){
@@ -287,6 +288,7 @@ eng.scrub=function(inputPercent){
 				}
 				
 				//Set the time properly
+				console.log(i,eng.currentFile,types[currentType],types[currentType].currentTime,newTime,(i==eng.currentFile && types[currentType]) ? "true" : "false");
 				if(i==eng.currentFile && types[currentType]) types[currentType].currentTime=newTime;
 				
 				newPart=i;
@@ -311,7 +313,6 @@ eng.scrub=function(inputPercent){
 			
 			//If there's a name, return it; otherwise, return blank space
 			if(name){
-				console.log(name);
 				//Get rid of the parentheses, but also replace safemark characters
 				return safeFilename(
 					name[0].replace(/(^\(|\)$)/g,'')
@@ -326,7 +327,10 @@ eng.scrub=function(inputPercent){
 			
 			//If there's a date, return it; otherwise, return blank space
 			if(date){
-				date=date[0].split(/[\s-]+/);
+				date=date[0]
+					.replace('x','') //Remove "x"s
+					.split(/[\s-]+/)
+				;
 				
 				date=new Date(
 					date[0]			//Year
@@ -1136,7 +1140,6 @@ function POST(onSuccess,formData){
 
 //Get the medium from the file extensions
 function getMedium(inputFileType){
-	console.log(inputFileType);
 	switch(inputFileType.match(/\.[^.]+$/)[0]){
 		case ".jpg":
 		case ".jpeg":
@@ -1346,7 +1349,9 @@ for(let i=0;i<l;i++){
 			let thisMedia=document.createElement(getMedium(eng.files[i]));
 		
 			thisMedia.preload="metadata";
-			thisMedia.src=eng.path+eng.files[i];
+			thisMedia.src=(eng.files[i][0]=="x" ? "showpony/showpony-get-file.php?path="+eng.path+"&get="+eng.files[i] : eng.path+eng.files[i]);
+			
+			console.log(thisMedia.src);
 			
 			//Listen for media loading
 			thisMedia.addEventListener(
@@ -1355,7 +1360,6 @@ for(let i=0;i<l;i++){
 					//Want to round up for later calculations
 					eng.durations[i]=thisMedia.duration;
 					eng.totalDuration+=thisMedia.duration;
-					console.log(eng.durations[i]);
 				}
 			);
 			

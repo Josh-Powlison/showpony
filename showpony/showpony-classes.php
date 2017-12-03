@@ -10,24 +10,19 @@ class Showpony{
 	
 	#Variables
 	public $filePath='parts';
+	public $admin=true; #start as true
 	
 	#Upload files for the story
 	function uploadFile(){
-		#$_POST['']
-		
-		#die($_FILES['files']['name']);
-		
-		#return $_FILES["files"]["name"]." ".$this->filePath;
-		
 		return move_uploaded_file(basename($_FILES["files"]["name"][0]),'../'.$this->filePath);
 	}
 	
 	function renameFile(){
-		#rename($this->filePath.'/'.$file,$this->filePath.'/'.substr($file,1));
+		
 	}
 	
 	function deleteFile(){
-		#rename($this->filePath.'/'.$file,$this->filePath.'/'.substr($file,1));
+		
 	}
 	
 	#Get files and protect others
@@ -64,7 +59,7 @@ class Showpony{
 				} #Otherwise, don't include it in the array
 				else
 				{
-					array_splice($passFiles,$i,1);
+					if(!$this->admin) array_splice($passFiles,$i,1);
 				}
 				
 				continue;
@@ -113,7 +108,7 @@ if(!empty($_POST["call"])){
 		case "renameFile":
 			$newFile=$_POST['newName'];
 	
-			#If the rename is successful, it wil return true
+			#If the rename is successful, it will return true
 			if(
 				rename(
 					'../'.$showpony->filePath.$_POST['name']
