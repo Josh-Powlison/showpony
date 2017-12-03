@@ -312,7 +312,11 @@ eng.scrub=function(inputPercent){
 			//If there's a name, return it; otherwise, return blank space
 			if(name){
 				console.log(name);
-				return name[0].replace(/(^\(|\)$)/g,'');
+				//Get rid of the parentheses, but also replace safemark characters
+				return safeFilename(
+					name[0].replace(/(^\(|\)$)/g,'')
+					,"from"
+				);
 			}else{
 				return "";
 			}
@@ -1226,6 +1230,39 @@ function Character(){
 };
 
 ///////////////////////////////////////
+///////////LOCAL FUNCTIONS/////////////
+///////////////////////////////////////
+
+//Replace unsafe characters for filenames with safe ones
+function safeFilename(string,type){
+	if(type=="from"){
+		string=replaceArray(
+			string
+			,["[fs]","[bs]","[gt]","[lt]","[c]","[a]","[q]","[qm]","[b]"]
+			,["/","\\",">","<",":","*",'"',"?","|"]
+		);
+	}else{
+		string=replaceArray(
+			string
+			,["/","\\",">","<",":","*",'"',"?","|"]
+			,["[fs]","[bs]","[gt]","[lt]","[c]","[a]","[q]","[qm]","[b]"]
+		);
+	}
+	
+	return string;
+}
+
+//Replace an array of values
+function replaceArray(string,fromArray,toArray){
+	var l=fromArray.length;
+	for(var i=0;i<l;i++){
+		string=string.replace(fromArray[i],toArray[i])
+	}
+	
+	return string;
+}
+
+///////////////////////////////////////
 ///////////LOCAL VARIABLES/////////////
 ///////////////////////////////////////
 
@@ -1562,6 +1599,7 @@ if(eng.admin){
 	var uploadName=document.createElement("input");
 	uploadName.type="text";
 	uploadName.className="showpony-editor-title";
+	uploadName.placeholder="YYYY-MM-DD (Part Title).ext";
 	
 	var uploadFiles=document.createElement("input");
 	uploadFiles.type="file";
@@ -1570,7 +1608,7 @@ if(eng.admin){
 	editor.appendChild(uploadFiles);
 	
 	eng.updateEditor=function(){
-		uploadName.value=eng.files[eng.currentFile];
+		uploadName.value=safeFilename(eng.files[eng.currentFile],"from");
 	}
 	
 	eng.renameFile=function(){
@@ -1578,7 +1616,7 @@ if(eng.admin){
 		formData.append('call',"renameFile");
 		formData.append('filePath',eng.path);
 		formData.append('name',eng.files[eng.currentFile]);
-		formData.append('newName',uploadName.value);
+		formData.append('newName',safeFilename(uploadName.value,"to"));
 		
 		POST(
 			function(ajax){
