@@ -86,12 +86,21 @@ class Showpony{
 
 #Call this file to run certain functions too
 if(!empty($_POST["call"])){
-	echo "Running!";
+	#This object is sent to the user as JSON
+	$response=[
+		"call" => $_POST["call"]
+		,"success" => false
+		,"message" => null
+	];
+	
+	#The message will be kept in the output buffer. We will send the output buffer to the user in the "message".
+	ob_start();
+	
+	$showpony=new Showpony();
+	$showpony->filePath=$_POST['filePath'];
+	
 	switch($_POST['call']){
 		case "uploadFile":
-			$showpony=new Showpony();
-			$showpony->filePath=$_POST['filePath'];
-			
 			move_uploaded_file(
 				$_FILES["files"]["tmp_name"]
 				,'../'.($showpony->filePath).(
@@ -100,14 +109,31 @@ if(!empty($_POST["call"])){
 					pathinfo($_POST['name'],PATHINFO_FILENAME).'.'.pathinfo($_FILES['files']['name'],PATHINFO_EXTENSION) #add new extension
 				)
 			);
-		break;
-		case "renameFile":
-			rename(
-				$showpony->filePath.'/'.$_POST['name']
-				,$showpony->filePath.'/'.$_POST['newName']
-			);
 			break;
+		case "renameFile":
+			$newFile=$_POST['newName'];
+	
+			#If the rename is successful, it wil return true
+			if(
+				rename(
+					'../'.$showpony->filePath.$_POST['name']
+					,'../'.$showpony->filePath.$_POST['newName']
+				)
+			){ #If renaming's successful
+				$response["success"]=true;
+				echo "Rename successful!";
+				$response["file"]=$_POST['newName'];
+			}else{ #If renaming fails
+				echo "Rename failed! You may have an illegal character in your new name.";
+			}
+			
+		break;
 	}
+	
+	$response["message"]=ob_get_contents();
+	ob_end_clean();
+	
+	echo json_encode($response);
 }
 
 ?>

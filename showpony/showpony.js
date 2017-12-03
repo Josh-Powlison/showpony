@@ -1549,21 +1549,18 @@ if(eng.admin){
 		eng.updateEditor();
 	}
 	
-	var uploadFiles;
-	var uploadName;
+	var uploadName=document.createElement("input");
+	uploadName.type="text";
+	uploadName.className="showpony-editor-title";
+	
+	var uploadFiles=document.createElement("input");
+	uploadFiles.type="file";
+	
+	editor.appendChild(uploadName);
+	editor.appendChild(uploadFiles);
 	
 	eng.updateEditor=function(){
-		
-		uploadName=document.createElement("p");
-		uploadName.className="showpony-editor-title";
-		uploadName.contentEditable=true;
-		uploadName.innerHTML=eng.files[eng.currentFile];
-		
-		uploadFiles=document.createElement("input");
-		uploadFiles.type="file";
-		uploadFiles.placeholder="Replace file";
-		
-		editor.appendChild(uploadFiles);
+		uploadName.value=eng.files[eng.currentFile];
 	}
 	
 	eng.renameFile=function(){
@@ -1571,11 +1568,17 @@ if(eng.admin){
 		formData.append('call',"renameFile");
 		formData.append('filePath',eng.path);
 		formData.append('name',eng.files[eng.currentFile]);
-		formData.append('newName',uploadName);
+		formData.append('newName',uploadName.value);
 		
 		POST(
 			function(ajax){
-				console.log(ajax.responseText);
+				var response=JSON.parse(ajax.responseText);
+				
+				if(response.success){
+					eng.files[eng.currentFile]=response.file;
+				}else{
+					alert(response.message);
+				}
 			}
 			,formData
 		);
@@ -1590,11 +1593,32 @@ if(eng.admin){
 		
 		POST(
 			function(ajax){
-				console.log(ajax.responseText);
+				var response=JSON.parse(ajax.responseText);
+				console.log(response.message);
+				
+				if(response.success){
+					eng.files[eng.currentFile]=response.file;
+				}else{
+					alert(response.message);
+				}
 			}
 			,formData
 		);
 	}
+	
+	//EVENT LISTENERS//
+	//On time, update the editor
+	eng.window.addEventListener("time"
+		,function(){
+			eng.updateEditor();
+		}
+	);
+	
+	uploadName.addEventListener("change"
+		,function(){
+			eng.renameFile();
+		}
+	);
 }
 
 }

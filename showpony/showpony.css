@@ -390,6 +390,6 @@
 }
 
 .showpony-editor-title{
-	color:#fff;
-	text-align:center;
+	display:block;
+	margin:auto;
 }
