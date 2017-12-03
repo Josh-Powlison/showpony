@@ -1,8 +1,44 @@
-"use strict";
-
 function Showpony(input){
 
+"use strict";
+
 var eng=this;
+
+//Startup errors
+if(!input.window) throw "Error: no window value passed to Showpony object. I recommend passing a <div> element to the window value.";
+
+//Set settings for the engine
+Object.assign(eng,{
+	window:input.window
+	,originalWindow:input.window.cloneNode(true)
+	,files:input.files || null
+	,path:input.path || ""
+	,loadingClass:input.loadingClass || null
+	,scrubLoad:input.scrubLoad || false
+	,currentFile:
+		input.startAt=="first" ? 0
+		: input.startAt=="last" ? input.files.length-1
+		: input.startAt!==undefined ? input.startAt
+		: input.files.length-1
+	,query:input.query!==undefined ? input.query
+		: "part"
+	,timeDisplay:input.timeDisplay || "[0pc] | [0pl]"
+	,data:input.data || {}
+	,durations:input.durations || []
+	,defaultDuration:input.defaultDuration || 20
+	,totalDuration:0
+	,admin:input.admin || false
+	,dateFormat:input.dateFormat || {
+			year:"numeric"
+			,month:"numeric"
+			,day:"numeric"
+			,hour:"numeric"
+			,minute:"numeric"
+		}
+});
+
+//Set input to null in hopes that garbage collection will come pick it up
+input=null;
 
 ///////////////////////////////////////
 ///////////OBJECT FUNCTIONS////////////
@@ -47,9 +83,7 @@ eng.time=function(obj){
 	}
 	
 	//If we aren't moving the bar, update the overlay
-	if(scrubbing===false){
-		eng.scrub();
-	}
+	scrubbing===false && eng.scrub();
 	
 	//Go to the top of the page
 	eng.window.scrollIntoView();
@@ -64,66 +98,53 @@ eng.time=function(obj){
 	content.style.cssText=null; //Remove any styles applied to the content
 	waitForInput=false;
 	
+	var thisType=types[newType];
+	
+	//If switching types, do some cleanup
+	if(currentType!=newType){
+		content.innerHTML="";
+		console.log(types);
+		content.appendChild(thisType);
+		
+		//Use the general content class
+		content.className="showpony-content-"+newType;
+	}
+	
 	//Display the medium based on the file extension
 	switch(newType){
 		case "image":
-			//If the previous type was different, empty the div and use this one
-			if(currentType!=newType){
-				content.innerHTML="";
-				content.appendChild(book);
-				
-				//Use the content class for books
-				content.className="showpony-content-book";
-			}
-			
 			//Adjust the source
-			book.src=eng.path+eng.files[eng.currentFile];
+			thisType.src=eng.path+eng.files[eng.currentFile];
 			break;
 		case "video":
-			if(currentType!=newType){
-				content.innerHTML="";
-				content.appendChild(video);
-				
-				//Use the general content class
-				content.className="showpony-content";
-			}
-			
 			//Adjust the source
-			video.src=eng.path+eng.files[eng.currentFile];
+			thisType.src=eng.path+eng.files[eng.currentFile];
 			
-			if(overlay.style.visibility=="hidden") video.play();
+			!overlay.classList.contains("showpony-overlay-visible") && thisType.play();
 			
 			//When the player's finished with a file
-			video.addEventListener(
+			thisType.addEventListener(
 				"ended"
 				,function(){
 					//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
-					if(overlay.style.visibility=="visible") return;
+					if(overlay.classList.contains("showpony-overlay-visible")) return;
 					
 					eng.time({"part":"next"});
 				}
 			);
 			break;
 		case "audio":
-			if(currentType!=newType){
-				content.innerHTML="";
-				content.appendChild(audio);
-				
-				//Use the general content class
-				content.className="showpony-content";
-			}
-			
 			//Adjust the source
-			audio.src=eng.path+eng.files[eng.currentFile];
+			thisType.src=eng.path+eng.files[eng.currentFile];
 			
-			if(overlay.style.visibility=="hidden") audio.play();
+			!overlay.classList.contains("showpony-overlay-visible") && thisType.play();
 			
 			//When the player's finished with a file
-			audio.addEventListener(
+			thisType.addEventListener(
 				"ended"
 				,function(){
 					//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
-					if(overlay.style.visibility=="visible") return;
+					if(overlay.classList.contains("showpony-overlay-visible")) return;
 					
 					eng.time({"part":"next"});
 				}
@@ -140,24 +161,19 @@ eng.time=function(obj){
 				eng.textboxes={};
 			//}
 			
-			AJAX(
+			GET(
 				function(ajax){
 					//Get each line (taking into account and ignoring extra lines)
 					eng.lines=ajax.responseText.match(/[^\r\n]+/g);
 					
-					content.className="showpony-content-multimedia";
+					content.className="";
 					
 					eng.run(0);
 				}
 			);
 			break;
 		case "text":
-			content.innerHTML="";
-			
-			//Use the general content class
-			content.className="showpony-content";
-			
-			AJAX(
+			GET(
 				function(ajax){
 					content.innerHTML=ajax.responseText;
 				}
@@ -200,27 +216,17 @@ eng.menu=function(event){
 	
 	else //If we aren't moving the bar
 	{
-		if(overlay.style.visibility=="visible"){
-			overlay.style.visibility="hidden";
-			menuButton.classList.add("showpony-button-preview");
-			fullscreenButton.classList.add("showpony-button-preview");
-			
-			if(currentType=="audio"){
-				audio.play();
-			}else if(currentType=="video"){
-				video.play();
-			}
-		}else{
+		menuButton.classList.toggle("showpony-button-preview");
+		fullscreenButton.classList.toggle("showpony-button-preview");
+		
+		//On toggling classes, returns "true" if just added
+		if(overlay.classList.toggle("showpony-overlay-visible")){
 			eng.scrub();
-			overlay.style.visibility="visible";
-			menuButton.classList.remove("showpony-button-preview");
-			fullscreenButton.classList.remove("showpony-button-preview");
 			
-			if(currentType=="audio"){
-				audio.pause();
-			}else if(currentType=="video"){
-				video.pause();
-			}
+			//Play/pause video or audio
+			types[currentType].play && types[currentType].pause();
+		}else{
+			types[currentType].play && types[currentType].play();
 		}
 	}
 	
@@ -233,14 +239,9 @@ eng.menu=function(event){
 eng.scrub=function(inputPercent){
 	//If no inputPercent was passed, estimate it
 	if(typeof(inputPercent)==='undefined'){
-		var currentTime=0;
-		
-		//Set currentTime differently if we can measure it
-		if(currentType=="video"){
-			currentTime=video.currentTime;
-		}else if(currentType=="audio"){
-			currentTime=audio.currentTime;
-		}
+		//Use the currentTime of the object, if it has one
+		//console.log("a "+types[currentType],"b "+types,"c "+currentType);
+		var currentTime=types[currentType] && types[currentType].currentTime || 0;
 	
 		//Look through the videos for the right one
 		var l=eng.currentFile;
@@ -250,7 +251,6 @@ eng.scrub=function(inputPercent){
 		}
 		
 		var inputPercent=currentTime / eng.totalDuration;
-		console.log(currentTime);
 		
 		var newPart=eng.currentFile;
 	}
@@ -286,14 +286,9 @@ eng.scrub=function(inputPercent){
 					}
 				}
 				
-				if(i==eng.currentFile){
-					//Set the time properly
-					if(currentType=="video"){
-						video.currentTime=newTime;
-					}else if(currentType=="audio"){
-						audio.currentTime=newTime;
-					}
-				}
+				//Set the time properly
+				if(i==eng.currentFile && types[currentType]) types[currentType].currentTime=newTime;
+				
 				newPart=i;
 			
 				break;
@@ -341,7 +336,7 @@ eng.scrub=function(inputPercent){
 				return new Intl.DateTimeFormat(
 					"default"
 					,eng.dateFormat
-					).format(date);
+				).format(date);
 			}else{
 				return "";
 			}
@@ -423,11 +418,10 @@ eng.fullscreen=function(type){
 	;
 	
 	//Use the 3 fullscreen values above to use fullscreen mode on various browsers.
-	if(document[fs[0]]){
-		document[fs[1]]();
-	}else{
-		eng.window[fs[2]]();
-	}
+	document[fs[0]]
+		? document[fs[1]]()
+		: eng.window[fs[2]]()
+	;
 	
 	return;
 }
@@ -436,7 +430,7 @@ eng.fullscreen=function(type){
 eng.run=function(inputNum){
 	
 	//Go to either the specified line or the next one
-	eng.currentLine=inputNum || eng.currentLine+1;
+	eng.currentLine=(inputNum!==undefined ? inputNum : eng.currentLine+1);
 	
 	//If we've ended manually or reached the end, stop running immediately and end it all
 	if(eng.currentLine>=eng.lines.length){
@@ -980,13 +974,18 @@ eng.run=function(inputNum){
 	var e=eng.textboxes[currentTextbox].children;
 	l=e.length;
 	for(let i=0;i<l;i++){
-		/*
-		e[i].classList.add("showpony-kn-char-"+e[i].dataset.animations);
-		e[i].style.animationDelay=
-			(e[i].dataset.animations=="sing"
-				? "-"+(i/20)+"s"
-				: "-"+Math.random()+"s"
-		);*/
+
+		if(
+			e[i].dataset.animations=="shake"
+			|| e[i].dataset.animations=="sing"
+		){
+			e[i].children[0].classList.add("showpony-kn-char-"+e[i].dataset.animations);
+			e[i].children[0].style.animationDelay=
+				(e[i].dataset.animations=="sing"
+					? "-"+(i/20)+"s"
+					: "-"+Math.random()+"s"
+			);
+		}
 		
 		//Add event listeners to each
 		//On displaying, do this:
@@ -1081,8 +1080,8 @@ eng.close=function(){
 ////////////LOCAL FUNCTIONS////////////
 ///////////////////////////////////////
 
-//Make an AJAX call
-function AJAX(onSuccess){
+//Make a GET call
+function GET(onSuccess){
 	//Add loadingClass
 	if(eng.loadingClass){
 		eng.window.classList.add(eng.loadingClass);
@@ -1104,6 +1103,26 @@ function AJAX(onSuccess){
 					}
 				}else{
 					alert("Failed to load file called: "+eng.path+eng.files[eng.currentFile]);
+				}
+			}
+		}
+	);
+}
+
+//Make a POST call
+function POST(onSuccess,formData){
+	var ajax=new XMLHttpRequest();
+	ajax.open("POST","showpony/showpony-classes.php");
+	ajax.send(formData);
+	
+	ajax.addEventListener(
+		"readystatechange"
+		,function(){
+			if(ajax.readyState==4){
+				if(ajax.status==200){
+					onSuccess(ajax);
+				}else{
+					alert("Failed to load Showpony class file.");
 				}
 			}
 		}
@@ -1225,13 +1244,18 @@ var scrubbing=false;
 //////////INITIALISE OBJECTS///////////
 ///////////////////////////////////////
 
-var overlay=m("overlay");
-var overlayText=m("overlay-text");
-var progress=m("progress");
-var content=m("content");
-var book=m("book","img");
-var audio=m("player","audio");
-var video=m("player","video");
+var overlay=m("overlay")
+	,editor=m("editor-ui")
+	,overlayText=m("overlay-text")
+	,progress=m("progress")
+	,content=m("content");
+
+var types={
+	image:m("image","img")
+	,audio:m("player","audio")
+	,video:m("player","video")
+	,multimedia:m("multimedia")
+}
 
 var menuButton=m("menu-button showpony-button-preview","button"); menuButton.alt="Menu";
 var fullscreenButton=document.createElement("button"); fullscreenButton.alt="Fullscreen"; fullscreenButton.className="showpony-fullscreen-button showpony-button-preview";
@@ -1262,7 +1286,12 @@ var eventEnd=new Event("end");
 var eventMenu=new Event(
 	"menuopen"
 	,{
-		//opened:overlay.style.visibility=="visible" ? true : false
+		function(){
+			opened:(
+				overlay.classList.contains("showpony-overlay-visible") ? true
+				: false
+			)
+		}
 	}
 );
 
@@ -1270,41 +1299,9 @@ var eventMenu=new Event(
 /////////////////START/////////////////
 ///////////////////////////////////////
 
-//Set settings for the engine
-Object.assign(eng,{
-	window:input.window
-	,originalWindow:input.window.cloneNode(true)
-	,files:input.files || null
-	,path:input.path || ""
-	,loadingClass:input.loadingClass || null
-	,scrubLoad:input.scrubLoad || false
-	,currentFile:
-		input.startAt=="first" ? 0
-		: input.startAt=="last" ? input.files.length-1
-		: input.startAt!==undefined ? input.startAt
-		: input.files.length-1
-	,query: input.query!==undefined ? input.query
-		: "part"
-	,timeDisplay: input.timeDisplay || "[0pc] | [0pl]"
-	,data: input.data || {}
-	,durations:[]
-	,defaultDuration: input.defaultDuration || 20
-	,totalDuration:0
-	,dateFormat:input.dateFormat || {
-			year:"numeric"
-			,month:"numeric"
-			,day:"numeric"
-			,hour:"numeric"
-			,minute:"numeric"
-		}
-});
-
-//Set input to null in hopes that garbage collection will come pick it up
-input=null;
-
 //Get lengths of all of the files
 var l=eng.files.length;
-for(var i=0;i<l;i++){
+for(let i=0;i<l;i++){
 	switch(getMedium(eng.files[i])){
 		case "video":
 		case "audio":
@@ -1320,6 +1317,7 @@ for(var i=0;i<l;i++){
 					//Want to round up for later calculations
 					eng.durations[i]=thisMedia.duration;
 					eng.totalDuration+=thisMedia.duration;
+					console.log(eng.durations[i]);
 				}
 			);
 			
@@ -1339,7 +1337,7 @@ if(window.getComputedStyle(eng.window).getPropertyValue('position')=="static"){
 eng.window.innerHTML="";
 
 //And fill it up again!
-frag([content,overlay,menuButton,fullscreenButton],eng.window);
+frag([content,overlay,menuButton,fullscreenButton,editor],eng.window);
 
 eng.window.classList.add("showpony");
 
@@ -1349,28 +1347,24 @@ if(eng.query){
 	window.addEventListener(
 		"popstate"
 		,function(){
-			var regex=new RegExp(eng.query+'[^&]+','i');
-			
-			var page=window.location.href.match(regex);
+			var page=window.location.href.match(new RegExp(eng.query+'[^&]+','i'));
 			
 			if(page){
 				eng.time({"part":parseInt(page[0].split("=")[1])-1,"popstate":true});
 			}
-			
 		}
 	);
 	
-	var regex=new RegExp(eng.query+'[^&]+','i');
+	var page=window.location.href.match(new RegExp(eng.query+'[^&]+','i'));
 	
-	var page=window.location.href.match(regex);
-	
-	//If the value is already in the header
-	if(page){
-		eng.time({"part":parseInt(page[0].split("=")[1])-1,"popstate":true});
-	//If the value's not in the header, default
-	}else{
-		eng.time();
-	}
+	//Add in the time if it needs it, otherwise pass nothing
+	eng.time(
+		page
+		? {
+			"part":parseInt(page[0].split("=")[1])-1,"popstate":true
+		}
+		: null
+	);
 }else{
 	//Start
 	eng.time();
@@ -1469,7 +1463,7 @@ overlay.addEventListener(
 			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
 			if(eng.scrubLoad==false){
 				//Load the part our pointer's on
-				eng.scrub(
+			eng.scrub(
 					(event.changedTouches[0].clientX-eng.window.getBoundingClientRect().left)
 					/
 					(eng.window.getBoundingClientRect().width)
@@ -1502,7 +1496,7 @@ fullscreenButton.addEventListener(
 captionsButton.addEventListener(
 	"click"
 	,function(){
-		
+		event.stopPropagation();
 	}
 );
 
@@ -1512,5 +1506,95 @@ content.addEventListener(
 		eng.input();
 	}
 );
+
+///////////////////////////////////////
+/////////////////ADMIN/////////////////
+///////////////////////////////////////
+
+if(eng.admin){
+	overlayText.contentEditable=true;
+	overlayText.style.pointerEvents="auto";
+	
+	//Adjust display of header
+	overlayText.addEventListener(
+		"focus"
+		,function(){
+			overlayText.innerHTML="<p>"+eng.timeDisplay+"</p>";
+		}
+	);
+	
+	overlayText.addEventListener(
+		"blur"
+		,function(event){
+			eng.timeDisplay=overlayText.children[0].innerHTML;
+			eng.scrub();
+		}
+	);
+	
+	//Edit/adjust file details
+	content.addEventListener(
+		"contextmenu"
+		,function(event){
+			event.preventDefault();
+			console.log("Context menu!");
+			eng.editor();
+		}
+	);
+	
+	eng.editor=function(){
+		eng.window.classList.toggle("showpony-editor");
+		
+		console.log(editor,eng.files[eng.currentFile]);
+		
+		eng.updateEditor();
+	}
+	
+	var uploadFiles;
+	var uploadName;
+	
+	eng.updateEditor=function(){
+		
+		uploadName=document.createElement("p");
+		uploadName.className="showpony-editor-title";
+		uploadName.contentEditable=true;
+		uploadName.innerHTML=eng.files[eng.currentFile];
+		
+		uploadFiles=document.createElement("input");
+		uploadFiles.type="file";
+		uploadFiles.placeholder="Replace file";
+		
+		editor.appendChild(uploadFiles);
+	}
+	
+	eng.renameFile=function(){
+		var formData=new FormData();
+		formData.append('call',"renameFile");
+		formData.append('filePath',eng.path);
+		formData.append('name',eng.files[eng.currentFile]);
+		formData.append('newName',uploadName);
+		
+		POST(
+			function(ajax){
+				console.log(ajax.responseText);
+			}
+			,formData
+		);
+	}
+	
+	eng.uploadFile=function(){
+		var formData=new FormData();
+		formData.append('files',uploadFiles.files[0]);
+		formData.append('call',"uploadFile");
+		formData.append('filePath',eng.path);
+		formData.append('name',eng.files[eng.currentFile]);
+		
+		POST(
+			function(ajax){
+				console.log(ajax.responseText);
+			}
+			,formData
+		);
+	}
+}
 
 }

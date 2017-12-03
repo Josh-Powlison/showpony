@@ -12,8 +12,13 @@
 	<p>Showpony is a lightweight multimedia engine that will allow you to work in all popular (and mnay niche), media and upload them to your website quickly and easily.</p>
 	<p>You will likely run into bugs and some very unpretty things since this is still in development. Sorry, and please report bugs on the <a href="https://github.com/Josh-Powlison/showpony" target="_blank">GitHub</a> page, where you can also download Showpony!</p>
 	<p>Go to the top-left corner of the engine to access the menu.</p>
+	<?
 	
-	<?php # include ('showpony/showpony-classes.php'); easyShowpony("parts"); ?>
+	#error_reporting(true);
+	include('showpony/showpony-classes.php');
+	$a=new Showpony();
+	
+	?>
 	
 	<div class="story-container" id="showpony"></div>
 	<script src="showpony/showpony.js"></script>
@@ -25,7 +30,9 @@
 			,function(){
 				showpony=new Showpony({
 					window:document.getElementById("showpony")
-					,files:<?php include('showpony/showpony-classes.php'); echo json_encode(getFiles("parts"));?>
+					,files:<?php
+						echo json_encode($a->getFiles());
+					?>
 					,path:"parts/"
 					,scrubLoad:false
 					,startAt:"first"
@@ -37,6 +44,7 @@
 						,month:"long"
 						,day:"numeric"
 					}
+					,admin:true
 				});
 			}
 		);

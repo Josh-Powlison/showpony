@@ -2,6 +2,12 @@
 
 An easy-to-use engine for telling stories in any medium and across any media!
 
+# What are some of its awesome features?
+
+* Fullscreen: on any device, for any medium!
+* Built-in easy archives: go to the menu and just click and drag across the screen to go to any part quickly!
+* Mix media- video, comics, songs, books, visual novels, and more can all be viewed in a streamlined experience!
+
 # Can you show me Showpony in action?
 
 [Game Plan! (Webmanga)](http://gameplanmanga.com/)
@@ -10,17 +16,24 @@ If you use Showpony on your site too, let me know and I might link to it from he
 
 # What media can I work in with Showpony?
 
-Currently Showpony can be used for the following media effectively:
+Showpony has been reasonably tested with:
 
 * Comics
 
-Engines in the works and testing phases are:
+Although it also supports:
 
-* Visual/Kinetic Novel
+* Visual Novels
+* Kinetic Novels
+* Interactive Fiction
 * Video
 * Audio
-* Interactive Fiction
-* Straight HTML files
+* Straight HTML files (for more flexibility)
+
+I also plan to add support for:
+
+* Screenplays
+* Stageplays
+* Videogames (will likely be limited)
 
 ## How hard is it to add to my webpage?
 
@@ -42,7 +55,7 @@ But Showpony doesn't require PHP to run, and you can create Showpony objects wit
 		,"loadingClass":"loading"
 		,"scrubLoad":false
 	});
-
+	
 The setup is the same for every medium, and you can have as many Showpony objects running at a time as you want!
 
 ## How hard is the syntax for Interactive Fiction and/or Visual Novels? I don't want to learn a new language.
@@ -51,7 +64,7 @@ Go into the stories folder and check out some of the ".txt" files. It's already 
 
 ## Can I use this on my website right now!
 
-Absolutely, although it's still very much a WIP, so be careful and test thoroughly! Email me if you run into any problems.
+Absolutely, although it's still really in the works, so be careful and test thoroughly! Email me if you run into any problems.
 
 ## Can I sell or make money off works made with Showpony?
 
@@ -59,7 +72,7 @@ Absolutely! But you can't sell the code itself.
 
 ## How heavy is Showpony?
 
-Uncompressed it's less than 200 KB. BUT not counting the license and fonts I added in, it's less than 55 KB. You can whittle it down quite a bit from there still!
+Uncompressed it's less than 200 KB. BUT not counting the license and fonts I added in, it's less than 45 KB. You can whittle it down quite a bit from there still! Compressed the core engine is less than 25 KB.
 
 This will obviously go up as I add features, but it will also go down as I make it more performant. So it'll probably stay around that amount (until/unless I add more media support).
 
@@ -67,9 +80,11 @@ This will obviously go up as I add features, but it will also go down as I make 
 
 This doesn't just depend on the code but on the resources you use, but my bad laptop's handled it pretty well. Try it for your projects and see!
 
-## What's its browser support?
+## How's browser support?
 
 It's made to work with newer browsers, and I can test with the latest versions of Chrome, Firefox, Edge, and Chrome Mobile. Test it thoroughly for your own projects, and let me know if you run into any errors!
+
+I do my best to guarantee it works in Chrome, Firefox, and Chrome mobile. I do not guarantee or attempt to support any versions of IE and try to support the newest versions of Edge. Some features in use may be officially up-and-coming in Edge but not commonly available in Edge.
 
 ## Do I need PHP, MySQL, Python, etc on my website for this to work?
 

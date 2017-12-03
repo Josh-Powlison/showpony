@@ -17,31 +17,32 @@
 	bottom:0;
 	background-color:rgba(0,0,0,.75);
 	visibility:hidden;
-	font-family:monospace;
 	-ms-user-select:none;
 	-moz-user-select:none;
 	-webkit-user-select:none;
 	user-select:none;
 	font-family:"Fengardo Neue";
 	z-index:1000;
+	pointer-events:none;
+}
+
+.showpony-overlay-visible{
+	visibility:visible;
+	pointer-events:auto;
 }
 
 .showpony-progress{
 	position:absolute;
-	left:0;
 	top:20%;
 	bottom:0;
 	width:.5em;
 	transform:translate(-.25em,0);
 	background-color:#fff;
-	z-index:1;
-	cursor:pointer;
 	pointer-events:none;
 }
 
 .showpony-progress::after{
 	content: " ";
-	display:block;
 	position:absolute;
 	border:solid white .5em;
 	border-radius:100%;
@@ -54,10 +55,7 @@
 
 .showpony-overlay-text{
 	position:absolute;
-	left:0;
-	top:0;
-	bottom:0;
-	right:0;
+	width:100%;
 	color:white;
 	text-align:center;
 	pointer-events:none;
@@ -66,13 +64,13 @@
 .showpony-menu-button
 ,.showpony-fullscreen-button
 ,.showpony-captions-button{
-	top:0;
 	position:absolute;
+	top:0;
 	border:none;
 	width:3em;
 	height:3em;
 	cursor:pointer;
-	background-image:url('showpony.svg');
+	background-image:url('showpony.svg'), radial-gradient(rgba(0,0,0,.75),rgba(0,0,0,0));
 	background-size:cover;
 	transition:opacity .5s;
 	background-color:rgba(0,0,0,0);
@@ -86,13 +84,14 @@
 
 /*Showing the button without the overlay*/
 .showpony-button-preview{
-	background-color:rgba(0,0,0,.75);
 	opacity:0;
+	background-color:rgba(0,0,0,.25);
+	border-radius:10%;
 }
 
 .showpony-button-preview:hover
 ,.showpony-button-preview:focus{
-	opacity:.75;
+	opacity:1;
 }
 
 .showpony-menu-button{
@@ -104,30 +103,23 @@
 	left:0;
 }
 
-.showpony-content{
+.showpony-content-video
+,.showpony-content-audio
+,.showpony-content{
 	width:100%;
 	height:100%;
 }
 
-.showpony-content-book{
+.showpony-content-image{
 	display:flex;
 	align-items:center;
 	justify-content:center;
 	width:100%;
 	height:100%;
-}
-
-.showpony-content-multimedia{
-	overflow:hidden;
-	cursor:pointer;
 	position:absolute;
-	left:0;
-	top:0;
-	bottom:0;
-	right:0;
 }
 
-.showpony-book{
+.showpony-image{
 	left:0;
 	top:0;
 	width:100%;
@@ -139,9 +131,6 @@
 }
 
 .showpony-player{
-	position:absolute;
-	left:0;
-	top:0;
 	width:100%;
 	height:100%;
 }
@@ -376,3 +365,31 @@
 	animation:kn-shake .2s linear infinite;
 }
 
+/*When the editor is open*/
+.showpony-editor{
+	
+}
+
+.showpony-editor-ui{
+	visibility:hidden;
+	
+	background-color:red;
+	position:absolute;
+	top:0;
+	height:20%;
+	width:100%;
+}
+
+.showpony-editor .showpony-editor-ui{
+	visibility:visible;
+}
+
+.showpony-editor .showpony-content-book{
+	height:80%;
+	bottom:0;
+}
+
+.showpony-editor-title{
+	color:#fff;
+	text-align:center;
+}
