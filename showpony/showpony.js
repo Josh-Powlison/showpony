@@ -311,7 +311,8 @@ eng.scrub=function(inputPercent){
 			
 			//If there's a name, return it; otherwise, return blank space
 			if(name){
-				return name[0].replace(/(\(|\))/g,'');
+				console.log(name);
+				return name[0].replace(/(^\(|\)$)/g,'');
 			}else{
 				return "";
 			}
