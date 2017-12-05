@@ -166,7 +166,8 @@ eng.time=function(obj){
 			//}
 			
 			GET(
-				function(ajax){
+				src
+				,function(ajax){
 					//Get each line (taking into account and ignoring extra lines)
 					eng.lines=ajax.responseText.match(/[^\r\n]+/g);
 					
@@ -178,7 +179,8 @@ eng.time=function(obj){
 			break;
 		case "text":
 			GET(
-				function(ajax){
+				src
+				,function(ajax){
 					content.innerHTML=ajax.responseText;
 				}
 			);
@@ -272,28 +274,25 @@ eng.scrub=function(inputPercent){
 		//Look through the media for the right one
 		var l=eng.durations.length;
 		for(var i=0;i<l;i++){
-			//If the duration's beyond this one, go to the next one (and subtract the duration from the total duration)
-			if(newTime>=eng.durations[i]){
-				newTime-=eng.durations[i];
-			}
-			else
-			{ //If this is the media!
+			//If the duration's within this one, stop at this one
+			if(i==l-1 || newTime<eng.durations[i]){
+			//If this is the media!
 				//If we allow scrubbing or we're not moving the bar, we can load the file
 				if(eng.scrubLoad!==false || scrubbing===false){
 					if(i!==eng.currentFile){
 						eng.time({"part":i});
-					}else{
-						
 					}
+					
+					//Set the time properly for the current file
+					if(i==eng.currentFile && types[currentType]) types[currentType].currentTime=newTime;
 				}
-				
-				//Set the time properly
-				console.log(i,eng.currentFile,types[currentType],types[currentType].currentTime,newTime,(i==eng.currentFile && types[currentType]) ? "true" : "false");
-				if(i==eng.currentFile && types[currentType]) types[currentType].currentTime=newTime;
 				
 				newPart=i;
 			
 				break;
+			}else{
+				//Otherwise, go to the next one (and subtract the duration from the total duration)
+				newTime-=eng.durations[i];
 			}
 		}
 	}
@@ -304,6 +303,8 @@ eng.scrub=function(inputPercent){
 	var current=Math.floor(inputPercent*eng.totalDuration);
 	var left=eng.totalDuration-Math.floor(inputPercent*eng.totalDuration);
 	var floorValue=1;
+	
+	//console.log(current,inputPercent,eng.totalDuration,newPart);
 	
 	function adjustReplace(input){
 		//Name
@@ -322,17 +323,18 @@ eng.scrub=function(inputPercent){
 				return "";
 			}
 		}else if(input[1]=="d"){
-			//Get the name, remove the parentheses
-			var date=eng.files[newPart].match(/^[^(]+(?!\()\S?/);
+			//Get the name, remove the parentheses (skip over "x")
+			var date=eng.files[newPart].match(/\d[^(]+(?!\()\S?/);
 			
 			//If there's a date, return it; otherwise, return blank space
 			if(date){
 				date=date[0]
-					.replace('x','') //Remove "x"s
-					.split(/[\s-]+/)
+					.split(/[\s-:;]+/)
 				;
 				
-				date=new Date(
+				console.log(date,date[0].replace(/^x/,''));
+				
+				date=new Date(Date.UTC(
 					date[0]			//Year
 					,date[1]-1 || 0	//Month
 					,date[2] || 0	//Date
@@ -340,7 +342,9 @@ eng.scrub=function(inputPercent){
 					,date[4] || 0	//Minutes
 					,date[5] || 0	//Seconds
 					,date[6] || 0	//Milliseconds
-				); //+" 00:00:00 UTC"
+				));
+				
+				console.log(date);
 				
 				return new Intl.DateTimeFormat(
 					"default"
@@ -1090,14 +1094,14 @@ eng.close=function(){
 ///////////////////////////////////////
 
 //Make a GET call
-function GET(onSuccess){
+function GET(src,onSuccess){
 	//Add loadingClass
 	if(eng.loadingClass){
 		eng.window.classList.add(eng.loadingClass);
 	}
 	
 	var ajax=new XMLHttpRequest();
-	ajax.open("GET",eng.path+eng.files[eng.currentFile]);
+	ajax.open("GET",src);
 	ajax.send();
 	
 	ajax.addEventListener(
@@ -1163,6 +1167,7 @@ function getMedium(inputFileType){
 			return "multimedia";
 			break;
 		case ".html":
+		case ".txt":
 			return "text";
 			break;
 		default:
@@ -1296,6 +1301,7 @@ var types={
 	,audio:m("player","audio")
 	,video:m("player","video")
 	,multimedia:m("multimedia")
+	,text:m("text")
 }
 
 var menuButton=m("menu-button showpony-button-preview","button"); menuButton.alt="Menu";
@@ -1603,24 +1609,66 @@ if(eng.admin){
 	var uploadName=document.createElement("input");
 	uploadName.type="text";
 	uploadName.className="showpony-editor-title";
-	uploadName.placeholder="YYYY-MM-DD (Part Title).ext";
+	uploadName.placeholder="Part Title (optional)";
+	
+	var uploadDate=document.createElement("input");
+	uploadDate.type="text";
+	uploadDate.className="showpony-editor-title";
+	uploadDate.placeholder="YYYY-MM-DD HH:MM:SS";
+	
+	var newFile=document.createElement("button");
+	newFile.innerHTML="+";
 	
 	var uploadFiles=document.createElement("input");
 	uploadFiles.type="file";
 	
 	editor.appendChild(uploadName);
+	editor.appendChild(uploadDate);
+	editor.appendChild(newFile);
 	editor.appendChild(uploadFiles);
 	
+	//var updateFile=document.
+	
 	eng.updateEditor=function(){
-		uploadName.value=safeFilename(eng.files[eng.currentFile],"from");
+		var date=(eng.files[eng.currentFile].match(/\d(.(?!\())+\d*/) || [""])[0].replace(/;/g,':');
+		
+		//Get the name, remove the parentheses
+		var name=safeFilename(
+			(eng.files[eng.currentFile].match(/\(.*\)/) || [""])[0].replace(/(^\(|\)$)/g,'')
+			,"from"
+		);
+		
+		uploadName.value=name;
+		uploadDate.value=date;
+	}
+	
+	eng.alert=function(message){
+		alert(message);
 	}
 	
 	eng.renameFile=function(){
+		var date=uploadDate.value;
+		
+		//Test that the date is safe (must match setup)
+		if(!date.match(/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/)){
+			eng.alert("Date must formatted as \"YYYY-MM-DD\" or \"YYYY-MM-DD HH-MM-SS\". You passed \""+date+"\"");
+			return;
+		}
+		
+		var fileName=date.replace(/:/g,';') //date (replace : with ; so it's Windows safe)
+			+" ("+safeFilename(uploadName.value,"to")+")" //name
+			+eng.files[eng.currentFile].match(/\.\w+$/) //ext
+		;
+		
+		console.log(fileName);
+		
+		//return;
+		
 		var formData=new FormData();
 		formData.append('call',"renameFile");
 		formData.append('filePath',eng.path);
 		formData.append('name',eng.files[eng.currentFile]);
-		formData.append('newName',safeFilename(uploadName.value,"to"));
+		formData.append('newName',fileName);
 		
 		POST(
 			function(ajax){
@@ -1659,6 +1707,32 @@ if(eng.admin){
 		);
 	}
 	
+	eng.newFile=function(){
+		var formData=new FormData();
+		formData.append('files',uploadFiles.files[0]);
+		formData.append('call',"newFile");
+		formData.append('filePath',eng.path);
+		formData.append('name',eng.files[eng.currentFile]);
+		
+		POST(
+			function(ajax){
+				var response=JSON.parse(ajax.responseText);
+				console.log(response.message);
+				
+				if(response.success){
+					//Add the file to the array
+					eng.files.push(response.file);
+					eng.durations.push(20);
+					eng.totalDuration+=20;
+					eng.scrub();
+				}else{
+					alert(response.message);
+				}
+			}
+			,formData
+		);
+	}
+	
 	//EVENT LISTENERS//
 	//On time, update the editor
 	eng.window.addEventListener("time"
@@ -1670,6 +1744,49 @@ if(eng.admin){
 	uploadName.addEventListener("change"
 		,function(){
 			eng.renameFile();
+		}
+	);
+	
+	uploadFiles.addEventListener("change"
+		,function(){
+			eng.uploadFile();
+		}
+	);
+	
+	newFile.addEventListener("click"
+		,function(){
+			eng.newFile();
+		}
+	);
+	
+	uploadDate.addEventListener("change"
+		,function(){
+			var date=uploadDate.value.split(/[\s-:;]+/);
+			
+			date=new Date(Date.UTC(
+				date[0]			//Year
+				,date[1]-1 || 0	//Month
+				,date[2] || 0	//Date
+				,date[3] || 0	//Hours
+				,date[4] || 0	//Minutes
+				,date[5] || 0	//Seconds
+				,date[6] || 0	//Milliseconds
+			));
+			
+			var date=new Intl.DateTimeFormat(
+				"default"
+				,{
+					year:'numeric'
+					,month:'numeric'
+					,day:'numeric'
+					,hour:'numeric'
+					,minute:'numeric'
+					,second:'numeric'
+					,timeZoneName:'short'
+				}
+			).format(date);
+			
+			console.log("Local time: "+date);
 		}
 	);
 }

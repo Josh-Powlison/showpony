@@ -5,9 +5,10 @@ ini_set('display_errors',1);
 
 #Allows working with non-ASCII characters
 setlocale(LC_ALL,'en_US.UTF-8');
+date_default_timezone_set('UTC');
 
 class Showpony{
-	
+
 	#Variables
 	public $filePath='parts';
 	public $admin=true; #start as true
@@ -45,6 +46,7 @@ class Showpony{
 			$date;
 			#Get the posting date from the file's name
 			preg_match('/[^x][^(]+(?!\()\S?/',$file,$date);
+			$date=str_replace(';',':',$date); #Replace semicolons in the date with colons for proper date check (semicolons are allowed in windows names, so they're used as an alternative to colons
 			
 			#If it has an "X" in the name, see if it should be made live
 			if($file[0]=="x"){
@@ -60,6 +62,7 @@ class Showpony{
 				else
 				{
 					if(!$this->admin) array_splice($passFiles,$i,1);
+					else $passFiles[$i]=$file;
 				}
 				
 				continue;
@@ -69,6 +72,10 @@ class Showpony{
 			if(strtotime($date[0])>=time()){
 				#Prepend the filename with x so it's inaccessible
 				rename($this->filePath.'/'.$file,$this->filePath.'/'.'x'.$file);
+				
+				if(!$this->admin) array_splice($passFiles,$i,1);
+				else $passFiles[$i]='x'.$file;
+				
 			}else{
 				#If this file is accessible by date, all the earlier ones will be too! Let's break out of this loop to save processing power:
 				#break;
@@ -96,14 +103,21 @@ if(!empty($_POST["call"])){
 	
 	switch($_POST['call']){
 		case "uploadFile":
+			#Delete original file
+			unlink('../'.($showpony->filePath).$_POST['name']);
+			
+			#Use the passed file name, but make sure to use the new file's extension
+			$fileName=pathinfo($_POST['name'],PATHINFO_FILENAME).'.'.pathinfo($_FILES['files']['name'],PATHINFO_EXTENSION); #add new extension
+		
+			#Place the uploaded file
 			move_uploaded_file(
 				$_FILES["files"]["tmp_name"]
-				,'../'.($showpony->filePath).(
-					#Use the passed file name, but make sure to use the new file's extension
-					#preg_replace('/\..+$/','',$_POST['name']) #Get the filename without the extension
-					pathinfo($_POST['name'],PATHINFO_FILENAME).'.'.pathinfo($_FILES['files']['name'],PATHINFO_EXTENSION) #add new extension
-				)
+				,'../'.($showpony->filePath).$fileName
 			);
+			
+			$response["success"]=true;
+			echo "Upload successful!";
+			$response["file"]=$fileName;
 			break;
 		case "renameFile":
 			$newFile=$_POST['newName'];
@@ -122,7 +136,16 @@ if(!empty($_POST["call"])){
 				echo "Rename failed! You may have an illegal character in your new name.";
 			}
 			
-		break;
+			break;
+			case "newFile":
+				$newFile='x2038-01-01 (Untitled '.time().').html';
+			
+				file_put_contents('../'.$showpony->filePath.$newFile,'Replace me with your new, better file!');
+				
+				$response["success"]=true;
+				echo "New part created!";
+				$response["file"]=$newFile;
+			break;
 	}
 	
 	$response["message"]=ob_get_contents();
