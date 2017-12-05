@@ -43,6 +43,7 @@
 						year:"numeric"
 						,month:"long"
 						,day:"numeric"
+						,hour:"numeric"
 					}
 					,admin:true
 				});

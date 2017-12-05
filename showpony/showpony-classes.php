@@ -138,7 +138,7 @@ if(!empty($_POST["call"])){
 			
 			break;
 			case "newFile":
-				$newFile='x2038-01-01 (Untitled '.time().').html';
+				$newFile='x2038-01-01 20;00;00 (Untitled '.time().').html';
 			
 				file_put_contents('../'.$showpony->filePath.$newFile,'Replace me with your new, better file!');
 				
@@ -146,6 +146,10 @@ if(!empty($_POST["call"])){
 				echo "New part created!";
 				$response["file"]=$newFile;
 			break;
+			case "deleteFile":
+				#Delete file
+				unlink('../'.($showpony->filePath).$_POST['name']);
+				break;
 	}
 	
 	$response["message"]=ob_get_contents();

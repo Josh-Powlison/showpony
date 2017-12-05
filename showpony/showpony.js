@@ -110,7 +110,24 @@ eng.time=function(obj){
 		content.className="showpony-content-"+newType;
 	}
 	
-	var src=(eng.files[eng.currentFile][0]=="x" ? "showpony/showpony-get-file.php?path="+eng.path+"&get="+eng.files[eng.currentFile] : eng.path+eng.files[eng.currentFile]);
+	var src=(
+		eng.files[eng.currentFile][0]=="x"
+		? "showpony/showpony-get-file.php?path="+eng.path+"&get="+eng.files[eng.currentFile]
+		: eng.path+eng.files[eng.currentFile]
+	);
+	
+	//Refresh the file, if requested we do so
+	if(obj && obj.refresh){
+		src+=(
+			eng.files[eng.currentFile][0]=="x"
+				? "&refresh-"+Date.now()
+				: '?refresh-'+Date.now()
+		);
+		
+		//Get the duration of the newly-loaded file too
+	}
+	
+	console.log(src);
 	
 	//Display the medium based on the file extension
 	switch(newType){
@@ -332,8 +349,6 @@ eng.scrub=function(inputPercent){
 					.split(/[\s-:;]+/)
 				;
 				
-				console.log(date,date[0].replace(/^x/,''));
-				
 				date=new Date(Date.UTC(
 					date[0]			//Year
 					,date[1]-1 || 0	//Month
@@ -343,8 +358,6 @@ eng.scrub=function(inputPercent){
 					,date[5] || 0	//Seconds
 					,date[6] || 0	//Milliseconds
 				));
-				
-				console.log(date);
 				
 				return new Intl.DateTimeFormat(
 					"default"
@@ -1606,28 +1619,25 @@ if(eng.admin){
 		eng.updateEditor();
 	}
 	
-	var uploadName=document.createElement("input");
+	var uploadName=m("editor-name","input");
 	uploadName.type="text";
-	uploadName.className="showpony-editor-title";
 	uploadName.placeholder="Part Title (optional)";
 	
-	var uploadDate=document.createElement("input");
+	var uploadDate=m("editor-date","input");
 	uploadDate.type="text";
-	uploadDate.className="showpony-editor-title";
 	uploadDate.placeholder="YYYY-MM-DD HH:MM:SS";
 	
-	var newFile=document.createElement("button");
+	var newFile=m("new-file","button");
 	newFile.innerHTML="+";
 	
 	var uploadFiles=document.createElement("input");
 	uploadFiles.type="file";
+	uploadFiles.style.display="none";
 	
-	editor.appendChild(uploadName);
-	editor.appendChild(uploadDate);
-	editor.appendChild(newFile);
-	editor.appendChild(uploadFiles);
+	var uploadFileButton=m("upload-file","label");
+	uploadFileButton.appendChild(uploadFiles);
 	
-	//var updateFile=document.
+	frag([uploadDate,uploadName,uploadFileButton,newFile],editor);
 	
 	eng.updateEditor=function(){
 		var date=(eng.files[eng.currentFile].match(/\d(.(?!\())+\d*/) || [""])[0].replace(/;/g,':');
@@ -1699,6 +1709,7 @@ if(eng.admin){
 				
 				if(response.success){
 					eng.files[eng.currentFile]=response.file;
+					eng.time({part:eng.currentFile,refresh:true})
 				}else{
 					alert(response.message);
 				}
@@ -1724,7 +1735,8 @@ if(eng.admin){
 					eng.files.push(response.file);
 					eng.durations.push(20);
 					eng.totalDuration+=20;
-					eng.scrub();
+					//eng.scrub();
+					eng.time({part:"last"})
 				}else{
 					alert(response.message);
 				}
@@ -1742,6 +1754,12 @@ if(eng.admin){
 	);
 	
 	uploadName.addEventListener("change"
+		,function(){
+			eng.renameFile();
+		}
+	);
+	
+	uploadDate.addEventListener("change"
 		,function(){
 			eng.renameFile();
 		}
