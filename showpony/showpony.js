@@ -24,7 +24,7 @@ Object.assign(eng,{
 		: "part"
 	,timeDisplay:input.timeDisplay || "[0pc] | [0pl]"
 	,data:input.data || {}
-	,durations:input.durations || []
+	,durations:[]
 	,defaultDuration:input.defaultDuration || 20
 	,totalDuration:0
 	,admin:input.admin || false
@@ -63,6 +63,10 @@ eng.time=function(obj){
 	
 	//If we're at the end, run the event
 	if(eng.currentFile>=eng.files.length){
+		//Go to the final file
+		eng.currentFile=eng.files.length-1;
+		
+		//Run the event that users can read
 		eng.window.dispatchEvent(eventEnd);
 		return;
 	}
@@ -1386,7 +1390,7 @@ function getDurations(){
 						eng.durations[i]=thisMedia.duration;
 						eng.totalDuration+=thisMedia.duration;
 						
-						//if(overlay.classList.contains("showpony-overlay-visible")) showpony.scrub();
+						//if(overlay.classList.contains("showpony-overlay-visible")) eng.scrub();
 					}
 				);
 				
@@ -1596,6 +1600,29 @@ if(eng.admin){
 	overlayText.contentEditable=true;
 	overlayText.style.pointerEvents="auto";
 	
+	var uploadName=m("editor-name","input");
+	uploadName.type="text";
+	uploadName.placeholder="Part Title (optional)";
+	
+	var uploadDate=m("editor-date","input");
+	uploadDate.type="text";
+	uploadDate.placeholder="YYYY-MM-DD HH:MM:SS";
+	
+	var newFile=m("new-file","button");
+	
+	var deleteFile=m("delete-file","button");
+	
+	var uploadFiles=document.createElement("input");
+	uploadFiles.type="file";
+	uploadFiles.style.display="none";
+	
+	var uploadFileButton=m("upload-file","label");
+	uploadFileButton.appendChild(uploadFiles);
+	
+	var logoutButton=m("logout","button");
+	
+	frag([uploadFileButton,uploadDate,uploadName,deleteFile,newFile,logoutButton],editor);
+	
 	//Adjust display of header
 	overlayText.addEventListener(
 		"focus"
@@ -1631,29 +1658,6 @@ if(eng.admin){
 			eng.login();
 		}
 	}
-	
-	var uploadName=m("editor-name","input");
-	uploadName.type="text";
-	uploadName.placeholder="Part Title (optional)";
-	
-	var uploadDate=m("editor-date","input");
-	uploadDate.type="text";
-	uploadDate.placeholder="YYYY-MM-DD HH:MM:SS";
-	
-	var newFile=m("new-file","button");
-	
-	var deleteFile=m("delete-file","button");
-	
-	var uploadFiles=document.createElement("input");
-	uploadFiles.type="file";
-	uploadFiles.style.display="none";
-	
-	var uploadFileButton=m("upload-file","label");
-	uploadFileButton.appendChild(uploadFiles);
-	
-	var logoutButton=m("logout","button");
-	
-	frag([uploadFileButton,uploadDate,uploadName,deleteFile,newFile,logoutButton],editor);
 	
 	eng.updateEditor=function(){
 		var date=(eng.files[eng.currentFile].match(/\d(.(?!\())+\d*/) || [""])[0].replace(/;/g,':');
@@ -1708,30 +1712,6 @@ if(eng.admin){
 		);
 	}
 	
-	eng.logout=function(){
-		var formData=new FormData();
-		formData.append('call','logout');
-		formData.append('filePath',eng.path);
-		
-		POST(
-			function(ajax){
-				var response=JSON.parse(ajax.responseText);
-				console.log(response);
-				
-				if(response.success){
-					eng.editor();
-					loggedIn=false;
-					
-					eng.files=response.files;
-					getDurations();
-				}else{
-					alert(response.message);
-				}
-			}
-			,formData
-		);
-	}
-	
 	eng.renameFile=function(){
 		var thisFile=eng.currentFile;
 		
@@ -1771,103 +1751,6 @@ if(eng.admin){
 		);
 	}
 	
-	eng.uploadFile=function(){
-		var thisFile=eng.currentFile;
-		
-		var formData=new FormData();
-		formData.append('files',uploadFiles.files[0]);
-		formData.append('call',"uploadFile");
-		formData.append('filePath',eng.path);
-		formData.append('name',eng.files[thisFile]);
-		
-		POST(
-			function(ajax){
-				var response=JSON.parse(ajax.responseText);
-				console.log(response);
-				
-				if(response.success){
-					eng.files[thisFile]=response.file;
-					
-					//If still on that file, refresh it
-					if(eng.currentFile===thisFile) eng.time({part:thisFile,refresh:true})
-				}else{
-					alert(response.message);
-				}
-			}
-			,formData
-		);
-	}
-	
-	eng.newFile=function(){
-		var formData=new FormData();
-		formData.append('files',uploadFiles.files[0]);
-		formData.append('call',"newFile");
-		formData.append('filePath',eng.path);
-		
-		POST(
-			function(ajax){
-				var response=JSON.parse(ajax.responseText);
-				console.log(response);
-				
-				if(response.success){
-					//Add the file to the array
-					eng.files.push(response.file);
-					eng.durations.push(20);
-					eng.totalDuration+=20;
-					
-					eng.time({part:"last"});
-					showpony.scrub();
-				}else{
-					alert(response.message);
-				}
-			}
-			,formData
-		);
-	}
-	
-	eng.deleteFile=function(){
-		var thisFile=eng.currentFile;
-		
-		var formData=new FormData();
-		formData.append('call',"deleteFile");
-		formData.append('filePath',eng.path);
-		formData.append('name',eng.files[thisFile]);
-		
-		POST(
-			function(ajax){
-				var response=JSON.parse(ajax.responseText);
-				console.log(response);
-				console.log(eng.currentFile,thisFile,eng.files.length);
-				
-				if(response.success){
-					//Remove the file from the arrays
-					eng.totalDuration-=eng.durations[thisFile];
-					
-					eng.durations.splice(thisFile,1);
-					eng.files.splice(thisFile,1);
-
-					console.log(thisFile,eng.files.length);
-					
-					//If still on that file, refresh it
-					if(thisFile===eng.currentFile){
-					
-						//Don't go past the last file
-						if(thisFile>=eng.files.length){
-							thisFile=eng.files.length-1;
-						}
-						
-						console.log(thisFile,eng.currentFile);
-						
-						eng.time({part:thisFile,refresh:true})
-					}
-				}else{
-					alert(response.message);
-				}
-			}
-			,formData
-		);
-	}
-	
 	//EVENT LISTENERS//
 	//On time, update the editor
 	eng.window.addEventListener("time"
@@ -1890,56 +1773,130 @@ if(eng.admin){
 	
 	uploadFiles.addEventListener("change"
 		,function(){
-			eng.uploadFile();
+			var thisFile=eng.currentFile;
+		
+			var formData=new FormData();
+			formData.append('files',uploadFiles.files[0]);
+			formData.append('call',"uploadFile");
+			formData.append('filePath',eng.path);
+			formData.append('name',eng.files[thisFile]);
+			
+			POST(
+				function(ajax){
+					var response=JSON.parse(ajax.responseText);
+					console.log(response);
+					
+					if(response.success){
+						eng.files[thisFile]=response.file;
+						
+						//If still on that file, refresh it
+						if(eng.currentFile===thisFile) eng.time({part:thisFile,refresh:true})
+					}else{
+						alert(response.message);
+					}
+				}
+				,formData
+			);
 		}
 	);
 	
 	deleteFile.addEventListener("click"
 		,function(){
-			eng.deleteFile();
+			var thisFile=eng.currentFile;
+		
+			var formData=new FormData();
+			formData.append('call',"deleteFile");
+			formData.append('filePath',eng.path);
+			formData.append('name',eng.files[thisFile]);
+			
+			POST(
+				function(ajax){
+					var response=JSON.parse(ajax.responseText);
+					console.log(response);
+					console.log(eng.currentFile,thisFile,eng.files.length);
+					
+					if(response.success){
+						//Remove the file from the arrays
+						eng.totalDuration-=eng.durations[thisFile];
+						
+						eng.durations.splice(thisFile,1);
+						eng.files.splice(thisFile,1);
+
+						console.log(thisFile,eng.files.length);
+						
+						//If still on that file, refresh it
+						if(thisFile===eng.currentFile){
+						
+							//Don't go past the last file
+							if(thisFile>=eng.files.length){
+								thisFile=eng.files.length-1;
+							}
+							
+							console.log(thisFile,eng.currentFile);
+							
+							eng.time({part:thisFile,refresh:true})
+						}
+					}else{
+						alert(response.message);
+					}
+				}
+				,formData
+			);
 		}
 	);
 	
 	newFile.addEventListener("click"
 		,function(){
-			eng.newFile();
+			var formData=new FormData();
+			formData.append('files',uploadFiles.files[0]);
+			formData.append('call',"newFile");
+			formData.append('filePath',eng.path);
+			
+			POST(
+				function(ajax){
+					var response=JSON.parse(ajax.responseText);
+					console.log(response);
+					
+					if(response.success){
+						//Add the file to the array
+						eng.files.push(response.file);
+						eng.durations.push(20);
+						eng.totalDuration+=20;
+						
+						eng.time({part:"last"});
+						eng.scrub();
+					}else{
+						alert(response.message);
+					}
+				}
+				,formData
+			);
 		}
 	);
 	
 	logoutButton.addEventListener("click"
 		,function(){
-			eng.logout();
-		}
-	);
-	
-	uploadDate.addEventListener("change"
-		,function(){
-			var date=uploadDate.value.split(/[\s-:;]+/);
+			var formData=new FormData();
+			formData.append('call','logout');
+			formData.append('filePath',eng.path);
 			
-			date=new Date(Date.UTC(
-				date[0]			//Year
-				,date[1]-1 || 0	//Month
-				,date[2] || 0	//Date
-				,date[3] || 0	//Hours
-				,date[4] || 0	//Minutes
-				,date[5] || 0	//Seconds
-				,date[6] || 0	//Milliseconds
-			));
-			
-			var date=new Intl.DateTimeFormat(
-				"default"
-				,{
-					year:'numeric'
-					,month:'numeric'
-					,day:'numeric'
-					,hour:'numeric'
-					,minute:'numeric'
-					,second:'numeric'
-					,timeZoneName:'short'
+			POST(
+				function(ajax){
+					var response=JSON.parse(ajax.responseText);
+					console.log(response);
+					
+					if(response.success){
+						eng.editor();
+						loggedIn=false;
+						
+						eng.files=response.files;
+						getDurations();
+					}else{
+						alert(response.message);
+					}
 				}
-			).format(date);
-			
-			console.log("Local time: "+date);
+				,formData
+			);
 		}
 	);
 	

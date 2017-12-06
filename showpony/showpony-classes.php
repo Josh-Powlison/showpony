@@ -104,42 +104,45 @@ class Showpony{
 			
 			###DETERMINE WHETHER TO HIDE FILES OR ALLOW THEM TO PASS###
 			
-			$date;
-			#Get the posting date from the file's name
-			preg_match('/[^x][^(]+(?!\()\S?/',$file,$date);
-			$date=str_replace(';',':',$date); #Replace semicolons in the date with colons for proper date check (semicolons are allowed in windows names, so they're used as an alternative to colons
-			
-			#If it has an "X" in the name, see if it should be made live
-			if($file[0]=="x"){
-				#If its launch time is before now, make it live
-				if(
-					!empty($date)
-					&& strtotime($date[0])<time()
-				){
-					rename($home.$this->mainFolder.$this->filePath.'/'.$file,$this->filePath.'/'.substr($file,1));
-					#Change the file name in the array
-					$passFiles[$i]=substr($file,1);
-				} #Otherwise, don't include it in the array
-				else
-				{
-					if(!$this->admin) array_splice($passFiles,$i,1);
-					else $passFiles[$i]=$file;
+			#We only do this with files that have a date on them (otherwise we can't tell, so check that it has a properly formatted date first:
+			if(preg_match('/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?/',$file)){
+				$date;
+				#Get the posting date from the file's name
+				preg_match('/[^x][^(]+(?!\()\S?/',$file,$date);
+				$date=str_replace(';',':',$date); #Replace semicolons in the date with colons for proper date check (semicolons are allowed in windows names, so they're used as an alternative to colons
+				
+				#If it has an "X" in the name, see if it should be made live
+				if($file[0]=="x"){
+					#If its launch time is before now, make it live
+					if(
+						!empty($date)
+						&& strtotime($date[0])<time()
+					){
+						rename($home.$this->mainFolder.$this->filePath.'/'.$file,$this->filePath.'/'.substr($file,1));
+						#Change the file name in the array
+						$passFiles[$i]=substr($file,1);
+					} #Otherwise, don't include it in the array
+					else
+					{
+						if(!$this->admin) array_splice($passFiles,$i,1);
+						else $passFiles[$i]=$file;
+					}
+					
+					continue;
 				}
 				
-				continue;
-			}
-			
-			#If it doesn't have an x in the name, see if it should be made private
-			if(strtotime($date[0])>=time()){
-				#Prepend the filename with x so it's inaccessible
-				rename($home.$this->filePath.'/'.$file,$this->filePath.'/'.'x'.$file);
-				
-				if(!$this->admin) array_splice($passFiles,$i,1);
-				else $passFiles[$i]='x'.$file;
-				
-			}else{
-				#If this file is accessible by date, all the earlier ones will be too! Let's break out of this loop to save processing power:
-				#break;
+				#If it doesn't have an x in the name, see if it should be made private
+				if(strtotime($date[0])>=time()){
+					#Prepend the filename with x so it's inaccessible
+					rename($home.$this->filePath.'/'.$file,$this->filePath.'/'.'x'.$file);
+					
+					if(!$this->admin) array_splice($passFiles,$i,1);
+					else $passFiles[$i]='x'.$file;
+					
+				}else{
+					#If this file is accessible by date, all the earlier ones will be too! Let's break out of this loop to save processing power:
+					#break;
+				}
 			}
 		}
 		

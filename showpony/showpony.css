@@ -1,8 +1,3 @@
-@font-face {
-	font-family: "Fengardo Neue";
-	src: url("FengardoNeue_Black.otf");
-}
-
 /*The container*/
 .showpony{
 	/*background-color:#000;*/
@@ -21,7 +16,7 @@
 	-moz-user-select:none;
 	-webkit-user-select:none;
 	user-select:none;
-	font-family:"Fengardo Neue";
+	font-family:sans-serif;
 	z-index:1000;
 	pointer-events:none;
 }
