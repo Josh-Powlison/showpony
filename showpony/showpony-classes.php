@@ -149,6 +149,9 @@ if(!empty($_POST["call"])){
 			case "deleteFile":
 				#Delete file
 				unlink('../'.($showpony->filePath).$_POST['name']);
+				
+				$response["success"]=true;
+				echo "Part deleted successfully!";
 				break;
 	}
 	

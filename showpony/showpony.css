@@ -380,6 +380,8 @@
 	z-index:10000;
 	
 	display:flex;
+	flex-wrap:wrap;
+	justify-content:center;
 }
 
 .showpony-editor .showpony-editor-ui{
@@ -398,12 +400,14 @@
 
 .showpony-editor-name
 ,.showpony-editor-date{
-	padding-left:1.5em;
+	padding-left:1.75em;
 }
 
 .showpony-editor-date
 ,.showpony-editor-name
-,.showpony-upload-file{
+,.showpony-upload-file
+,.showpony-new-file
+,.showpony-delete-file{
 	color:white;
 	font-size:1.25em;
 	
@@ -429,25 +433,34 @@
 }
 
 .showpony-editor-date{
-	background-position:0 40%;
+	background-position:.25em 40%;
+	width:50%;
 }
 
 .showpony-editor-name{
-	background-position:0 50%;
-	width:10em;
+	background-position:.25em 50%;
 	flex-grow:2;
+	width:20%;
 }
 
 .showpony-upload-file{
+	background-position:50% 60%;
+}
+
+.showpony-upload-file
+,.showpony-new-file
+,.showpony-delete-file{
 	cursor:pointer;
-	
-	background-position:0 60%;
-	padding-left:1.25em;
+	width:2.5em;
+	min-height:1.25em;
+}
+
+.showpony-delete-file{
+	background-position:50% 70%;
+	background-color:rgba(255,0,0,.5);
 }
 
 .showpony-new-file{
-	margin-left:auto;
-	cursor:pointer;
-	background:rgba(0,255,0,.5);
-	color:white;
+	background-position:50% 80%;
+	background-color:rgba(0,255,0,.5);
 }

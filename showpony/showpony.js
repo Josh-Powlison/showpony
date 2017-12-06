@@ -150,7 +150,7 @@ eng.time=function(obj){
 					//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
 					if(overlay.classList.contains("showpony-overlay-visible")) return;
 					
-					eng.time({"part":"next"});
+					eng.time({part:"next"});
 				}
 			);
 			break;
@@ -167,7 +167,7 @@ eng.time=function(obj){
 					//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
 					if(overlay.classList.contains("showpony-overlay-visible")) return;
 					
-					eng.time({"part":"next"});
+					eng.time({part:"next"});
 				}
 			);
 			break;
@@ -1376,6 +1376,8 @@ for(let i=0;i<l;i++){
 			thisMedia.addEventListener(
 				"loadedmetadata"
 				,function(){
+					console.log("Get duration of this!",thisMedia.duration);
+					
 					//Want to round up for later calculations
 					eng.durations[i]=thisMedia.duration;
 					eng.totalDuration+=thisMedia.duration;
@@ -1628,7 +1630,8 @@ if(eng.admin){
 	uploadDate.placeholder="YYYY-MM-DD HH:MM:SS";
 	
 	var newFile=m("new-file","button");
-	newFile.innerHTML="+";
+	
+	var deleteFile=m("delete-file","button");
 	
 	var uploadFiles=document.createElement("input");
 	uploadFiles.type="file";
@@ -1637,7 +1640,7 @@ if(eng.admin){
 	var uploadFileButton=m("upload-file","label");
 	uploadFileButton.appendChild(uploadFiles);
 	
-	frag([uploadDate,uploadName,uploadFileButton,newFile],editor);
+	frag([uploadFileButton,uploadDate,uploadName,deleteFile,newFile],editor);
 	
 	eng.updateEditor=function(){
 		var date=(eng.files[eng.currentFile].match(/\d(.(?!\())+\d*/) || [""])[0].replace(/;/g,':');
@@ -1657,6 +1660,8 @@ if(eng.admin){
 	}
 	
 	eng.renameFile=function(){
+		var thisFile=eng.currentFile;
+		
 		var date=uploadDate.value;
 		
 		//Test that the date is safe (must match setup)
@@ -1667,7 +1672,7 @@ if(eng.admin){
 		
 		var fileName=date.replace(/:/g,';') //date (replace : with ; so it's Windows safe)
 			+" ("+safeFilename(uploadName.value,"to")+")" //name
-			+eng.files[eng.currentFile].match(/\.\w+$/) //ext
+			+eng.files[thisFile].match(/\.\w+$/) //ext
 		;
 		
 		console.log(fileName);
@@ -1677,7 +1682,7 @@ if(eng.admin){
 		var formData=new FormData();
 		formData.append('call',"renameFile");
 		formData.append('filePath',eng.path);
-		formData.append('name',eng.files[eng.currentFile]);
+		formData.append('name',eng.files[thisFile]);
 		formData.append('newName',fileName);
 		
 		POST(
@@ -1685,7 +1690,7 @@ if(eng.admin){
 				var response=JSON.parse(ajax.responseText);
 				
 				if(response.success){
-					eng.files[eng.currentFile]=response.file;
+					eng.files[thisFile]=response.file;
 					eng.scrub();
 				}else{
 					alert(response.message);
@@ -1696,20 +1701,24 @@ if(eng.admin){
 	}
 	
 	eng.uploadFile=function(){
+		var thisFile=eng.currentFile;
+		
 		var formData=new FormData();
 		formData.append('files',uploadFiles.files[0]);
 		formData.append('call',"uploadFile");
 		formData.append('filePath',eng.path);
-		formData.append('name',eng.files[eng.currentFile]);
+		formData.append('name',eng.files[thisFile]);
 		
 		POST(
 			function(ajax){
 				var response=JSON.parse(ajax.responseText);
-				console.log(response.message);
+				console.log(response);
 				
 				if(response.success){
-					eng.files[eng.currentFile]=response.file;
-					eng.time({part:eng.currentFile,refresh:true})
+					eng.files[thisFile]=response.file;
+					
+					//If still on that file, refresh it
+					if(eng.currentFile===thisFile) eng.time({part:thisFile,refresh:true})
 				}else{
 					alert(response.message);
 				}
@@ -1723,20 +1732,62 @@ if(eng.admin){
 		formData.append('files',uploadFiles.files[0]);
 		formData.append('call',"newFile");
 		formData.append('filePath',eng.path);
-		formData.append('name',eng.files[eng.currentFile]);
 		
 		POST(
 			function(ajax){
 				var response=JSON.parse(ajax.responseText);
-				console.log(response.message);
+				console.log(response);
 				
 				if(response.success){
 					//Add the file to the array
 					eng.files.push(response.file);
 					eng.durations.push(20);
 					eng.totalDuration+=20;
-					//eng.scrub();
+					
 					eng.time({part:"last"})
+				}else{
+					alert(response.message);
+				}
+			}
+			,formData
+		);
+	}
+	
+	eng.deleteFile=function(){
+		var thisFile=eng.currentFile;
+		
+		var formData=new FormData();
+		formData.append('call',"deleteFile");
+		formData.append('filePath',eng.path);
+		formData.append('name',eng.files[thisFile]);
+		
+		POST(
+			function(ajax){
+				var response=JSON.parse(ajax.responseText);
+				console.log(response);
+				console.log(eng.currentFile,thisFile,eng.files.length);
+				
+				if(response.success){
+					//Remove the file from the arrays
+					eng.totalDuration-=eng.durations[thisFile];
+					
+					eng.durations.splice(thisFile,1);
+					eng.files.splice(thisFile,1);
+
+					console.log(thisFile,eng.files.length);
+					
+					//If still on that file, refresh it
+					if(thisFile===eng.currentFile){
+					
+						//Don't go past the last file
+						if(thisFile>=eng.files.length){
+							thisFile=eng.files.length-1;
+						}
+						
+						console.log(thisFile,eng.currentFile);
+						
+						eng.time({part:thisFile,refresh:true})
+					}
 				}else{
 					alert(response.message);
 				}
@@ -1768,6 +1819,12 @@ if(eng.admin){
 	uploadFiles.addEventListener("change"
 		,function(){
 			eng.uploadFile();
+		}
+	);
+	
+	deleteFile.addEventListener("click"
+		,function(){
+			eng.deleteFile();
 		}
 	);
 	
