@@ -1359,35 +1359,39 @@ var eventMenu=new Event(
 /////////////////START/////////////////
 ///////////////////////////////////////
 
-//Get lengths of all of the files
-var l=eng.files.length;
-for(let i=0;i<l;i++){
-	switch(getMedium(eng.files[i])){
-		case "video":
-		case "audio":
-			let thisMedia=document.createElement(getMedium(eng.files[i]));
-		
-			thisMedia.preload="metadata";
-			thisMedia.src=(eng.files[i][0]=="x" ? "showpony/showpony-get-file.php?path="+eng.path+"&get="+eng.files[i] : eng.path+eng.files[i]);
+function getDurations(){
+	eng.durations=[];
+	
+	//Get lengths of all of the files
+	var l=eng.files.length;
+	for(let i=0;i<l;i++){
+		switch(getMedium(eng.files[i])){
+			case "video":
+			case "audio":
+				let thisMedia=document.createElement(getMedium(eng.files[i]));
 			
-			console.log(thisMedia.src);
-			
-			//Listen for media loading
-			thisMedia.addEventListener(
-				"loadedmetadata"
-				,function(){
-					console.log("Get duration of this!",thisMedia.duration);
-					
-					//Want to round up for later calculations
-					eng.durations[i]=thisMedia.duration;
-					eng.totalDuration+=thisMedia.duration;
-				}
-			);
-			
-			break;
-		default:
-			eng.durations[i]=eng.defaultDuration;
-			eng.totalDuration+=eng.defaultDuration;
+				thisMedia.preload="metadata";
+				thisMedia.src=(eng.files[i][0]=="x" ? "showpony/showpony-get-file.php?path="+eng.path+"&get="+eng.files[i] : eng.path+eng.files[i]);
+				
+				console.log(thisMedia.src);
+				
+				//Listen for media loading
+				thisMedia.addEventListener(
+					"loadedmetadata"
+					,function(){
+						console.log("Get duration of this!",thisMedia.duration);
+						
+						//Want to round up for later calculations
+						eng.durations[i]=thisMedia.duration;
+						eng.totalDuration+=thisMedia.duration;
+					}
+				);
+				
+				break;
+			default:
+				eng.durations[i]=eng.defaultDuration;
+				eng.totalDuration+=eng.defaultDuration;
+		}
 	}
 }
 
@@ -1584,6 +1588,8 @@ content.addEventListener(
 ///////////////////////////////////////
 
 if(eng.admin){
+	var loggedIn=false;
+	
 	overlayText.contentEditable=true;
 	overlayText.style.pointerEvents="auto";
 	
@@ -1614,11 +1620,15 @@ if(eng.admin){
 	);
 	
 	eng.editor=function(){
-		eng.window.classList.toggle("showpony-editor");
-		
-		console.log(editor,eng.files[eng.currentFile]);
-		
-		eng.updateEditor();
+		if(loggedIn){
+			eng.window.classList.toggle("showpony-editor");
+			
+			console.log(editor,eng.files[eng.currentFile]);
+			
+			eng.updateEditor();
+		}else{
+			eng.login();
+		}
 	}
 	
 	var uploadName=m("editor-name","input");
@@ -1640,7 +1650,9 @@ if(eng.admin){
 	var uploadFileButton=m("upload-file","label");
 	uploadFileButton.appendChild(uploadFiles);
 	
-	frag([uploadFileButton,uploadDate,uploadName,deleteFile,newFile],editor);
+	var logoutButton=m("logout","button");
+	
+	frag([uploadFileButton,uploadDate,uploadName,deleteFile,newFile,logoutButton],editor);
 	
 	eng.updateEditor=function(){
 		var date=(eng.files[eng.currentFile].match(/\d(.(?!\())+\d*/) || [""])[0].replace(/;/g,':');
@@ -1657,6 +1669,66 @@ if(eng.admin){
 	
 	eng.alert=function(message){
 		alert(message);
+	}
+	
+	eng.login=function(tryCookie){
+		var formData=new FormData();
+		formData.append('call','login');
+		formData.append('filePath',eng.path);
+		
+		//If try
+		formData.append(
+			'password'
+			,(tryCookie ? null : prompt("What's your password?"))
+		);
+		
+		POST(
+			function(ajax){
+				var response=JSON.parse(ajax.responseText);
+				console.log(response);
+				
+				if(response.success){
+					//If logged in successfully
+					if(response.admin){
+						loggedIn=true;
+					
+						if(!tryCookie){
+							eng.editor();
+						}
+					}
+					
+					eng.files=response.files;
+					getDurations();
+				}else{
+					alert(response.message);
+				}
+			}
+			,formData
+		);
+	}
+	
+	eng.logout=function(){
+		var formData=new FormData();
+		formData.append('call','logout');
+		formData.append('filePath',eng.path);
+		
+		POST(
+			function(ajax){
+				var response=JSON.parse(ajax.responseText);
+				console.log(response);
+				
+				if(response.success){
+					eng.editor();
+					loggedIn=false;
+					
+					eng.files=response.files;
+					getDurations();
+				}else{
+					alert(response.message);
+				}
+			}
+			,formData
+		);
 	}
 	
 	eng.renameFile=function(){
@@ -1759,7 +1831,7 @@ if(eng.admin){
 		var formData=new FormData();
 		formData.append('call',"deleteFile");
 		formData.append('filePath',eng.path);
-		formData.append('name',eng.files[thisFile]);
+		formData.append('name',eng.files);
 		
 		POST(
 			function(ajax){
@@ -1834,6 +1906,12 @@ if(eng.admin){
 		}
 	);
 	
+	logoutButton.addEventListener("click"
+		,function(){
+			eng.logout();
+		}
+	);
+	
 	uploadDate.addEventListener("change"
 		,function(){
 			var date=uploadDate.value.split(/[\s-:;]+/);
@@ -1864,6 +1942,13 @@ if(eng.admin){
 			console.log("Local time: "+date);
 		}
 	);
+	
+	//Try logging in
+	eng.login(true);
+}else{
+	//If not admin, do some things manually
+
+	getDurations();
 }
 
 }

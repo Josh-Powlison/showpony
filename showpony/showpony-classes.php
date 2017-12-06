@@ -7,28 +7,85 @@ ini_set('display_errors',1);
 setlocale(LC_ALL,'en_US.UTF-8');
 date_default_timezone_set('UTC');
 
-class Showpony{
+#The directory of the page we're running showpony from
+$home=dirname(__FILE__,2).'/';
 
+class Showpony{
+	
 	#Variables
 	public $filePath='parts';
-	public $admin=true; #start as true
+	public $admin=false;
 	
-	#Upload files for the story
-	function uploadFile(){
-		return move_uploaded_file(basename($_FILES["files"]["name"][0]),'../'.$this->filePath);
+	/***
+		SHOWPONY SECURITY
+		
+		
+	***/
+	
+	#If null, then the admin console won't be accessible at all.
+	protected static $password='password';
+	#protected static $password=null;
+	
+	function login(){
+		if(self::$password==null){
+			echo 'Admin access not available for this Showpony object.';
+		}else{
+			
+			#Check if the user's trying to log in right now (and aren't trying to auto login)
+			if(
+				$_POST['call']=='login'
+				&& $_POST['password']!=="null"
+			){
+				if($_POST['password']==self::$password){
+					setcookie(
+						"showpony_password"
+						,self::$password
+						,time()+60*60*24 #Expire in a day
+						,false
+					);
+					
+					$this->admin=true;
+				}else{
+					echo "Wrong password!";
+					
+					setcookie('showpony_password',null,-1);
+					unset($_COOKIE['showpony_password']);
+					$this->admin=false;
+				}
+			}else{
+				
+				if(!empty($_COOKIE['showpony_password'])){
+					#Check if the password cookie lines with up the password
+					if(
+						$_COOKIE['showpony_password']===self::$password
+					){
+						#Set admin to true
+						$this->admin=true;
+					}else{
+						echo "You've been logged out!";
+						
+						setcookie('showpony_password',null,-1);
+						unset($_COOKIE['showpony_password']);
+						$this->admin=false;
+					}
+				}
+			}
+		}
 	}
 	
-	function renameFile(){
+	function logout(){
+		$this->admin=false;
+		setcookie('showpony_password',null,-1);
+		unset($_COOKIE['showpony_password']);
 		
-	}
-	
-	function deleteFile(){
-		
+		echo "You've been logged out successfully!";
 	}
 	
 	#Get files and protect others
 	function getFiles(){
-		$passFiles=scandir($this->filePath);
+		global $home;
+		
+		$passFiles=scandir($home.$this->filePath);
 		
 		#Run through the files (backwards, so we can splice the array and keep going back
 		for($i=count($passFiles)-1;$i>=0;$i--){
@@ -55,7 +112,7 @@ class Showpony{
 					!empty($date)
 					&& strtotime($date[0])<time()
 				){
-					rename($this->filePath.'/'.$file,$this->filePath.'/'.substr($file,1));
+					rename($home.$this->mainFolder.$this->filePath.'/'.$file,$this->filePath.'/'.substr($file,1));
 					#Change the file name in the array
 					$passFiles[$i]=substr($file,1);
 				} #Otherwise, don't include it in the array
@@ -71,7 +128,7 @@ class Showpony{
 			#If it doesn't have an x in the name, see if it should be made private
 			if(strtotime($date[0])>=time()){
 				#Prepend the filename with x so it's inaccessible
-				rename($this->filePath.'/'.$file,$this->filePath.'/'.'x'.$file);
+				rename($home.$this->filePath.'/'.$file,$this->filePath.'/'.'x'.$file);
 				
 				if(!$this->admin) array_splice($passFiles,$i,1);
 				else $passFiles[$i]='x'.$file;
@@ -100,59 +157,86 @@ if(!empty($_POST["call"])){
 	
 	$showpony=new Showpony();
 	$showpony->filePath=$_POST['filePath'];
+	$showpony->login();
 	
-	switch($_POST['call']){
-		case "uploadFile":
-			#Delete original file
-			unlink('../'.($showpony->filePath).$_POST['name']);
-			
-			#Use the passed file name, but make sure to use the new file's extension
-			$fileName=pathinfo($_POST['name'],PATHINFO_FILENAME).'.'.pathinfo($_FILES['files']['name'],PATHINFO_EXTENSION); #add new extension
-		
-			#Place the uploaded file
-			move_uploaded_file(
-				$_FILES["files"]["tmp_name"]
-				,'../'.($showpony->filePath).$fileName
-			);
-			
+	if($_POST['call']==='login'){
+		if($showpony->admin){
+			echo "Logged in successfully!";
+					
+			#Get the file names and pass them on
 			$response["success"]=true;
-			echo "Upload successful!";
-			$response["file"]=$fileName;
-			break;
-		case "renameFile":
-			$newFile=$_POST['newName'];
-	
-			#If the rename is successful, it will return true
-			if(
-				rename(
-					'../'.$showpony->filePath.$_POST['name']
-					,'../'.$showpony->filePath.$_POST['newName']
-				)
-			){ #If renaming's successful
-				$response["success"]=true;
-				echo "Rename successful!";
-				$response["file"]=$_POST['newName'];
-			}else{ #If renaming fails
-				echo "Rename failed! You may have an illegal character in your new name.";
+			$response["files"]=$showpony->getFiles();
+		}else if($_POST['password']==='null'){
+			$response["success"]=true;
+			$response["files"]=$showpony->getFiles();
+		}
+		
+		
+		$response["admin"]=$showpony->admin;
+	}else if($_POST['call']==='logout'){
+		$showpony->logout();
+		$response["files"]=$showpony->getFiles();
+		$response["success"]=true;
+	}else{
+		if($showpony->admin){
+			switch($_POST['call']){
+				case "uploadFile":
+					#Delete original file
+					unlink($home.($showpony->filePath).$_POST['name']);
+					
+					#Use the passed file name, but make sure to use the new file's extension
+					$fileName=pathinfo($_POST['name'],PATHINFO_FILENAME).'.'.pathinfo($_FILES['files']['name'],PATHINFO_EXTENSION); #add new extension
+				
+					#Place the uploaded file
+					move_uploaded_file(
+						$_FILES["files"]["tmp_name"]
+						,$home.$showpony->filePath.$fileName
+					);
+					
+					$response["success"]=true;
+					echo "Upload successful!";
+					$response["file"]=$fileName;
+					break;
+				case "renameFile":
+					$newFile=$_POST['newName'];
+			
+					#If the rename is successful, it will return true
+					if(
+						rename(
+							$home.$showpony->filePath.$_POST['name']
+							,$home.$showpony->filePath.$_POST['newName']
+						)
+					){ #If renaming's successful
+						$response["success"]=true;
+						echo "Rename successful!";
+						$response["file"]=$_POST['newName'];
+					}else{ #If renaming fails
+						echo "Rename failed! You may have an illegal character in your new name.";
+					}
+					
+					break;
+					case "newFile":
+						$newFile='x2038-01-01 20;00;00 (Untitled '.time().').html';
+					
+						file_put_contents('../'.$showpony->filePath.$newFile,'Replace me with your new, better file!');
+						
+						$response["success"]=true;
+						echo "New part created!";
+						$response["file"]=$newFile;
+					break;
+					case "deleteFile":
+						#Delete file
+						unlink($home.$showpony->filePath.$_POST['name']);
+						
+						$response["success"]=true;
+						echo "Part deleted successfully!";
+						break;
+					default:
+						break;
 			}
-			
-			break;
-			case "newFile":
-				$newFile='x2038-01-01 20;00;00 (Untitled '.time().').html';
-			
-				file_put_contents('../'.$showpony->filePath.$newFile,'Replace me with your new, better file!');
-				
-				$response["success"]=true;
-				echo "New part created!";
-				$response["file"]=$newFile;
-			break;
-			case "deleteFile":
-				#Delete file
-				unlink('../'.($showpony->filePath).$_POST['name']);
-				
-				$response["success"]=true;
-				echo "Part deleted successfully!";
-				break;
+		}else{
+			echo "You don't have the rights to perform that action! Are you logged in?";
+		}
 	}
 	
 	$response["message"]=ob_get_contents();

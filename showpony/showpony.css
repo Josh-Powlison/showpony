@@ -407,7 +407,8 @@
 ,.showpony-editor-name
 ,.showpony-upload-file
 ,.showpony-new-file
-,.showpony-delete-file{
+,.showpony-delete-file
+,.showpony-logout{
 	color:white;
 	font-size:1.25em;
 	
@@ -434,12 +435,13 @@
 
 .showpony-editor-date{
 	background-position:.25em 40%;
-	width:50%;
+	flex-grow:3;
+	width:20%;
 }
 
 .showpony-editor-name{
 	background-position:.25em 50%;
-	flex-grow:2;
+	flex-grow:1;
 	width:20%;
 }
 
@@ -449,7 +451,8 @@
 
 .showpony-upload-file
 ,.showpony-new-file
-,.showpony-delete-file{
+,.showpony-delete-file
+,.showpony-logout{
 	cursor:pointer;
 	width:2.5em;
 	min-height:1.25em;
@@ -463,4 +466,8 @@
 .showpony-new-file{
 	background-position:50% 80%;
 	background-color:rgba(0,255,0,.5);
+}
+
+.showpony-logout{
+	background-position:50% 90%;
 }
