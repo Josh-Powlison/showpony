@@ -1361,6 +1361,7 @@ var eventMenu=new Event(
 
 function getDurations(){
 	eng.durations=[];
+	eng.totalDuration=0;
 	
 	//Get lengths of all of the files
 	var l=eng.files.length;
@@ -1384,6 +1385,8 @@ function getDurations(){
 						//Want to round up for later calculations
 						eng.durations[i]=thisMedia.duration;
 						eng.totalDuration+=thisMedia.duration;
+						
+						//if(overlay.classList.contains("showpony-overlay-visible")) showpony.scrub();
 					}
 				);
 				
@@ -1623,8 +1626,6 @@ if(eng.admin){
 		if(loggedIn){
 			eng.window.classList.toggle("showpony-editor");
 			
-			console.log(editor,eng.files[eng.currentFile]);
-			
 			eng.updateEditor();
 		}else{
 			eng.login();
@@ -1747,8 +1748,6 @@ if(eng.admin){
 			+eng.files[thisFile].match(/\.\w+$/) //ext
 		;
 		
-		console.log(fileName);
-		
 		//return;
 		
 		var formData=new FormData();
@@ -1816,7 +1815,8 @@ if(eng.admin){
 					eng.durations.push(20);
 					eng.totalDuration+=20;
 					
-					eng.time({part:"last"})
+					eng.time({part:"last"});
+					showpony.scrub();
 				}else{
 					alert(response.message);
 				}
@@ -1831,7 +1831,7 @@ if(eng.admin){
 		var formData=new FormData();
 		formData.append('call',"deleteFile");
 		formData.append('filePath',eng.path);
-		formData.append('name',eng.files);
+		formData.append('name',eng.files[thisFile]);
 		
 		POST(
 			function(ajax){

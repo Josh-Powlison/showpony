@@ -19,12 +19,16 @@ class Showpony{
 	/***
 		SHOWPONY SECURITY
 		
+		Showpony is not a fortress. The security here is very simple; if you are at all concerned about security, don't use the editor; you can do everything the editor can do by simply naming files properly and putting them into the correct folder. The editor is just a tool that can be helpful.
 		
+		To turn on the editor, set a password (other than "null" below, and set admin:true for the showpony object in JS.
+		
+		To turn off the editor, set the password to "null" (no quotes) and set admin:false for the showpony object in JS. It's important you do both of these things; if you leave password at something here, somebody can sneakily adjust the backend on you. You don't want that.
 	***/
 	
 	#If null, then the admin console won't be accessible at all.
-	protected static $password='password';
-	#protected static $password=null;
+	#protected static $password='password';
+	protected static $password=null;
 	
 	function login(){
 		if(self::$password==null){
