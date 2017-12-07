@@ -14,9 +14,8 @@
 	<p>Go to the top-left corner of the engine to access the menu.</p>
 	<?
 	
-	#error_reporting(true);
 	include('showpony/showpony-classes.php');
-	$a=new Showpony();
+	$a=new Showpony(['path'=>'parts']);
 	
 	?>
 	
@@ -45,7 +44,7 @@
 						,day:"numeric"
 						,hour:"numeric"
 					}
-					,admin:false
+					,admin:true
 				});
 			}
 		);

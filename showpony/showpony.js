@@ -1678,8 +1678,8 @@ if(eng.admin){
 	
 	eng.login=function(tryCookie){
 		var formData=new FormData();
-		formData.append('call','login');
-		formData.append('filePath',eng.path);
+		formData.append('showpony-call','login');
+		formData.append('path',eng.path);
 		
 		//If try
 		formData.append(
@@ -1731,8 +1731,8 @@ if(eng.admin){
 		//return;
 		
 		var formData=new FormData();
-		formData.append('call',"renameFile");
-		formData.append('filePath',eng.path);
+		formData.append('showpony-call',"renameFile");
+		formData.append('path',eng.path);
 		formData.append('name',eng.files[thisFile]);
 		formData.append('newName',fileName);
 		
@@ -1777,8 +1777,8 @@ if(eng.admin){
 		
 			var formData=new FormData();
 			formData.append('files',uploadFiles.files[0]);
-			formData.append('call',"uploadFile");
-			formData.append('filePath',eng.path);
+			formData.append('showpony-call',"uploadFile");
+			formData.append('path',eng.path);
 			formData.append('name',eng.files[thisFile]);
 			
 			POST(
@@ -1805,8 +1805,8 @@ if(eng.admin){
 			var thisFile=eng.currentFile;
 		
 			var formData=new FormData();
-			formData.append('call',"deleteFile");
-			formData.append('filePath',eng.path);
+			formData.append('showpony-call',"deleteFile");
+			formData.append('path',eng.path);
 			formData.append('name',eng.files[thisFile]);
 			
 			POST(
@@ -1849,8 +1849,8 @@ if(eng.admin){
 		,function(){
 			var formData=new FormData();
 			formData.append('files',uploadFiles.files[0]);
-			formData.append('call',"newFile");
-			formData.append('filePath',eng.path);
+			formData.append('showpony-call',"newFile");
+			formData.append('path',eng.path);
 			
 			POST(
 				function(ajax){
@@ -1877,8 +1877,8 @@ if(eng.admin){
 	logoutButton.addEventListener("click"
 		,function(){
 			var formData=new FormData();
-			formData.append('call','logout');
-			formData.append('filePath',eng.path);
+			formData.append('showpony-call','logout');
+			formData.append('path',eng.path);
 			
 			POST(
 				function(ajax){
