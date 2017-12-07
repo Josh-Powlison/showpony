@@ -93,16 +93,15 @@ eng.time=function(obj){
 	eng.window.scrollIntoView();
 	
 	var newType=getMedium(eng.files[eng.currentFile]);
+	var thisType=types[newType];
 	
 	//Multimedia engine resets
 	eng.lines=null;
 	eng.charsHidden=0;
 	eng.currentLine=0;
-	waitTimer=null;
 	content.style.cssText=null; //Remove any styles applied to the content
 	waitForInput=false;
-	
-	var thisType=types[newType];
+	waitTimer=null;
 	
 	//If switching types, do some cleanup
 	if(currentType!=newType){
@@ -116,7 +115,7 @@ eng.time=function(obj){
 	
 	var src=(
 		eng.files[eng.currentFile][0]=="x"
-		? "showpony/showpony-get-file.php?path="+eng.path+"&get="+eng.files[eng.currentFile]
+		? "showpony/showpony-get-file.php?get="+eng.path+eng.files[eng.currentFile]
 		: eng.path+eng.files[eng.currentFile]
 	);
 	
@@ -277,9 +276,8 @@ eng.scrub=function(inputPercent){
 			currentTime+=eng.durations[i];
 		}
 		
-		var inputPercent=currentTime / eng.totalDuration;
-		
-		var newPart=eng.currentFile;
+		var inputPercent=currentTime / eng.totalDuration
+			,newPart=eng.currentFile;
 	}
 	else //if inputPercent WAS passed
 	{
@@ -288,9 +286,9 @@ eng.scrub=function(inputPercent){
 		inputPercent= inputPercent <= 0 ? 0 : inputPercent >= 1 ? 1 : inputPercent;
 		
 		//Go to the time
-		var newTime=eng.totalDuration*inputPercent;
-
-		var newPart=0;
+		var newTime=eng.totalDuration*inputPercent
+			,newPart=0
+		;
 		
 		//Look through the media for the right one
 		var l=eng.durations.length;
@@ -321,9 +319,10 @@ eng.scrub=function(inputPercent){
 	//Move the progress bar
 	progress.style.left=(inputPercent*100)+"%";
 	
-	var current=Math.floor(inputPercent*eng.totalDuration);
-	var left=eng.totalDuration-Math.floor(inputPercent*eng.totalDuration);
-	var floorValue=1;
+	var current=Math.floor(inputPercent*eng.totalDuration)
+		,left=eng.totalDuration-Math.floor(inputPercent*eng.totalDuration)
+		,floorValue=1
+	;
 	
 	//console.log(current,inputPercent,eng.totalDuration,newPart);
 	
@@ -471,60 +470,51 @@ eng.run=function(inputNum){
 
 	var text=eng.lines[eng.currentLine];
 	
-	//Skip comment lines
-	if(text[0]=='#'){
-		//Go to the next line
-		eng.run();
-		return;
-	}
-	
-	//Replace any variable placeholders with their values
-	var varMatch=text.match(/[^\[]+(?=\])/g);
-	
-	var l=varMatch ? varMatch.length : 0;
-	for(var i=0;i<l;i++){
-		//Replace the match with the data value
+	//Replace all variables (including variables inside variables) with the right name
+	while(text.match(/[^\[]+(?=\])/g)){
+		var match=text.match(/[^\[]+(?=\])/g)[0];
+		
 		text=text.replace(
-			'['+varMatch[i]+']'
-			,eng.data[varMatch[i]]
+			'['+match+']'
+			,eng.data[match]
 		);
 	}
-	
-	var currentTextbox="main";
-	//Assume waiting time
-	var wait=true;
 
+	var currentTextbox="main" //Assume textbox is "main"
+		,wait=true //Assume waiting time
+	;
+	
 	if(text[0]==">"){
-		var splitValues=text.replace(/>\s+/,'').split(/(?:\s{3,}|\t+)/);
+		var vals=text.replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/);
 		
-		console.log(text,splitValues);
+		console.log(text,vals);
 		
 		//Consider special text calls
-		switch(splitValues[0]){
+		switch(vals[0].toLowerCase()){
 			//Characters and Backgrounds
-			case "CH":
-			case "BG":
+			case "ch":
+			case "bg":
 				//Get the folder, which is the name without anything after a hash
-				var folder=splitValues[1].split('#')[0];
+				var folder=vals[1].split('#')[0];
 
 				//If an object with that name doesn't exist
-				if(!eng.objects[splitValues[1]]){
+				if(!eng.objects[vals[1]]){
 					//Add a character
-					if(splitValues[0]=="CH"){
-						eng.objects[splitValues[1]]=new Character();
+					if(vals[0]=="ch"){
+						eng.objects[vals[1]]=new Character();
 					}else{
 						//Add a background
-						eng.objects[splitValues[1]]=m("background");
-						content.appendChild(eng.objects[splitValues[1]]);
+						eng.objects[vals[1]]=m("background");
+						content.appendChild(eng.objects[vals[1]]);
 					}
 				}
 				
-				var images=(splitValues[0]=="CH" ? [] : '');
+				var images=(vals[0]=="ch" ? [] : '');
 				
 				//images will be either an array or a string
-				var imageNames=splitValues[2];
+				var imageNames=vals[2];
 				
-				console.log(splitValues);
+				console.log(vals);
 				
 				if(imageNames){
 					//Get all the values (colors, etc) out of here as possible
@@ -534,7 +524,7 @@ eng.run=function(inputNum){
 					
 					console.log(imageNames);
 					
-					if(splitValues[0]=="CH")
+					if(vals[0]=="ch")
 					{
 						images.push("url('resources/characters/"+folder+"/"+imageNames+"')");
 					}
@@ -546,7 +536,7 @@ eng.run=function(inputNum){
 						
 						//If it's a color or gradient, treat it as such
 						if(imageNames.match(/(#|gradient\(|rgb\(|rgba\()/)){
-							eng.objects[splitValues[1]].style.backgroundColor=imageNames;
+							eng.objects[vals[1]].style.backgroundColor=imageNames;
 						}
 						else //Otherwise, assume it's an image
 						{
@@ -557,7 +547,7 @@ eng.run=function(inputNum){
 					/*
 					for(var i=0;i<imageNames.length;i++){
 						
-						if(splitValues[0]=="CH")
+						if(vals[0]=="ch")
 						{
 							images.push("url('resources/characters/"+folder+"/"+imageNames[i]+"')");
 						}
@@ -569,7 +559,7 @@ eng.run=function(inputNum){
 							
 							//If it's a color or gradient, treat it as such
 							if(imageNames[i].match(/(#|gradient\(|rgb\(|rgba\()/)){
-								eng.objects[splitValues[1]].el.style.backgroundColor=imageNames[i];
+								eng.objects[vals[1]].el.style.backgroundColor=imageNames[i];
 							}
 							else //Otherwise, assume it's an image
 							{
@@ -584,7 +574,7 @@ eng.run=function(inputNum){
 					}*/
 					
 					//Adding the background images
-					if(splitValues[0]=="CH"){
+					if(vals[0]=="ch"){
 						
 						//Go through each image and add a div
 						let l=images.length;
@@ -593,10 +583,10 @@ eng.run=function(inputNum){
 							var found=false;
 							
 							//If the layer exists
-							if(eng.objects[splitValues[1]].el.children[i]){
+							if(eng.objects[vals[1]].el.children[i]){
 								//If this value doesn't exist in the layer
 								
-								var search=eng.objects[splitValues[1]].el.children[i].children;
+								var search=eng.objects[vals[1]].el.children[i].children;
 								
 								let ll=search.length;
 								for(var ii=0;ii<ll;ii++){
@@ -611,71 +601,67 @@ eng.run=function(inputNum){
 							}
 							
 							if(!found){
-								eng.objects[splitValues[1]].imgDiv(i,images[i]);
+								eng.objects[vals[1]].imgDiv(i,images[i]);
 							}
 						}
 					}else{
-						eng.objects[splitValues[1]].style.backgroundImage=images;
+						eng.objects[vals[1]].style.backgroundImage=images;
 					}
 				}
 				
 				//If a 4th value exists, adjust 'left' if a character or 'zIndex' if a background
-				if(splitValues[3]){
-					eng.objects[splitValues[1]].el.style[splitValues[0]=="CH" ? "left" : "zIndex"]=splitValues[3];
+				if(vals[3]){
+					eng.objects[vals[1]].el.style[vals[0]=="ch" ? "left" : "zIndex"]=vals[3];
 				}
 				
 				//Go to the next line
 				eng.run();
 				return;
-				break;
 			//Styles
-			case "ST":
+			case "st":
+			case "styles":
 				//If it's the window
-				if(splitValues[1]=="window"){
-					content.style.cssText+=splitValues[2];
+				if(vals[1]=="window"){
+					content.style.cssText+=vals[2];
 				//If it's a general element
 				}else{
-					eng[
-						(eng.objects[splitValues[1]]
-						? "objects"
-						: "textboxes")
-					][splitValues[1]].style.cssText+=splitValues[2];
+					(eng.objects[vals[1]] || eng.textboxes[vals[1]]).style.cssText+=vals[2];
 				}
 				
 				//Go to the next line
 				eng.run();
 				return;
-				break;
 			//Audio
-			case "AU":
+			case "au":
+			case "music":
+			case "audio":
 				//If the audio doesn't exist
-				if(!eng.objects[splitValues[1]]){
+				if(!eng.objects[vals[1]]){
 					//Add them in!
 					let el=document.createElement("audio");
 					
-					el.src="resources/audio/"+splitValues[1];
-					
+					el.src="resources/audio/"+vals[1];
 					el.preload=true;
 					
-					eng.objects[splitValues[1]]=el;
+					eng.objects[vals[1]]=el;
 					
-					content.appendChild(eng.objects[splitValues[1]]);
+					content.appendChild(eng.objects[vals[1]]);
 				}
 				
 				//Go through the passed parameters and apply them
-				let l=splitValues.length;
+				let l=vals.length;
 				for(let i=2;i<l;i++){
-					switch(splitValues[i]){
+					switch(vals[i]){
 						case "loop":
-							eng.objects[splitValues[1]].loop=true;
+							eng.objects[vals[1]].loop=true;
 							break;
 						case "play":
 						case "pause":
-							eng.objects[splitValues[1]][splitValues[i]]();
+							eng.objects[vals[1]][vals[i]]();
 							break;
 						case "stop":
-							eng.objects[splitValues[1]].currentTime=0;
-							eng.objects[splitValues[1]].pause();
+							eng.objects[vals[1]].currentTime=0;
+							eng.objects[vals[1]].pause();
 							break;
 					}
 				}
@@ -683,159 +669,78 @@ eng.run=function(inputNum){
 				//Go to the next line
 				eng.run();
 				return;
-				break;
 			//Wait for reader input before continuing
-			case "WT":
+			case "wt":
+			case "wait":
 				//If there's a waitTimer, clear it out
 				clearTimeout(waitTimer);
 				
 				//If a value was included, wait 
-				if(splitValues[1]){
-					
-					//Set a wait timer (continue after wait)
-					waitTimer=setTimeout(
-						eng.run
-						,parseFloat(splitValues[1])*1000
-					);
-				}
+				waitTimer=vals[1] && setTimeout(eng.run,parseFloat(vals[1])*1000);
 				return;
-				break;
 			//Go to a place
-			case "GO":
-				eng.run(
-					eng.lines.indexOf(splitValues[1])+1 || null
-				);
+			case "go":
+				eng.run(eng.lines.indexOf(vals[1])+1 || null);
 				return;
-				
-				break;
 			//End the novel
-			case "EN":
+			case "end":
 				eng.time({part:"next"});
 				return;
-				break;
 			//Set data
-			case "DS":
-				//If the variable is already set, get its current value
-				var curValue=eng.data[splitValues[1]] || 0;
-				
-				//Update data
-				eng.data[splitValues[1]]=
-					splitValues[2]=="++" ? parseFloat(curValue)+1
-					: splitValues[2]=="--" ? parseFloat(curValue)-1
-					: splitValues[2][0]=="+" ? parseFloat(curValue)+parseFloat(splitValues[2].match(/(\d|\.|\,)+$/))
-					: splitValues[2][0]=="-" ? parseFloat(curValue)-parseFloat(splitValues[2].match(/(\d|\.|\,)+$/))
-					: splitValues[2]
-				;
-
-				console.log(eng.data);
+			case "ds":
+			case "data":
+				//DS	var		=	val
+				eng.data[vals[1]]=operators[vals[2]](
+					ifParse(eng.data[vals[1]])
+					,ifParse(vals[3])
+				);
 				
 				//Go to the next line
 				eng.run();
 				return;
-				
-				break;
-			case "IF":
-				//Get the var, the values, and the goTo position
-				var checkVar=text.substring(4);
-				var checkValues=eng.lines[eng.currentLine+1].split(/\s+/g);
-				var goTos=eng.lines[eng.currentLine+2].split(/\s+/g);
-				
-				console.log(checkVar,eng.data[checkVar]);
-				
-				//If the object exists
-				if(typeof eng.data[checkVar]!=='undefined'){
-					//Go through all the values it could be and check for them (if none match, we're just displaying this line as text
-					let l=checkValues.length;
-					for(var i=0;i<l;i++){
-						var goToLine=-1;
-						var check=false;
-						
-						console.log(eng.data[checkVar],checkValues[i]);
-						
-						switch(checkValues[i][0]){
-							//If less than
-							case "<":
-								if(checkValues[i][1]=="="){
-									console.log(eng.data[checkVar],checkValues[i].substr(2));
-									
-									check=(parseFloat(eng.data[checkVar])<=parseFloat(checkValues[i].substr(2)));
-								}else{
-									check=(parseFloat(eng.data[checkVar])<parseFloat(checkValues[i].substr(1)));
-								}
-								break;
-							//If greater than
-							case ">":
-								if(checkValues[i][1]=="="){
-									check=(parseFloat(eng.data[checkVar])>=parseFloat(checkValues[i].substr(2)));
-								}else{
-									check=(parseFloat(eng.data[checkVar])>parseFloat(checkValues[i].substr(1)));
-								}
-								break;
-							case "!":
-								check=(eng.data[checkVar]!=checkValues[i].substr(1));
-								break;
-							default:
-								check=(eng.data[checkVar]==checkValues[i]);
-							break;
-						}
-						
-						//If the check is true, set the goToLine
-						if(check) goToLine=eng.lines.indexOf(goTos[i]);
-						
-						//As long as that line exists, go to it (otherwise continue)
-						if(goToLine>-1){
-							eng.run(goToLine+1);
-							
-							//Escape the loop
-							break;
-						}
-					}
+			case "if":
+				//IF	val		==	val		goto
+				if(operators[vals[2]](
+					ifParse(vals[1])
+					,ifParse(vals[3])
+				)){
+					eng.run(eng.lines.indexOf(vals[4])+1 || null);
+				}else{
+					eng.run();
 				}
 				
 				return;
-				break;
 			//Input Button (players choose between several button options)
-			case "IN":
+			case "in":
+			case "input":
+				var thisButton=m("kn-choice","button");
+				thisButton.innerHTML=vals[2];
 				
-				var readLine=eng.currentLine+1;
+				eng.textboxes["main"].appendChild(thisButton);
 				
-				//While the line has a dash before it
-				while(eng.lines[readLine] && eng.lines[readLine][0]=='-'){
-					var thisButton=document.createElement("button");
-					thisButton.className="kn-choice";
+				//On clicking a button, go to the right place
+				thisButton.addEventListener("click",function(event){
+					event.stopPropagation();
 					
-					console.log(readLine);
+					//Progress
+					eng.run(eng.lines.indexOf(vals[1])+1);
 					
-					var values=eng.lines[readLine].substr(1).split(/\s+(.+)/);
-					
-					let cur=values[0];
-					thisButton.innerHTML=values[1];
-					eng.textboxes["main"].el.appendChild(thisButton);
-					
-					readLine++;
-					
-					//On clicking a button, go to the right place
-					thisButton.addEventListener("click",function(event){
-						event.stopPropagation();
-						
-						//Progress
-						eng.run(eng.lines.indexOf(cur)+1);
-						
-						waitForInput=false;
-					});
-				}
+					waitForInput=false;
+				});
 				
 				waitForInput=true;
 				
+				eng.run();
+				
 				return;
-				break;
 			//Textbox
-			case "TB":
+			case "tb":
+			case "textbox":
 				//Get the current textbox
-				currentTextbox=splitValues[1];
+				currentTextbox=vals[1];
 				
 				//Get the text to display
-				text=splitValues[2];
+				text=vals[2];
 				
 				//Turn off automatic waiting for this, we're assuming waiting is off
 				wait=false;
@@ -853,7 +758,7 @@ eng.run=function(inputNum){
 	}
 	
 	//If there's nothing passed, clear the current textbox and continue on to the next line.
-	if(splitValues && !splitValues[2]){
+	if(vals && !vals[2]){
 		eng.textboxes[currentTextbox].innerHTML="";
 		eng.run();
 		return;
@@ -864,8 +769,11 @@ eng.run=function(inputNum){
 	//STEP 2: Design the text//
 	
 	//Design defaults
-	var charElementDefault=m("kn-char","span");	
-	var charElement, baseWaitTime, addAnimations;
+	var charElementDefault=m("kn-char","span")
+		,charElement
+		,baseWaitTime
+		,addAnimations
+	;
 	
 	//Reset the defaults with this function, or set them inside here!
 	function charDefaults(){
@@ -882,7 +790,7 @@ eng.run=function(inputNum){
 	var totalWait=0;
 	var fragment=document.createDocumentFragment();
 	
-	l=text.length;
+	var l=text.length;
 	for(let i=0;i<l;i++){	
 		var waitTime=baseWaitTime;
 		
@@ -1139,26 +1047,6 @@ function GET(src,onSuccess){
 	);
 }
 
-//Make a POST call
-function POST(onSuccess,formData){
-	var ajax=new XMLHttpRequest();
-	ajax.open("POST","showpony/showpony-classes.php");
-	ajax.send(formData);
-	
-	ajax.addEventListener(
-		"readystatechange"
-		,function(){
-			if(ajax.readyState==4){
-				if(ajax.status==200){
-					onSuccess(ajax);
-				}else{
-					alert("Failed to load Showpony class file.");
-				}
-			}
-		}
-	);
-}
-
 //Get the medium from the file extensions
 function getMedium(inputFileType){
 	switch(inputFileType.match(/\.[^.]+$/)[0]){
@@ -1211,6 +1099,27 @@ function m(input,el){
 	a.className="showpony-"+input;
 	
 	return a;
+}
+
+//Check values inline
+var operators={
+	'+':function(a,b){return a+b;}
+	,'-':function(a,b){return a-b;}
+	,'=':function(a,b){return b;}
+	,'==':function(a,b){return a==b;}
+	,'<':function(a,b){return a<b;}
+	,'>':function(a,b){return a>b;}
+	,'<=':function(a,b){return a<=b;}
+	,'>=':function(a,b){return a>=b;}
+	,'!':function(a,b){return a!=b;}
+};
+
+//If a value's a number, return it as one
+function ifParse(input){
+	return parseFloat(input)==input
+		? parseFloat(input)
+		: input
+	;
 }
 
 ///////////////////////////////////////
@@ -1292,44 +1201,37 @@ function replaceArray(string,fromArray,toArray){
 ///////////////////////////////////////
 
 //Waiting for user input
-var waitForInput=false;
-
-//The timer for waiting
-var waitTimer=null;
-
-//The type of file in use
-var currentType=null;
-
-//Whether or not we're moving the scrub bar
-var scrubbing=false;
-
-///////////////////////////////////////
-//////////INITIALISE OBJECTS///////////
-///////////////////////////////////////
-
-var overlay=m("overlay")
+var waitForInput=false
+	,scrubbing=false
+	,waitTimer=null
+	,currentType=null
+	//Elements
+	,overlay=m("overlay")
 	,editor=m("editor-ui")
 	,overlayText=m("overlay-text")
 	,progress=m("progress")
-	,content=m("content");
+	,content=m("content")
+	//Buttons
+	,menuButton=m("menu-button showpony-button-preview","button")
+	,fullscreenButton=m("fullscreen-button showpony-button-preview","button")
+	,captionsButton=m("captions-button","button")
+	,types={
+		image:m("image","img")
+		,audio:m("player","audio")
+		,video:m("player","video")
+		,multimedia:m("multimedia")
+		,text:m("text")
+	}
+	
+	,continueNotice=m("continue")
+;
 
-var types={
-	image:m("image","img")
-	,audio:m("player","audio")
-	,video:m("player","video")
-	,multimedia:m("multimedia")
-	,text:m("text")
-}
-
-var menuButton=m("menu-button showpony-button-preview","button"); menuButton.alt="Menu";
-var fullscreenButton=document.createElement("button"); fullscreenButton.alt="Fullscreen"; fullscreenButton.className="showpony-fullscreen-button showpony-button-preview";
-var captionsButton=document.createElement("button"); captionsButton.alt="Closed Captions/Subtitles"; captionsButton.className="showpony-captions-button";
-frag([progress,overlayText],overlay)
-
-//Objects
-//Continue Notification
-var continueNotice=m("continue");
+menuButton.alt="Menu";
+fullscreenButton.alt="Fullscreen";
+captionsButton.alt="Closed Captions/Subtitles";
 continueNotice.innerHTML="...";
+
+frag([progress,overlayText],overlay)
 
 ///////////////////////////////////////
 /////////////CUSTOM EVENTS/////////////
@@ -1376,7 +1278,7 @@ function getDurations(){
 				let thisMedia=document.createElement(getMedium(eng.files[i]));
 			
 				thisMedia.preload="metadata";
-				thisMedia.src=(eng.files[i][0]=="x" ? "showpony/showpony-get-file.php?path="+eng.path+"&get="+eng.files[i] : eng.path+eng.files[i]);
+				thisMedia.src=(eng.files[i][0]=="x" ? "showpony/showpony-get-file.php?get="+eng.path+eng.files[i] : eng.path+eng.files[i]);
 				
 				console.log(thisMedia.src);
 				
@@ -1612,12 +1514,12 @@ if(eng.admin){
 	
 	var deleteFile=m("delete-file","button");
 	
-	var uploadFiles=document.createElement("input");
-	uploadFiles.type="file";
-	uploadFiles.style.display="none";
+	var uploadFile=document.createElement("input");
+	uploadFile.type="file";
+	uploadFile.style.display="none";
 	
 	var uploadFileButton=m("upload-file","label");
-	uploadFileButton.appendChild(uploadFiles);
+	uploadFileButton.appendChild(uploadFile);
 	
 	var logoutButton=m("logout","button");
 	
@@ -1677,16 +1579,6 @@ if(eng.admin){
 	}
 	
 	eng.login=function(tryCookie){
-		var formData=new FormData();
-		formData.append('showpony-call','login');
-		formData.append('path',eng.path);
-		
-		//If try
-		formData.append(
-			'password'
-			,(tryCookie ? null : prompt("What's your password?"))
-		);
-		
 		POST(
 			function(ajax){
 				var response=JSON.parse(ajax.responseText);
@@ -1708,14 +1600,15 @@ if(eng.admin){
 					alert(response.message);
 				}
 			}
-			,formData
+			,"login"
+			,(tryCookie ? null : prompt("What's your password?"))
 		);
 	}
 	
 	eng.renameFile=function(){
 		var thisFile=eng.currentFile;
-		
 		var date=uploadDate.value;
+		var x=(eng.files[thisFile][0]=='x') ? 'x': '';
 		
 		//Test that the date is safe (must match setup)
 		if(!date.match(/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/)){
@@ -1723,18 +1616,11 @@ if(eng.admin){
 			return;
 		}
 		
-		var fileName=date.replace(/:/g,';') //date (replace : with ; so it's Windows safe)
+		var fileName=x
+			+date.replace(/:/g,';') //date (replace : with ; so it's Windows safe)
 			+" ("+safeFilename(uploadName.value,"to")+")" //name
 			+eng.files[thisFile].match(/\.\w+$/) //ext
 		;
-		
-		//return;
-		
-		var formData=new FormData();
-		formData.append('showpony-call',"renameFile");
-		formData.append('path',eng.path);
-		formData.append('name',eng.files[thisFile]);
-		formData.append('newName',fileName);
 		
 		POST(
 			function(ajax){
@@ -1742,12 +1628,18 @@ if(eng.admin){
 				
 				if(response.success){
 					eng.files[thisFile]=response.file;
+					
+					//Sort the files by order
+					eng.files.sort();
+					
+					getDurations();
 					eng.scrub();
 				}else{
 					alert(response.message);
 				}
 			}
-			,formData
+			,"renameFile"
+			,fileName
 		);
 	}
 	
@@ -1771,15 +1663,9 @@ if(eng.admin){
 		}
 	);
 	
-	uploadFiles.addEventListener("change"
+	uploadFile.addEventListener("change"
 		,function(){
 			var thisFile=eng.currentFile;
-		
-			var formData=new FormData();
-			formData.append('files',uploadFiles.files[0]);
-			formData.append('showpony-call',"uploadFile");
-			formData.append('path',eng.path);
-			formData.append('name',eng.files[thisFile]);
 			
 			POST(
 				function(ajax){
@@ -1796,6 +1682,7 @@ if(eng.admin){
 					}
 				}
 				,formData
+				,thisFile
 			);
 		}
 	);
@@ -1803,11 +1690,6 @@ if(eng.admin){
 	deleteFile.addEventListener("click"
 		,function(){
 			var thisFile=eng.currentFile;
-		
-			var formData=new FormData();
-			formData.append('showpony-call',"deleteFile");
-			formData.append('path',eng.path);
-			formData.append('name',eng.files[thisFile]);
 			
 			POST(
 				function(ajax){
@@ -1840,18 +1722,14 @@ if(eng.admin){
 						alert(response.message);
 					}
 				}
-				,formData
+				,"deleteFile"
+				,thisFile
 			);
 		}
 	);
 	
 	newFile.addEventListener("click"
 		,function(){
-			var formData=new FormData();
-			formData.append('files',uploadFiles.files[0]);
-			formData.append('showpony-call',"newFile");
-			formData.append('path',eng.path);
-			
 			POST(
 				function(ajax){
 					var response=JSON.parse(ajax.responseText);
@@ -1869,17 +1747,13 @@ if(eng.admin){
 						alert(response.message);
 					}
 				}
-				,formData
+				,"newFile"
 			);
 		}
 	);
 	
 	logoutButton.addEventListener("click"
 		,function(){
-			var formData=new FormData();
-			formData.append('showpony-call','logout');
-			formData.append('path',eng.path);
-			
 			POST(
 				function(ajax){
 					var response=JSON.parse(ajax.responseText);
@@ -1895,10 +1769,41 @@ if(eng.admin){
 						alert(response.message);
 					}
 				}
-				,formData
+				,"logout"
 			);
 		}
 	);
+	
+	//Make a POST call
+	function POST(onSuccess,call,inputVal){
+		//Prepare the form data
+		var formData=new FormData();
+		formData.append('showpony-call',call);
+		formData.append('path',eng.path);
+		
+		
+		formData.append('password',inputVal || null);
+		formData.append('name',eng.files[inputVal || null]);
+		formData.append('newName',inputVal || null);
+		formData.append('files',uploadFile.files[0] || null);
+
+		var ajax=new XMLHttpRequest();
+		ajax.open("POST","showpony/showpony-classes.php");
+		ajax.send(formData);
+		
+		ajax.addEventListener(
+			"readystatechange"
+			,function(){
+				if(ajax.readyState==4){
+					if(ajax.status==200){
+						onSuccess(ajax);
+					}else{
+						alert("Failed to load Showpony class file.");
+					}
+				}
+			}
+		);
+	}
 	
 	//Try logging in
 	eng.login(true);

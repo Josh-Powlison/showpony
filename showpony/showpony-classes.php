@@ -6,7 +6,7 @@ ini_set('display_errors',1);
 
 class Showpony{
 
-	protected static $password='passfeword'; #NULL will disable admin access
+	protected static $password='password'; #NULL will disable admin access. Do not keep the default password.
 	
 	#Initialize the class
 	function __construct($inputArray){
