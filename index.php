@@ -35,7 +35,6 @@
 					,path:"parts/"
 					,scrubLoad:false
 					,startAt:"first"
-					//,"timeDisplay":"Part [0pc]: [n]<br>[1mc]:[2sc] | [1ml]:[2sl]<br>[d]"
 					,timeDisplay:"Part [0pc]: [n]<br>[1mc]:[2sc] | [1ml]:[2sl]<br>[d]"
 					,query:false
 					,dateFormat:{

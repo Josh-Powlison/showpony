@@ -110,7 +110,7 @@ eng.time=function(obj){
 		content.appendChild(thisType);
 		
 		//Use the general content class
-		content.className="showpony-content-"+newType;
+		content.className="showpony-content";//+newType;
 	}
 	
 	var src=(
@@ -190,8 +190,6 @@ eng.time=function(obj){
 				,function(ajax){
 					//Get each line (taking into account and ignoring extra lines)
 					eng.lines=ajax.responseText.match(/[^\r\n]+/g);
-					
-					content.className="";
 					
 					eng.run(0);
 				}
@@ -278,9 +276,7 @@ eng.scrub=function(inputPercent){
 		
 		var inputPercent=currentTime / eng.totalDuration
 			,newPart=eng.currentFile;
-	}
-	else //if inputPercent WAS passed
-	{
+	}else{ //if inputPercent WAS passed
 	
 		//Clamp inputPercent between 0 and 1
 		inputPercent= inputPercent <= 0 ? 0 : inputPercent >= 1 ? 1 : inputPercent;
@@ -455,6 +451,12 @@ eng.fullscreen=function(type){
 	return;
 }
 
+var multimediaSettings={
+	textbox:"main"
+	,text: null
+	,go:false
+};
+
 //Run multimedia (interactive fiction, visual novels, etc)
 eng.run=function(inputNum){
 	
@@ -480,299 +482,57 @@ eng.run=function(inputNum){
 		);
 	}
 
-	var currentTextbox="main" //Assume textbox is "main"
-		,wait=true //Assume waiting time
-	;
+	var wait=true; //Assume waiting time
 	
 	if(text[0]==">"){
 		var vals=text.replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/);
 		
 		console.log(text,vals);
 		
-		//Consider special text calls
-		switch(vals[0].toLowerCase()){
-			//Characters and Backgrounds
-			case "ch":
-			case "bg":
-				//Get the folder, which is the name without anything after a hash
-				var folder=vals[1].split('#')[0];
-
-				//If an object with that name doesn't exist
-				if(!eng.objects[vals[1]]){
-					//Add a character
-					if(vals[0]=="ch"){
-						eng.objects[vals[1]]=new Character();
-					}else{
-						//Add a background
-						eng.objects[vals[1]]=m("background");
-						content.appendChild(eng.objects[vals[1]]);
-					}
-				}
-				
-				var images=(vals[0]=="ch" ? [] : '');
-				
-				//images will be either an array or a string
-				var imageNames=vals[2];
-				
-				console.log(vals);
-				
-				if(imageNames){
-					//Get all the values (colors, etc) out of here as possible
-					if(imageNames.indexOf(",")>-1){
-						imageNames=imageNames[0].split(",");
-					}
-					
-					console.log(imageNames);
-					
-					if(vals[0]=="ch")
-					{
-						images.push("url('resources/characters/"+folder+"/"+imageNames+"')");
-					}
-					else
-					{
-						if(i>0){
-							images+=',';
-						}
-						
-						//If it's a color or gradient, treat it as such
-						if(imageNames.match(/(#|gradient\(|rgb\(|rgba\()/)){
-							eng.objects[vals[1]].style.backgroundColor=imageNames;
-						}
-						else //Otherwise, assume it's an image
-						{
-							images+="url('resources/backgrounds/"+imageNames+"')";
-						}
-					}
-					
-					/*
-					for(var i=0;i<imageNames.length;i++){
-						
-						if(vals[0]=="ch")
-						{
-							images.push("url('resources/characters/"+folder+"/"+imageNames[i]+"')");
-						}
-						else
-						{
-							if(i>0){
-								images+=',';
-							}
-							
-							//If it's a color or gradient, treat it as such
-							if(imageNames[i].match(/(#|gradient\(|rgb\(|rgba\()/)){
-								eng.objects[vals[1]].el.style.backgroundColor=imageNames[i];
-							}
-							else //Otherwise, assume it's an image
-							{
-								//If there's no extension set, assume .jpg 
-								if(!imageNames[i].match(/\.[^\.]+$/)){
-									imageNames[i]+=".jpg";
-								}
-								
-								images+="url('resources/backgrounds/"+imageNames[i]+"')";
-							}
-						}
-					}*/
-					
-					//Adding the background images
-					if(vals[0]=="ch"){
-						
-						//Go through each image and add a div
-						let l=images.length;
-						for(var i=0;i<l;i++){
-							//If the image already exists
-							var found=false;
-							
-							//If the layer exists
-							if(eng.objects[vals[1]].el.children[i]){
-								//If this value doesn't exist in the layer
-								
-								var search=eng.objects[vals[1]].el.children[i].children;
-								
-								let ll=search.length;
-								for(var ii=0;ii<ll;ii++){
-									
-									if(search[ii].style.backgroundImage==images[i]){
-										found=true;
-										search[ii].style.opacity=1;
-									}else{
-										search[ii].style.opacity=0;
-									}
-								}
-							}
-							
-							if(!found){
-								eng.objects[vals[1]].imgDiv(i,images[i]);
-							}
-						}
-					}else{
-						eng.objects[vals[1]].style.backgroundImage=images;
-					}
-				}
-				
-				//If a 4th value exists, adjust 'left' if a character or 'zIndex' if a background
-				if(vals[3]){
-					eng.objects[vals[1]].el.style[vals[0]=="ch" ? "left" : "zIndex"]=vals[3];
-				}
-				
-				//Go to the next line
-				eng.run();
-				return;
-			//Styles
-			case "st":
-			case "styles":
-				//If it's the window
-				if(vals[1]=="window"){
-					content.style.cssText+=vals[2];
-				//If it's a general element
-				}else{
-					(eng.objects[vals[1]] || eng.textboxes[vals[1]]).style.cssText+=vals[2];
-				}
-				
-				//Go to the next line
-				eng.run();
-				return;
-			//Audio
-			case "au":
-			case "music":
-			case "audio":
-				//If the audio doesn't exist
-				if(!eng.objects[vals[1]]){
-					//Add them in!
-					let el=document.createElement("audio");
-					
-					el.src="resources/audio/"+vals[1];
-					el.preload=true;
-					
-					eng.objects[vals[1]]=el;
-					
-					content.appendChild(eng.objects[vals[1]]);
-				}
-				
-				//Go through the passed parameters and apply them
-				let l=vals.length;
-				for(let i=2;i<l;i++){
-					switch(vals[i]){
-						case "loop":
-							eng.objects[vals[1]].loop=true;
-							break;
-						case "play":
-						case "pause":
-							eng.objects[vals[1]][vals[i]]();
-							break;
-						case "stop":
-							eng.objects[vals[1]].currentTime=0;
-							eng.objects[vals[1]].pause();
-							break;
-					}
-				}
-				
-				//Go to the next line
-				eng.run();
-				return;
-			//Wait for reader input before continuing
-			case "wt":
-			case "wait":
-				//If there's a waitTimer, clear it out
-				clearTimeout(waitTimer);
-				
-				//If a value was included, wait 
-				waitTimer=vals[1] && setTimeout(eng.run,parseFloat(vals[1])*1000);
-				return;
-			//Go to a place
-			case "go":
-				eng.run(eng.lines.indexOf(vals[1])+1 || null);
-				return;
-			//End the novel
-			case "end":
-				eng.time({part:"next"});
-				return;
-			//Set data
-			case "ds":
-			case "data":
-				//DS	var		=	val
-				eng.data[vals[1]]=operators[vals[2]](
-					ifParse(eng.data[vals[1]])
-					,ifParse(vals[3])
-				);
-				
-				//Go to the next line
-				eng.run();
-				return;
-			case "if":
-				//IF	val		==	val		goto
-				if(operators[vals[2]](
-					ifParse(vals[1])
-					,ifParse(vals[3])
-				)){
-					eng.run(eng.lines.indexOf(vals[4])+1 || null);
-				}else{
-					eng.run();
-				}
-				
-				return;
-			//Input Button (players choose between several button options)
-			case "in":
-			case "input":
-				var thisButton=m("kn-choice","button");
-				thisButton.innerHTML=vals[2];
-				
-				eng.textboxes["main"].appendChild(thisButton);
-				
-				//On clicking a button, go to the right place
-				thisButton.addEventListener("click",function(event){
-					event.stopPropagation();
-					
-					//Progress
-					eng.run(eng.lines.indexOf(vals[1])+1);
-					
-					waitForInput=false;
-				});
-				
-				waitForInput=true;
-				
-				eng.run();
-				
-				return;
-			//Textbox
-			case "tb":
-			case "textbox":
-				//Get the current textbox
-				currentTextbox=vals[1];
-				
-				//Get the text to display
-				text=vals[2];
-				
-				//Turn off automatic waiting for this, we're assuming waiting is off
-				wait=false;
-				break;
-			//The default will just fall through to the normal textbox settings
-			default:
-				break;
+		//We run a function based on the value passed.
+		//If it returns multimediaSettings, we use those new ones over the old ones.
+		multimediaSettings=multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals,multimediaSettings) || multimediaSettings;
+		
+		if(multimediaSettings.text){
+			text=multimediaSettings.text;
+			multimediaSettings.text=null;
+		}
+		
+		if(multimediaSettings.wait){
+			wait=multimediaSettings.wait;
+			multimediaSettings.wait=null;
+		}
+		
+		//console.log(multimediaSettings,eng.currentLine);
+		
+		if(!multimediaSettings.go){
+			return;
+		}else{
+			multimediaSettings.go=false;
 		}
 	}
 	
 	//If the textbox hasn't been created, create it!
-	if(!eng.textboxes[currentTextbox]){
-		eng.textboxes[currentTextbox]=m("textbox");
-		content.appendChild(eng.textboxes[currentTextbox]);
+	if(!eng.textboxes[multimediaSettings.textbox]){
+		eng.textboxes[multimediaSettings.textbox]=m("textbox");
+		content.appendChild(eng.textboxes[multimediaSettings.textbox]);
 	}
 	
 	//If there's nothing passed, clear the current textbox and continue on to the next line.
 	if(vals && !vals[2]){
-		eng.textboxes[currentTextbox].innerHTML="";
+		eng.textboxes[multimediaSettings.textbox].innerHTML="";
 		eng.run();
 		return;
 	}else{ //If we're typing in the old textbox
-		eng.textboxes[currentTextbox].innerHTML="";
+		eng.textboxes[multimediaSettings.textbox].innerHTML="";
 	}
 	
 	//STEP 2: Design the text//
 	
 	//Design defaults
-	var charElementDefault=m("kn-char","span")
+	var charElementDefault=m("char-container","span")
 		,charElement
 		,baseWaitTime
-		,addAnimations
 	;
 	
 	//Reset the defaults with this function, or set them inside here!
@@ -780,7 +540,6 @@ eng.run=function(inputNum){
 		//Use the default element for starting off
 		charElement=charElementDefault.cloneNode(true);
 		baseWaitTime=.03; //The default wait time
-		addAnimations='';
 	}
 	
 	//Use the defaults
@@ -829,23 +588,7 @@ eng.run=function(inputNum){
 					if(values[2].length) charElement.style.color=values[2];
 					
 					//Effect
-					if(values[3].length){
-						switch(values[3]){
-							case "bold":
-								charElement.style.fontWeight="bold";
-								break;
-							case "italic":
-								charElement.style.fontStyle="italic";
-								break;
-							case "underline":
-								charElement.style.textDecoration="underline";
-								break;
-							//General animations
-							default:
-								addAnimations=values[3];
-								break;
-						}
-					}
+					if(values[3].length) charElement.classList.add("showpony-char-"+values[3]);
 				}
 				
 				//Adjust the styles of charElement based on what's passed (this will impact all future eng.objects)
@@ -858,58 +601,71 @@ eng.run=function(inputNum){
 				fragment.appendChild(document.createElement("br"));
 				continue;
 				break;
-			//How to handle punctuation
-			case '.':
-			case '!':
-			case '?':
-			case ':':
-			case ';':
-			case '-':
-				if(i!=text.length && text[i+1]==' '){
-					waitTime*=20;
-				}
-				break;
-			case ',':
-				if(i!=text.length && text[i+1]==' '){
-					waitTime*=10;
-				}
-				break;
-			//For regular eng.objects, do nothing
 			default:
+				//Handle punctuation
+				if(i!=text.length && text[i+1]==' '){
+					if(text[i].match(/[.!?:;-]/)) waitTime*=20;
+					if(text[i].match(/[,]/)) waitTime*=10;
+				}
+
 				break;
 		}
 		
 		//Make the char based on charElement
 		var thisChar=charElement.cloneNode(false);
 		
-		if(addAnimations){
-			thisChar.innerHTML="<span style='position:absolute;display:inline-block;'>"+text[i]+"</span><span style='visibility:hidden'>"+text[i]+"</span>"; //we need inline-blocks for animation- BUT we need inlines for proper positioning! So we have a hidden inline text element, and a visible inline-block element positioned over it.
-		}else{
-			thisChar.innerHTML=text[i];
-		}
+		let showChar=m("char","span");
+		let hideChar=m("char-placeholder","span");
+		hideChar.innerHTML=showChar.innerHTML=text[i];
+		
+		frag([showChar,hideChar],thisChar);
 		
 		//This character is adding to the list of hidden eng.objects
 		eng.charsHidden++;
 		
 		//Set the display time here
-		thisChar.style.animation="kn-display 0s linear "+totalWait+"s forwards";
-		
-		//Add any animations necessary (some need to be on at all times to line up right)
-		thisChar.dataset.animations=addAnimations;
+		showChar.style.animationDelay=totalWait+"s";
 		
 		//Add the char to the document fragment
 		fragment.appendChild(thisChar);
 		
 		totalWait+=waitTime;
+		
+		//Add event listeners to each
+		//On displaying, do this:
+		showChar.addEventListener("animationstart",function(event){
+			//If the animation ended on a child, don't continue! (animations are applied to children for text effects)
+			if(this!=event.target){
+				return;
+			}
+			
+			//If the element's currently hidden (the animation that ended is for unhiding)
+			if(this.style.visibility!="visible"){		
+				eng.charsHidden--;
+				this.style.visibility="visible";
+				
+				//If there are no more eng.objects to show
+				if(eng.charsHidden<1){
+					if(!wait){
+						eng.run();
+						return;
+					}
+				}
+				
+				//Scroll to the newly displayed letter
+				if(this.getBoundingClientRect().bottom>this.parentNode.getBoundingClientRect().bottom){
+					this.parentNode.scrollTop+=this.getBoundingClientRect().height;
+				}
+			}
+		});
 	}
 	
 	//Add the chars to the textbox
-	eng.textboxes[currentTextbox].appendChild(fragment);
+	eng.textboxes[multimediaSettings.textbox].appendChild(fragment);
 
-	//REPLACE ANIMATION SETUPS WITH CLASSES CONTAINING THE ANIMATIONS (this will allow more customizability and simplify things greatly over here)//
-	
+	/*
 	//Add animations that span the whole thing, so they're in sync
-	var e=eng.textboxes[currentTextbox].children;
+	var e=eng.textboxes[multimediaSettings.textbox].children;
 	l=e.length;
 	for(let i=0;i<l;i++){
 
@@ -924,40 +680,288 @@ eng.run=function(inputNum){
 					: "-"+Math.random()+"s"
 			);
 		}
+	}*/
+}
+
+var multimediaFunction={
+	'en':function(){
+		eng.time({part:"next"});
+	}
+	,'go':function(vals){
+		eng.run(eng.lines.indexOf(vals[1])+1 || null);
+	}
+	,'in':function(vals){
+		var thisButton=m("kn-choice","button");
+		thisButton.innerHTML=vals[2];
 		
-		//Add event listeners to each
-		//On displaying, do this:
-		e[i].addEventListener("animationstart",function(event){
-			//If the animation ended on a child, don't continue! (animations are applied to children for text effects)
-			if(this!=event.target){
-				return;
+		eng.textboxes["main"].appendChild(thisButton);
+		
+		//On clicking a button, go to the right place
+		thisButton.addEventListener("click",function(event){
+			event.stopPropagation();
+			
+			//Progress
+			eng.run(eng.lines.indexOf(vals[1])+1);
+			
+			waitForInput=false;
+		});
+		
+		waitForInput=true;
+		
+		eng.run();
+	}
+	,'if':function(vals){
+		//IF	val		==	val		goto
+		if(operators[vals[2]](
+			ifParse(vals[1])
+			,ifParse(vals[3])
+		)){
+			eng.run(eng.lines.indexOf(vals[4])+1 || null);
+		}else{
+			eng.run();
+		}
+	}
+	,'ds':function(vals){
+		//DS	var		=	val
+		eng.data[vals[1]]=operators[vals[2]](
+			ifParse(eng.data[vals[1]])
+			,ifParse(vals[3])
+		);
+		
+		//Go to the next line
+		eng.run();
+	}
+	,'wt':function(vals){
+		//If there's a waitTimer, clear it out
+		clearTimeout(waitTimer);
+		
+		//If a value was included, wait 
+		waitTimer=vals[1] && setTimeout(eng.run,parseFloat(vals[1])*1000);
+	}
+	,'au':function(vals){
+		//If the audio doesn't exist
+		if(!eng.objects[vals[1]]){
+			//Add them in!
+			let el=document.createElement("audio");
+			
+			el.src="resources/audio/"+vals[1];
+			el.preload=true;
+			
+			eng.objects[vals[1]]=el;
+			
+			content.appendChild(eng.objects[vals[1]]);
+		}
+		
+		//Go through the passed parameters and apply them
+		let l=vals.length;
+		for(let i=2;i<l;i++){
+			switch(vals[i]){
+				case "loop":
+					eng.objects[vals[1]].loop=true;
+					break;
+				case "play":
+				case "pause":
+					eng.objects[vals[1]][vals[i]]();
+					break;
+				case "stop":
+					eng.objects[vals[1]].currentTime=0;
+					eng.objects[vals[1]].pause();
+					break;
+			}
+		}
+		
+		//Go to the next line
+		eng.run();
+	}
+	,'st':function(vals){
+		//If it's the window
+		if(vals[1]=="window"){
+			content.style.cssText+=vals[2];
+		//If it's a general element
+		}else{
+			(eng.objects[vals[1]] || eng.textboxes[vals[1]]).style.cssText+=vals[2];
+		}
+		
+		//Go to the next line
+		eng.run();
+	}
+	,'ch':function(vals){
+		//Get the folder, which is the name without anything after a hash
+		var folder=vals[1].split('#')[0];
+
+		//If an object with that name doesn't exist
+		if(!eng.objects[vals[1]]){
+			eng.objects[vals[1]]=new Character();
+		}
+		
+		var images=[];
+		
+		//images will be either an array or a string
+		var imageNames=vals[2];
+		
+		console.log(vals);
+		
+		if(imageNames){
+			//Get all the values (colors, etc) out of here as possible
+			if(imageNames.indexOf(",")>-1){
+				imageNames=imageNames[0].split(",");
 			}
 			
-			//If the element's currently hidden (the animation that ended is for unhiding)
-			if(this.style.visibility!="visible"){
-				//Show the character and state that one less character is hidden.
-				eng.charsHidden--;
-				this.style.visibility="visible";
+			console.log(imageNames);
+			
+			images.push("url('resources/characters/"+folder+"/"+imageNames+"')");
+			
+			/*
+			for(var i=0;i<imageNames.length;i++){
 				
-				//If animations are set up to be applied
-				if(this.dataset.animations){
-					this.children[0].classList.add("showpony-kn-char-"+this.dataset.animations);
+				if(vals[0]=="ch")
+				{
+					images.push("url('resources/characters/"+folder+"/"+imageNames[i]+"')");
 				}
+				else
+				{
+					if(i>0){
+						images+=',';
+					}
+					
+					//If it's a color or gradient, treat it as such
+					if(imageNames[i].match(/(#|gradient\(|rgb\(|rgba\()/)){
+						eng.objects[vals[1]].el.style.backgroundColor=imageNames[i];
+					}
+					else //Otherwise, assume it's an image
+					{
+						//If there's no extension set, assume .jpg 
+						if(!imageNames[i].match(/\.[^\.]+$/)){
+							imageNames[i]+=".jpg";
+						}
+						
+						images+="url('resources/backgrounds/"+imageNames[i]+"')";
+					}
+				}
+			}*/
+			
+			//Go through each image and add a div
+			let l=images.length;
+			for(var i=0;i<l;i++){
+				//If the image already exists
+				var found=false;
 				
-				//If there are no more eng.objects to show
-				if(eng.charsHidden<1){
-					if(!wait){
-						eng.run();
+				//If the layer exists
+				if(eng.objects[vals[1]].el.children[i]){
+					//If this value doesn't exist in the layer
+					
+					var search=eng.objects[vals[1]].el.children[i].children;
+					
+					let ll=search.length;
+					for(var ii=0;ii<ll;ii++){
+						
+						if(search[ii].style.backgroundImage==images[i]){
+							found=true;
+							search[ii].style.opacity=1;
+						}else{
+							search[ii].style.opacity=0;
+						}
 					}
 				}
 				
-				//Scroll to the newly displayed letter
-				if(this.getBoundingClientRect().bottom>this.parentNode.getBoundingClientRect().bottom){
-					this.parentNode.scrollTop+=this.getBoundingClientRect().height;
+				if(!found){
+					eng.objects[vals[1]].imgDiv(i,images[i]);
 				}
 			}
-		});
+		}
 		
+		//If a 4th value exists, adjust 'left' if a character or 'zIndex' if a background
+		if(vals[3]){
+			eng.objects[vals[1]].el.style.left=vals[3];
+		}
+		
+		//Go to the next line
+		eng.run();
+	}
+	,'bg':function(vals){
+		//Get the folder, which is the name without anything after a hash
+		var folder=vals[1].split('#')[0];
+
+		//If an object with that name doesn't exist
+		if(!eng.objects[vals[1]]){
+			//Add a background
+			eng.objects[vals[1]]=m("background");
+			content.appendChild(eng.objects[vals[1]]);
+		}
+		
+		var images=(vals[0]=="ch" ? [] : '');
+		
+		//images will be either an array or a string
+		var imageNames=vals[2];
+		
+		console.log(vals);
+		
+		if(imageNames){
+			//Get all the values (colors, etc) out of here as possible
+			if(imageNames.indexOf(",")>-1){
+				imageNames=imageNames[0].split(",");
+			}
+			
+			console.log(imageNames);
+			
+			//if(i>0){
+			//	images+=',';
+			//}
+			
+			//If it's a color or gradient, treat it as such
+			if(imageNames.match(/(#|gradient\(|rgb\(|rgba\()/)){
+				eng.objects[vals[1]].style.backgroundColor=imageNames;
+			}
+			else //Otherwise, assume it's an image
+			{
+				images+="url('resources/backgrounds/"+imageNames+"')";
+			}
+			
+			/*
+			for(var i=0;i<imageNames.length;i++){
+				
+				if(i>0){
+					images+=',';
+				}
+				
+				//If it's a color or gradient, treat it as such
+				if(imageNames[i].match(/(#|gradient\(|rgb\(|rgba\()/)){
+					eng.objects[vals[1]].el.style.backgroundColor=imageNames[i];
+				}
+				else //Otherwise, assume it's an image
+				{
+					//If there's no extension set, assume .jpg 
+					if(!imageNames[i].match(/\.[^\.]+$/)){
+						imageNames[i]+=".jpg";
+					}
+					
+					images+="url('resources/backgrounds/"+imageNames[i]+"')";
+				}
+			}*/
+			
+			eng.objects[vals[1]].style.backgroundImage=images;
+		}
+		
+		//If a 4th value exists, adjust 'left' if a character or 'zIndex' if a background
+		if(vals[3]){
+			eng.objects[vals[1]].el.style.zIndex=vals[3];
+		}
+		
+		//Go to the next line
+		eng.run();
+	}
+	,'tb':function(vals,multimediaSettings){
+		//Set the current textbox
+		multimediaSettings.textbox=vals[1];
+		
+		//Get the text to display
+		multimediaSettings.text=vals[2];
+		
+		//Turn off automatic waiting for this, we're assuming waiting is off
+		multimediaSettings.wait=false;
+		multimediaSettings.go=true;
+		
+		return multimediaSettings;
 	}
 }
 
@@ -981,8 +985,10 @@ eng.input=function(){
 			//If a wait timer was going, stop it.
 			clearTimeout(waitTimer);
 		
+			console.log(eng.charsHidden);
+		
 			//If all letters are displayed
-			if(eng.charsHidden<1){ //failsafe in case this value somehow goes negative
+			if(eng.charsHidden<1){
 				eng.run();
 			}
 			else //If some eng.objects have yet to be displayed
@@ -995,7 +1001,7 @@ eng.input=function(){
 						let l=eng.textboxes[key].children.length;
 						for(let i=0;i<l;i++){
 							//Remove the delay so they're displayed immediately
-							eng.textboxes[key].children[i].style.animationDelay="0s";
+							eng.textboxes[key].children[i].children[0].style.animationDelay="0s";
 						}
 					}
 				);
@@ -1066,9 +1072,10 @@ function getMedium(inputFileType){
 		case ".wav":
 			return "audio";
 			break;
-		case ".if":
-		case ".vn":
+		case ".txt":
 		case ".kn":
+		case ".vn":
+		case ".mm":
 			return "multimedia";
 			break;
 		case ".html":
@@ -1207,7 +1214,6 @@ var waitForInput=false
 	,currentType=null
 	//Elements
 	,overlay=m("overlay")
-	,editor=m("editor-ui")
 	,overlayText=m("overlay-text")
 	,progress=m("progress")
 	,content=m("content")
@@ -1280,7 +1286,7 @@ function getDurations(){
 				thisMedia.preload="metadata";
 				thisMedia.src=(eng.files[i][0]=="x" ? "showpony/showpony-get-file.php?get="+eng.path+eng.files[i] : eng.path+eng.files[i]);
 				
-				console.log(thisMedia.src);
+				//console.log(thisMedia.src);
 				
 				//Listen for media loading
 				thisMedia.addEventListener(
@@ -1313,7 +1319,7 @@ if(window.getComputedStyle(eng.window).getPropertyValue('position')=="static"){
 eng.window.innerHTML="";
 
 //And fill it up again!
-frag([content,overlay,menuButton,fullscreenButton,editor],eng.window);
+frag([content,overlay,menuButton,fullscreenButton],eng.window);
 
 eng.window.classList.add("showpony");
 
@@ -1502,28 +1508,29 @@ if(eng.admin){
 	overlayText.contentEditable=true;
 	overlayText.style.pointerEvents="auto";
 	
-	var uploadName=m("editor-name","input");
-	uploadName.type="text";
+	var editorUI=m("editor-ui")
+		,uploadFileButton=m("upload-file","label")
+		,uploadFile=document.createElement("input")
+		,uploadDate=m("editor-date","input")
+		,uploadName=m("editor-name","input")
+		,deleteFile=m("delete-file","button")
+		,newFile=m("new-file","button")
+		,logoutButton=m("logout","button")
+	;
+
+	uploadName.type=uploadDate.type="text";
 	uploadName.placeholder="Part Title (optional)";
 	
-	var uploadDate=m("editor-date","input");
-	uploadDate.type="text";
 	uploadDate.placeholder="YYYY-MM-DD HH:MM:SS";
-	
-	var newFile=m("new-file","button");
-	
-	var deleteFile=m("delete-file","button");
-	
-	var uploadFile=document.createElement("input");
+
 	uploadFile.type="file";
 	uploadFile.style.display="none";
 	
-	var uploadFileButton=m("upload-file","label");
 	uploadFileButton.appendChild(uploadFile);
 	
-	var logoutButton=m("logout","button");
+	frag([uploadFileButton,uploadDate,uploadName,deleteFile,newFile,logoutButton],editorUI);
 	
-	frag([uploadFileButton,uploadDate,uploadName,deleteFile,newFile,logoutButton],editor);
+	eng.window.appendChild(editorUI);
 	
 	//Adjust display of header
 	overlayText.addEventListener(
@@ -1547,21 +1554,20 @@ if(eng.admin){
 		,function(event){
 			event.preventDefault();
 			console.log("Context menu!");
-			eng.editor();
+			editor();
 		}
 	);
 	
-	eng.editor=function(){
+	function editor(){
 		if(loggedIn){
 			eng.window.classList.toggle("showpony-editor");
-			
-			eng.updateEditor();
+			updateEditor();
 		}else{
-			eng.login();
+			account("login");
 		}
 	}
 	
-	eng.updateEditor=function(){
+	function updateEditor(){
 		var date=(eng.files[eng.currentFile].match(/\d(.(?!\())+\d*/) || [""])[0].replace(/;/g,':');
 		
 		//Get the name, remove the parentheses
@@ -1578,20 +1584,38 @@ if(eng.admin){
 		alert(message);
 	}
 	
-	eng.login=function(tryCookie){
+	logoutButton.addEventListener("click"
+		,function(){account("logout");}
+	);
+	
+	function account(type,tryCookie){
+		var pass=null;
+		if(type==="login"){
+			if(!tryCookie){
+				pass=prompt("What's your password?");
+				if(!pass) return;
+			}
+		}
+		
+		console.log(type,tryCookie,pass);
+		
 		POST(
 			function(ajax){
 				var response=JSON.parse(ajax.responseText);
 				console.log(response);
 				
 				if(response.success){
-					//If logged in successfully
+					//Logged in
 					if(response.admin){
+						console.log("Hello!");
 						loggedIn=true;
 					
 						if(!tryCookie){
-							eng.editor();
+							editor();
 						}
+					}else{ //Not logged in
+						editor();
+						loggedIn=false;
 					}
 					
 					eng.files=response.files;
@@ -1600,12 +1624,12 @@ if(eng.admin){
 					alert(response.message);
 				}
 			}
-			,"login"
-			,(tryCookie ? null : prompt("What's your password?"))
+			,type
+			,pass
 		);
 	}
 	
-	eng.renameFile=function(){
+	function renameFile(){
 		var thisFile=eng.currentFile;
 		var date=uploadDate.value;
 		var x=(eng.files[thisFile][0]=='x') ? 'x': '';
@@ -1639,6 +1663,7 @@ if(eng.admin){
 				}
 			}
 			,"renameFile"
+			,eng.files[thisFile]
 			,fileName
 		);
 	}
@@ -1647,19 +1672,19 @@ if(eng.admin){
 	//On time, update the editor
 	eng.window.addEventListener("time"
 		,function(){
-			eng.updateEditor();
+			updateEditor();
 		}
 	);
 	
 	uploadName.addEventListener("change"
 		,function(){
-			eng.renameFile();
+			renameFile();
 		}
 	);
 	
 	uploadDate.addEventListener("change"
 		,function(){
-			eng.renameFile();
+			renameFile();
 		}
 	);
 	
@@ -1681,7 +1706,7 @@ if(eng.admin){
 						alert(response.message);
 					}
 				}
-				,formData
+				,"uploadFile"
 				,thisFile
 			);
 		}
@@ -1723,7 +1748,7 @@ if(eng.admin){
 					}
 				}
 				,"deleteFile"
-				,thisFile
+				,eng.files[thisFile]
 			);
 		}
 	);
@@ -1752,39 +1777,16 @@ if(eng.admin){
 		}
 	);
 	
-	logoutButton.addEventListener("click"
-		,function(){
-			POST(
-				function(ajax){
-					var response=JSON.parse(ajax.responseText);
-					console.log(response);
-					
-					if(response.success){
-						eng.editor();
-						loggedIn=false;
-						
-						eng.files=response.files;
-						getDurations();
-					}else{
-						alert(response.message);
-					}
-				}
-				,"logout"
-			);
-		}
-	);
-	
 	//Make a POST call
-	function POST(onSuccess,call,inputVal){
+	function POST(onSuccess,call,inputVal,inputVal2){
 		//Prepare the form data
 		var formData=new FormData();
 		formData.append('showpony-call',call);
 		formData.append('path',eng.path);
 		
-		
 		formData.append('password',inputVal || null);
-		formData.append('name',eng.files[inputVal || null]);
-		formData.append('newName',inputVal || null);
+		formData.append('name',inputVal || null);
+		formData.append('newName',inputVal2 || null);
 		formData.append('files',uploadFile.files[0] || null);
 
 		var ajax=new XMLHttpRequest();
@@ -1806,7 +1808,7 @@ if(eng.admin){
 	}
 	
 	//Try logging in
-	eng.login(true);
+	account("login",true);
 }else{
 	//If not admin, do some things manually
 

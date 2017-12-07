@@ -1,6 +1,4 @@
 <?php
-
-#Testing
 error_reporting(E_ALL);
 ini_set('display_errors',1);
 
@@ -10,56 +8,67 @@ class Showpony{
 	
 	#Initialize the class
 	function __construct($inputArray){
-		$this->home=dirname(__FILE__,2).'/';
-		$this->admin=false;
-		$this->path=($inputArray['path'] ?? $_POST['path'] ?? null);
+		#The message will be kept in the output buffer. We will send the output buffer to the user in the "message".
+		ob_start();
 		
-		if(!empty($_POST['showpony-call'])) $this->postHandler();
+		$this->admin=false;
+		chdir(dirname(__FILE__,2).'/'.($inputArray['path'] ?? $_POST['path'] ?? null));
+		
+		#This object is sent to the user as JSON
+		$response=[
+			'call' => ($_POST['showpony-call'] ?? null)
+			,'success' => false
+			,'message' => null
+		];
+		
+		#Always attempt login for admin functions
+		$response=$this->login($response);
+		
+		#If the user passed a call
+		if(!empty($_POST['showpony-call'])){
+			#If we were here to login, don't bother doing so again
+			if($response['call']!=='login'){
+				$response=$this->{$response['call']}($response);
+			}
+			
+			$response["message"]=ob_get_clean();
+			
+			echo json_encode($response);
+		}
 	}
 	
 	protected function login($response){
-		if(self::$password==null){
-			echo 'Admin access not available for this Showpony object.';
-		}else{
-			
+		if(self::$password){
 			#Check if the user's trying to log in right now (and aren't trying to auto login)
 			if(
 				$response['call']=='login'
-				&& $response['password']!=="null"
+				&& $_POST['password']!=="null"
 			){
-				if($response['password']==self::$password){
-					setcookie(
-						"showpony_password"
-						,self::$password
-						,time()+60*60*24 #Expire in a day
-						,false
-					);
-					
-					$this->admin=true;
-				}else{
-					echo "Wrong password!";
-					
+				$this->admin=($_POST['password']==self::$password);
+				
+				$response['success']=setcookie(
+					"showpony_password"
+					,self::$password
+					,($this->admin ? time()+60*60*24 : -1) #Expire in a day
+				);
+				
+				if(!$response['success']) echo $this->admin ? "Correct password, but we failed to log you in." : "Wrong password!";
+			}else if(!empty($_COOKIE['showpony_password'])){
+				#Check if the password cookie lines with up the password
+				$this->admin=($_COOKIE['showpony_password']===self::$password);
+				
+				if(!$this->admin){
+					echo "You've been logged out!";
 					setcookie('showpony_password',null,-1);
-					$this->admin=false;
 				}
-			}else{
-				if(!empty($_COOKIE['showpony_password'])){
-					#Check if the password cookie lines with up the password
-					if($_COOKIE['showpony_password']!==self::$password){
-						echo "You've been logged out!";
-						
-						setcookie('showpony_password',null,-1);
-					}
-					
-					$this->admin=($_COOKIE['showpony_password']===self::$password);
-				}
+				
 			}
-		}
+		}else echo 'Admin access not available for this Showpony object.';
 		
 		if($response['call']==='login'){
 			if(
 				$this->admin
-				|| $response['password']==='null'
+				|| $_POST['password']==='null'
 			){
 				#Get the file names and pass them on
 				$response['success']=true;
@@ -73,163 +82,100 @@ class Showpony{
 	}
 	
 	protected function logout($response){
-		setcookie('showpony_password',null,-1);
-		
+		$response["success"]=setcookie('showpony_password',null,-1);
 		$response["files"]=$this->getFiles();
-		$response["success"]=true;
-		
 		return $response;
 	}
 	
 	protected function uploadFile($response){
 		#Delete original file
-		unlink($this->home.($this->path).$response['name']);
+		unlink($_POST['name']);
 		
 		#Use the passed file name, but make sure to use the new file's extension
-		$fileName=pathinfo($response['name'],PATHINFO_FILENAME).'.'.pathinfo($_FILES['files']['name'],PATHINFO_EXTENSION); #add new extension
+		$fileName=pathinfo($_POST['name'],PATHINFO_FILENAME).'.'.pathinfo($_FILES['files']['name'],PATHINFO_EXTENSION); #add new extension
 	
 		#Place the uploaded file
-		move_uploaded_file(
+		$response["success"]=move_uploaded_file(
 			$_FILES["files"]["tmp_name"]
-			,$this->home.$this->path.$fileName
+			,$fileName
 		);
 		
-		$response["success"]=true;
 		$response["file"]=$fileName;
-		
 		return $response;
 	}
 	
 	protected function renameFile($response){
-		$newFile=$response['newName'];
+		$response['success']=rename(
+			$_POST['name']
+			,$_POST['newName']
+		);
 		
-		#If the rename is successful, it will return true
-		if(
-			rename(
-				$this->home.$this->path.$response['name']
-				,$this->home.$this->path.$response['newName']
-			)
-		){ #If renaming's successful
-			$response["success"]=true;
-			$response["file"]=$response['newName'];
-		}else{ #If renaming fails
-			echo "Rename failed! You may have an illegal character in your new title.";
-		}
+		$response['file']=$_POST['newName'];
+		
+		if(!$response['success']) echo "Rename failed! You may have an illegal character in your new title.";
 		
 		return $response;
 	}
 	
 	protected function newFile($response){
-		$newFile='x2038-01-01 20;00;00 (Untitled '.time().').html';
+		$response["file"]='x2038-01-01 20;00;00 (Untitled '.time().').html';
 				
-		file_put_contents($this->home.$this->path.$newFile,'Replace me with your new, better file!');
-		
-		$response["success"]=true;
-		$response["file"]=$newFile;
+		$response["success"]=file_put_contents($response["file"],'Replace me with your new, better file!');
 		
 		return $response;
 	}
 	
 	protected function deleteFile($response){
-		unlink($this->home.$this->path.$response['name']);
-		$response["success"]=true;
+		$response["success"]=unlink($_POST['name']);
 		return $response;
 	}
 	
 	#Get files and protect others
 	public function getFiles(){
-		$passFiles=scandir($this->home.$this->path);
+		$passFiles=scandir('.');
 		
-		#Run through the files (backwards, so we can splice the array and keep going back
+		#Run through the files (backwards, so we can splice the array and keep going back)
 		for($i=count($passFiles)-1;$i>=0;$i--){
-			$file=$passFiles[$i];
-			
-			#Check if it's a folder, htaccess file, or other hidden file
-			if($file[0]=="."){
-				#If so, remove it from the list
-				array_splice($passFiles,$i,1);
-				continue;
-			}
-			
-			###DETERMINE WHETHER TO HIDE FILES OR ALLOW THEM TO PASS###
-			
-			#We only do this with files that have a date on them (otherwise we can't tell, so check that it has a properly formatted date first:
+			#Remove folders and hidden files
+			if($passFiles[$i][0]==".") array_splice($passFiles,$i,1);
+
+			#Ignore files that have dates in their filenames set to later
 			$date;
-			#Get the posting date from the file's name
-			preg_match('/[^x][^(]+(?!\()\S?/',$file,$date);
-			
-			if($date){
-				$date=str_replace(';',':',$date); #Replace semicolons in the date with colons for proper date check (semicolons are allowed in windows names, so they're used as an alternative to colons
+			if(preg_match('/[^x][^(]+(?!\()\S?/',$passFiles[$i],$date)){ #Get the posting date from the file's name; if there is one:
+				$file=$passFiles[$i];
 				
-				#If it has an "X" in the name, see if it should be made live
-				if($file[0]=="x"){
-					#If its launch time is before now, make it live
-					if(strtotime($date[0].' UTC')<time()){
+				$date=str_replace(';',':',$date); #Semicolons are used instead of colons to support Windows file naming
+				
+				#Should be live; remove any x at the beginning of the filename
+				if(strtotime($date[0].' UTC')<=time()){
+					if($file[0]=='x'){
 						rename(
-							$this->home.$this->path.$file
-							,$this->home.$this->path.substr($file,1));
-						#Change the file name in the array
+							$file
+							,substr($file,1)
+						);
+						
 						$passFiles[$i]=substr($file,1);
-					} #Otherwise, don't include it in the array
-					else
-					{
-						if(!$this->admin) array_splice($passFiles,$i,1);
-						else $passFiles[$i]=$file;
+					}
+				}else{ #Shouldn't be live; make sure an x is at the beginning of the filename
+					if($file[0]!="x"){
+						rename(
+							$file
+							,'x'.$file
+						);
+						
+						if($this->admin) $passFiles[$i]='x'.$file;
 					}
 					
-					continue;
-				}
-				
-				#If it doesn't have an x in the name, see if it should be made protected
-				if(strtotime($date[0].' UTC')>=time()){
-					#Prepend the filename with x so it's inaccessible
-					rename(
-						$this->home.$this->path.$file
-						,$this->home.$this->path.'x'.$file
-					);
-					
 					if(!$this->admin) array_splice($passFiles,$i,1);
-					else $passFiles[$i]='x'.$file;
 				}
 			}
 		}
 		
 		return $passFiles;
 	}
-	
-	private function postHandler(){
-		#This object is sent to the user as JSON
-		$response=[
-			'call' => $_POST['showpony-call']
-			,'success' => false
-			,'message' => null
-			,'name' => ($_POST['name'] ?? null)
-			,'newName' => ($_POST['newName'] ?? null)
-			,'password' => ($_POST['password'] ?? null)
-		];
-		
-		#The message will be kept in the output buffer. We will send the output buffer to the user in the "message".
-		ob_start();
-		
-		$this->path=$_POST['path'];
-		
-		#Always attempt login for admin functions
-		$response=$this->login($response);
-		
-		#If we were here to login, don't bother doing so again
-		if($response['call']!=='login'){
-			$response=$this->{$response['call']}($response);
-		}
-		
-		$response["message"]=ob_get_clean();
-		
-		echo json_encode($response);
-	}
 }
 
-#Call this file to run certain functions too
-if(!empty($_POST['showpony-call'])){
-	new Showpony([]);
-}
+#Call this file to run Showpony functions
+if(!empty($_POST['showpony-call'])) new Showpony([]);
 
 ?>

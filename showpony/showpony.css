@@ -98,20 +98,17 @@
 	left:0;
 }
 
-.showpony-content-video
-,.showpony-content-audio
-,.showpony-content{
-	width:100%;
-	height:100%;
-}
-
-.showpony-content-image{
-	display:flex;
-	align-items:center;
-	justify-content:center;
+.showpony-content{
 	width:100%;
 	height:100%;
 	position:absolute;
+	
+	/*Image*/
+	/*
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	*/
 }
 
 .showpony-image{
@@ -159,6 +156,12 @@
 	-ms-user-select:none;
 	-moz-user-select:none;
 	font-size:2em;
+	
+	word-wrap:break-word;
+	word-break:normal;
+	break-word:normal;
+	overflow-wrap:break-word;
+	white-space:pre-line;
 }
 
 .showpony-background{
@@ -209,19 +212,51 @@
 ,:fullscreen*/
 
 /*Text effects*/
+.showpony-char-container{
+	visibility:hidden;
+	font-size:1em;
+	color:inherit;
+	font-weight:inherit;
+	font-style:inherit;
+}
+
+.showpony-char{
+	position:absolute;
+	display:inline-block;
+}
+
+.showpony-char-placeholder{
+	visibility:hidden;
+}
+
+.showpony-char-container>.showpony-char{
+	animation:kn-display 0s linear;
+	animation-fill-mode:forwards;
+}
+
 @keyframes kn-display{
 	0% {visibility:hidden;}
 	100% {visibility:visible;}
 }
 
-@keyframes kn-fade{
+.kn-display-fade{
+	animation:kn-fade .1s linear;
+	animation-fill-mode:forwards;
+}
+
+@keyframes kn-display-fade{
 	0% {opacity:0;}
-	100% {opacity:1;}
+	100% {visibility:visible;opacity:1;}
+}
+
+.showpony-char-shout>.showpony-char{
+	animation:kn-shout .1s linear;
+	animation-fill-mode:forwards;
 }
 
 @keyframes kn-shout{
 	0% {transform:scale(2);}
-	100% {transform:scale(1);}
+	100% {visibility:visible;transform:scale(1);}
 }
 
 @keyframes kn-sing{
@@ -238,7 +273,7 @@
 	100% {transform:translate(.05em,.125em);}
 }
 
-@keyframes kn-smoke {
+@keyframes kn-display-smoke {
   0% {
 	transform:
 	  translate(-.5em,-1.5em)
@@ -255,7 +290,7 @@
   }
 }
 
-@keyframes kn-blur {
+@keyframes kn-display-blur {
   0% {
 	opacity:0;
 	filter:blur(.5em);
@@ -266,7 +301,7 @@
   }
 }
 
-@keyframes kn-smoke-mirror {
+@keyframes kn-display-smoke-mirror {
   0% {
 	transform:
 	  translate(.5em,-1.5em)
@@ -283,7 +318,7 @@
 	}
 }
 
-@keyframes kn-glitch{
+@keyframes kn-display-glitch{
 	0% {transform:;}
 	100% {opacity:1;}
 }
@@ -322,14 +357,6 @@
 .kn-choice:hover{
 	background-color:#fff;
 	color:#000;
-}
-
-.showpony-kn-char{
-	visibility:hidden;
-	font-size:1em;
-	color:inherit;
-	font-weight:inherit;
-	font-style:inherit;
 }
 
 .showpony-kn-char-shout{
