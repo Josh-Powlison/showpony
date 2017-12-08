@@ -53,7 +53,7 @@ eng.time=function(obj){
 		
 		//Run the event that users can read.
 		eng.window.dispatchEvent(eventEnd);
-		console.log("Ended!");
+		//console.log("Ended!");
 		
 		return;
 	}
@@ -76,7 +76,7 @@ eng.time=function(obj){
 			newURL+=eng.query+'='+(eng.currentFile+1);
 		}
 		
-		console.log(newURL);
+		//console.log(newURL);
 		
 		history.pushState(
 			{}
@@ -107,7 +107,7 @@ eng.time=function(obj){
 	//If switching types, do some cleanup
 	if(currentType!=newType){
 		content.innerHTML="";
-		console.log(types);
+		//console.log(types);
 		content.appendChild(thisType);
 		
 		//Use the general content class
@@ -139,7 +139,7 @@ eng.time=function(obj){
 			//Adjust the source
 			thisType.src=src;
 			
-			console.log(thisType.src);
+			//console.log(thisType.src);
 			
 			!overlay.classList.contains("showpony-overlay-visible") && thisType.play();
 			
@@ -173,7 +173,7 @@ eng.time=function(obj){
 			break;
 		//Visual Novels/Kinetic Novels/Interactive Fiction
 		case "multimedia":
-			console.log(currentType);
+			//console.log(currentType);
 		
 			//If the previous type was different, use the new type (or if we're scrubbing and not moving along as normal)
 			//if(currentType!=newType || overlay.style.visibility=="visible"){
@@ -318,7 +318,7 @@ eng.scrub=function(inputPercent){
 		,floorValue=1
 	;
 	
-	//console.log(current,inputPercent,duration,newPart);
+	////console.log(current,inputPercent,duration,newPart);
 	
 	function adjustReplace(input){
 		//Name
@@ -406,15 +406,26 @@ eng.scrub=function(inputPercent){
 		}
 		
 		//Return the value
-		return String(
+		return padStart(String(
 			Math.floor(floorValue)
-		).padStart(input[1],'0');
+		),input[1]);
 	}
 	
 	//Set the overlay text (the current time)
 	overlayText.innerHTML="<p>"
 		+eng.info.replace(/\[[^\]]*\]/g,adjustReplace)
 	+"</p>";
+}
+
+//Pad the beginning of a value with leading zeroes
+function padStart(input,length){
+	//Return if length is 0
+	if(!length || length==0) return input;
+	
+	var padded=('000000000'+String(input)).slice(-length);
+	
+	//Return either the input or the padded value, whichever is longer
+	return input.length>padded.length ? input : padded;
 }
 
 //Toggle fullscreen
@@ -463,7 +474,7 @@ eng.run=function(inputNum){
 	
 	//If we've ended manually or reached the end, stop running immediately and end it all
 	if(eng.currentLine>=eng.lines.length){
-		console.log("Ending!");
+		//console.log("Ending!");
 		eng.time({"part":"next"});
 		return;
 	}
@@ -485,7 +496,7 @@ eng.run=function(inputNum){
 	if(text[0]==">"){
 		var vals=text.replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/);
 		
-		console.log(text,vals);
+		//console.log(text,vals);
 		
 		//We run a function based on the value passed.
 		//If it returns multimediaSettings, we use those new ones over the old ones.
@@ -501,7 +512,7 @@ eng.run=function(inputNum){
 			multimediaSettings.wait=null;
 		}
 		
-		//console.log(multimediaSettings,eng.currentLine);
+		////console.log(multimediaSettings,eng.currentLine);
 		
 		if(!multimediaSettings.go){
 			return;
@@ -797,7 +808,7 @@ var multimediaFunction={
 		//images will be either an array or a string
 		var imageNames=vals[2];
 		
-		console.log(vals);
+		//console.log(vals);
 		
 		if(imageNames){
 			//Get all the values (colors, etc) out of here as possible
@@ -805,7 +816,7 @@ var multimediaFunction={
 				imageNames=imageNames[0].split(",");
 			}
 			
-			console.log(imageNames);
+			//console.log(imageNames);
 			
 			images.push("url('resources/characters/"+folder+"/"+imageNames+"')");
 			
@@ -892,7 +903,7 @@ var multimediaFunction={
 		//images will be either an array or a string
 		var imageNames=vals[2];
 		
-		console.log(vals);
+		//console.log(vals);
 		
 		if(imageNames){
 			//Get all the values (colors, etc) out of here as possible
@@ -900,7 +911,7 @@ var multimediaFunction={
 				imageNames=imageNames[0].split(",");
 			}
 			
-			console.log(imageNames);
+			//console.log(imageNames);
 			
 			//if(i>0){
 			//	images+=',';
@@ -965,7 +976,7 @@ var multimediaFunction={
 
 //When the viewer inputs to Showpony (click, space, general action)
 eng.input=function(){
-	console.log(currentType);
+	//console.log(currentType);
 	
 	//Function differently depending on medium
 	switch(currentType){
@@ -983,7 +994,7 @@ eng.input=function(){
 			//If a wait timer was going, stop it.
 			clearTimeout(waitTimer);
 		
-			console.log(eng.charsHidden);
+			//console.log(eng.charsHidden);
 		
 			//If all letters are displayed
 			if(eng.charsHidden<1){
@@ -991,7 +1002,7 @@ eng.input=function(){
 			}
 			else //If some eng.objects have yet to be displayed
 			{
-				console.log(eng.textboxes);
+				//console.log(eng.textboxes);
 				
 				//Go through each textbox and display all of its text
 				Object.keys(eng.textboxes).forEach(
@@ -1015,7 +1026,7 @@ eng.input=function(){
 eng.close=function(){
 	//Replace the container with the original element
 	
-	console.log(windowClick);
+	//console.log(windowClick);
 	
 	//Remove the window event listener
 	window.removeEventListener("click",windowClick);
@@ -1209,7 +1220,7 @@ function Character(){
 	//Go through the file and add in all of the images
 	for(let i=0;i<eng.lines.length;i++){
 		if(eng.lines[i].match(/@CH ben/)){
-			console.log(eng.lines[i]);
+			//console.log(eng.lines[i]);
 			//cha.imgDiv(i,images[i]);
 		}
 	}*/
@@ -1324,7 +1335,7 @@ if(eng.files=="get"){
 	POST(
 		function(ajax){
 			var response=JSON.parse(ajax.responseText);
-			console.log(response);
+			//console.log(response);
 			
 			if(response.success){
 				eng.files=response.files;
@@ -1344,8 +1355,6 @@ function startup(){
 	
 	//Go to the part if it's a number, otherwise go to the end.
 	eng.currentFile=!isNaN(input.start) ? input.start : eng.files.length-1;
-	
-	console.log(eng.currentFile,eng.files.length);
 	
 	//If querystrings are in use, consider the querystring in the URL
 	if(eng.query){
@@ -1492,7 +1501,7 @@ overlay.addEventListener(
 		//If we were scrubbing
 		if(scrubbing===true){
 			scrubbing=false;
-			console.log("We were scrubbing!");
+			//console.log("We were scrubbing!");
 			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
 			if(eng.scrubLoad==false){
 				//Load the part our pointer's on
@@ -1595,7 +1604,7 @@ if(eng.admin){
 		"contextmenu"
 		,function(event){
 			event.preventDefault();
-			console.log("Context menu!");
+			//console.log("Context menu!");
 			editor();
 		}
 	);
@@ -1639,17 +1648,17 @@ if(eng.admin){
 			}
 		}
 		
-		console.log(type,tryCookie,pass);
+		//console.log(type,tryCookie,pass);
 		
 		POST(
 			function(ajax){
 				var response=JSON.parse(ajax.responseText);
-				console.log(response);
+				//console.log(response);
 				
 				if(response.success){
 					//Logged in
 					if(response.admin){
-						console.log("Hello!");
+						//console.log("Hello!");
 						loggedIn=true;
 					
 						if(!tryCookie){
@@ -1736,7 +1745,7 @@ if(eng.admin){
 			POST(
 				function(ajax){
 					var response=JSON.parse(ajax.responseText);
-					console.log(response);
+					//console.log(response);
 					
 					if(response.success){
 						eng.files[thisFile]=response.file;
@@ -1760,14 +1769,14 @@ if(eng.admin){
 			POST(
 				function(ajax){
 					var response=JSON.parse(ajax.responseText);
-					console.log(response);
-					console.log(eng.currentFile,thisFile,eng.files.length);
+					//console.log(response);
+					//console.log(eng.currentFile,thisFile,eng.files.length);
 					
 					if(response.success){
 						//Remove the file from the arrays
 						eng.files.splice(thisFile,1);
 
-						console.log(thisFile,eng.files.length);
+						//console.log(thisFile,eng.files.length);
 						
 						//If still on that file, refresh it
 						if(thisFile===eng.currentFile){
@@ -1777,7 +1786,7 @@ if(eng.admin){
 								thisFile=eng.files.length-1;
 							}
 							
-							console.log(thisFile,eng.currentFile);
+							//console.log(thisFile,eng.currentFile);
 							
 							eng.time({part:thisFile,refresh:true})
 						}
@@ -1796,7 +1805,7 @@ if(eng.admin){
 			POST(
 				function(ajax){
 					var response=JSON.parse(ajax.responseText);
-					console.log(response);
+					//console.log(response);
 					
 					if(response.success){
 						//Add the file to the array
