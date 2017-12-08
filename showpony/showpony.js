@@ -88,8 +88,6 @@ eng.time=function(obj){
 	//If we aren't moving the bar, update the overlay
 	scrubbing===false && eng.scrub();
 	
-	console.log(obj);
-	
 	//Go to the top of the page (if we didn't come here by autoloading)
 	if(!obj || !obj.autoload){
 		eng.window.scrollIntoView();
