@@ -132,18 +132,16 @@ class Showpony{
 	
 	#Get files and protect others
 	public function getFiles(){
-		$passFiles=scandir('.');
+		$files=[];
 		
 		#Run through the files (backwards, so we can splice the array and keep going back)
-		for($i=count($passFiles)-1;$i>=0;$i--){
+		foreach(scandir('.') as &$file){
 			#Remove folders and hidden files
-			if($passFiles[$i][0]==".") array_splice($passFiles,$i,1);
+			if($file[0]==".") continue;
 
 			#Ignore files that have dates in their filenames set to later
 			$date;
-			if(preg_match('/[^x][^(]+(?!\()\S?/',$passFiles[$i],$date)){ #Get the posting date from the file's name; if there is one:
-				$file=$passFiles[$i];
-				
+			if(preg_match('/[^x][^(]+(?!\()\S?/',$file,$date)){ #Get the posting date from the file's name; if there is one:
 				$date=str_replace(';',':',$date); #Semicolons are used instead of colons to support Windows file naming
 				
 				#Should be live; remove any x at the beginning of the filename
@@ -153,8 +151,7 @@ class Showpony{
 							$file
 							,substr($file,1)
 						);
-						
-						$passFiles[$i]=substr($file,1);
+						$file=substr($file,1);
 					}
 				}else{ #Shouldn't be live; make sure an x is at the beginning of the filename
 					if($file[0]!="x"){
@@ -162,16 +159,19 @@ class Showpony{
 							$file
 							,'x'.$file
 						);
-						
-						if($this->admin) $passFiles[$i]='x'.$file;
+						$file='x'.$file;
 					}
 					
-					if(!$this->admin) array_splice($passFiles,$i,1);
+					#Don't add this file if we aren't an admin
+					if(!$this->admin) continue;
 				}
 			}
+			
+			#Add the file to the array
+			$files[]=$file;
 		}
 		
-		return $passFiles;
+		return $files;
 	}
 }
 
