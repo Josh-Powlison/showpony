@@ -11,32 +11,19 @@ if(!input.window) throw "Error: no window value passed to Showpony object. I rec
 Object.assign(eng,{
 	window:input.window
 	,originalWindow:input.window.cloneNode(true)
-	,files:input.files || null
+	,files:input.files || "get"
 	,path:input.path || ""
 	,loadingClass:input.loadingClass || null
 	,scrubLoad:input.scrubLoad || false
-	,currentFile:
-		input.startAt=="first" ? 0
-		: input.startAt=="last" ? input.files.length-1
-		: input.startAt!==undefined ? input.startAt
-		: input.files.length-1
 	,query:input.query!==undefined ? input.query
 		: "part"
-	,timeDisplay:input.timeDisplay || "[0pc] | [0pl]"
+	,info:input.info || "[0pc] | [0pl]"
 	,data:input.data || {}
 	,defaultDuration:input.defaultDuration || 10
 	,admin:input.admin || false
-	,dateFormat:input.dateFormat || {
-			year:"numeric"
-			,month:"numeric"
-			,day:"numeric"
-			,hour:"numeric"
-			,minute:"numeric"
-		}
+	,dateFormat:input.dateFormat || {year:"numeric",month:"numeric",day:"numeric"}
+	,autoplay:input.autoplay!==undefined ? input.autoplay : true
 });
-
-//Set input to null in hopes that garbage collection will come pick it up
-input=null;
 
 ///////////////////////////////////////
 ///////////OBJECT FUNCTIONS////////////
@@ -59,13 +46,15 @@ eng.time=function(obj){
 		}
 	}
 	
-	//If we're at the end, run the event
+	//If we're at the end, run the readable event
 	if(eng.currentFile>=eng.files.length){
 		//Go to the final file
 		eng.currentFile=eng.files.length-1;
 		
-		//Run the event that users can read
+		//Run the event that users can read.
 		eng.window.dispatchEvent(eventEnd);
+		console.log("Ended!");
+		
 		return;
 	}
 	
@@ -75,20 +64,36 @@ eng.time=function(obj){
 	
 	//If we're using queries
 	if(eng.query && (!obj || !obj.popstate)){
+		var search=new RegExp('(\\?|&)'+eng.query+'=','i');
+		var newURL=document.location.href;
+		
+		if(document.location.href.match(search)){
+			var replace=new RegExp('((\\?|&)'+eng.query+')=?[^&]+','i');
+			newURL=newURL.replace(replace,'$1='+(eng.currentFile+1));
+		}else{
+			newURL+=newURL.indexOf("?")>-1 ? '&' : '?';
+			
+			newURL+=eng.query+'='+(eng.currentFile+1);
+		}
+		
+		console.log(newURL);
+		
 		history.pushState(
 			{}
 			,""
-			,(document.location.href)
-				.split(/\#|\?/)[0] //Get text before any existing hashes or querystrings
-				+'?'+eng.query+'='+(eng.currentFile+1) //Append the search query in the header (adding 1 so it looks more normal to users)
+			,newURL
 		);
 	}
 	
 	//If we aren't moving the bar, update the overlay
 	scrubbing===false && eng.scrub();
 	
-	//Go to the top of the page
-	eng.window.scrollIntoView();
+	console.log(obj);
+	
+	//Go to the top of the page (if we didn't come here by autoloading)
+	if(!obj || !obj.autoload){
+		eng.window.scrollIntoView();
+	}
 	
 	var newType=getMedium(eng.files[eng.currentFile]);
 	var thisType=types[newType];
@@ -113,7 +118,7 @@ eng.time=function(obj){
 	
 	var src=(
 		eng.files[eng.currentFile][0]=="x"
-		? "showpony/showpony-get-file.php?get="+eng.path+eng.files[eng.currentFile]
+		? "showpony/showpony-classes.php?showpony-get="+eng.path+eng.files[eng.currentFile]
 		: eng.path+eng.files[eng.currentFile]
 	);
 	
@@ -125,8 +130,6 @@ eng.time=function(obj){
 				: '?refresh-'+Date.now()
 		);
 	}
-	
-	console.log(src);
 	
 	//Display the medium based on the file extension
 	switch(newType){
@@ -206,7 +209,6 @@ eng.time=function(obj){
 	
 	//Track the file type used here for when we next switch
 	currentType=getMedium(eng.files[eng.currentFile]);
-	console.log(currentType);
 	
 	eng.window.dispatchEvent(eventTime);
 }
@@ -259,8 +261,6 @@ eng.menu=function(event){
 //Update the scrubber's position
 eng.scrub=function(inputPercent){
 	var duration=eng.files.map(function(e){return getLength(e);}).reduce((a,b) => a+b,0);
-	
-	console.log(duration);
 	
 	//If no inputPercent was passed, estimate it
 	if(typeof(inputPercent)==='undefined'){
@@ -415,7 +415,7 @@ eng.scrub=function(inputPercent){
 	
 	//Set the overlay text (the current time)
 	overlayText.innerHTML="<p>"
-		+eng.timeDisplay.replace(/\[[^\]]*\]/g,adjustReplace)
+		+eng.info.replace(/\[[^\]]*\]/g,adjustReplace)
 	+"</p>";
 }
 
@@ -1000,6 +1000,9 @@ eng.input=function(){
 					function(key){
 						let l=eng.textboxes[key].children.length;
 						for(let i=0;i<l;i++){
+							//Skip over non-span tags
+							if(eng.textboxes[key].children[i].tagName!=="SPAN") continue;
+							
 							//Remove the delay so they're displayed immediately
 							eng.textboxes[key].children[i].children[0].style.animationDelay="0s";
 						}
@@ -1014,8 +1017,14 @@ eng.input=function(){
 eng.close=function(){
 	//Replace the container with the original element
 	
+	console.log(windowClick);
+	
+	//Remove the window event listener
+	window.removeEventListener("click",windowClick);
+	
 	//Reset the window to what it was before
 	eng.window.parentNode.replaceChild(eng.originalWindow,eng.window);
+	
 	//Remove this object
 	eng=null;
 }
@@ -1047,6 +1056,39 @@ function GET(src,onSuccess){
 					}
 				}else{
 					alert("Failed to load file called: "+eng.path+eng.files[eng.currentFile]);
+				}
+			}
+		}
+	);
+}
+
+//Make a POST call
+function POST(onSuccess,call,inputVal,inputVal2){
+	//Prepare the form data
+	var formData=new FormData();
+	formData.append('showpony-call',call);
+	formData.append('path',eng.path);
+	
+	//If we're a logged-in admin
+	if(eng.admin &&  loggedIn){
+		formData.append('password',inputVal || null);
+		formData.append('name',inputVal || null);
+		formData.append('newName',inputVal2 || null);
+		formData.append('files',uploadFile.files[0] || null);
+	}
+
+	var ajax=new XMLHttpRequest();
+	ajax.open("POST","showpony/showpony-classes.php");
+	ajax.send(formData);
+	
+	ajax.addEventListener(
+		"readystatechange"
+		,function(){
+			if(ajax.readyState==4){
+				if(ajax.status==200){
+					onSuccess(ajax);
+				}else{
+					alert("Failed to load Showpony class file.");
 				}
 			}
 		}
@@ -1229,9 +1271,9 @@ var waitForInput=false
 	,fullscreenButton=m("fullscreen-button showpony-button-preview","button")
 	,captionsButton=m("captions-button","button")
 	,types={
-		image:m("image","img")
-		,audio:m("player","audio")
-		,video:m("player","video")
+		image:m("block","img")
+		,audio:m("block","audio")
+		,video:m("block","video")
 		,multimedia:m("multimedia")
 		,text:m("text")
 	}
@@ -1278,6 +1320,69 @@ var eventMenu=new Event(
 /////////////////START/////////////////
 ///////////////////////////////////////
 
+//If the user's getting the files remotely, make the call
+if(eng.files=="get"){
+	eng.files=[];
+	POST(
+		function(ajax){
+			var response=JSON.parse(ajax.responseText);
+			console.log(response);
+			
+			if(response.success){
+				eng.files=response.files;
+				startup();
+			}else{
+				alert(response.message);
+			}
+		}
+		,"getFiles"
+	);
+}else{
+	startup();
+}
+
+function startup(){
+	if(!eng.autoplay) eng.menu();
+	
+	//Go to the part if it's a number, otherwise go to the end.
+	eng.currentFile=!isNaN(input.start) ? input.start : eng.files.length-1;
+	
+	console.log(eng.currentFile,eng.files.length);
+	
+	//If querystrings are in use, consider the querystring in the URL
+	if(eng.query){
+		window.addEventListener(
+			"popstate"
+			,function(){
+				var page=window.location.href.match(new RegExp(eng.query+'[^&]+','i'));
+				
+				if(page){
+					eng.time({part:parseInt(page[0].split("=")[1])-1,popstate:true,autoload:true});
+				}
+			}
+		);
+		
+		var page=window.location.href.match(new RegExp(eng.query+'[^&]+','i'));
+	
+		//Add in the time if it needs it, otherwise pass nothing
+		eng.time(
+			page
+			? {
+				part:parseInt(page[0].split("=")[1])-1
+				,popstate:true
+				,autoload:true
+			}
+			: null
+		);
+	}else{
+		//Start
+		eng.time({autoload:true});
+	}
+	
+	//Set input to null in hopes that garbage collection will come pick it up
+	input=null;
+}
+
 //If the window is statically positioned, set it to relative! (so positions of children work)
 if(window.getComputedStyle(eng.window).getPropertyValue('position')=="static"){
 	eng.window.style.position="relative";
@@ -1291,47 +1396,18 @@ frag([content,overlay,menuButton,fullscreenButton],eng.window);
 
 eng.window.classList.add("showpony");
 
-//If querystrings are in use, consider the querystring in the URL
-if(eng.query){
-	
-	window.addEventListener(
-		"popstate"
-		,function(){
-			var page=window.location.href.match(new RegExp(eng.query+'[^&]+','i'));
-			
-			if(page){
-				eng.time({"part":parseInt(page[0].split("=")[1])-1,"popstate":true});
-			}
-		}
-	);
-	
-	var page=window.location.href.match(new RegExp(eng.query+'[^&]+','i'));
-	
-	//Add in the time if it needs it, otherwise pass nothing
-	eng.time(
-		page
-		? {
-			"part":parseInt(page[0].split("=")[1])-1,"popstate":true
-		}
-		: null
-	);
-}else{
-	//Start
-	eng.time();
-}
-
 ///////////////////////////////////////
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
 
+//We need to set this as a variable to remove it later on
+var windowClick=function(event){
+	event.stopPropagation();
+	eng.menu(event);
+};
+
 //On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
-window.addEventListener(
-	"click"
-	,function(event){
-		event.stopPropagation();
-		eng.menu(event);
-	}
-);
+window.addEventListener("click",windowClick);
 
 //On mousedown, we prepare to move the cursor
 overlay.addEventListener(
@@ -1504,14 +1580,14 @@ if(eng.admin){
 	overlayText.addEventListener(
 		"focus"
 		,function(){
-			overlayText.innerHTML="<p>"+eng.timeDisplay+"</p>";
+			overlayText.innerHTML="<p>"+eng.info+"</p>";
 		}
 	);
 	
 	overlayText.addEventListener(
 		"blur"
 		,function(event){
-			eng.timeDisplay=overlayText.children[0].innerHTML;
+			eng.info=overlayText.children[0].innerHTML;
 			eng.scrub();
 		}
 	);
@@ -1623,6 +1699,7 @@ if(eng.admin){
 					//Sort the files by order
 					eng.files.sort();
 					
+					eng.time({part:eng.files.indexOf(response.file)});
 					eng.scrub();
 				}else{
 					alert(response.message);
@@ -1673,7 +1750,7 @@ if(eng.admin){
 					}
 				}
 				,"uploadFile"
-				,thisFile
+				,eng.files[thisFile]
 			);
 		}
 	);
@@ -1737,36 +1814,6 @@ if(eng.admin){
 			);
 		}
 	);
-	
-	//Make a POST call
-	function POST(onSuccess,call,inputVal,inputVal2){
-		//Prepare the form data
-		var formData=new FormData();
-		formData.append('showpony-call',call);
-		formData.append('path',eng.path);
-		
-		formData.append('password',inputVal || null);
-		formData.append('name',inputVal || null);
-		formData.append('newName',inputVal2 || null);
-		formData.append('files',uploadFile.files[0] || null);
-
-		var ajax=new XMLHttpRequest();
-		ajax.open("POST","showpony/showpony-classes.php");
-		ajax.send(formData);
-		
-		ajax.addEventListener(
-			"readystatechange"
-			,function(){
-				if(ajax.readyState==4){
-					if(ajax.status==200){
-						onSuccess(ajax);
-					}else{
-						alert("Failed to load Showpony class file.");
-					}
-				}
-			}
-		);
-	}
 	
 	//Try logging in
 	account("login",true);
