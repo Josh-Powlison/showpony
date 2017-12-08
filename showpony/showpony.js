@@ -24,9 +24,7 @@ Object.assign(eng,{
 		: "part"
 	,timeDisplay:input.timeDisplay || "[0pc] | [0pl]"
 	,data:input.data || {}
-	,durations:[]
-	,defaultDuration:input.defaultDuration || 20
-	,totalDuration:0
+	,defaultDuration:input.defaultDuration || 10
 	,admin:input.admin || false
 	,dateFormat:input.dateFormat || {
 			year:"numeric"
@@ -126,8 +124,6 @@ eng.time=function(obj){
 				? "&refresh-"+Date.now()
 				: '?refresh-'+Date.now()
 		);
-		
-		//Get the duration of the newly-loaded file too
 	}
 	
 	console.log(src);
@@ -262,6 +258,10 @@ eng.menu=function(event){
 
 //Update the scrubber's position
 eng.scrub=function(inputPercent){
+	var duration=eng.files.map(function(e){return getLength(e);}).reduce((a,b) => a+b,0);
+	
+	console.log(duration);
+	
 	//If no inputPercent was passed, estimate it
 	if(typeof(inputPercent)==='undefined'){
 		//Use the currentTime of the object, if it has one
@@ -271,10 +271,10 @@ eng.scrub=function(inputPercent){
 		var l=eng.currentFile;
 		for(var i=0;i<l;i++){
 			//Add the times of previous videos 7to get the actual time in the piece
-			currentTime+=eng.durations[i];
+			currentTime+=getLength(eng.files[i]);
 		}
 		
-		var inputPercent=currentTime / eng.totalDuration
+		var inputPercent=currentTime / duration
 			,newPart=eng.currentFile;
 	}else{ //if inputPercent WAS passed
 	
@@ -282,15 +282,15 @@ eng.scrub=function(inputPercent){
 		inputPercent= inputPercent <= 0 ? 0 : inputPercent >= 1 ? 1 : inputPercent;
 		
 		//Go to the time
-		var newTime=eng.totalDuration*inputPercent
+		var newTime=duration*inputPercent
 			,newPart=0
 		;
 		
 		//Look through the media for the right one
-		var l=eng.durations.length;
+		var l=eng.files.length;
 		for(var i=0;i<l;i++){
 			//If the duration's within this one, stop at this one
-			if(i==l-1 || newTime<eng.durations[i]){
+			if(i==l-1 || newTime<getLength(eng.files[i])){
 			//If this is the media!
 				//If we allow scrubbing or we're not moving the bar, we can load the file
 				if(eng.scrubLoad!==false || scrubbing===false){
@@ -307,7 +307,7 @@ eng.scrub=function(inputPercent){
 				break;
 			}else{
 				//Otherwise, go to the next one (and subtract the duration from the total duration)
-				newTime-=eng.durations[i];
+				newTime-=getLength(eng.files[i]);
 			}
 		}
 	}
@@ -315,12 +315,12 @@ eng.scrub=function(inputPercent){
 	//Move the progress bar
 	progress.style.left=(inputPercent*100)+"%";
 	
-	var current=Math.floor(inputPercent*eng.totalDuration)
-		,left=eng.totalDuration-Math.floor(inputPercent*eng.totalDuration)
+	var current=Math.floor(inputPercent*duration)
+		,left=duration-Math.floor(inputPercent*duration)
 		,floorValue=1
 	;
 	
-	//console.log(current,inputPercent,eng.totalDuration,newPart);
+	//console.log(current,inputPercent,duration,newPart);
 	
 	function adjustReplace(input){
 		//Name
@@ -387,9 +387,9 @@ eng.scrub=function(inputPercent){
 			if(input[3]=="t"){
 				//Pass a calculation based on whether hours, minutes, or seconds were asked for
 				floorValue=
-					input[2]=="h" ? eng.totalDuration / 3600
-					: input[2]=="m" ? (eng.totalDuration % 3600) / 60
-					: eng.totalDuration % 60
+					input[2]=="h" ? duration / 3600
+					: input[2]=="m" ? (duration % 3600) / 60
+					: duration % 60
 				;
 			}else{ //Current time or time left
 				var val=
@@ -1088,6 +1088,13 @@ function getMedium(inputFileType){
 	}
 }
 
+function getLength(file){
+	var get=file.match(/[^\s)]+(?=\..+$)/);
+
+	//Return the value in the file or the default duration
+	return (get ? parseFloat(get[0]) : eng.defaultDuration);
+}
+
 //Use documentFragment to append elements faster
 function frag(inputArray,inputParent){
 	var fragment=document.createDocumentFragment();
@@ -1270,45 +1277,6 @@ var eventMenu=new Event(
 ///////////////////////////////////////
 /////////////////START/////////////////
 ///////////////////////////////////////
-
-function getDurations(){
-	eng.durations=[];
-	eng.totalDuration=0;
-	
-	//Get lengths of all of the files
-	var l=eng.files.length;
-	for(let i=0;i<l;i++){
-		switch(getMedium(eng.files[i])){
-			case "video":
-			case "audio":
-				let thisMedia=document.createElement(getMedium(eng.files[i]));
-			
-				thisMedia.preload="metadata";
-				thisMedia.src=(eng.files[i][0]=="x" ? "showpony/showpony-get-file.php?get="+eng.path+eng.files[i] : eng.path+eng.files[i]);
-				
-				//console.log(thisMedia.src);
-				
-				//Listen for media loading
-				thisMedia.addEventListener(
-					"loadedmetadata"
-					,function(){
-						console.log("Get duration of this!",thisMedia.duration);
-						
-						//Want to round up for later calculations
-						eng.durations[i]=thisMedia.duration;
-						eng.totalDuration+=thisMedia.duration;
-						
-						//if(overlay.classList.contains("showpony-overlay-visible")) eng.scrub();
-					}
-				);
-				
-				break;
-			default:
-				eng.durations[i]=eng.defaultDuration;
-				eng.totalDuration+=eng.defaultDuration;
-		}
-	}
-}
 
 //If the window is statically positioned, set it to relative! (so positions of children work)
 if(window.getComputedStyle(eng.window).getPropertyValue('position')=="static"){
@@ -1619,7 +1587,6 @@ if(eng.admin){
 					}
 					
 					eng.files=response.files;
-					getDurations();
 				}else{
 					alert(response.message);
 				}
@@ -1656,7 +1623,6 @@ if(eng.admin){
 					//Sort the files by order
 					eng.files.sort();
 					
-					getDurations();
 					eng.scrub();
 				}else{
 					alert(response.message);
@@ -1724,9 +1690,6 @@ if(eng.admin){
 					
 					if(response.success){
 						//Remove the file from the arrays
-						eng.totalDuration-=eng.durations[thisFile];
-						
-						eng.durations.splice(thisFile,1);
 						eng.files.splice(thisFile,1);
 
 						console.log(thisFile,eng.files.length);
@@ -1763,8 +1726,6 @@ if(eng.admin){
 					if(response.success){
 						//Add the file to the array
 						eng.files.push(response.file);
-						eng.durations.push(20);
-						eng.totalDuration+=20;
 						
 						eng.time({part:"last"});
 						eng.scrub();
@@ -1809,10 +1770,6 @@ if(eng.admin){
 	
 	//Try logging in
 	account("login",true);
-}else{
-	//If not admin, do some things manually
-
-	getDurations();
 }
 
 }
