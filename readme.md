@@ -13,6 +13,7 @@ An easy-to-use multimedia engine for telling stories in almost any medium!
 # Can you show me Showpony in action?
 
 [Game Plan! (Webmanga)](http://gameplanmanga.com/)
+
 [Test Site](https://showpony.heybard.com/)
 
 If you use Showpony on your site too, let me know and I might link to it from here!
@@ -26,7 +27,7 @@ Showpony is ready for:
 * Audio
 * Straight HTML files
 
-Although in the words are also:
+Although in the works are also:
 
 * Visual Novels
 * Kinetic Novels
