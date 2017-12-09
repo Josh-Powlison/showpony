@@ -4,7 +4,7 @@ ini_set('display_errors',1);
 
 class Showpony{
 
-	protected static $password='password'; #NULL will disable admin access. Do not keep the default password.
+	protected static $password=NULL; #NULL will disable admin access. Using a string will set that as the password and allow admin access.
 	
 	#Initialize the class
 	function __construct($inputArray){
@@ -18,8 +18,18 @@ class Showpony{
 			,'message' => null
 		];
 		
-		#Always attempt login for admin functions
-		$response=$this->login($response);
+		#If there's no password in use, don't try to log in
+		if(self::$password!==NULL){
+			#Always attempt login for admin functions
+			$response=$this->login($response);
+		}else
+		#If the user's trying to access admin stuff when there's no password set, prevent it and let them know
+		if(!empty($_POST['password']) || $response['call']==='login'){
+			$response['message']=("You are trying to access admin privileges through this webpage but you have admin disabled. Either set a password for the admin or set \"admin:false\" in the Showpony object.");
+			
+			echo json_encode($response);
+			die();
+		}
 		
 		#If the user passed a call
 		if(!empty($_POST['showpony-call'])){
@@ -44,7 +54,7 @@ class Showpony{
 			#Check if the user's trying to log in right now (and aren't trying to auto login)
 			if(
 				$response['call']=='login'
-				&& $_POST['password']!=="null"
+				&& !empty($_POST['password'])
 			){
 				$this->admin=($_POST['password']==self::$password);
 				
@@ -63,19 +73,14 @@ class Showpony{
 					echo "You've been logged out!";
 					setcookie('showpony_password',null,-1);
 				}
-				
 			}
 		}else echo 'Admin access not available for this Showpony object.';
 		
+		#This is outside the other block because files need to be returned if the user's trying to log in (and needs that info)
 		if($response['call']==='login'){
-			if(
-				$this->admin
-				|| $_POST['password']==='null'
-			){
-				#Get the file names and pass them on
-				$response['success']=true;
-				$response=$this->getFiles($response);
-			}
+			#Get the file names and pass them on
+			$response['success']=true;
+			$response=$this->getFiles($response);
 			
 			$response['admin']=$this->admin;
 		}
@@ -85,6 +90,7 @@ class Showpony{
 	
 	protected function logout($response){
 		$response["success"]=setcookie('showpony_password',null,-1);
+		$this->admin=false;
 		$response=$this->getFiles($response);
 		return $response;
 	}

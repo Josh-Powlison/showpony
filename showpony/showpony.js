@@ -31,19 +31,28 @@ Object.assign(eng,{
 
 //Go to another file
 eng.time=function(obj){
-	//If inputPart is set
-	if(obj && typeof(obj.part)!==undefined){
-		//Use different options
-		switch(obj.part){
-			case "first": eng.currentFile=0; break;
-			case "prev": eng.currentFile--; break;
-			case "next": eng.currentFile++; break;
-			case "last": eng.currentFile=eng.files.length-1; break;
-			default:
-				//Get the part, or 0 if it's undefined
-				eng.currentFile=parseInt(obj.part ? obj.part : 0);
-				break;
-		}
+	console.log(obj);
+	
+	obj=obj || {};
+	
+	Object.assign(obj,{
+		part:obj.part || eng.currentFile
+		,refresh:obj.refresh || false
+		,reload:obj.reload || false
+		,scrollToTop:obj.scrollToTop===undefined ? true : obj.scrollToTop
+		,popstate:obj.popstate || false
+	});
+	
+	//Use different options
+	switch(obj.part){
+		case "first": eng.currentFile=0; break;
+		case "prev": eng.currentFile--; break;
+		case "next": eng.currentFile++; break;
+		case "last": eng.currentFile=eng.files.length-1; break;
+		default:
+			//Get the part, or 0 if it's undefined
+			eng.currentFile=parseInt(obj.part ? obj.part : 0);
+			break;
 	}
 	
 	//If we're at the end, run the readable event
@@ -51,11 +60,13 @@ eng.time=function(obj){
 		//Go to the final file
 		eng.currentFile=eng.files.length-1;
 		
-		//Run the event that users can read.
-		eng.window.dispatchEvent(eventEnd);
-		//console.log("Ended!");
-		
-		return;
+		//If we aren't just trying to reload a file, end; otherwise, get to that last file
+		if(!obj || !obj.reload){
+			//Run the event that users can read.
+			eng.window.dispatchEvent(eventEnd);
+			console.log("Ended!");
+			return;
+		}
 	}
 	
 	if(eng.currentFile<0){
@@ -63,7 +74,7 @@ eng.time=function(obj){
 	}
 	
 	//If we're using queries
-	if(eng.query && (!obj || !obj.popstate)){
+	if(eng.query && !obj.popstate){
 		var search=new RegExp('(\\?|&)'+eng.query+'=','i');
 		var newURL=document.location.href;
 		
@@ -76,7 +87,7 @@ eng.time=function(obj){
 			newURL+=eng.query+'='+(eng.currentFile+1);
 		}
 		
-		//console.log(newURL);
+		console.log(newURL);
 		
 		history.pushState(
 			{}
@@ -89,7 +100,7 @@ eng.time=function(obj){
 	scrubbing===false && eng.scrub();
 	
 	//Go to the top of the page (if we didn't come here by autoloading)
-	if(!obj || !obj.autoload){
+	if(obj.scrollToTop){
 		eng.window.scrollIntoView();
 	}
 	
@@ -107,7 +118,7 @@ eng.time=function(obj){
 	//If switching types, do some cleanup
 	if(currentType!=newType){
 		content.innerHTML="";
-		//console.log(types);
+		console.log(types);
 		content.appendChild(thisType);
 		
 		//Use the general content class
@@ -121,7 +132,7 @@ eng.time=function(obj){
 	);
 	
 	//Refresh the file, if requested we do so
-	if(obj && obj.refresh){
+	if(obj.refresh){
 		src+=(
 			eng.files[eng.currentFile][0]=="x"
 				? "&refresh-"+Date.now()
@@ -139,7 +150,7 @@ eng.time=function(obj){
 			//Adjust the source
 			thisType.src=src;
 			
-			//console.log(thisType.src);
+			console.log(thisType.src);
 			
 			!overlay.classList.contains("showpony-overlay-visible") && thisType.play();
 			
@@ -173,7 +184,7 @@ eng.time=function(obj){
 			break;
 		//Visual Novels/Kinetic Novels/Interactive Fiction
 		case "multimedia":
-			//console.log(currentType);
+			console.log(currentType);
 		
 			//If the previous type was different, use the new type (or if we're scrubbing and not moving along as normal)
 			//if(currentType!=newType || overlay.style.visibility=="visible"){
@@ -318,7 +329,7 @@ eng.scrub=function(inputPercent){
 		,floorValue=1
 	;
 	
-	////console.log(current,inputPercent,duration,newPart);
+	//console.log(current,inputPercent,duration,newPart);
 	
 	function adjustReplace(input){
 		//Name
@@ -474,7 +485,7 @@ eng.run=function(inputNum){
 	
 	//If we've ended manually or reached the end, stop running immediately and end it all
 	if(eng.currentLine>=eng.lines.length){
-		//console.log("Ending!");
+		console.log("Ending!");
 		eng.time({"part":"next"});
 		return;
 	}
@@ -496,7 +507,7 @@ eng.run=function(inputNum){
 	if(text[0]==">"){
 		var vals=text.replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/);
 		
-		//console.log(text,vals);
+		console.log(text,vals);
 		
 		//We run a function based on the value passed.
 		//If it returns multimediaSettings, we use those new ones over the old ones.
@@ -512,7 +523,7 @@ eng.run=function(inputNum){
 			multimediaSettings.wait=null;
 		}
 		
-		////console.log(multimediaSettings,eng.currentLine);
+		//console.log(multimediaSettings,eng.currentLine);
 		
 		if(!multimediaSettings.go){
 			return;
@@ -808,7 +819,7 @@ var multimediaFunction={
 		//images will be either an array or a string
 		var imageNames=vals[2];
 		
-		//console.log(vals);
+		console.log(vals);
 		
 		if(imageNames){
 			//Get all the values (colors, etc) out of here as possible
@@ -816,7 +827,7 @@ var multimediaFunction={
 				imageNames=imageNames[0].split(",");
 			}
 			
-			//console.log(imageNames);
+			console.log(imageNames);
 			
 			images.push("url('resources/characters/"+folder+"/"+imageNames+"')");
 			
@@ -903,7 +914,7 @@ var multimediaFunction={
 		//images will be either an array or a string
 		var imageNames=vals[2];
 		
-		//console.log(vals);
+		console.log(vals);
 		
 		if(imageNames){
 			//Get all the values (colors, etc) out of here as possible
@@ -911,7 +922,7 @@ var multimediaFunction={
 				imageNames=imageNames[0].split(",");
 			}
 			
-			//console.log(imageNames);
+			console.log(imageNames);
 			
 			//if(i>0){
 			//	images+=',';
@@ -976,7 +987,7 @@ var multimediaFunction={
 
 //When the viewer inputs to Showpony (click, space, general action)
 eng.input=function(){
-	//console.log(currentType);
+	console.log(currentType);
 	
 	//Function differently depending on medium
 	switch(currentType){
@@ -994,7 +1005,7 @@ eng.input=function(){
 			//If a wait timer was going, stop it.
 			clearTimeout(waitTimer);
 		
-			//console.log(eng.charsHidden);
+			console.log(eng.charsHidden);
 		
 			//If all letters are displayed
 			if(eng.charsHidden<1){
@@ -1002,7 +1013,7 @@ eng.input=function(){
 			}
 			else //If some eng.objects have yet to be displayed
 			{
-				//console.log(eng.textboxes);
+				console.log(eng.textboxes);
 				
 				//Go through each textbox and display all of its text
 				Object.keys(eng.textboxes).forEach(
@@ -1026,7 +1037,7 @@ eng.input=function(){
 eng.close=function(){
 	//Replace the container with the original element
 	
-	//console.log(windowClick);
+	console.log(windowClick);
 	
 	//Remove the window event listener
 	window.removeEventListener("click",windowClick);
@@ -1041,6 +1052,51 @@ eng.close=function(){
 ///////////////////////////////////////
 ////////////LOCAL FUNCTIONS////////////
 ///////////////////////////////////////
+
+function startup(){
+	if(!eng.autoplay) eng.menu();
+	
+	//Go to the part if it's a number, otherwise go to the end.
+	eng.currentFile=!isNaN(input.start) ? input.start : eng.files.length-1;
+	
+	//If querystrings are in use, consider the querystring in the URL
+	if(eng.query){
+		window.addEventListener(
+			"popstate"
+			,function(){
+				var page=window.location.href.match(new RegExp(eng.query+'[^&]+','i'));
+				
+				if(page){
+					eng.time({part:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
+				}
+			}
+		);
+		
+		var page=window.location.href.match(new RegExp(eng.query+'[^&]+','i'));
+	
+		//Add in the time if it needs it, otherwise pass nothing
+		eng.time(
+			page
+			? {
+				part:parseInt(page[0].split("=")[1])-1
+				,popstate:true
+				,scrollToTop:false
+			}
+			: null
+		);
+	}else{
+		//Start
+		eng.time({scrollToTop:false});
+	}
+	
+	//Set input to null in hopes that garbage collection will come pick it up
+	input=null;
+	
+	//Try to access the admin account if logged in
+	if(eng.admin){
+		account("login",true);
+	}
+}
 
 //Make a GET call
 function GET(src,onSuccess){
@@ -1072,19 +1128,17 @@ function GET(src,onSuccess){
 }
 
 //Make a POST call
-function POST(onSuccess,call,inputVal,inputVal2){
+function POST(onSuccess,obj){
 	//Prepare the form data
 	var formData=new FormData();
-	formData.append('showpony-call',call);
+	formData.append('showpony-call',obj.call);
 	formData.append('path',eng.path);
 	
-	//If we're a logged-in admin
-	if(eng.admin &&  loggedIn){
-		formData.append('password',inputVal || null);
-		formData.append('name',inputVal || null);
-		formData.append('newName',inputVal2 || null);
-		formData.append('files',uploadFile.files[0] || null);
-	}
+	//Special values, if passed
+	obj.password && formData.append('password',obj.password);
+	obj.name && formData.append('name',obj.name);
+	obj.newName && formData.append('newName',obj.newName);
+	obj.file && formData.append('files',obj.file);
 
 	var ajax=new XMLHttpRequest();
 	ajax.open("POST","showpony/showpony-classes.php");
@@ -1220,7 +1274,7 @@ function Character(){
 	//Go through the file and add in all of the images
 	for(let i=0;i<eng.lines.length;i++){
 		if(eng.lines[i].match(/@CH ben/)){
-			//console.log(eng.lines[i]);
+			console.log(eng.lines[i]);
 			//cha.imgDiv(i,images[i]);
 		}
 	}*/
@@ -1297,6 +1351,19 @@ continueNotice.innerHTML="...";
 
 frag([progress,overlayText],overlay)
 
+//If the window is statically positioned, set it to relative! (so positions of children work)
+if(window.getComputedStyle(eng.window).getPropertyValue('position')=="static"){
+	eng.window.style.position="relative";
+}
+
+//Empty the current window
+eng.window.innerHTML="";
+
+//And fill it up again!
+frag([content,overlay,menuButton,fullscreenButton],eng.window);
+
+eng.window.classList.add("showpony");
+
 ///////////////////////////////////////
 /////////////CUSTOM EVENTS/////////////
 ///////////////////////////////////////
@@ -1324,84 +1391,6 @@ var eventMenu=new Event(
 		}
 	}
 );
-
-///////////////////////////////////////
-/////////////////START/////////////////
-///////////////////////////////////////
-
-//If the user's getting the files remotely, make the call
-if(eng.files=="get"){
-	eng.files=[];
-	POST(
-		function(ajax){
-			var response=JSON.parse(ajax.responseText);
-			//console.log(response);
-			
-			if(response.success){
-				eng.files=response.files;
-				startup();
-			}else{
-				alert(response.message);
-			}
-		}
-		,"getFiles"
-	);
-}else{
-	startup();
-}
-
-function startup(){
-	if(!eng.autoplay) eng.menu();
-	
-	//Go to the part if it's a number, otherwise go to the end.
-	eng.currentFile=!isNaN(input.start) ? input.start : eng.files.length-1;
-	
-	//If querystrings are in use, consider the querystring in the URL
-	if(eng.query){
-		window.addEventListener(
-			"popstate"
-			,function(){
-				var page=window.location.href.match(new RegExp(eng.query+'[^&]+','i'));
-				
-				if(page){
-					eng.time({part:parseInt(page[0].split("=")[1])-1,popstate:true,autoload:true});
-				}
-			}
-		);
-		
-		var page=window.location.href.match(new RegExp(eng.query+'[^&]+','i'));
-	
-		//Add in the time if it needs it, otherwise pass nothing
-		eng.time(
-			page
-			? {
-				part:parseInt(page[0].split("=")[1])-1
-				,popstate:true
-				,autoload:true
-			}
-			: null
-		);
-	}else{
-		//Start
-		eng.time({autoload:true});
-	}
-	
-	//Set input to null in hopes that garbage collection will come pick it up
-	input=null;
-}
-
-//If the window is statically positioned, set it to relative! (so positions of children work)
-if(window.getComputedStyle(eng.window).getPropertyValue('position')=="static"){
-	eng.window.style.position="relative";
-}
-
-//Empty the current window
-eng.window.innerHTML="";
-
-//And fill it up again!
-frag([content,overlay,menuButton,fullscreenButton],eng.window);
-
-eng.window.classList.add("showpony");
 
 ///////////////////////////////////////
 ////////////EVENT LISTENERS////////////
@@ -1501,7 +1490,7 @@ overlay.addEventListener(
 		//If we were scrubbing
 		if(scrubbing===true){
 			scrubbing=false;
-			//console.log("We were scrubbing!");
+			console.log("We were scrubbing!");
 			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
 			if(eng.scrubLoad==false){
 				//Load the part our pointer's on
@@ -1604,7 +1593,7 @@ if(eng.admin){
 		"contextmenu"
 		,function(event){
 			event.preventDefault();
-			//console.log("Context menu!");
+			console.log("Context menu!");
 			editor();
 		}
 	);
@@ -1612,13 +1601,14 @@ if(eng.admin){
 	function editor(){
 		if(loggedIn){
 			eng.window.classList.toggle("showpony-editor");
-			updateEditor();
 		}else{
 			account("login");
 		}
 	}
 	
 	function updateEditor(){
+		console.log(eng.files,eng.currentFile);
+		
 		var date=(eng.files[eng.currentFile].match(/\d(.(?!\())+\d*/) || [""])[0].replace(/;/g,':');
 		
 		//Get the name, remove the parentheses
@@ -1639,7 +1629,8 @@ if(eng.admin){
 		,function(){account("logout");}
 	);
 	
-	function account(type,tryCookie){
+	//Must be set to a variable to be called outside the enclosing "if" statement
+	var account=function(type,tryCookie){
 		var pass=null;
 		if(type==="login"){
 			if(!tryCookie){
@@ -1648,34 +1639,37 @@ if(eng.admin){
 			}
 		}
 		
-		//console.log(type,tryCookie,pass);
+		console.log(type,tryCookie,pass);
 		
 		POST(
 			function(ajax){
 				var response=JSON.parse(ajax.responseText);
-				//console.log(response);
+				console.log(response);
 				
 				if(response.success){
+					eng.files=response.files;
+					
 					//Logged in
 					if(response.admin){
-						//console.log("Hello!");
+						
 						loggedIn=true;
 					
 						if(!tryCookie){
 							editor();
 						}
 					}else{ //Not logged in
-						editor();
-						loggedIn=false;
+						if(loggedIn){
+							editor();
+							loggedIn=false;
+						}
 					}
 					
-					eng.files=response.files;
+					eng.time({reload:true,scrollToTop:false});
 				}else{
 					alert(response.message);
 				}
 			}
-			,type
-			,pass
+			,{call:type,password:pass}
 		);
 	}
 	
@@ -1706,15 +1700,13 @@ if(eng.admin){
 					//Sort the files by order
 					eng.files.sort();
 					
-					eng.time({part:eng.files.indexOf(response.file)});
+					eng.time({part:eng.files.indexOf(response.file),scrollToTop:false});
 					eng.scrub();
 				}else{
 					alert(response.message);
 				}
 			}
-			,"renameFile"
-			,eng.files[thisFile]
-			,fileName
+			,{call:"renameFile",name:eng.files[thisFile],newName:fileName}
 		);
 	}
 	
@@ -1745,19 +1737,22 @@ if(eng.admin){
 			POST(
 				function(ajax){
 					var response=JSON.parse(ajax.responseText);
-					//console.log(response);
+					console.log(response);
 					
 					if(response.success){
 						eng.files[thisFile]=response.file;
 						
 						//If still on that file, refresh it
-						if(eng.currentFile===thisFile) eng.time({part:thisFile,refresh:true})
+						if(eng.currentFile===thisFile) eng.time({part:thisFile,refresh:true,scrollToTop:false})
 					}else{
 						alert(response.message);
 					}
 				}
-				,"uploadFile"
-				,eng.files[thisFile]
+				,{
+					call:"uploadFile"
+					,name:eng.files[thisFile]
+					,file:uploadFile.files[0]
+				}
 			);
 		}
 	);
@@ -1769,14 +1764,14 @@ if(eng.admin){
 			POST(
 				function(ajax){
 					var response=JSON.parse(ajax.responseText);
-					//console.log(response);
-					//console.log(eng.currentFile,thisFile,eng.files.length);
+					console.log(response);
+					console.log(eng.currentFile,thisFile,eng.files.length);
 					
 					if(response.success){
 						//Remove the file from the arrays
 						eng.files.splice(thisFile,1);
 
-						//console.log(thisFile,eng.files.length);
+						console.log(thisFile,eng.files.length);
 						
 						//If still on that file, refresh it
 						if(thisFile===eng.currentFile){
@@ -1786,7 +1781,7 @@ if(eng.admin){
 								thisFile=eng.files.length-1;
 							}
 							
-							//console.log(thisFile,eng.currentFile);
+							console.log(thisFile,eng.currentFile);
 							
 							eng.time({part:thisFile,refresh:true})
 						}
@@ -1794,8 +1789,7 @@ if(eng.admin){
 						alert(response.message);
 					}
 				}
-				,"deleteFile"
-				,eng.files[thisFile]
+				,{call:"deleteFile",name:eng.files[thisFile]}
 			);
 		}
 	);
@@ -1805,7 +1799,7 @@ if(eng.admin){
 			POST(
 				function(ajax){
 					var response=JSON.parse(ajax.responseText);
-					//console.log(response);
+					console.log(response);
 					
 					if(response.success){
 						//Add the file to the array
@@ -1817,13 +1811,38 @@ if(eng.admin){
 						alert(response.message);
 					}
 				}
-				,"newFile"
+				,{call:"newFile"}
 			);
 		}
 	);
 	
-	//Try logging in
-	account("login",true);
+	console.log(account);
+}
+
+///////////////////////////////////////
+/////////////////START/////////////////
+///////////////////////////////////////
+
+//If the user's getting the files remotely, make the call
+if(eng.files=="get"){
+	eng.files=[];
+	
+	POST(
+		function(ajax){
+			var response=JSON.parse(ajax.responseText);
+			console.log(response);
+			
+			if(response.success){
+				eng.files=response.files;
+				startup();
+			}else{
+				alert(response.message);
+			}
+		}
+		,{call:"getFiles"}
+	);
+}else{
+	startup();
 }
 
 }
