@@ -89,11 +89,20 @@ eng.time=function(obj){
 		
 		console.log(newURL);
 		
-		history.pushState(
-			{}
-			,""
-			,newURL
-		);
+		//We can replace the current history state rather than adding to the history
+		if(obj.replaceState){
+			history.replaceState(
+				{}
+				,""
+				,newURL
+			);
+		}else{
+			history.pushState(
+				{}
+				,""
+				,newURL
+			);
+		}
 	}
 	
 	//If we aren't moving the bar, update the overlay
@@ -1075,15 +1084,12 @@ function startup(){
 		var page=window.location.href.match(new RegExp(eng.query+'[^&]+','i'));
 	
 		//Add in the time if it needs it, otherwise pass nothing
-		eng.time(
-			page
-			? {
-				part:parseInt(page[0].split("=")[1])-1
-				,popstate:true
-				,scrollToTop:false
-			}
-			: null
-		);
+		eng.time({
+			part: page ? parseInt(page[0].split("=")[1])-1 : null
+			,popstate:page ? true : false
+			,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
+			,scrollToTop:false
+		});
 	}else{
 		//Start
 		eng.time({scrollToTop:false});

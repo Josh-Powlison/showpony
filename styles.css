@@ -1,0 +1,90 @@
+@font-face{
+	font-family:"Grand Hotel";
+	src:url(design-files/GrandHotel-Regular.otf);
+	font-weight:normal;
+}
+
+body{
+	margin:0;
+	padding:0;
+	font-family:Arial;
+}
+
+main{
+	width:40rem;
+	max-width:100%;
+	margin:auto;
+	padding:2rem;
+	box-sizing:border-box;
+}
+
+h1,h2{
+	font-family:"Grand Hotel",serif;
+}
+
+h1{
+	text-align:center;
+	font-size:3rem;
+	margin:0;
+}
+
+pre{
+	background-color:rgba(0,0,0,.1);
+	padding:1em;
+	border-radius:10px;
+	white-space:pre-wrap;
+}
+
+pre h3{
+	margin:0;
+}
+
+.html{
+	background-color:rgba(0,255,0,.1);
+}
+
+.css{
+	background-color:rgba(0,0,255,.1);
+}
+
+.js{
+	background-color:rgba(255,0,0,.1);
+}
+
+#logo{
+	margin:auto;
+	display:block;
+	width:15rem;
+	max-width:100%;
+}
+
+/*Don't start custom classes with .showpony, because that's how all of the classes are named in showpony.css*/
+	
+/*Set width and height to whatever you want*/
+.story{
+	width:100%;
+	height:500px;
+	margin:auto;
+}
+
+#orbit{
+	width:500px;
+	height:2000px;
+	margin:auto;
+	background-color:white;
+}
+
+.splash{
+	width:100%;
+	height:100%;
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	font-size:3em;
+	background-color:black;
+	color:white;
+	cursor:pointer;
+	box-sizing:border-box;
+	padding:1rem;
+	font-family:"Grand Hotel";
+}
