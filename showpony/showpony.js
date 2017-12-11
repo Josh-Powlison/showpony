@@ -16,13 +16,12 @@ Object.assign(eng,{
 	,loadingClass:input.loadingClass || null
 	,scrubLoad:input.scrubLoad || false
 	,query:input.query!==undefined ? input.query
-		: "part"
+		: "file"
 	,info:input.info || "[0pc] | [0pl]"
 	,data:input.data || {}
 	,defaultDuration:input.defaultDuration || 10
 	,admin:input.admin || false
 	,dateFormat:input.dateFormat || {year:"numeric",month:"numeric",day:"numeric"}
-	,autoplay:input.autoplay!==undefined ? input.autoplay : true
 });
 
 ///////////////////////////////////////
@@ -35,8 +34,31 @@ eng.time=function(obj){
 	
 	obj=obj || {};
 	
+	//If a time is passed, get file and time based on the place in the total
+	if(obj.time!==undefined && obj.file===undefined){
+		obj.file=0;
+		
+		//Look through the videos for the right one
+		var l=eng.files.length;
+		for(var i=0;i<l;i++){
+			var length=getLength(eng.files[i]);
+			
+			//If we've reached the file, exit
+			if(obj.time<length){
+				break;
+			}else{ //Otherwise go to the next file
+				obj.file++;
+				obj.time-=length;
+			}
+			//If the time is too great, the story will just end
+		}
+		
+		console.log(obj.time,obj.file);
+	}
+	
 	Object.assign(obj,{
-		part:obj.part || eng.currentFile
+		file:obj.file!==undefined ? obj.file : eng.currentFile
+		,time:obj.time || 0
 		,refresh:obj.refresh || false
 		,reload:obj.reload || false
 		,scrollToTop:obj.scrollToTop===undefined ? true : obj.scrollToTop
@@ -44,16 +66,18 @@ eng.time=function(obj){
 	});
 	
 	//Use different options
-	switch(obj.part){
+	switch(obj.file){
 		case "first": eng.currentFile=0; break;
 		case "prev": eng.currentFile--; break;
 		case "next": eng.currentFile++; break;
 		case "last": eng.currentFile=eng.files.length-1; break;
 		default:
-			//Get the part, or 0 if it's undefined
-			eng.currentFile=parseInt(obj.part ? obj.part : 0);
+			//Get the file, or 0 if it's undefined
+			eng.currentFile=parseInt(obj.file ? obj.file : 0);
 			break;
 	}
+	
+	console.log(eng.currentFile);
 	
 	//If we're at the end, run the readable event
 	if(eng.currentFile>=eng.files.length){
@@ -106,7 +130,7 @@ eng.time=function(obj){
 	}
 	
 	//If we aren't moving the bar, update the overlay
-	scrubbing===false && eng.scrub();
+	scrubbing===false && scrub();
 	
 	//Go to the top of the page (if we didn't come here by autoloading)
 	if(obj.scrollToTop){
@@ -170,7 +194,7 @@ eng.time=function(obj){
 					//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
 					if(overlay.classList.contains("showpony-overlay-visible")) return;
 					
-					eng.time({part:"next"});
+					eng.time({file:"next"});
 				}
 			);
 			break;
@@ -187,7 +211,7 @@ eng.time=function(obj){
 					//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
 					if(overlay.classList.contains("showpony-overlay-visible")) return;
 					
-					eng.time({part:"next"});
+					eng.time({file:"next"});
 				}
 			);
 			break;
@@ -225,6 +249,9 @@ eng.time=function(obj){
 			break;
 	}
 	
+	//Update the time
+	thisType.currentTime=obj.time;
+	
 	//Track the file type used here for when we next switch
 	currentType=getMedium(eng.files[eng.currentFile]);
 	
@@ -240,8 +267,8 @@ eng.menu=function(event){
 	
 		//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
 		if(eng.scrubLoad==false){
-			//Load the part our cursor's on
-			eng.scrub(
+			//Load the file our cursor's on
+			scrub(
 				(event.clientX-eng.window.getBoundingClientRect().left)
 				/
 				(eng.window.getBoundingClientRect().width)
@@ -262,7 +289,7 @@ eng.menu=function(event){
 		
 		//On toggling classes, returns "true" if just added
 		if(overlay.classList.toggle("showpony-overlay-visible")){
-			eng.scrub();
+			scrub();
 			
 			//Play/pause video or audio
 			types[currentType].play && types[currentType].pause();
@@ -277,7 +304,7 @@ eng.menu=function(event){
 };
 
 //Update the scrubber's position
-eng.scrub=function(inputPercent){
+function scrub(inputPercent){
 	var duration=eng.files.map(function(e){return getLength(e);}).reduce((a,b) => a+b,0);
 	
 	//If no inputPercent was passed, estimate it
@@ -313,7 +340,7 @@ eng.scrub=function(inputPercent){
 				//If we allow scrubbing or we're not moving the bar, we can load the file
 				if(eng.scrubLoad!==false || scrubbing===false){
 					if(i!==eng.currentFile){
-						eng.time({"part":i});
+						eng.time({file:i});
 					}
 					
 					//Set the time properly for the current file
@@ -390,9 +417,9 @@ eng.scrub=function(inputPercent){
 		if(input[2]=="%"){
 			floorValue=(inputPercent*100);
 		}else
-		//Part numbers
+		//File numbers
 		if(input[2]=="p"){
-			//Pass a calculation based on whether the number of files left, total, or the number of the current part was asked for
+			//Pass a calculation based on whether the number of files left, total, or the number of the current file was asked for
 			floorValue=
 				input[3]=="l" ? eng.files.length-(newPart+1)
 				: input[3]=="t" ? eng.files.length
@@ -495,7 +522,7 @@ eng.run=function(inputNum){
 	//If we've ended manually or reached the end, stop running immediately and end it all
 	if(eng.currentLine>=eng.lines.length){
 		console.log("Ending!");
-		eng.time({"part":"next"});
+		eng.time({file:"next"});
 		return;
 	}
 
@@ -714,7 +741,7 @@ eng.run=function(inputNum){
 
 var multimediaFunction={
 	'en':function(){
-		eng.time({part:"next"});
+		eng.time({file:"next"});
 	}
 	,'go':function(vals){
 		eng.run(eng.lines.indexOf(vals[1])+1 || null);
@@ -1001,7 +1028,7 @@ eng.input=function(){
 	//Function differently depending on medium
 	switch(currentType){
 		case "image":
-			eng.time({"part":"next"});
+			eng.time({file:"next"});
 			break;
 		case "audio":
 		case "video":
@@ -1063,9 +1090,7 @@ eng.close=function(){
 ///////////////////////////////////////
 
 function startup(){
-	if(!eng.autoplay) eng.menu();
-	
-	//Go to the part if it's a number, otherwise go to the end.
+	//Go to the file if it's a number, otherwise go to the end.
 	eng.currentFile=!isNaN(input.start) ? input.start : eng.files.length-1;
 	
 	//If querystrings are in use, consider the querystring in the URL
@@ -1076,7 +1101,7 @@ function startup(){
 				var page=window.location.href.match(new RegExp(eng.query+'[^&]+','i'));
 				
 				if(page){
-					eng.time({part:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
+					eng.time({file:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
 				}
 			}
 		);
@@ -1085,7 +1110,7 @@ function startup(){
 	
 		//Add in the time if it needs it, otherwise pass nothing
 		eng.time({
-			part: page ? parseInt(page[0].split("=")[1])-1 : null
+			file: page ? parseInt(page[0].split("=")[1])-1 : null
 			,popstate:page ? true : false
 			,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
 			,scrollToTop:false
@@ -1374,7 +1399,7 @@ eng.window.classList.add("showpony");
 /////////////CUSTOM EVENTS/////////////
 ///////////////////////////////////////
 
-//On moving to another part
+//On moving to another file
 var eventTime=new Event(
 	"time"
 	,{
@@ -1451,7 +1476,7 @@ window.addEventListener(
 			}
 		}
 		
-		eng.scrub(
+		scrub(
 			(event.clientX-eng.window.getBoundingClientRect().left)
 			/
 			(eng.window.getBoundingClientRect().width)
@@ -1480,7 +1505,7 @@ overlay.addEventListener(
 		//Don't want the users to accidentally swipe to another page!
 		event.preventDefault();
 		
-		eng.scrub(
+		scrub(
 			(event.changedTouches[0].clientX-eng.window.getBoundingClientRect().left)
 			/
 			(eng.window.getBoundingClientRect().width)
@@ -1499,8 +1524,8 @@ overlay.addEventListener(
 			console.log("We were scrubbing!");
 			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
 			if(eng.scrubLoad==false){
-				//Load the part our pointer's on
-			eng.scrub(
+				//Load the file our pointer's on
+			scrub(
 					(event.changedTouches[0].clientX-eng.window.getBoundingClientRect().left)
 					/
 					(eng.window.getBoundingClientRect().width)
@@ -1565,7 +1590,7 @@ if(eng.admin){
 	;
 
 	uploadName.type=uploadDate.type="text";
-	uploadName.placeholder="Part Title (optional)";
+	uploadName.placeholder="File Title (optional)";
 	
 	uploadDate.placeholder="YYYY-MM-DD HH:MM:SS";
 
@@ -1590,7 +1615,7 @@ if(eng.admin){
 		"blur"
 		,function(event){
 			eng.info=overlayText.children[0].innerHTML;
-			eng.scrub();
+			scrub();
 		}
 	);
 	
@@ -1625,10 +1650,6 @@ if(eng.admin){
 		
 		uploadName.value=name;
 		uploadDate.value=date;
-	}
-	
-	eng.alert=function(message){
-		alert(message);
 	}
 	
 	logoutButton.addEventListener("click"
@@ -1686,7 +1707,7 @@ if(eng.admin){
 		
 		//Test that the date is safe (must match setup)
 		if(!date.match(/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/)){
-			eng.alert("Date must formatted as \"YYYY-MM-DD\" or \"YYYY-MM-DD HH-MM-SS\". You passed \""+date+"\"");
+			alert("Date must formatted as \"YYYY-MM-DD\" or \"YYYY-MM-DD HH-MM-SS\". You passed \""+date+"\"");
 			return;
 		}
 		
@@ -1706,8 +1727,8 @@ if(eng.admin){
 					//Sort the files by order
 					eng.files.sort();
 					
-					eng.time({part:eng.files.indexOf(response.file),scrollToTop:false});
-					eng.scrub();
+					eng.time({file:eng.files.indexOf(response.file),scrollToTop:false});
+					scrub();
 				}else{
 					alert(response.message);
 				}
@@ -1749,7 +1770,7 @@ if(eng.admin){
 						eng.files[thisFile]=response.file;
 						
 						//If still on that file, refresh it
-						if(eng.currentFile===thisFile) eng.time({part:thisFile,refresh:true,scrollToTop:false})
+						if(eng.currentFile===thisFile) eng.time({file:thisFile,refresh:true,scrollToTop:false})
 					}else{
 						alert(response.message);
 					}
@@ -1789,7 +1810,7 @@ if(eng.admin){
 							
 							console.log(thisFile,eng.currentFile);
 							
-							eng.time({part:thisFile,refresh:true})
+							eng.time({file:thisFile,refresh:true})
 						}
 					}else{
 						alert(response.message);
@@ -1811,8 +1832,8 @@ if(eng.admin){
 						//Add the file to the array
 						eng.files.push(response.file);
 						
-						eng.time({part:"last"});
-						eng.scrub();
+						eng.time({file:"last"});
+						scrub();
 					}else{
 						alert(response.message);
 					}
