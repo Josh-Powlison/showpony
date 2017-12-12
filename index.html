@@ -38,6 +38,7 @@
 				,info:"[n]<br>[2pc] | [2pl]"
 				,query:"orbit"
 				,start:0
+				,title:"Orbit: [n] (Part [0pc])"
 			});
 		}
 	);
@@ -58,6 +59,7 @@
 					window:document.getElementById("sintel")
 					,path:"examples/sintel/" //The path to the story files. Remember the slash!
 					,info:"Click to play!<br>[2mc]:[2sc] | [2mt]:[2st]<br>© copyright Blender Foundation | www.sintel.org"
+					,title:"Sintel [2mc]:[2sc] | [2mt]:[2st]"
 					,query:false
 					,start:0
 				});
@@ -320,7 +322,6 @@ new Showpony({
 
 <div class="story" id="custom"></div>
 <script>
-	//Below is my generally recommended setup.//
 	window.addEventListener(
 		"load"
 		,function(){
@@ -386,6 +387,7 @@ new Showpony({
 	<li>[n] passed the filename</li>
 	<li>[d] passes the current date</li>
 	<li>[0pc], [0pl], [0pt] passes the current part, parts left, and parts total, respectively</li>
+	<li>[0%c] and [0%l] passes the current percentage and percentage left, respectively</li>
 	<li>[0hc], [0hl], [0ht] passes the current hour, hours left, and hours total, respectively</li>
 	<li>[0mc], [0ml], [0mt] passes the current minute, minutes left, and minutes total, respectively</li>
 	<li>[0sc], [0sl], [0st] passes the current second, seconds left, and seconds total, respectively</li>

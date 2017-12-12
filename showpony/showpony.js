@@ -22,6 +22,7 @@ Object.assign(eng,{
 	,defaultDuration:input.defaultDuration || 10
 	,admin:input.admin || false
 	,dateFormat:input.dateFormat || {year:"numeric",month:"numeric",day:"numeric"}
+	,title:input.title || false
 });
 
 ///////////////////////////////////////
@@ -64,6 +65,21 @@ eng.time=function(obj){
 		,scrollToTop:obj.scrollToTop===undefined ? true : obj.scrollToTop
 		,popstate:obj.popstate || false
 	});
+		/*
+	//Don't continue if the file is the same and we aren't trying to refresh
+	if(obj.file==eng.currentFile){
+		//Set the time to the new time though
+		if(thisType){
+			thisType.currentTime=obj.time;
+		}
+	}
+	
+	console.log(obj.file,eng.currentFile,thisType,obj.time);
+	
+	//Change the title if requested
+	if(eng.title) document.title=replaceInfoText(eng.title,eng.currentFile);
+	
+	if(obj.file==eng.currentFile && !obj.refresh) return;*/
 	
 	//Use different options
 	switch(obj.file){
@@ -76,8 +92,6 @@ eng.time=function(obj){
 			eng.currentFile=parseInt(obj.file ? obj.file : 0);
 			break;
 	}
-	
-	console.log(eng.currentFile);
 	
 	//If we're at the end, run the readable event
 	if(eng.currentFile>=eng.files.length){
@@ -102,7 +116,7 @@ eng.time=function(obj){
 		var search=new RegExp('(\\?|&)'+eng.query+'=','i');
 		var newURL=document.location.href;
 		
-		if(document.location.href.match(search)){
+		if(search.test(newURL)){
 			var replace=new RegExp('((\\?|&)'+eng.query+')=?[^&]+','i');
 			newURL=newURL.replace(replace,'$1='+(eng.currentFile+1));
 		}else{
@@ -255,6 +269,9 @@ eng.time=function(obj){
 	//Track the file type used here for when we next switch
 	currentType=getMedium(eng.files[eng.currentFile]);
 	
+	//Update the title if it's set
+	if(eng.title) document.title=replaceInfoText(eng.title,eng.currentFile);
+	
 	eng.window.dispatchEvent(eventTime);
 }
 
@@ -339,12 +356,17 @@ function scrub(inputPercent){
 			//If this is the media!
 				//If we allow scrubbing or we're not moving the bar, we can load the file
 				if(eng.scrubLoad!==false || scrubbing===false){
-					if(i!==eng.currentFile){
-						eng.time({file:i});
-					}
+					eng.time({file:i,time:newTime});
 					
 					//Set the time properly for the current file
-					if(i==eng.currentFile && types[currentType]) types[currentType].currentTime=newTime;
+					/*if(i==eng.currentFile && types[currentType]) types[currentType].currentTime=newTime;*/
+					/*
+					if(i!==eng.currentFile){
+						eng.time({file:i});
+					}else{
+						//Update the title if it's set (because the time could be different)
+						
+					}*/
 				}
 				
 				newPart=i;
@@ -359,19 +381,56 @@ function scrub(inputPercent){
 	
 	//Move the progress bar
 	progress.style.left=(inputPercent*100)+"%";
-	
-	var current=Math.floor(inputPercent*duration)
-		,left=duration-Math.floor(inputPercent*duration)
-		,floorValue=1
-	;
-	
 	//console.log(current,inputPercent,duration,newPart);
 	
-	function adjustReplace(input){
+	//Set the overlay text (the current time)
+	overlayText.innerHTML="<p>"+replaceInfoText(
+		eng.info
+		,newPart
+		,Math.floor(inputPercent*duration)
+		,duration-Math.floor(inputPercent*duration)
+	)+"</p>";
+}
+
+function replaceInfoText(value,fileNum,current,left){
+	var floorValue=1;
+	var duration=eng.files.map(function(e){return getLength(e);}).reduce((a,b) => a+b,0);
+	
+	if(fileNum===undefined) fileNum=eng.currentFile;
+	
+	console.log(current,left,types[currentType]);
+	
+	if(current===undefined){
+		//var currentType=getMedium(eng.files[eng.currentFile]);
+		
+		//Use the currentTime of the object, if it has one
+		var currentTime=types[currentType] && types[currentType].currentTime || 0;
+		
+		//var currentTime=0;
+		
+		console.log(currentTime);
+		
+		//Look through the videos for the right one
+		var l=eng.currentFile;
+		for(var i=0;i<l;i++){
+			//Add the times of previous videos 7to get the actual time in the piece
+			currentTime+=getLength(eng.files[i]);
+		}
+		
+		var inputPercent=currentTime / duration
+			,newPart=eng.currentFile;
+			
+		var current=Math.floor(inputPercent*duration)
+			,left=duration-Math.floor(inputPercent*duration)
+		;
+	}
+	
+	//Use special naming convention to replace values correctly
+	function infoNaming(input){
 		//Name
 		if(input[1]=="n"){
 			//Get the name, remove the parentheses
-			var name=eng.files[newPart].match(/\(.*\)/);
+			var name=eng.files[fileNum].match(/\(.*\)/);
 			
 			//If there's a name, return it; otherwise, return blank space
 			if(name){
@@ -385,7 +444,7 @@ function scrub(inputPercent){
 			}
 		}else if(input[1]=="d"){
 			//Get the name, remove the parentheses (skip over "x")
-			var date=eng.files[newPart].match(/\d[^(]+(?!\()\S?/);
+			var date=eng.files[fileNum].match(/\d[^(]+(?!\()\S?/);
 			
 			//If there's a date, return it; otherwise, return blank space
 			if(date){
@@ -415,15 +474,19 @@ function scrub(inputPercent){
 		}
 		//Percentage complete
 		if(input[2]=="%"){
-			floorValue=(inputPercent*100);
+			//Pass a calculation based on whether it's the percentage left or the current percentage (the total is, of course, 100)
+			floorValue=
+				input[3]=="l" ? ((1-inputPercent)*100)
+				: (inputPercent*100)
+			;
 		}else
 		//File numbers
 		if(input[2]=="p"){
 			//Pass a calculation based on whether the number of files left, total, or the number of the current file was asked for
 			floorValue=
-				input[3]=="l" ? eng.files.length-(newPart+1)
+				input[3]=="l" ? eng.files.length-(fileNum+1)
 				: input[3]=="t" ? eng.files.length
-				: newPart+1
+				: fileNum+1
 			;
 		}
 		else //Times
@@ -458,10 +521,7 @@ function scrub(inputPercent){
 		),input[1]);
 	}
 	
-	//Set the overlay text (the current time)
-	overlayText.innerHTML="<p>"
-		+eng.info.replace(/\[[^\]]*\]/g,adjustReplace)
-	+"</p>";
+	return value.replace(/\[[^\]]*\]/g,infoNaming);
 }
 
 //Pad the beginning of a value with leading zeroes
@@ -660,8 +720,8 @@ eng.run=function(inputNum){
 			default:
 				//Handle punctuation
 				if(i!=text.length && text[i+1]==' '){
-					if(text[i].match(/[.!?:;-]/)) waitTime*=20;
-					if(text[i].match(/[,]/)) waitTime*=10;
+					if(/[.!?:;-]/.test(text[i])) waitTime*=20;
+					if(/[,]/.test(text[i])) waitTime*=10;
 				}
 
 				break;
@@ -965,7 +1025,7 @@ var multimediaFunction={
 			//}
 			
 			//If it's a color or gradient, treat it as such
-			if(imageNames.match(/(#|gradient\(|rgb\(|rgba\()/)){
+			if(/(#|gradient\(|rgb\(|rgba\()/.test(imageNames)){
 				eng.objects[vals[1]].style.backgroundColor=imageNames;
 			}
 			else //Otherwise, assume it's an image
@@ -1090,8 +1150,11 @@ eng.close=function(){
 ///////////////////////////////////////
 
 function startup(){
-	//Go to the file if it's a number, otherwise go to the end.
-	eng.currentFile=!isNaN(input.start) ? input.start : eng.files.length-1;
+	//currentFile is -1 before we load
+	eng.currentFile=-1;
+	
+	//Find where to start from
+	eng.start=!isNaN(input.start) ? input.start : eng.files.length-1;
 	
 	//If querystrings are in use, consider the querystring in the URL
 	if(eng.query){
@@ -1110,14 +1173,14 @@ function startup(){
 	
 		//Add in the time if it needs it, otherwise pass nothing
 		eng.time({
-			file: page ? parseInt(page[0].split("=")[1])-1 : null
+			file: page ? parseInt(page[0].split("=")[1])-1 : eng.start
 			,popstate:page ? true : false
 			,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
 			,scrollToTop:false
 		});
 	}else{
 		//Start
-		eng.time({scrollToTop:false});
+		eng.time({file:eng.start,scrollToTop:false});
 	}
 	
 	//Set input to null in hopes that garbage collection will come pick it up
@@ -1189,9 +1252,10 @@ function POST(onSuccess,obj){
 	);
 }
 
-//Get the medium from the file extensions
-function getMedium(inputFileType){
-	switch(inputFileType.match(/\.[^.]+$/)[0]){
+//Get the medium of a file
+function getMedium(name){
+	//Get the extension
+	switch(name.match(/\.[^.]+$/)[0]){
 		case ".jpg":
 		case ".jpeg":
 		case ".png":
@@ -1374,6 +1438,22 @@ var waitForInput=false
 	
 	,continueNotice=m("continue")
 ;
+
+if(eng.title){
+	types.audio.addEventListener(
+		"timeupdate"
+		,function(){
+			document.title=replaceInfoText(eng.title,eng.currentFile);
+		}
+	);
+	
+	types.video.addEventListener(
+		"timeupdate"
+		,function(){
+			document.title=replaceInfoText(eng.title,eng.currentFile);
+		}
+	);
+}
 
 menuButton.alt="Menu";
 fullscreenButton.alt="Fullscreen";
@@ -1706,7 +1786,7 @@ if(eng.admin){
 		var x=(eng.files[thisFile][0]=='x') ? 'x': '';
 		
 		//Test that the date is safe (must match setup)
-		if(!date.match(/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/)){
+		if(/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.test(date)){
 			alert("Date must formatted as \"YYYY-MM-DD\" or \"YYYY-MM-DD HH-MM-SS\". You passed \""+date+"\"");
 			return;
 		}
