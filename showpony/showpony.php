@@ -10,14 +10,15 @@ class Showpony{
 	
 	#Initialize the class
 	function __construct($inputArray){
-		chdir(dirname(__FILE__,2).'/'.($inputArray['path'] ?? $_POST['path'] ?? $_GET['path'] ?? null));
-		
 		#This object is sent to the user as JSON
 		$response=[
-			'call' => ($_POST['showpony-call'] ?? $inputArray['call'] ?? null)
+			'call' => ($inputArray['call'] ?? null)
 			,'success' => false
 			,'message' => null
+			,'directory' => dirname(__FILE__,2).'/'.($inputArray['path'] ?? '')
 		];
+		
+		chdir($response['directory']);
 		
 		if(!self::$password) unset($_SESSION['showpony_admin']);
 		
@@ -252,9 +253,18 @@ class Showpony{
 }
 
 #Call this file to run Showpony functions
-if(!empty($_POST['showpony-call']) || !empty($_GET['rss'])) new Showpony([]);
+if(!empty($_POST['showpony-call']) || !empty($_GET['showpony-call'])){
+	new Showpony([
+		'call'=>$_POST['showpony-call'] ?? $_GET['showpony-call']
+		,'path'=>$_POST['path'] ?? $_GET['path']
+	]);
+}
 
 if(!empty($_GET['showpony-get'])){
+	if(empty($_SESSION['showpony_admin'])){
+		die("You need to be logged in to access private files.");
+	}
+	
 	$file=dirname(__FILE__,2).'/'.$_GET['showpony-get'];
 
 	#These headers are required to scrub media (yes, you read that right)
