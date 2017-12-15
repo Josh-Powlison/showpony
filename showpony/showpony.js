@@ -2,162 +2,141 @@ function Showpony(input){
 
 "use strict";
 
-var eng=this;
-
 //Startup errors
 if(!input.window) throw "Error: no window value passed to Showpony object. I recommend passing a <div> element to the window value.";
 
-//Set settings for the engine
-Object.assign(eng,{
-	window:input.window
-	,originalWindow:input.window.cloneNode(true)
-	,files:input.files || "get"
-	,path:input.path || ""
-	,loadingClass:input.loadingClass || null
-	,scrubLoad:input.scrubLoad || false
-	,query:input.query!==undefined ? input.query
-		: "file"
-	,info:input.info || "[0pc] | [0pl]"
-	,data:input.data || {}
-	,defaultDuration:input.defaultDuration || 10
-	,admin:input.admin || false
-	,dateFormat:input.dateFormat || {year:"numeric",month:"numeric",day:"numeric"}
-	,title:input.title || false
-});
+///////////////////////////////////////
+///////////PUBLIC VARIABLES////////////
+///////////////////////////////////////
+
+//Engine settings
+const S=this;
+S.window			=input.window;
+S.originalWindow	=input.window.cloneNode(true);
+S.files				=input.files			|| "get";
+S.path				=input.path				|| "";
+S.loadingClass		=input.loadingClass		|| null;
+S.scrubLoad			=input.scrubLoad		|| false;
+S.info				=input.info				|| "[0pc] | [0pl]";
+S.data				=input.data				|| {};
+S.defaultDuration	=input.defaultDuration	|| 10;
+S.title				=input.title			|| false;
+S.dateFormat		=input.dateFormat		|| {year:"numeric",month:"numeric",day:"numeric"};
+S.admin				=input.admin			|| false;
+S.query				=input.query !==undefined ? input.query : "file";
 
 ///////////////////////////////////////
-///////////OBJECT FUNCTIONS////////////
+///////////PUBLIC FUNCTIONS////////////
 ///////////////////////////////////////
 
 //Go to another file
-eng.time=function(obj){
-	console.log(obj);
+S.time=function(input){
+	console.log(input);
 	
-	obj=obj || {};
+	var obj=input || {};
 	
 	//If a time is passed, get file and time based on the place in the total
 	if(obj.time!==undefined && obj.file===undefined){
 		obj.file=0;
 		
 		//Look through the videos for the right one
-		var l=eng.files.length;
+		var l=S.files.length;
 		for(var i=0;i<l;i++){
-			var length=getLength(eng.files[i]);
+			var length=getLength(S.files[i]);
 			
 			//If we've reached the file, exit
-			if(obj.time<length){
-				break;
-			}else{ //Otherwise go to the next file
-				obj.file++;
-				obj.time-=length;
-			}
-			//If the time is too great, the story will just end
+			if(obj.time<length) break;
+			//Otherwise go to the next file
+			else obj.file++, obj.time-=length;
+			
+			//If the time passed is greater than the total time, the story will end
 		}
 		
 		console.log(obj.time,obj.file);
 	}
 	
 	Object.assign(obj,{
-		file:obj.file!==undefined ? obj.file : eng.currentFile
+		file:obj.file!==undefined ? obj.file : S.currentFile
 		,time:obj.time || 0
 		,refresh:obj.refresh || false
 		,reload:obj.reload || false
 		,scrollToTop:obj.scrollToTop===undefined ? true : obj.scrollToTop
 		,popstate:obj.popstate || false
+		,replaceState:obj.replaceState || false
 	});
 		/*
 	//Don't continue if the file is the same and we aren't trying to refresh
-	if(obj.file==eng.currentFile){
+	if(obj.file==S.currentFile){
 		//Set the time to the new time though
 		if(thisType){
 			thisType.currentTime=obj.time;
 		}
 	}
 	
-	console.log(obj.file,eng.currentFile,thisType,obj.time);
+	console.log(obj.file,S.currentFile,thisType,obj.time);
 	
 	//Change the title if requested
-	if(eng.title) document.title=replaceInfoText(eng.title,eng.currentFile);
+	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
 	
-	if(obj.file==eng.currentFile && !obj.refresh) return;*/
+	if(obj.file==S.currentFile && !obj.refresh) return;*/
 	
 	//Use different options
-	switch(obj.file){
-		case "first": eng.currentFile=0; break;
-		case "prev": eng.currentFile--; break;
-		case "next": eng.currentFile++; break;
-		case "last": eng.currentFile=eng.files.length-1; break;
-		default:
-			//Get the file, or 0 if it's undefined
-			eng.currentFile=parseInt(obj.file ? obj.file : 0);
-			break;
-	}
+	S.currentFile=
+		obj.file==="first" ? 0
+		: obj.file==="prev" ? S.currentFile-1
+		: obj.file==="next" ? S.currentFile+1
+		: obj.file==="last" ? S.files.length-1
+		: parseInt(obj.file || 0) //Get the file, or 0 if it's undefined
+	;
 	
 	//If we're at the end, run the readable event
-	if(eng.currentFile>=eng.files.length){
+	if(S.currentFile>=S.files.length){
 		//Go to the final file
-		eng.currentFile=eng.files.length-1;
+		S.currentFile=S.files.length-1;
 		
 		//If we aren't just trying to reload a file, end; otherwise, get to that last file
 		if(!obj || !obj.reload){
-			//Run the event that users can read.
-			eng.window.dispatchEvent(eventEnd);
+			//Run the event that users can read
+			S.window.dispatchEvent(new CustomEvent("end"));
+			
 			console.log("Ended!");
 			return;
 		}
 	}
 	
-	if(eng.currentFile<0){
-		eng.currentFile=0;
-	}
+	if(S.currentFile<0) S.currentFile=0;
 	
 	//If we're using queries
-	if(eng.query && !obj.popstate){
-		var search=new RegExp('(\\?|&)'+eng.query+'=','i');
-		var newURL=document.location.href;
+	if(S.query && !obj.popstate){
+		var search=new RegExp('(\\?|&)'+S.query+'=','i')
+			,newURL=document.location.href;
 		
 		if(search.test(newURL)){
-			var replace=new RegExp('((\\?|&)'+eng.query+')=?[^&]+','i');
-			newURL=newURL.replace(replace,'$1='+(eng.currentFile+1));
+			var replace=new RegExp('((\\?|&)'+S.query+')=?[^&]+','i');
+			newURL=newURL.replace(replace,'$1='+(S.currentFile+1));
 		}else{
-			newURL+=newURL.indexOf("?")>-1 ? '&' : '?';
-			
-			newURL+=eng.query+'='+(eng.currentFile+1);
+			newURL+=newURL.indexOf("?")>-1 ? '&' : '?' +(S.query+'='+(S.currentFile+1));
 		}
 		
 		console.log(newURL);
 		
-		//We can replace the current history state rather than adding to the history
-		if(obj.replaceState){
-			history.replaceState(
-				{}
-				,""
-				,newURL
-			);
-		}else{
-			history.pushState(
-				{}
-				,""
-				,newURL
-			);
-		}
+		//Either replace or push the state
+		history[obj.replaceState ? "replaceState" : "pushState"]({},"",newURL);
 	}
 	
 	//If we aren't moving the bar, update the overlay
 	scrubbing===false && scrub();
 	
 	//Go to the top of the page (if we didn't come here by autoloading)
-	if(obj.scrollToTop){
-		eng.window.scrollIntoView();
-	}
+	obj.scrollToTop && S.window.scrollIntoView();
 	
-	var newType=getMedium(eng.files[eng.currentFile]);
-	var thisType=types[newType];
+	var newType=getMedium(S.files[S.currentFile])
+		,thisType=types[newType];
 	
 	//Multimedia engine resets
-	eng.lines=null;
-	eng.charsHidden=0;
-	eng.currentLine=0;
+	S.lines=null;
+	S.charsHidden=0;
+	S.currentLine=0;
 	content.style.cssText=null; //Remove any styles applied to the content
 	waitForInput=false;
 	waitTimer=null;
@@ -173,15 +152,15 @@ eng.time=function(obj){
 	}
 	
 	var src=(
-		eng.files[eng.currentFile][0]=="x"
-		? "showpony/showpony-classes.php?showpony-get="+eng.path+eng.files[eng.currentFile]
-		: eng.path+eng.files[eng.currentFile]
+		S.files[S.currentFile][0]=="x"
+		? "showpony/showpony-classes.php?showpony-get="+S.path+S.files[S.currentFile]
+		: S.path+S.files[S.currentFile]
 	);
 	
 	//Refresh the file, if requested we do so
 	if(obj.refresh){
 		src+=(
-			eng.files[eng.currentFile][0]=="x"
+			S.files[S.currentFile][0]=="x"
 				? "&refresh-"+Date.now()
 				: '?refresh-'+Date.now()
 		);
@@ -208,7 +187,7 @@ eng.time=function(obj){
 					//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
 					if(overlay.classList.contains("showpony-overlay-visible")) return;
 					
-					eng.time({file:"next"});
+					S.time({file:"next"});
 				}
 			);
 			break;
@@ -225,7 +204,7 @@ eng.time=function(obj){
 					//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
 					if(overlay.classList.contains("showpony-overlay-visible")) return;
 					
-					eng.time({file:"next"});
+					S.time({file:"next"});
 				}
 			);
 			break;
@@ -236,17 +215,17 @@ eng.time=function(obj){
 			//If the previous type was different, use the new type (or if we're scrubbing and not moving along as normal)
 			//if(currentType!=newType || overlay.style.visibility=="visible"){
 				content.innerHTML="";
-				eng.objects={};
-				eng.textboxes={};
+				S.objects={};
+				S.textboxes={};
 			//}
 			
 			GET(
 				src
 				,function(ajax){
 					//Get each line (taking into account and ignoring extra lines)
-					eng.lines=ajax.responseText.match(/[^\r\n]+/g);
+					S.lines=ajax.responseText.match(/[^\r\n]+/g);
 					
-					eng.run(0);
+					runMM(0);
 				}
 			);
 			break;
@@ -267,28 +246,39 @@ eng.time=function(obj){
 	thisType.currentTime=obj.time;
 	
 	//Track the file type used here for when we next switch
-	currentType=getMedium(eng.files[eng.currentFile]);
+	currentType=getMedium(S.files[S.currentFile]);
 	
 	//Update the title if it's set
-	if(eng.title) document.title=replaceInfoText(eng.title,eng.currentFile);
+	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
 	
-	eng.window.dispatchEvent(eventTime);
+	//Run custom event for checking time
+	S.window.dispatchEvent(
+		new CustomEvent(
+			"time"
+			,{
+				detail:{
+					file:(S.currentFile+1)
+					,time:thisType.currentTime
+				}
+			}
+		)
+	);
 }
 
 //Toggle the menu
-eng.menu=function(event){
+S.menu=function(event){
 	//If we're moving the bar right now, ignore clicking but do set scrubbing to false
 	
 	if(scrubbing===true){
 		scrubbing=false;
 	
 		//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
-		if(eng.scrubLoad==false){
+		if(S.scrubLoad==false){
 			//Load the file our cursor's on
 			scrub(
-				(event.clientX-eng.window.getBoundingClientRect().left)
+				(event.clientX-S.window.getBoundingClientRect().left)
 				/
-				(eng.window.getBoundingClientRect().width)
+				(S.window.getBoundingClientRect().width)
 			);
 		}
 		
@@ -317,27 +307,217 @@ eng.menu=function(event){
 	
 	scrubbing=false;
 	
-	eng.window.dispatchEvent(eventMenu);
+	//Send an event when toggling the menu
+	S.window.dispatchEvent(
+		new CustomEvent("menu"
+		,{detail:{
+			open:(
+				overlay.classList.contains("showpony-overlay-visible") ? true
+				: false
+			)
+		}})
+	);
 };
+
+//Toggle fullscreen
+S.fullscreen=function(type){
+	//Get fullscreen type
+	var fs=S.window.requestFullscreen //Normal
+			? [
+				"fullscreenElement"
+				,"exitFullscreen"
+				,"requestFullscreen"
+			]
+		: S.window.webkitRequestFullscreen //Webkit
+			? [
+				"webkitFullscreenElement"
+				,"webkitExitFullscreen"
+				,"webkitRequestFullscreen"
+			]
+		: //FF
+			[
+				"mozFullScreenElement"
+				,"mozCancelFullScreen"
+				,"mozRequestFullScreen"
+			]
+	;
+	
+	//Use the 3 fullscreen values above to use fullscreen mode on various browsers.
+	document[fs[0]]
+		? document[fs[1]]()
+		: S.window[fs[2]]()
+	;
+	
+	return;
+}
+
+//When the viewer inputs to Showpony (click, space, general action)
+S.input=function(){
+	console.log(currentType);
+	
+	//Function differently depending on medium
+	switch(currentType){
+		case "image":
+			S.time({file:"next"});
+			break;
+		case "audio":
+		case "video":
+			S.menu();
+			break;
+		case "multimedia":
+			//If the player is making choices right now
+			if(waitForInput) return;
+		
+			//If a wait timer was going, stop it.
+			clearTimeout(waitTimer);
+		
+			console.log(S.charsHidden);
+		
+			//If all letters are displayed
+			if(S.charsHidden<1){
+				runMM();
+			}
+			else //If some S.objects have yet to be displayed
+			{
+				console.log(S.textboxes);
+				
+				//Go through each textbox and display all of its text
+				Object.keys(S.textboxes).forEach(
+					function(key){
+						let l=S.textboxes[key].children.length;
+						for(let i=0;i<l;i++){
+							//Skip over non-span tags
+							if(S.textboxes[key].children[i].tagName!=="SPAN") continue;
+							
+							//Remove the delay so they're displayed immediately
+							S.textboxes[key].children[i].children[0].style.animationDelay="0s";
+						}
+					}
+				);
+			}
+			break;
+	}
+}
+
+//Close ShowPony
+S.close=function(){
+	//Replace the container with the original element
+	
+	console.log(windowClick);
+	
+	//Remove the window event listener
+	window.removeEventListener("click",windowClick);
+	
+	//Reset the window to what it was before
+	S.window.parentNode.replaceChild(S.originalWindow,S.window);
+	
+	//Remove this object
+	S=null;
+}
+
+///////////////////////////////////////
+///////////PRIVATE VARIABLES///////////
+///////////////////////////////////////
+
+var multimediaSettings={
+	textbox:"main"
+	,text: null
+	,go:false
+};
+
+//Waiting for user input
+var waitForInput=false
+	,scrubbing=false
+	,waitTimer=null
+	,currentType=null
+	//Elements
+	,overlay=m("overlay")
+	,overlayText=m("overlay-text")
+	,progress=m("progress")
+	,content=m("content")
+	//Buttons
+	,menuButton=m("menu-button showpony-button-preview","button")
+	,fullscreenButton=m("fullscreen-button showpony-button-preview","button")
+	,captionsButton=m("captions-button","button")
+	,types={
+		image:m("block","img")
+		,audio:m("block","audio")
+		,video:m("block","video")
+		,multimedia:m("multimedia")
+		,text:m("text")
+	}
+	
+	,continueNotice=m("continue")
+;
+
+menuButton.alt="Menu";
+fullscreenButton.alt="Fullscreen";
+captionsButton.alt="Closed Captions/Subtitles";
+continueNotice.innerHTML="...";
+
+frag([progress,overlayText],overlay);
+
+///////////////////////////////////////
+///////////PRIVATE FUNCTIONS///////////
+///////////////////////////////////////
+
+function startup(){
+	//currentFile is -1 before we load
+	S.currentFile=-1;
+	
+	//Find where to start from
+	S.start=!isNaN(input.start) ? input.start : S.files.length-1;
+	
+	//If querystrings are in use, consider the querystring in the URL
+	if(S.query){
+		window.addEventListener(
+			"popstate"
+			,function(){
+				var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+				
+				if(page){
+					S.time({file:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
+				}
+			}
+		);
+		
+		var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+	
+		//Add in the time if it needs it, otherwise pass nothing
+		S.time({
+			file: page ? parseInt(page[0].split("=")[1])-1 : S.start
+			,popstate:page ? true : false
+			,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
+			,scrollToTop:false
+		});
+	}else{
+		//Start
+		S.time({file:S.start,scrollToTop:false});
+	}
+	
+	//Set input to null in hopes that garbage collection will come pick it up
+	input=null;
+	
+	//Try to access the admin account if logged in
+	if(S.admin){
+		account("login",true);
+	}
+}
 
 //Update the scrubber's position
 function scrub(inputPercent){
-	var duration=eng.files.map(function(e){return getLength(e);}).reduce((a,b) => a+b,0);
+	var duration=S.files.map(function(e){return getLength(e);}).reduce((a,b) => a+b,0);
 	
 	//If no inputPercent was passed, estimate it
 	if(typeof(inputPercent)==='undefined'){
 		//Use the currentTime of the object, if it has one
 		var currentTime=types[currentType] && types[currentType].currentTime || 0;
 		
-		//Look through the videos for the right one
-		var l=eng.currentFile;
-		for(var i=0;i<l;i++){
-			//Add the times of previous videos 7to get the actual time in the piece
-			currentTime+=getLength(eng.files[i]);
-		}
+		//Add the times of previous videos to get the actual time in the piece
+		for(var i=0;i<S.currentFile;i++) currentTime+=getLength(S.files[i]);
 		
 		var inputPercent=currentTime / duration
-			,newPart=eng.currentFile;
+			,newPart=S.currentFile;
 	}else{ //if inputPercent WAS passed
 	
 		//Clamp inputPercent between 0 and 1
@@ -349,32 +529,20 @@ function scrub(inputPercent){
 		;
 		
 		//Look through the media for the right one
-		var l=eng.files.length;
+		var l=S.files.length;
 		for(var i=0;i<l;i++){
 			//If the duration's within this one, stop at this one
-			if(i==l-1 || newTime<getLength(eng.files[i])){
+			if(i==l-1 || newTime<getLength(S.files[i])){
 			//If this is the media!
 				//If we allow scrubbing or we're not moving the bar, we can load the file
-				if(eng.scrubLoad!==false || scrubbing===false){
-					eng.time({file:i,time:newTime});
-					
-					//Set the time properly for the current file
-					/*if(i==eng.currentFile && types[currentType]) types[currentType].currentTime=newTime;*/
-					/*
-					if(i!==eng.currentFile){
-						eng.time({file:i});
-					}else{
-						//Update the title if it's set (because the time could be different)
-						
-					}*/
-				}
+				if(S.scrubLoad!==false || scrubbing===false) S.time({file:i,time:newTime});
 				
 				newPart=i;
 			
 				break;
 			}else{
 				//Otherwise, go to the next one (and subtract the duration from the total duration)
-				newTime-=getLength(eng.files[i]);
+				newTime-=getLength(S.files[i]);
 			}
 		}
 	}
@@ -385,23 +553,23 @@ function scrub(inputPercent){
 	
 	//Set the overlay text (the current time)
 	overlayText.innerHTML="<p>"+replaceInfoText(
-		eng.info
+		S.info
 		,newPart
-		,Math.floor(inputPercent*duration)
-		,duration-Math.floor(inputPercent*duration)
+		,Math.floor(newTime)
+		,duration-Math.floor(newTime)
 	)+"</p>";
 }
 
 function replaceInfoText(value,fileNum,current,left){
 	var floorValue=1;
-	var duration=eng.files.map(function(e){return getLength(e);}).reduce((a,b) => a+b,0);
+	var duration=S.files.map(function(e){return getLength(e);}).reduce((a,b) => a+b,0);
 	
-	if(fileNum===undefined) fileNum=eng.currentFile;
+	if(fileNum===undefined) fileNum=S.currentFile;
 	
 	console.log(current,left,types[currentType]);
 	
 	if(current===undefined){
-		//var currentType=getMedium(eng.files[eng.currentFile]);
+		//var currentType=getMedium(S.files[S.currentFile]);
 		
 		//Use the currentTime of the object, if it has one
 		var currentTime=types[currentType] && types[currentType].currentTime || 0;
@@ -411,14 +579,14 @@ function replaceInfoText(value,fileNum,current,left){
 		console.log(currentTime);
 		
 		//Look through the videos for the right one
-		var l=eng.currentFile;
+		var l=S.currentFile;
 		for(var i=0;i<l;i++){
 			//Add the times of previous videos 7to get the actual time in the piece
-			currentTime+=getLength(eng.files[i]);
+			currentTime+=getLength(S.files[i]);
 		}
 		
 		var inputPercent=currentTime / duration
-			,newPart=eng.currentFile;
+			,newPart=S.currentFile;
 			
 		var current=Math.floor(inputPercent*duration)
 			,left=duration-Math.floor(inputPercent*duration)
@@ -430,7 +598,7 @@ function replaceInfoText(value,fileNum,current,left){
 		//Name
 		if(input[1]=="n"){
 			//Get the name, remove the parentheses
-			var name=eng.files[fileNum].match(/\(.*\)/);
+			var name=S.files[fileNum].match(/\(.*\)/);
 			
 			//If there's a name, return it; otherwise, return blank space
 			if(name){
@@ -444,7 +612,7 @@ function replaceInfoText(value,fileNum,current,left){
 			}
 		}else if(input[1]=="d"){
 			//Get the name, remove the parentheses (skip over "x")
-			var date=eng.files[fileNum].match(/\d[^(]+(?!\()\S?/);
+			var date=S.files[fileNum].match(/\d[^(]+(?!\()\S?/);
 			
 			//If there's a date, return it; otherwise, return blank space
 			if(date){
@@ -464,7 +632,7 @@ function replaceInfoText(value,fileNum,current,left){
 				
 				return new Intl.DateTimeFormat(
 					"default"
-					,eng.dateFormat
+					,S.dateFormat
 				).format(date);
 			}else{
 				return "";
@@ -484,8 +652,8 @@ function replaceInfoText(value,fileNum,current,left){
 		if(input[2]=="p"){
 			//Pass a calculation based on whether the number of files left, total, or the number of the current file was asked for
 			floorValue=
-				input[3]=="l" ? eng.files.length-(fileNum+1)
-				: input[3]=="t" ? eng.files.length
+				input[3]=="l" ? S.files.length-(fileNum+1)
+				: input[3]=="t" ? S.files.length
 				: fileNum+1
 			;
 		}
@@ -535,58 +703,149 @@ function padStart(input,length){
 	return input.length>padded.length ? input : padded;
 }
 
-//Toggle fullscreen
-eng.fullscreen=function(type){
-	//Get fullscreen type
-	var fs=eng.window.requestFullscreen //Normal
-			? [
-				"fullscreenElement"
-				,"exitFullscreen"
-				,"requestFullscreen"
-			]
-		: eng.window.webkitRequestFullscreen //Webkit
-			? [
-				"webkitFullscreenElement"
-				,"webkitExitFullscreen"
-				,"webkitRequestFullscreen"
-			]
-		: //FF
-			[
-				"mozFullScreenElement"
-				,"mozCancelFullScreen"
-				,"mozRequestFullScreen"
-			]
-	;
+//Make a GET call
+function GET(src,onSuccess){
+	//Add loadingClass
+	if(S.loadingClass){
+		S.window.classList.add(S.loadingClass);
+	}
 	
-	//Use the 3 fullscreen values above to use fullscreen mode on various browsers.
-	document[fs[0]]
-		? document[fs[1]]()
-		: eng.window[fs[2]]()
-	;
+	var ajax=new XMLHttpRequest();
+	ajax.open("GET",src);
+	ajax.send();
 	
-	return;
+	ajax.addEventListener(
+		"readystatechange"
+		,function(){
+			if(ajax.readyState==4){
+				if(ajax.status==200){
+					onSuccess(ajax);
+					//Remove loadingClass
+					if(S.loadingClass){
+						content.classList.remove(S.loadingClass);
+					}
+				}else{
+					alert("Failed to load file called: "+S.path+S.files[S.currentFile]);
+				}
+			}
+		}
+	);
 }
 
-var multimediaSettings={
-	textbox:"main"
-	,text: null
-	,go:false
-};
+//Make a POST call
+function POST(onSuccess,obj){
+	//Prepare the form data
+	var formData=new FormData();
+	formData.append('showpony-call',obj.call);
+	formData.append('path',S.path);
+	
+	//Special values, if passed
+	obj.password && formData.append('password',obj.password);
+	obj.name && formData.append('name',obj.name);
+	obj.newName && formData.append('newName',obj.newName);
+	obj.file && formData.append('files',obj.file);
+	
+	var ajax=new XMLHttpRequest();
+	ajax.open("POST","showpony/showpony-classes.php");
+	ajax.send(formData);
+	
+	ajax.addEventListener(
+		"readystatechange"
+		,function(){
+			if(ajax.readyState==4){
+				if(ajax.status==200){
+					var response=JSON.parse(ajax.responseText);
+					console.log(response);
+					
+					if(response.success){
+						onSuccess(response);
+					}else{
+						alert(response.message);
+					}
+				}else{
+					alert("Failed to load Showpony class file.");
+				}
+			}
+		}
+	);
+}
+
+//Get the medium of a file
+function getMedium(name){
+	//Get the extension
+	switch(name.match(/\.[^.]+$/)[0]){
+		case ".jpg":
+		case ".jpeg":
+		case ".png":
+		case ".gif":
+		case ".svg":
+			return "image";
+			break;
+		case ".mp4":
+		case ".webm":
+			return "video";
+			break;
+		case ".mp3":
+		case ".wav":
+			return "audio";
+			break;
+		case ".txt":
+		case ".kn":
+		case ".vn":
+		case ".mm":
+			return "multimedia";
+			break;
+		case ".html":
+		case ".txt":
+			return "text";
+			break;
+		default:
+			return null;
+			break;
+	}
+}
+
+function getLength(file){
+	var get=file.match(/[^\s)]+(?=\..+$)/);
+
+	//Return the value in the file or the default duration
+	return (get ? parseFloat(get[0]) : S.defaultDuration);
+}
+
+//Use documentFragment to append elements faster
+function frag(inputArray,inputParent){
+	var fragment=document.createDocumentFragment();
+	
+	var l=inputArray.length;
+	for(var i=0;i<l;i++){
+		fragment.appendChild(inputArray[i]);
+	}
+	
+	inputParent.appendChild(fragment);
+}
+
+//Create an element with a class
+function m(c,el){
+	var a=document.createElement(el || "div");
+	a.className="showpony-"+c;
+	
+	return a;
+}
 
 //Run multimedia (interactive fiction, visual novels, etc)
-eng.run=function(inputNum){
+function runMM(inputNum){
 	
 	//Go to either the specified line or the next one
-	eng.currentLine=(inputNum!==undefined ? inputNum : eng.currentLine+1);
+	S.currentLine=(inputNum!==undefined ? inputNum : S.currentLine+1);
 	
 	//If we've ended manually or reached the end, stop running immediately and end it all
-	if(eng.currentLine>=eng.lines.length){
+	if(S.currentLine>=S.lines.length){
 		console.log("Ending!");
-		eng.time({file:"next"});
+		S.time({file:"next"});
 		return;
 	}
 
-	var text=eng.lines[eng.currentLine];
+	var text=S.lines[S.currentLine];
 	
 	//Replace all variables (including variables inside variables) with the right name
 	while(text.match(/[^\[]+(?=\])/g)){
@@ -594,7 +853,7 @@ eng.run=function(inputNum){
 		
 		text=text.replace(
 			'['+match+']'
-			,eng.data[match]
+			,S.data[match]
 		);
 	}
 
@@ -619,7 +878,7 @@ eng.run=function(inputNum){
 			multimediaSettings.wait=null;
 		}
 		
-		//console.log(multimediaSettings,eng.currentLine);
+		//console.log(multimediaSettings,S.currentLine);
 		
 		if(!multimediaSettings.go){
 			return;
@@ -629,18 +888,18 @@ eng.run=function(inputNum){
 	}
 	
 	//If the textbox hasn't been created, create it!
-	if(!eng.textboxes[multimediaSettings.textbox]){
-		eng.textboxes[multimediaSettings.textbox]=m("textbox");
-		content.appendChild(eng.textboxes[multimediaSettings.textbox]);
+	if(!S.textboxes[multimediaSettings.textbox]){
+		S.textboxes[multimediaSettings.textbox]=m("textbox");
+		content.appendChild(S.textboxes[multimediaSettings.textbox]);
 	}
 	
 	//If there's nothing passed, clear the current textbox and continue on to the next line.
 	if(vals && !vals[2]){
-		eng.textboxes[multimediaSettings.textbox].innerHTML="";
-		eng.run();
+		S.textboxes[multimediaSettings.textbox].innerHTML="";
+		runMM();
 		return;
 	}else{ //If we're typing in the old textbox
-		eng.textboxes[multimediaSettings.textbox].innerHTML="";
+		S.textboxes[multimediaSettings.textbox].innerHTML="";
 	}
 	
 	//STEP 2: Design the text//
@@ -707,7 +966,7 @@ eng.run=function(inputNum){
 					if(values[3].length) charElement.classList.add("showpony-char-"+values[3]);
 				}
 				
-				//Adjust the styles of charElement based on what's passed (this will impact all future eng.objects)
+				//Adjust the styles of charElement based on what's passed (this will impact all future S.objects)
 				
 				//Pass over the closing bracket
 				continue;
@@ -736,8 +995,8 @@ eng.run=function(inputNum){
 		
 		frag([showChar,hideChar],thisChar);
 		
-		//This character is adding to the list of hidden eng.objects
-		eng.charsHidden++;
+		//This character is adding to the list of hidden S.objects
+		S.charsHidden++;
 		
 		//Set the display time here
 		showChar.style.animationDelay=totalWait+"s";
@@ -757,13 +1016,13 @@ eng.run=function(inputNum){
 			
 			//If the element's currently hidden (the animation that ended is for unhiding)
 			if(this.style.visibility!="visible"){		
-				eng.charsHidden--;
+				S.charsHidden--;
 				this.style.visibility="visible";
 				
-				//If there are no more eng.objects to show
-				if(eng.charsHidden<1){
+				//If there are no more S.objects to show
+				if(S.charsHidden<1){
 					if(!wait){
-						eng.run();
+						runMM();
 						return;
 					}
 				}
@@ -777,11 +1036,11 @@ eng.run=function(inputNum){
 	}
 	
 	//Add the chars to the textbox
-	eng.textboxes[multimediaSettings.textbox].appendChild(fragment);
+	S.textboxes[multimediaSettings.textbox].appendChild(fragment);
 
 	/*
 	//Add animations that span the whole thing, so they're in sync
-	var e=eng.textboxes[multimediaSettings.textbox].children;
+	var e=S.textboxes[multimediaSettings.textbox].children;
 	l=e.length;
 	for(let i=0;i<l;i++){
 
@@ -801,30 +1060,30 @@ eng.run=function(inputNum){
 
 var multimediaFunction={
 	'en':function(){
-		eng.time({file:"next"});
+		S.time({file:"next"});
 	}
 	,'go':function(vals){
-		eng.run(eng.lines.indexOf(vals[1])+1 || null);
+		runMM(S.lines.indexOf(vals[1])+1 || null);
 	}
 	,'in':function(vals){
 		var thisButton=m("kn-choice","button");
 		thisButton.innerHTML=vals[2];
 		
-		eng.textboxes["main"].appendChild(thisButton);
+		S.textboxes["main"].appendChild(thisButton);
 		
 		//On clicking a button, go to the right place
 		thisButton.addEventListener("click",function(event){
 			event.stopPropagation();
 			
 			//Progress
-			eng.run(eng.lines.indexOf(vals[1])+1);
+			runMM(S.lines.indexOf(vals[1])+1);
 			
 			waitForInput=false;
 		});
 		
 		waitForInput=true;
 		
-		eng.run();
+		runMM();
 	}
 	,'if':function(vals){
 		//IF	val		==	val		goto
@@ -832,40 +1091,62 @@ var multimediaFunction={
 			ifParse(vals[1])
 			,ifParse(vals[3])
 		)){
-			eng.run(eng.lines.indexOf(vals[4])+1 || null);
+			runMM(S.lines.indexOf(vals[4])+1 || null);
 		}else{
-			eng.run();
+			runMM();
 		}
 	}
 	,'ds':function(vals){
 		//DS	var		=	val
-		eng.data[vals[1]]=operators[vals[2]](
-			ifParse(eng.data[vals[1]])
+		S.data[vals[1]]=operators[vals[2]](
+			ifParse(S.data[vals[1]])
 			,ifParse(vals[3])
 		);
 		
+		//Run an event that the user can track for updated user info
+		S.window.dispatchEvent(
+			new CustomEvent(
+				"data"
+				,{
+					detail:{
+						name:vals[1]
+						,value:S.data[vals[1]]
+					}
+				}
+			)
+		);
+		
 		//Go to the next line
-		eng.run();
+		runMM();
+	}
+	,'ev':function(vals){
+		//EV	event
+		
+		//Dispatch the event the user requested to
+		S.window.dispatchEvent(new CustomEvent(vals[1]));
+		
+		//Go to the next line
+		runMM();
 	}
 	,'wt':function(vals){
 		//If there's a waitTimer, clear it out
 		clearTimeout(waitTimer);
 		
 		//If a value was included, wait 
-		waitTimer=vals[1] && setTimeout(eng.run,parseFloat(vals[1])*1000);
+		waitTimer=vals[1] && setTimeout(runMM,parseFloat(vals[1])*1000);
 	}
 	,'au':function(vals){
 		//If the audio doesn't exist
-		if(!eng.objects[vals[1]]){
+		if(!S.objects[vals[1]]){
 			//Add them in!
 			let el=document.createElement("audio");
 			
 			el.src="resources/audio/"+vals[1];
 			el.preload=true;
 			
-			eng.objects[vals[1]]=el;
+			S.objects[vals[1]]=el;
 			
-			content.appendChild(eng.objects[vals[1]]);
+			content.appendChild(S.objects[vals[1]]);
 		}
 		
 		//Go through the passed parameters and apply them
@@ -873,21 +1154,21 @@ var multimediaFunction={
 		for(let i=2;i<l;i++){
 			switch(vals[i]){
 				case "loop":
-					eng.objects[vals[1]].loop=true;
+					S.objects[vals[1]].loop=true;
 					break;
 				case "play":
 				case "pause":
-					eng.objects[vals[1]][vals[i]]();
+					S.objects[vals[1]][vals[i]]();
 					break;
 				case "stop":
-					eng.objects[vals[1]].currentTime=0;
-					eng.objects[vals[1]].pause();
+					S.objects[vals[1]].currentTime=0;
+					S.objects[vals[1]].pause();
 					break;
 			}
 		}
 		
 		//Go to the next line
-		eng.run();
+		runMM();
 	}
 	,'st':function(vals){
 		//If it's the window
@@ -895,19 +1176,19 @@ var multimediaFunction={
 			content.style.cssText+=vals[2];
 		//If it's a general element
 		}else{
-			(eng.objects[vals[1]] || eng.textboxes[vals[1]]).style.cssText+=vals[2];
+			(S.objects[vals[1]] || S.textboxes[vals[1]]).style.cssText+=vals[2];
 		}
 		
 		//Go to the next line
-		eng.run();
+		runMM();
 	}
 	,'ch':function(vals){
 		//Get the folder, which is the name without anything after a hash
 		var folder=vals[1].split('#')[0];
 
 		//If an object with that name doesn't exist
-		if(!eng.objects[vals[1]]){
-			eng.objects[vals[1]]=new Character();
+		if(!S.objects[vals[1]]){
+			S.objects[vals[1]]=new Character();
 		}
 		
 		var images=[];
@@ -942,7 +1223,7 @@ var multimediaFunction={
 					
 					//If it's a color or gradient, treat it as such
 					if(imageNames[i].match(/(#|gradient\(|rgb\(|rgba\()/)){
-						eng.objects[vals[1]].el.style.backgroundColor=imageNames[i];
+						S.objects[vals[1]].el.style.backgroundColor=imageNames[i];
 					}
 					else //Otherwise, assume it's an image
 					{
@@ -963,10 +1244,10 @@ var multimediaFunction={
 				var found=false;
 				
 				//If the layer exists
-				if(eng.objects[vals[1]].el.children[i]){
+				if(S.objects[vals[1]].el.children[i]){
 					//If this value doesn't exist in the layer
 					
-					var search=eng.objects[vals[1]].el.children[i].children;
+					var search=S.objects[vals[1]].el.children[i].children;
 					
 					let ll=search.length;
 					for(var ii=0;ii<ll;ii++){
@@ -981,28 +1262,28 @@ var multimediaFunction={
 				}
 				
 				if(!found){
-					eng.objects[vals[1]].imgDiv(i,images[i]);
+					S.objects[vals[1]].imgDiv(i,images[i]);
 				}
 			}
 		}
 		
 		//If a 4th value exists, adjust 'left' if a character or 'zIndex' if a background
 		if(vals[3]){
-			eng.objects[vals[1]].el.style.left=vals[3];
+			S.objects[vals[1]].el.style.left=vals[3];
 		}
 		
 		//Go to the next line
-		eng.run();
+		runMM();
 	}
 	,'bg':function(vals){
 		//Get the folder, which is the name without anything after a hash
 		var folder=vals[1].split('#')[0];
 
 		//If an object with that name doesn't exist
-		if(!eng.objects[vals[1]]){
+		if(!S.objects[vals[1]]){
 			//Add a background
-			eng.objects[vals[1]]=m("background");
-			content.appendChild(eng.objects[vals[1]]);
+			S.objects[vals[1]]=m("background");
+			content.appendChild(S.objects[vals[1]]);
 		}
 		
 		var images=(vals[0]=="ch" ? [] : '');
@@ -1026,7 +1307,7 @@ var multimediaFunction={
 			
 			//If it's a color or gradient, treat it as such
 			if(/(#|gradient\(|rgb\(|rgba\()/.test(imageNames)){
-				eng.objects[vals[1]].style.backgroundColor=imageNames;
+				S.objects[vals[1]].style.backgroundColor=imageNames;
 			}
 			else //Otherwise, assume it's an image
 			{
@@ -1042,7 +1323,7 @@ var multimediaFunction={
 				
 				//If it's a color or gradient, treat it as such
 				if(imageNames[i].match(/(#|gradient\(|rgb\(|rgba\()/)){
-					eng.objects[vals[1]].el.style.backgroundColor=imageNames[i];
+					S.objects[vals[1]].el.style.backgroundColor=imageNames[i];
 				}
 				else //Otherwise, assume it's an image
 				{
@@ -1055,16 +1336,16 @@ var multimediaFunction={
 				}
 			}*/
 			
-			eng.objects[vals[1]].style.backgroundImage=images;
+			S.objects[vals[1]].style.backgroundImage=images;
 		}
 		
 		//If a 4th value exists, adjust 'left' if a character or 'zIndex' if a background
 		if(vals[3]){
-			eng.objects[vals[1]].el.style.zIndex=vals[3];
+			S.objects[vals[1]].el.style.zIndex=vals[3];
 		}
 		
 		//Go to the next line
-		eng.run();
+		runMM();
 	}
 	,'tb':function(vals,multimediaSettings){
 		//Set the current textbox
@@ -1081,251 +1362,17 @@ var multimediaFunction={
 	}
 }
 
-//When the viewer inputs to Showpony (click, space, general action)
-eng.input=function(){
-	console.log(currentType);
-	
-	//Function differently depending on medium
-	switch(currentType){
-		case "image":
-			eng.time({file:"next"});
-			break;
-		case "audio":
-		case "video":
-			eng.menu();
-			break;
-		case "multimedia":
-			//If the player is making choices right now
-			if(waitForInput) return;
-		
-			//If a wait timer was going, stop it.
-			clearTimeout(waitTimer);
-		
-			console.log(eng.charsHidden);
-		
-			//If all letters are displayed
-			if(eng.charsHidden<1){
-				eng.run();
-			}
-			else //If some eng.objects have yet to be displayed
-			{
-				console.log(eng.textboxes);
-				
-				//Go through each textbox and display all of its text
-				Object.keys(eng.textboxes).forEach(
-					function(key){
-						let l=eng.textboxes[key].children.length;
-						for(let i=0;i<l;i++){
-							//Skip over non-span tags
-							if(eng.textboxes[key].children[i].tagName!=="SPAN") continue;
-							
-							//Remove the delay so they're displayed immediately
-							eng.textboxes[key].children[i].children[0].style.animationDelay="0s";
-						}
-					}
-				);
-			}
-			break;
-	}
-}
-
-//Close ShowPony
-eng.close=function(){
-	//Replace the container with the original element
-	
-	console.log(windowClick);
-	
-	//Remove the window event listener
-	window.removeEventListener("click",windowClick);
-	
-	//Reset the window to what it was before
-	eng.window.parentNode.replaceChild(eng.originalWindow,eng.window);
-	
-	//Remove this object
-	eng=null;
-}
-
-///////////////////////////////////////
-////////////LOCAL FUNCTIONS////////////
-///////////////////////////////////////
-
-function startup(){
-	//currentFile is -1 before we load
-	eng.currentFile=-1;
-	
-	//Find where to start from
-	eng.start=!isNaN(input.start) ? input.start : eng.files.length-1;
-	
-	//If querystrings are in use, consider the querystring in the URL
-	if(eng.query){
-		window.addEventListener(
-			"popstate"
-			,function(){
-				var page=window.location.href.match(new RegExp(eng.query+'[^&]+','i'));
-				
-				if(page){
-					eng.time({file:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
-				}
-			}
-		);
-		
-		var page=window.location.href.match(new RegExp(eng.query+'[^&]+','i'));
-	
-		//Add in the time if it needs it, otherwise pass nothing
-		eng.time({
-			file: page ? parseInt(page[0].split("=")[1])-1 : eng.start
-			,popstate:page ? true : false
-			,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
-			,scrollToTop:false
-		});
-	}else{
-		//Start
-		eng.time({file:eng.start,scrollToTop:false});
-	}
-	
-	//Set input to null in hopes that garbage collection will come pick it up
-	input=null;
-	
-	//Try to access the admin account if logged in
-	if(eng.admin){
-		account("login",true);
-	}
-}
-
-//Make a GET call
-function GET(src,onSuccess){
-	//Add loadingClass
-	if(eng.loadingClass){
-		eng.window.classList.add(eng.loadingClass);
-	}
-	
-	var ajax=new XMLHttpRequest();
-	ajax.open("GET",src);
-	ajax.send();
-	
-	ajax.addEventListener(
-		"readystatechange"
-		,function(){
-			if(ajax.readyState==4){
-				if(ajax.status==200){
-					onSuccess(ajax);
-					//Remove loadingClass
-					if(eng.loadingClass){
-						content.classList.remove(eng.loadingClass);
-					}
-				}else{
-					alert("Failed to load file called: "+eng.path+eng.files[eng.currentFile]);
-				}
-			}
-		}
-	);
-}
-
-//Make a POST call
-function POST(onSuccess,obj){
-	//Prepare the form data
-	var formData=new FormData();
-	formData.append('showpony-call',obj.call);
-	formData.append('path',eng.path);
-	
-	//Special values, if passed
-	obj.password && formData.append('password',obj.password);
-	obj.name && formData.append('name',obj.name);
-	obj.newName && formData.append('newName',obj.newName);
-	obj.file && formData.append('files',obj.file);
-
-	var ajax=new XMLHttpRequest();
-	ajax.open("POST","showpony/showpony-classes.php");
-	ajax.send(formData);
-	
-	ajax.addEventListener(
-		"readystatechange"
-		,function(){
-			if(ajax.readyState==4){
-				if(ajax.status==200){
-					onSuccess(ajax);
-				}else{
-					alert("Failed to load Showpony class file.");
-				}
-			}
-		}
-	);
-}
-
-//Get the medium of a file
-function getMedium(name){
-	//Get the extension
-	switch(name.match(/\.[^.]+$/)[0]){
-		case ".jpg":
-		case ".jpeg":
-		case ".png":
-		case ".gif":
-		case ".svg":
-		case ".tiff":
-			return "image";
-			break;
-		case ".mp4":
-		case ".webm":
-			return "video";
-			break;
-		case ".mp3":
-		case ".wav":
-			return "audio";
-			break;
-		case ".txt":
-		case ".kn":
-		case ".vn":
-		case ".mm":
-			return "multimedia";
-			break;
-		case ".html":
-		case ".txt":
-			return "text";
-			break;
-		default:
-			return null;
-			break;
-	}
-}
-
-function getLength(file){
-	var get=file.match(/[^\s)]+(?=\..+$)/);
-
-	//Return the value in the file or the default duration
-	return (get ? parseFloat(get[0]) : eng.defaultDuration);
-}
-
-//Use documentFragment to append elements faster
-function frag(inputArray,inputParent){
-	var fragment=document.createDocumentFragment();
-	
-	var l=inputArray.length;
-	for(var i=0;i<l;i++){
-		fragment.appendChild(inputArray[i]);
-	}
-	
-	inputParent.appendChild(fragment);
-}
-
-//Create an element with a class
-function m(input,el){
-	var a=document.createElement(el || "div");
-	a.className="showpony-"+input;
-	
-	return a;
-}
-
 //Check values inline
 var operators={
-	'+':function(a,b){return a+b;}
-	,'-':function(a,b){return a-b;}
-	,'=':function(a,b){return b;}
-	,'==':function(a,b){return a==b;}
-	,'<':function(a,b){return a<b;}
-	,'>':function(a,b){return a>b;}
-	,'<=':function(a,b){return a<=b;}
-	,'>=':function(a,b){return a>=b;}
-	,'!':function(a,b){return a!=b;}
+	'+'		:function(a,b){return a+b;}
+	,'-'	:function(a,b){return a-b;}
+	,'='	:function(a,b){return b;}
+	,'=='	:function(a,b){return a==b;}
+	,'<'	:function(a,b){return a<b;}
+	,'>'	:function(a,b){return a>b;}
+	,'<='	:function(a,b){return a<=b;}
+	,'>='	:function(a,b){return a>=b;}
+	,'!'	:function(a,b){return a!=b;}
 };
 
 //If a value's a number, return it as one
@@ -1335,10 +1382,6 @@ function ifParse(input){
 		: input
 	;
 }
-
-///////////////////////////////////////
-////////////////OBJECTS////////////////
-///////////////////////////////////////
 
 function Character(){
 	var cha=this;
@@ -1367,19 +1410,15 @@ function Character(){
 	
 	/*
 	//Go through the file and add in all of the images
-	for(let i=0;i<eng.lines.length;i++){
-		if(eng.lines[i].match(/@CH ben/)){
-			console.log(eng.lines[i]);
+	for(let i=0;i<S.lines.length;i++){
+		if(S.lines[i].match(/@CH ben/)){
+			console.log(S.lines[i]);
 			//cha.imgDiv(i,images[i]);
 		}
 	}*/
 	
 	content.appendChild(cha.el);
 };
-
-///////////////////////////////////////
-///////////LOCAL FUNCTIONS/////////////
-///////////////////////////////////////
 
 //Replace unsafe characters for filenames with safe ones
 function safeFilename(string,type){
@@ -1411,106 +1450,13 @@ function replaceArray(string,fromArray,toArray){
 }
 
 ///////////////////////////////////////
-///////////LOCAL VARIABLES/////////////
-///////////////////////////////////////
-
-//Waiting for user input
-var waitForInput=false
-	,scrubbing=false
-	,waitTimer=null
-	,currentType=null
-	//Elements
-	,overlay=m("overlay")
-	,overlayText=m("overlay-text")
-	,progress=m("progress")
-	,content=m("content")
-	//Buttons
-	,menuButton=m("menu-button showpony-button-preview","button")
-	,fullscreenButton=m("fullscreen-button showpony-button-preview","button")
-	,captionsButton=m("captions-button","button")
-	,types={
-		image:m("block","img")
-		,audio:m("block","audio")
-		,video:m("block","video")
-		,multimedia:m("multimedia")
-		,text:m("text")
-	}
-	
-	,continueNotice=m("continue")
-;
-
-if(eng.title){
-	types.audio.addEventListener(
-		"timeupdate"
-		,function(){
-			document.title=replaceInfoText(eng.title,eng.currentFile);
-		}
-	);
-	
-	types.video.addEventListener(
-		"timeupdate"
-		,function(){
-			document.title=replaceInfoText(eng.title,eng.currentFile);
-		}
-	);
-}
-
-menuButton.alt="Menu";
-fullscreenButton.alt="Fullscreen";
-captionsButton.alt="Closed Captions/Subtitles";
-continueNotice.innerHTML="...";
-
-frag([progress,overlayText],overlay)
-
-//If the window is statically positioned, set it to relative! (so positions of children work)
-if(window.getComputedStyle(eng.window).getPropertyValue('position')=="static"){
-	eng.window.style.position="relative";
-}
-
-//Empty the current window
-eng.window.innerHTML="";
-
-//And fill it up again!
-frag([content,overlay,menuButton,fullscreenButton],eng.window);
-
-eng.window.classList.add("showpony");
-
-///////////////////////////////////////
-/////////////CUSTOM EVENTS/////////////
-///////////////////////////////////////
-
-//On moving to another file
-var eventTime=new Event(
-	"time"
-	,{
-		current:eng.currentFile+1
-	}
-);
-
-//On ending (reaching the very end)
-var eventEnd=new Event("end");
-
-//On toggling the menu
-var eventMenu=new Event(
-	"menuopen"
-	,{
-		function(){
-			opened:(
-				overlay.classList.contains("showpony-overlay-visible") ? true
-				: false
-			)
-		}
-	}
-);
-
-///////////////////////////////////////
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
 
 //We need to set this as a variable to remove it later on
 var windowClick=function(event){
 	event.stopPropagation();
-	eng.menu(event);
+	S.menu(event);
 };
 
 //On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
@@ -1557,9 +1503,9 @@ window.addEventListener(
 		}
 		
 		scrub(
-			(event.clientX-eng.window.getBoundingClientRect().left)
+			(event.clientX-S.window.getBoundingClientRect().left)
 			/
-			(eng.window.getBoundingClientRect().width)
+			(S.window.getBoundingClientRect().width)
 		);
 	}
 );
@@ -1586,9 +1532,9 @@ overlay.addEventListener(
 		event.preventDefault();
 		
 		scrub(
-			(event.changedTouches[0].clientX-eng.window.getBoundingClientRect().left)
+			(event.changedTouches[0].clientX-S.window.getBoundingClientRect().left)
 			/
-			(eng.window.getBoundingClientRect().width)
+			(S.window.getBoundingClientRect().width)
 		);
 	}
 );
@@ -1603,12 +1549,12 @@ overlay.addEventListener(
 			scrubbing=false;
 			console.log("We were scrubbing!");
 			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
-			if(eng.scrubLoad==false){
+			if(S.scrubLoad==false){
 				//Load the file our pointer's on
 			scrub(
-					(event.changedTouches[0].clientX-eng.window.getBoundingClientRect().left)
+					(event.changedTouches[0].clientX-S.window.getBoundingClientRect().left)
 					/
-					(eng.window.getBoundingClientRect().width)
+					(S.window.getBoundingClientRect().width)
 				);
 			}
 		}
@@ -1622,7 +1568,7 @@ menuButton.addEventListener(
 	"click"
 	,function(event){
 		event.stopPropagation();
-		eng.menu();
+		S.menu();
 	}
 );
 
@@ -1631,7 +1577,7 @@ fullscreenButton.addEventListener(
 	"click"
 	,function(event){
 		event.stopPropagation();
-		eng.fullscreen();
+		S.fullscreen();
 	}
 );
 
@@ -1645,19 +1591,62 @@ captionsButton.addEventListener(
 content.addEventListener(
 	"click"
 	,function(){
-		eng.input();
+		S.input();
 	}
 );
+
+if(S.title){
+	types.audio.addEventListener(
+		"timeupdate"
+		,function(){
+			document.title=replaceInfoText(S.title,S.currentFile);
+		}
+	);
+	
+	types.video.addEventListener(
+		"timeupdate"
+		,function(){
+			document.title=replaceInfoText(S.title,S.currentFile);
+		}
+	);
+}
+
+///////////////////////////////////////
+/////////////////START/////////////////
+///////////////////////////////////////
+
+//If the window is statically positioned, set it to relative! (so positions of children work)
+if(window.getComputedStyle(S.window).getPropertyValue('position')=="static"){
+	S.window.style.position="relative";
+}
+
+//Empty the current window
+S.window.innerHTML="";
+
+//And fill it up again!
+frag([content,overlay,menuButton,fullscreenButton],S.window);
+
+S.window.classList.add("showpony");
+
+//If the user's getting the files remotely, make the call
+if(S.files=="get"){
+	POST(
+		function(response){
+			S.files=response.files;
+			startup();
+		}
+		,{call:"getFiles"}
+	);
+}else{
+	startup();
+}
 
 ///////////////////////////////////////
 /////////////////ADMIN/////////////////
 ///////////////////////////////////////
 
-if(eng.admin){
+if(S.admin){
 	var loggedIn=false;
-	
-	overlayText.contentEditable=true;
-	overlayText.style.pointerEvents="auto";
 	
 	var editorUI=m("editor-ui")
 		,uploadFileButton=m("upload-file","label")
@@ -1671,65 +1660,41 @@ if(eng.admin){
 
 	uploadName.type=uploadDate.type="text";
 	uploadName.placeholder="File Title (optional)";
-	
 	uploadDate.placeholder="YYYY-MM-DD HH:MM:SS";
 
 	uploadFile.type="file";
 	uploadFile.style.display="none";
+	uploadFile.accept=".jpg,.jpeg,.png,.gif,.svg,.mp3,.wav,.mp4,.webm,.txt,.mm,.html";
 	
 	uploadFileButton.appendChild(uploadFile);
 	
 	frag([uploadFileButton,uploadDate,uploadName,deleteFile,newFile,logoutButton],editorUI);
 	
-	eng.window.appendChild(editorUI);
-	
-	//Adjust display of header
-	overlayText.addEventListener(
-		"focus"
-		,function(){
-			overlayText.innerHTML="<p>"+eng.info+"</p>";
-		}
-	);
-	
-	overlayText.addEventListener(
-		"blur"
-		,function(event){
-			eng.info=overlayText.children[0].innerHTML;
-			scrub();
-		}
-	);
+	S.window.appendChild(editorUI);
 	
 	//Edit/adjust file details
-	eng.window.addEventListener(
+	S.window.addEventListener(
 		"contextmenu"
 		,function(event){
 			event.preventDefault();
-			console.log("Context menu!");
 			editor();
 		}
 	);
 	
 	function editor(){
-		if(loggedIn){
-			eng.window.classList.toggle("showpony-editor");
-		}else{
-			account("login");
-		}
+		//If logged in, toggle the editor; otherwise, try to log in
+		if(loggedIn) S.window.classList.toggle("showpony-editor");
+		else account("login");
 	}
 	
 	function updateEditor(){
-		console.log(eng.files,eng.currentFile);
-		
-		var date=(eng.files[eng.currentFile].match(/\d(.(?!\())+\d*/) || [""])[0].replace(/;/g,':');
-		
 		//Get the name, remove the parentheses
-		var name=safeFilename(
-			(eng.files[eng.currentFile].match(/\(.*\)/) || [""])[0].replace(/(^\(|\)$)/g,'')
+		uploadName.value=safeFilename(
+			(S.files[S.currentFile].match(/\(.*\)/) || [""])[0].replace(/(^\(|\)$)/g,'')
 			,"from"
 		);
 		
-		uploadName.value=name;
-		uploadDate.value=date;
+		uploadDate.value=(S.files[S.currentFile].match(/\d(.(?!\())+\d*/) || [""])[0].replace(/;/g,':');
 	}
 	
 	logoutButton.addEventListener("click"
@@ -1749,116 +1714,80 @@ if(eng.admin){
 		console.log(type,tryCookie,pass);
 		
 		POST(
-			function(ajax){
-				var response=JSON.parse(ajax.responseText);
-				console.log(response);
+			function(response){
+				S.files=response.files;
 				
-				if(response.success){
-					eng.files=response.files;
+				//Logged in
+				if(response.admin){
 					
-					//Logged in
-					if(response.admin){
-						
-						loggedIn=true;
-					
-						if(!tryCookie){
-							editor();
-						}
-					}else{ //Not logged in
-						if(loggedIn){
-							editor();
-							loggedIn=false;
-						}
+					loggedIn=true;
+				
+					if(!tryCookie) editor();
+				}else{ //Not logged in
+					if(loggedIn){
+						editor();
+						loggedIn=false;
 					}
-					
-					eng.time({reload:true,scrollToTop:false});
-				}else{
-					alert(response.message);
 				}
+				
+				S.time({reload:true,scrollToTop:false});
 			}
 			,{call:type,password:pass}
 		);
 	}
 	
 	function renameFile(){
-		var thisFile=eng.currentFile;
+		var thisFile=S.currentFile;
 		var date=uploadDate.value;
-		var x=(eng.files[thisFile][0]=='x') ? 'x': '';
+		var x=(S.files[thisFile][0]=='x') ? 'x': '';
 		
 		//Test that the date is safe (must match setup)
-		if(/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.test(date)){
-			alert("Date must formatted as \"YYYY-MM-DD\" or \"YYYY-MM-DD HH-MM-SS\". You passed \""+date+"\"");
+		if(!(/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.test(date))){
+			alert("Date must be formatted as \"YYYY-MM-DD\" or \"YYYY-MM-DD HH-MM-SS\". You passed \""+date+"\"");
 			return;
 		}
 		
 		var fileName=x
 			+date.replace(/:/g,';') //date (replace : with ; so it's Windows safe)
 			+" ("+safeFilename(uploadName.value,"to")+")" //name
-			+eng.files[thisFile].match(/\.\w+$/) //ext
+			+S.files[thisFile].match(/\.\w+$/) //ext
 		;
 		
 		POST(
-			function(ajax){
-				var response=JSON.parse(ajax.responseText);
+			function(response){
+				S.files[thisFile]=response.file;
 				
-				if(response.success){
-					eng.files[thisFile]=response.file;
-					
-					//Sort the files by order
-					eng.files.sort();
-					
-					eng.time({file:eng.files.indexOf(response.file),scrollToTop:false});
-					scrub();
-				}else{
-					alert(response.message);
-				}
+				//Sort the files by order
+				S.files.sort();
+				
+				S.time({file:S.files.indexOf(response.file),scrollToTop:false});
+				scrub();
 			}
-			,{call:"renameFile",name:eng.files[thisFile],newName:fileName}
+			,{call:"renameFile",name:S.files[thisFile],newName:fileName}
 		);
 	}
 	
 	//EVENT LISTENERS//
 	//On time, update the editor
-	eng.window.addEventListener("time"
-		,function(){
-			updateEditor();
-		}
-	);
-	
-	uploadName.addEventListener("change"
-		,function(){
-			renameFile();
-		}
-	);
-	
-	uploadDate.addEventListener("change"
-		,function(){
-			renameFile();
-		}
-	);
+	S.window.addEventListener("time",updateEditor);
+	uploadName.addEventListener("change",renameFile);
+	uploadDate.addEventListener("change",renameFile);
 	
 	uploadFile.addEventListener("change"
 		,function(){
-			var thisFile=eng.currentFile;
+			var thisFile=S.currentFile;
 			
 			POST(
-				function(ajax){
-					var response=JSON.parse(ajax.responseText);
-					console.log(response);
+				function(response){
+					S.files[thisFile]=response.file;
 					
-					if(response.success){
-						eng.files[thisFile]=response.file;
-						
-						//If still on that file, refresh it
-						if(eng.currentFile===thisFile) eng.time({file:thisFile,refresh:true,scrollToTop:false})
-					}else{
-						alert(response.message);
-					}
+					//If still on that file, refresh it
+					if(S.currentFile===thisFile) S.time({file:thisFile,refresh:true,scrollToTop:false})
 				}
 				,{
 					call:"uploadFile"
-					,name:eng.files[thisFile]
-					,file:uploadFile.files[0]
+					,name:S.files[thisFile]
+					,files:uploadFile.files[0]
 				}
 			);
 		}
@@ -1866,37 +1795,29 @@ if(eng.admin){
 	
 	deleteFile.addEventListener("click"
 		,function(){
-			var thisFile=eng.currentFile;
+			var thisFile=S.currentFile;
 			
 			POST(
-				function(ajax){
-					var response=JSON.parse(ajax.responseText);
-					console.log(response);
-					console.log(eng.currentFile,thisFile,eng.files.length);
-					
-					if(response.success){
-						//Remove the file from the arrays
-						eng.files.splice(thisFile,1);
+				function(response){
+					//Remove the file from the arrays
+					S.files.splice(thisFile,1);
 
-						console.log(thisFile,eng.files.length);
-						
-						//If still on that file, refresh it
-						if(thisFile===eng.currentFile){
-						
-							//Don't go past the last file
-							if(thisFile>=eng.files.length){
-								thisFile=eng.files.length-1;
-							}
-							
-							console.log(thisFile,eng.currentFile);
-							
-							eng.time({file:thisFile,refresh:true})
+					console.log(thisFile,S.files.length);
+					
+					//If still on that file, refresh it
+					if(thisFile===S.currentFile){
+					
+						//Don't go past the last file
+						if(thisFile>=S.files.length){
+							thisFile=S.files.length-1;
 						}
-					}else{
-						alert(response.message);
+						
+						console.log(thisFile,S.currentFile);
+						
+						S.time({file:thisFile,refresh:true})
 					}
 				}
-				,{call:"deleteFile",name:eng.files[thisFile]}
+				,{call:"deleteFile",name:S.files[thisFile]}
 			);
 		}
 	);
@@ -1904,19 +1825,12 @@ if(eng.admin){
 	newFile.addEventListener("click"
 		,function(){
 			POST(
-				function(ajax){
-					var response=JSON.parse(ajax.responseText);
-					console.log(response);
+				function(response){
+					//Add the file to the array
+					S.files.push(response.file);
 					
-					if(response.success){
-						//Add the file to the array
-						eng.files.push(response.file);
-						
-						eng.time({file:"last"});
-						scrub();
-					}else{
-						alert(response.message);
-					}
+					S.time({file:"last"});
+					scrub();
 				}
 				,{call:"newFile"}
 			);
@@ -1924,32 +1838,6 @@ if(eng.admin){
 	);
 	
 	console.log(account);
-}
-
-///////////////////////////////////////
-/////////////////START/////////////////
-///////////////////////////////////////
-
-//If the user's getting the files remotely, make the call
-if(eng.files=="get"){
-	eng.files=[];
-	
-	POST(
-		function(ajax){
-			var response=JSON.parse(ajax.responseText);
-			console.log(response);
-			
-			if(response.success){
-				eng.files=response.files;
-				startup();
-			}else{
-				alert(response.message);
-			}
-		}
-		,{call:"getFiles"}
-	);
-}else{
-	startup();
 }
 
 }

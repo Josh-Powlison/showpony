@@ -18,17 +18,14 @@ class Showpony{
 			,'message' => null
 		];
 		
-		#If there's no password in use, don't try to log in
-		if(self::$password!==NULL){
-			#Always attempt login for admin functions
-			$response=$this->login($response);
-		}else
+		#Attempt login to access admin functions, if password isn't null
+		if(self::$password!==NULL) $response=$this->login($response);
 		#If the user's trying to access admin stuff when there's no password set, prevent it and let them know
-		if(!empty($_POST['password']) || $response['call']==='login'){
+		else if($response['call']==='login'){
 			$response['message']=("You are trying to access admin privileges through this webpage but you have admin disabled. Either set a password for the admin or set \"admin:false\" in the Showpony object.");
 			
 			echo json_encode($response);
-			die();
+			return;
 		}
 		
 		#If the user passed a call
@@ -81,10 +78,9 @@ class Showpony{
 			#Get the file names and pass them on
 			$response['success']=true;
 			$response=$this->getFiles($response);
-			
-			$response['admin']=$this->admin;
 		}
 		
+		$response['admin']=$this->admin;
 		return $response;
 	}
 	
@@ -96,27 +92,21 @@ class Showpony{
 	}
 	
 	protected function uploadFile($response){
-		#Delete original file
+		#Delete the original file (if it exists)
 		unlink($_POST['name']);
 		
-		#Use the passed file name, but make sure to use the new file's extension
-		$fileName=pathinfo($_POST['name'],PATHINFO_FILENAME).'.'.pathinfo($_FILES['files']['name'],PATHINFO_EXTENSION); #add new extension
+		#Make the new file name with the old name + the new extension
+		$response["file"]=pathinfo($_POST['name'],PATHINFO_FILENAME).'.'.pathinfo($_FILES['files']['name'],PATHINFO_EXTENSION);
 	
-		#Place the uploaded file
-		$response["success"]=move_uploaded_file(
-			$_FILES["files"]["tmp_name"]
-			,$fileName
-		);
+		#Success if we move the uploaded file to the directory
+		$response["success"]=move_uploaded_file($_FILES["files"]["tmp_name"],$response["file"]);
 		
-		$response["file"]=$fileName;
 		return $response;
 	}
 	
 	protected function renameFile($response){
-		$response['success']=rename(
-			$_POST['name']
-			,$_POST['newName']
-		);
+		#Success if rename the file
+		$response['success']=rename($_POST['name'],$_POST['newName']);
 		
 		$response['file']=$_POST['newName'];
 		
