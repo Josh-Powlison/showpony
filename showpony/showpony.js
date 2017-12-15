@@ -739,7 +739,7 @@ function POST(onSuccess,obj){
 	obj.password && formData.append('password',obj.password);
 	obj.name && formData.append('name',obj.name);
 	obj.newName && formData.append('newName',obj.newName);
-	obj.file && formData.append('files',obj.file);
+	obj.files && formData.append('files',obj.files);
 	
 	var ajax=new XMLHttpRequest();
 	ajax.open("POST","showpony/showpony.php");
