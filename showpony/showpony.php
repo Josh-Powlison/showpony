@@ -1,14 +1,15 @@
 <?php
+session_start();
+
 error_reporting(E_ALL);
 ini_set('display_errors',1);
 
 class Showpony{
 
-	protected static $password=NULL; #NULL will disable admin access. Using a string will set that as the password and allow admin access.
+	protected static $password='password'; #NULL will disable admin access. Using a string will set that as the password and allow admin access.
 	
 	#Initialize the class
 	function __construct($inputArray){
-		$this->admin=false;
 		chdir(dirname(__FILE__,2).'/'.($inputArray['path'] ?? $_POST['path'] ?? $_GET['path'] ?? null));
 		
 		#This object is sent to the user as JSON
@@ -18,77 +19,57 @@ class Showpony{
 			,'message' => null
 		];
 		
-		#Attempt login to access admin functions, if password isn't null
-		if(self::$password!==NULL) $response=$this->login($response);
-		#If the user's trying to access admin stuff when there's no password set, prevent it and let them know
-		else if($response['call']==='login'){
-			$response['message']=("You are trying to access admin privileges through this webpage but you have admin disabled. Either set a password for the admin or set \"admin:false\" in the Showpony object.");
-			
-			echo json_encode($response);
-			return;
-		}
+		if(!self::$password) unset($_SESSION['showpony_admin']);
 		
 		#If the user passed a call
-		if(!empty($_POST['showpony-call'])){
+		if($response['call']){
 			#The message will be kept in the output buffer. We will send the output buffer to the user in the "message".
 			ob_start();
 			
-			#If we were here to login, don't bother doing so again
-			if($response['call']!=='login'){
-				$response=$this->{$response['call']}($response);
+			#Run the called function
+			switch($response['call']){
+				#Check admin for most functions
+				default:
+					if(!self::$password){
+						$response['message']="You need to set a password to access admin functions! See Showpony's GitHub wiki to find out how!";
+						break;
+					}
+					
+					if($response['call']!=='login' && empty($_SESSION['showpony_admin'])){
+						$response['message']="You need to be logged in to do that! Did you log off on another page?";
+						break;
+					}
+					#Fall-through
+				case 'getFiles':
+				case 'logout':
+					$response=$this->{$response['call']}($response);
+					break;
 			}
 			
-			$response["message"]=ob_get_clean();
+			$response["message"].=ob_get_clean();
+			$response['admin']=$_SESSION['showpony_admin'] ?? false;
 			
 			echo json_encode($response);
 		}
 		
-		if(!empty($_GET['rss'])) $this->RSS();
+		#if(!empty($_GET['rss'])) $this->RSS();
 	}
 	
 	protected function login($response){
-		if(self::$password){
-			#Check if the user's trying to log in right now (and aren't trying to auto login)
-			if(
-				$response['call']=='login'
-				&& !empty($_POST['password'])
-			){
-				$this->admin=($_POST['password']==self::$password);
-				
-				$response['success']=setcookie(
-					"showpony_password"
-					,self::$password
-					,($this->admin ? time()+60*60*24 : -1) #Expire in a day
-				);
-				
-				if(!$response['success']) echo $this->admin ? "Correct password, but we failed to log you in." : "Wrong password!";
-			}else if(!empty($_COOKIE['showpony_password'])){
-				#Check if the password cookie lines with up the password
-				$this->admin=($_COOKIE['showpony_password']===self::$password);
-				
-				if(!$this->admin){
-					echo "You've been logged out!";
-					setcookie('showpony_password',null,-1);
-				}
-			}
-		}else echo 'Admin access not available for this Showpony object.';
-		
-		#This is outside the other block because files need to be returned if the user's trying to log in (and needs that info)
-		if($response['call']==='login'){
-			#Get the file names and pass them on
-			$response['success']=true;
-			$response=$this->getFiles($response);
+		#If the password's right, set the session and get the files
+		if($_SESSION['showpony_admin']=($_POST['password']==self::$password)){
+			return $this->getFiles($response);
+		}else{ #If the password's wrong, let the user know
+			$response['message']='Wrong password!';
+			return $response;
 		}
-		
-		$response['admin']=$this->admin;
-		return $response;
 	}
 	
 	protected function logout($response){
-		$response["success"]=setcookie('showpony_password',null,-1);
-		$this->admin=false;
-		$response=$this->getFiles($response);
-		return $response;
+		unset($_SESSION['showpony_admin']);
+		
+		#Refresh the files the user sees
+		return $this->getFiles($response);
 	}
 	
 	protected function uploadFile($response){
@@ -161,8 +142,8 @@ class Showpony{
 						$file='x'.$file;
 					}
 					
-					#Don't add this file if we aren't an admin
-					if(!$this->admin) continue;
+					#Don't add hidden files if we aren't logged in
+					if(!$_SESSION['showpony_admin']) continue;
 				}
 			}
 			

@@ -153,7 +153,7 @@ S.time=function(input){
 	
 	var src=(
 		S.files[S.currentFile][0]=="x"
-		? "showpony/showpony-classes.php?showpony-get="+S.path+S.files[S.currentFile]
+		? "showpony/showpony.php?showpony-get="+S.path+S.files[S.currentFile]
 		: S.path+S.files[S.currentFile]
 	);
 	
@@ -430,6 +430,7 @@ var waitForInput=false
 	,scrubbing=false
 	,waitTimer=null
 	,currentType=null
+	,loggedIn=false //Logged in as admin
 	//Elements
 	,overlay=m("overlay")
 	,overlayText=m("overlay-text")
@@ -497,11 +498,6 @@ function startup(){
 	
 	//Set input to null in hopes that garbage collection will come pick it up
 	input=null;
-	
-	//Try to access the admin account if logged in
-	if(S.admin){
-		account("login",true);
-	}
 }
 
 //Update the scrubber's position
@@ -746,7 +742,7 @@ function POST(onSuccess,obj){
 	obj.file && formData.append('files',obj.file);
 	
 	var ajax=new XMLHttpRequest();
-	ajax.open("POST","showpony/showpony-classes.php");
+	ajax.open("POST","showpony/showpony.php");
 	ajax.send(formData);
 	
 	ajax.addEventListener(
@@ -1633,6 +1629,7 @@ if(S.files=="get"){
 	POST(
 		function(response){
 			S.files=response.files;
+			loggedIn=response.admin;
 			startup();
 		}
 		,{call:"getFiles"}
@@ -1646,8 +1643,6 @@ if(S.files=="get"){
 ///////////////////////////////////////
 
 if(S.admin){
-	var loggedIn=false;
-	
 	var editorUI=m("editor-ui")
 		,uploadFileButton=m("upload-file","label")
 		,uploadFile=document.createElement("input")
