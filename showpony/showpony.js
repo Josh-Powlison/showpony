@@ -24,20 +24,50 @@ S.title				=input.title			|| false;
 S.dateFormat		=input.dateFormat		|| {year:"numeric",month:"numeric",day:"numeric"};
 S.admin				=input.admin			|| false;
 S.query				=input.query !==undefined ? input.query : "file";
+S.shortcuts			=input.shortcuts !==undefined ? input.shortcuts : "focus";
 
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
 ///////////////////////////////////////
 
 //Go to another file
-S.time=function(input){
-	console.log(input);
+S.to=function(input){
+	//console.log(input);
 	
 	var obj=input || {};
 	
-	//If a time is passed, get file and time based on the place in the total
+	//Relative file
+	if(obj.file && (obj.file[0]==='+' || obj.file[0]==='-')){
+		obj.file=S.currentFile+(parseInt(obj.file.substring(1))*(obj.file[0]==='-' ? -1 : 1))
+	}
+	
+	//Relative time
+	if(obj.time && (obj.time[0]==='+' || obj.time[0]==='-')){
+		var getTime=0;
+		//Add the times of previous videos to get the actual time in the piece
+		for(var i=0;i<S.currentFile;i++){
+			getTime+=getLength(S.files[i]);
+		}
+		
+		getTime+=types[currentType] && types[currentType].currentTime || 0;
+		
+		//console.log(getTime);
+		
+		obj.time=getTime+(parseFloat(obj.time.substring(1))*(obj.time[0]==='-' ? -1 : 1));
+		
+		//console.log(obj.time);
+		
+		//Don't go below 0
+		if(obj.time<0) obj.time=0;
+	}
+	
+	//If a time is passed but no file, get file and time based on the place in the total
 	if(obj.time!==undefined && obj.file===undefined){
 		obj.file=0;
+		
+		//Relative time
+		/*if(obj.time[0]==='+') obj.time=
+		if(obj.time[0]==='-') obj.time=*/
 		
 		//Look through the videos for the right one
 		var l=S.files.length;
@@ -52,7 +82,7 @@ S.time=function(input){
 			//If the time passed is greater than the total time, the story will end
 		}
 		
-		console.log(obj.time,obj.file);
+		//console.log(obj.time,obj.file);
 	}
 	
 	Object.assign(obj,{
@@ -64,6 +94,7 @@ S.time=function(input){
 		,popstate:obj.popstate || false
 		,replaceState:obj.replaceState || false
 	});
+		
 		/*
 	//Don't continue if the file is the same and we aren't trying to refresh
 	if(obj.file==S.currentFile){
@@ -73,7 +104,7 @@ S.time=function(input){
 		}
 	}
 	
-	console.log(obj.file,S.currentFile,thisType,obj.time);
+	//console.log(obj.file,S.currentFile,thisType,obj.time);
 	
 	//Change the title if requested
 	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
@@ -99,7 +130,7 @@ S.time=function(input){
 			//Run the event that users can read
 			S.window.dispatchEvent(new CustomEvent("end"));
 			
-			console.log("Ended!");
+			//console.log("Ended!");
 			return;
 		}
 	}
@@ -115,10 +146,10 @@ S.time=function(input){
 			var replace=new RegExp('((\\?|&)'+S.query+')=?[^&]+','i');
 			newURL=newURL.replace(replace,'$1='+(S.currentFile+1));
 		}else{
-			newURL+=newURL.indexOf("?")>-1 ? '&' : '?' +(S.query+'='+(S.currentFile+1));
+			newURL+=(newURL.indexOf("?")>-1 ? '&' : '?') +(S.query+'='+(S.currentFile+1));
 		}
 		
-		console.log(newURL);
+		//console.log(newURL);
 		
 		//Either replace or push the state
 		history[obj.replaceState ? "replaceState" : "pushState"]({},"",newURL);
@@ -144,11 +175,8 @@ S.time=function(input){
 	//If switching types, do some cleanup
 	if(currentType!=newType){
 		content.innerHTML="";
-		console.log(types);
+		//console.log(types);
 		content.appendChild(thisType);
-		
-		//Use the general content class
-		content.className="showpony-content";//+newType;
 	}
 	
 	var src=(
@@ -169,14 +197,12 @@ S.time=function(input){
 	//Display the medium based on the file extension
 	switch(newType){
 		case "image":
-			//Adjust the source
 			thisType.src=src;
 			break;
 		case "video":
-			//Adjust the source
 			thisType.src=src;
 			
-			console.log(thisType.src);
+			//console.log(thisType.src);
 			
 			!overlay.classList.contains("showpony-overlay-visible") && thisType.play();
 			
@@ -187,7 +213,7 @@ S.time=function(input){
 					//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
 					if(overlay.classList.contains("showpony-overlay-visible")) return;
 					
-					S.time({file:"next"});
+					S.to({file:"+1"});
 				}
 			);
 			break;
@@ -204,13 +230,13 @@ S.time=function(input){
 					//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
 					if(overlay.classList.contains("showpony-overlay-visible")) return;
 					
-					S.time({file:"next"});
+					S.to({file:"+1"});
 				}
 			);
 			break;
 		//Visual Novels/Kinetic Novels/Interactive Fiction
 		case "multimedia":
-			console.log(currentType);
+			//console.log(currentType);
 		
 			//If the previous type was different, use the new type (or if we're scrubbing and not moving along as normal)
 			//if(currentType!=newType || overlay.style.visibility=="visible"){
@@ -230,12 +256,7 @@ S.time=function(input){
 			);
 			break;
 		case "text":
-			GET(
-				src
-				,function(ajax){
-					content.innerHTML=ajax.responseText;
-				}
-			);
+			GET(src,function(ajax){content.innerHTML=ajax.responseText;});
 			break;
 		default:
 			alert("Extension not recognized or supported!");
@@ -353,12 +374,12 @@ S.fullscreen=function(type){
 
 //When the viewer inputs to Showpony (click, space, general action)
 S.input=function(){
-	console.log(currentType);
+	//console.log(currentType);
 	
 	//Function differently depending on medium
 	switch(currentType){
 		case "image":
-			S.time({file:"next"});
+			S.to({file:"+1"});
 			break;
 		case "audio":
 		case "video":
@@ -371,7 +392,7 @@ S.input=function(){
 			//If a wait timer was going, stop it.
 			clearTimeout(waitTimer);
 		
-			console.log(S.charsHidden);
+			//console.log(S.charsHidden);
 		
 			//If all letters are displayed
 			if(S.charsHidden<1){
@@ -379,7 +400,7 @@ S.input=function(){
 			}
 			else //If some S.objects have yet to be displayed
 			{
-				console.log(S.textboxes);
+				//console.log(S.textboxes);
 				
 				//Go through each textbox and display all of its text
 				Object.keys(S.textboxes).forEach(
@@ -403,7 +424,7 @@ S.input=function(){
 S.close=function(){
 	//Replace the container with the original element
 	
-	console.log(windowClick);
+	//console.log(windowClick);
 	
 	//Remove the window event listener
 	window.removeEventListener("click",windowClick);
@@ -451,6 +472,8 @@ var waitForInput=false
 	,continueNotice=m("continue")
 ;
 
+content.className="showpony-content";
+
 menuButton.alt="Menu";
 fullscreenButton.alt="Fullscreen";
 captionsButton.alt="Closed Captions/Subtitles";
@@ -477,7 +500,7 @@ function startup(){
 				var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
 				
 				if(page){
-					S.time({file:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
+					S.to({file:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
 				}
 			}
 		);
@@ -485,7 +508,7 @@ function startup(){
 		var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
 	
 		//Add in the time if it needs it, otherwise pass nothing
-		S.time({
+		S.to({
 			file: page ? parseInt(page[0].split("=")[1])-1 : S.start
 			,popstate:page ? true : false
 			,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
@@ -493,7 +516,7 @@ function startup(){
 		});
 	}else{
 		//Start
-		S.time({file:S.start,scrollToTop:false});
+		S.to({file:S.start,scrollToTop:false});
 	}
 	
 	//Set input to null in hopes that garbage collection will come pick it up
@@ -531,7 +554,7 @@ function scrub(inputPercent){
 			if(i==l-1 || newTime<getLength(S.files[i])){
 			//If this is the media!
 				//If we allow scrubbing or we're not moving the bar, we can load the file
-				if(S.scrubLoad!==false || scrubbing===false) S.time({file:i,time:newTime});
+				if(S.scrubLoad!==false || scrubbing===false) S.to({file:i,time:newTime});
 				
 				newPart=i;
 			
@@ -545,7 +568,7 @@ function scrub(inputPercent){
 	
 	//Move the progress bar
 	progress.style.left=(inputPercent*100)+"%";
-	//console.log(current,inputPercent,duration,newPart);
+	////console.log(current,inputPercent,duration,newPart);
 	
 	//Set the overlay text (the current time)
 	overlayText.innerHTML="<p>"+replaceInfoText(
@@ -562,7 +585,7 @@ function replaceInfoText(value,fileNum,current,left){
 	
 	if(fileNum===undefined) fileNum=S.currentFile;
 	
-	console.log(current,left,types[currentType]);
+	//console.log(current,left,types[currentType]);
 	
 	if(current===undefined){
 		//var currentType=getMedium(S.files[S.currentFile]);
@@ -572,7 +595,7 @@ function replaceInfoText(value,fileNum,current,left){
 		
 		//var currentTime=0;
 		
-		console.log(currentTime);
+		//console.log(currentTime);
 		
 		//Look through the videos for the right one
 		var l=S.currentFile;
@@ -702,9 +725,7 @@ function padStart(input,length){
 //Make a GET call
 function GET(src,onSuccess){
 	//Add loadingClass
-	if(S.loadingClass){
-		S.window.classList.add(S.loadingClass);
-	}
+	S.loadingClass && S.window.classList.add(S.loadingClass);
 	
 	var ajax=new XMLHttpRequest();
 	ajax.open("GET",src);
@@ -751,7 +772,7 @@ function POST(onSuccess,obj){
 			if(ajax.readyState==4){
 				if(ajax.status==200){
 					var response=JSON.parse(ajax.responseText);
-					console.log(response);
+					//console.log(response);
 					
 					if(response.success){
 						onSuccess(response);
@@ -836,8 +857,8 @@ function runMM(inputNum){
 	
 	//If we've ended manually or reached the end, stop running immediately and end it all
 	if(S.currentLine>=S.lines.length){
-		console.log("Ending!");
-		S.time({file:"next"});
+		//console.log("Ending!");
+		S.to({file:"+1"});
 		return;
 	}
 
@@ -858,7 +879,7 @@ function runMM(inputNum){
 	if(text[0]==">"){
 		var vals=text.replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/);
 		
-		console.log(text,vals);
+		//console.log(text,vals);
 		
 		//We run a function based on the value passed.
 		//If it returns multimediaSettings, we use those new ones over the old ones.
@@ -874,7 +895,7 @@ function runMM(inputNum){
 			multimediaSettings.wait=null;
 		}
 		
-		//console.log(multimediaSettings,S.currentLine);
+		////console.log(multimediaSettings,S.currentLine);
 		
 		if(!multimediaSettings.go){
 			return;
@@ -1056,7 +1077,7 @@ function runMM(inputNum){
 
 var multimediaFunction={
 	'en':function(){
-		S.time({file:"next"});
+		S.to({file:"+1"});
 	}
 	,'go':function(vals){
 		runMM(S.lines.indexOf(vals[1])+1 || null);
@@ -1192,7 +1213,7 @@ var multimediaFunction={
 		//images will be either an array or a string
 		var imageNames=vals[2];
 		
-		console.log(vals);
+		//console.log(vals);
 		
 		if(imageNames){
 			//Get all the values (colors, etc) out of here as possible
@@ -1200,7 +1221,7 @@ var multimediaFunction={
 				imageNames=imageNames[0].split(",");
 			}
 			
-			console.log(imageNames);
+			//console.log(imageNames);
 			
 			images.push("url('resources/characters/"+folder+"/"+imageNames+"')");
 			
@@ -1287,7 +1308,7 @@ var multimediaFunction={
 		//images will be either an array or a string
 		var imageNames=vals[2];
 		
-		console.log(vals);
+		//console.log(vals);
 		
 		if(imageNames){
 			//Get all the values (colors, etc) out of here as possible
@@ -1295,7 +1316,7 @@ var multimediaFunction={
 				imageNames=imageNames[0].split(",");
 			}
 			
-			console.log(imageNames);
+			//console.log(imageNames);
 			
 			//if(i>0){
 			//	images+=',';
@@ -1408,7 +1429,7 @@ function Character(){
 	//Go through the file and add in all of the images
 	for(let i=0;i<S.lines.length;i++){
 		if(S.lines[i].match(/@CH ben/)){
-			console.log(S.lines[i]);
+			//console.log(S.lines[i]);
 			//cha.imgDiv(i,images[i]);
 		}
 	}*/
@@ -1448,6 +1469,53 @@ function replaceArray(string,fromArray,toArray){
 ///////////////////////////////////////
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
+
+//Keyboard presses
+window.addEventListener(
+	"keydown"
+	,function(event){
+		//console.log(document.activeElement);
+		
+		//Adjust response based on shortcuts setting
+		if(S.shortcuts==='always'){
+			//Proceed if always enabled
+		}
+		else if(!S.shortcuts || S.shortcuts==='never'){
+			//If shortcuts disabled
+			return;
+		}else if(S.shortcuts==='fullscreen'){
+			//If isn't fullscreen
+			if(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.msFullscreenElement) return;
+		}else{ //Default to "focus"
+			//Return if not focused
+			if(
+				//If isn't selected
+				(S.window!==document.activeElement)
+				&&
+				//If isn't fullscreen
+				(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.msFullscreenElement)
+			) return;
+		}
+		
+		//event.preventDefault();
+
+		var keys={
+			32: function(){S.input();}				//Spacebar
+			,37: function(){S.to({time:"-10"});}	//Left arrow
+			,39: function(){S.to({time:"+10"});}	//Right arrow
+			,36: function(){S.to({file:"first"});}	//Home
+			,35: function(){S.to({file:"last"});}	//End
+			,177: function(){S.to({file:"-1"});}	//Previous
+			,176: function(){S.to({file:"+1"});}	//Next
+			,179: function(){S.menu();}				//Play/pause
+		};
+		
+		if(keys[event.keyCode]){
+			event.preventDefault();
+			keys[event.keyCode]();
+		}
+	}
+);
 
 //We need to set this as a variable to remove it later on
 var windowClick=function(event){
@@ -1543,7 +1611,7 @@ overlay.addEventListener(
 		//If we were scrubbing
 		if(scrubbing===true){
 			scrubbing=false;
-			console.log("We were scrubbing!");
+			//console.log("We were scrubbing!");
 			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
 			if(S.scrubLoad==false){
 				//Load the file our pointer's on
@@ -1624,8 +1692,11 @@ frag([content,overlay,menuButton,fullscreenButton],S.window);
 
 S.window.classList.add("showpony");
 
+//Set tabIndex so it's selectable (if it's not already set)
+if(S.window.tabIndex<0) S.window.tabIndex=0;
+
 //If the user's getting the files remotely, make the call
-if(S.files=="get"){
+if(S.files==="get"){
 	POST(
 		function(response){
 			S.files=response.files;
@@ -1634,9 +1705,7 @@ if(S.files=="get"){
 		}
 		,{call:"getFiles"}
 	);
-}else{
-	startup();
-}
+}else startup();
 
 ///////////////////////////////////////
 /////////////////ADMIN/////////////////
@@ -1677,8 +1746,9 @@ if(S.admin){
 	);
 	
 	function editor(){
-		//If logged in, toggle the editor; otherwise, try to log in
+		//If logged in, toggle the editor
 		if(loggedIn) S.window.classList.toggle("showpony-editor");
+		//Otherwise, try to log in
 		else account("login");
 	}
 	
@@ -1692,40 +1762,22 @@ if(S.admin){
 		uploadDate.value=(S.files[S.currentFile].match(/\d(.(?!\())+\d*/) || [""])[0].replace(/;/g,':');
 	}
 	
-	logoutButton.addEventListener("click"
-		,function(){account("logout");}
-	);
+	logoutButton.addEventListener("click",function(){account("logout");});
 	
 	//Must be set to a variable to be called outside the enclosing "if" statement
-	var account=function(type,tryCookie){
+	var account=function(type){
 		var pass=null;
-		if(type==="login"){
-			if(!tryCookie){
-				pass=prompt("What's your password?");
-				if(!pass) return;
-			}
-		}
+		if(type==="login") if(!(pass=prompt("What's your password?"))) return;
 		
-		console.log(type,tryCookie,pass);
+		//console.log(type,pass);
 		
 		POST(
 			function(response){
 				S.files=response.files;
 				
-				//Logged in
-				if(response.admin){
-					
-					loggedIn=true;
+				S.window.classList[(loggedIn=response.admin) ? "add" : "remove"]("showpony-editor");
 				
-					if(!tryCookie) editor();
-				}else{ //Not logged in
-					if(loggedIn){
-						editor();
-						loggedIn=false;
-					}
-				}
-				
-				S.time({reload:true,scrollToTop:false});
+				S.to({reload:true,scrollToTop:false});
 			}
 			,{call:type,password:pass}
 		);
@@ -1755,7 +1807,7 @@ if(S.admin){
 				//Sort the files by order
 				S.files.sort();
 				
-				S.time({file:S.files.indexOf(response.file),scrollToTop:false});
+				S.to({file:S.files.indexOf(response.file),scrollToTop:false});
 				scrub();
 			}
 			,{call:"renameFile",name:S.files[thisFile],newName:fileName}
@@ -1777,7 +1829,7 @@ if(S.admin){
 					S.files[thisFile]=response.file;
 					
 					//If still on that file, refresh it
-					if(S.currentFile===thisFile) S.time({file:thisFile,refresh:true,scrollToTop:false})
+					S.currentFile===thisFile && S.to({file:thisFile,refresh:true,scrollToTop:false})
 				}
 				,{
 					call:"uploadFile"
@@ -1797,7 +1849,7 @@ if(S.admin){
 					//Remove the file from the arrays
 					S.files.splice(thisFile,1);
 
-					console.log(thisFile,S.files.length);
+					//console.log(thisFile,S.files.length);
 					
 					//If still on that file, refresh it
 					if(thisFile===S.currentFile){
@@ -1807,9 +1859,9 @@ if(S.admin){
 							thisFile=S.files.length-1;
 						}
 						
-						console.log(thisFile,S.currentFile);
+						//console.log(thisFile,S.currentFile);
 						
-						S.time({file:thisFile,refresh:true})
+						S.to({file:thisFile,refresh:true})
 					}
 				}
 				,{call:"deleteFile",name:S.files[thisFile]}
@@ -1824,7 +1876,7 @@ if(S.admin){
 					//Add the file to the array
 					S.files.push(response.file);
 					
-					S.time({file:"last"});
+					S.to({file:"last"});
 					scrub();
 				}
 				,{call:"newFile"}
@@ -1832,7 +1884,7 @@ if(S.admin){
 		}
 	);
 	
-	console.log(account);
+	//console.log(account);
 }
 
 }
