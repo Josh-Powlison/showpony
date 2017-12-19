@@ -32,14 +32,14 @@ class Showpony{
 				$response=$this->getFiles($response);
 			}else{ #Admin functions
 				#If no password, exit
-				if(!self::$password || ($response['call']!=='login' && empty($_SESSION['showpony_admin']))) $response['message']="You aren't logged in or don't have admin set up! Try refreshing and logging in again, or check out Showpony's wiki on GitHub for setting up or disabling admin.";
+				if(!self::$password || ($response['call']!=='login' && empty($_SESSION['showpony_admin']))) echo "You aren't logged in or don't have admin set up! Try refreshing and logging in again, or check out Showpony's wiki on GitHub for setting up or disabling admin.";
 				else{
 					#Try logging in with the passed password
 					if($response['call']==='login'){
 						#If the password's right, set the session and get the files
 						if($_SESSION['showpony_admin']=($_POST['password']==self::$password)) $response=$this->getFiles($response);
 						#Wrong password
-						else $response['message']='Wrong password!';
+						else echo 'Wrong password!';
 					}
 					
 					#Try renaming the file, and pass the new filename to the user
@@ -56,7 +56,7 @@ class Showpony{
 				}
 			}
 			
-			$response["message"]=($response["message"] ?? '').ob_get_clean();
+			$response["message"]=ob_get_clean();
 			$response['admin']=$_SESSION['showpony_admin'] ?? false;
 			
 			echo json_encode($response);
