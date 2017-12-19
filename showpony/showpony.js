@@ -1777,7 +1777,7 @@ if(S.admin){
 				
 				S.window.classList[(loggedIn=response.admin) ? "add" : "remove"]("showpony-editor");
 				
-				S.to({reload:true,scrollToTop:false});
+				S.to({reload:true,scrollToTop:false,replaceState:true});
 			}
 			,{call:type,password:pass}
 		);
@@ -1807,7 +1807,7 @@ if(S.admin){
 				//Sort the files by order
 				S.files.sort();
 				
-				S.to({file:S.files.indexOf(response.file),scrollToTop:false});
+				S.to({file:S.files.indexOf(response.file),scrollToTop:false,replaceState:true});
 				scrub();
 			}
 			,{call:"renameFile",name:S.files[thisFile],newName:fileName}
@@ -1829,7 +1829,7 @@ if(S.admin){
 					S.files[thisFile]=response.file;
 					
 					//If still on that file, refresh it
-					S.currentFile===thisFile && S.to({file:thisFile,refresh:true,scrollToTop:false})
+					S.currentFile===thisFile && S.to({file:thisFile,refresh:true,scrollToTop:false,replaceState:true})
 				}
 				,{
 					call:"uploadFile"
@@ -1861,7 +1861,7 @@ if(S.admin){
 						
 						//console.log(thisFile,S.currentFile);
 						
-						S.to({file:thisFile,refresh:true})
+						S.to({file:thisFile,refresh:true,replaceState:true})
 					}
 				}
 				,{call:"deleteFile",name:S.files[thisFile]}
