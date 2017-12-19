@@ -61,8 +61,6 @@ class Showpony{
 			
 			echo json_encode($response);
 		}
-		
-		#if(!empty($_GET['rss'])) $this->RSS();
 	}
 	
 	#Get files and protect others
@@ -98,109 +96,13 @@ class Showpony{
 		
 		return $response;
 	}
-	
-	#http://localhost/showpony/showpony/showpony-classes.php?rss=true&path=parts/
-	public function RSS(){
-		die("RSS feed incomplete.");
-		
-		#Parse the results as XML
-		#header("Content-type: application/xml");
-		header("Content-type: txt");
-		
-		$cover="http://joshpowlison.com/podcasts/pickapart-tv/cover.jpg";
-		$creator="Josh Powlison";
-		$email="joshuapowlison@gmail.com";
-		$category1="TV &amp; Film";
-		$category2="Education";
-		$explicit="no";
-		$title="Inspector Josh Investigates TV";
-		$language="en-us";
-		
-		$keywords="videogames,announcement,games,media";
-		
-		$summary="Inspector Josh studies TV shows for writing lessons.";
-		$subtitle="Inspector Josh will find the truth.";
-		
-		?><rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
-			<channel>
-				<atom:link href="<?=getcwd()?>" rel="self" type="application/rss+xml"/>
-				<title><?=$title?></title>
-				<link><?=getcwd()?></link>
-				<description>Inspector Josh studies TV shows for writing lessons.</description>
-				<language><?=$language?></language>
-				<webMaster><?=$email?> (<?=$creator?>)</webMaster>
-				<copyright><![CDATA[ Copyright 2017 Josh Powlison. All rights reserved. ]]></copyright>
-				<docs><?=getcwd()?></docs>
-				<managingEditor><?=$email?> (<?=$email?>)</managingEditor>
-				<image>
-					<url><?=$cover?></url>
-					<title><?=$title?></title>
-					<link><![CDATA[ <?=getcwd()?> ]]></link>
-				</image>
-				<itunes:summary><![CDATA[ <?=$summary?> ]]></itunes:summary>
-				<itunes:author><?=$creator?></itunes:author>
-				<itunes:category text="<?=$category1?>"/>
-				<itunes:category text="<?=$category2?>"/>
-				<itunes:image href="<?=$cover?>"/>
-				<itunes:explicit><?=$explicit?></itunes:explicit>
-				<itunes:owner>
-					<itunes:name><![CDATA[ <?=$creator?> ]]></itunes:name>
-					<itunes:email><?=$email?></itunes:email>
-				</itunes:owner>
-				<itunes:subtitle><![CDATA[ <?=$subtitle?> ]]></itunes:subtitle>
-
-				<?
-				
-				foreach($this->getFiles($response)['files'] as $file){
-					
-					$name;
-					$date;
-					$length;
-					
-					#Get the name and date from the filename
-					preg_match('/(?<=\().+(?=\))/',$file,$name);
-					preg_match('/[^x][^(]+(?!\()\S?/',$file,$date);
-					preg_match('/[^\s)]+(?=\..+$)/',$file,$length);
-					
-					#Ignore hidden files
-					if($file[0]==='x') continue;
-					
-					$name=$name[0] ?? '';
-					$date=$date[0] ? strtotime($date[0]) : filemtime($file);
-					str_replace(';',':',$date);
-					$length=$length[0] ?? 10;
-					
-					#die(date('D, j M Y G:i:s',strtotime($date[0])));
-					
-					$date=date('D, j M Y G:i:s',$date);
-					?>
-				<item>
-					<title><?=$name?></title>
-					<link><?=getcwd().'/'.$file?></link>
-					<guid><?=getcwd().'/'.$file?></guid>
-					<pubDate><?=$date?></pubDate>
-					<description><![CDATA[ Listen to the latest entry of <?=$title?>! ]]></description>
-					<enclosure length="<?=$length[0] ?>" type="audio/mpeg" url="<?=getcwd().'/'.$file?>"/>
-					<itunes:image href="<?=$cover?>"/>
-					<itunes:duration><?=($length / 60).':'.$length[0] % 60 ?></itunes:duration>
-					<itunes:explicit><?=$explicit?></itunes:explicit>
-					<itunes:keywords><?=$keywords?></itunes:keywords>
-					<itunes:subtitle><![CDATA[ The latest update is here! ]]></itunes:subtitle>
-				</item>
-					<?
-				}
-				?>
-			</channel>
-		</rss>
-		<?
-	}
 }
 
 #Call this file to run Showpony functions
-if(!empty($_POST['showpony-call']) || !empty($_GET['showpony-call'])){
+if(!empty($_POST['showpony-call'])){
 	new Showpony([
-		'call'=>$_POST['showpony-call'] ?? $_GET['showpony-call']
-		,'path'=>$_POST['path'] ?? $_GET['path']
+		'call'=>$_POST['showpony-call']
+		,'path'=>$_POST['path']
 	]);
 }
 
