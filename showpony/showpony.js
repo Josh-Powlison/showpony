@@ -25,6 +25,9 @@ S.dateFormat		=input.dateFormat		|| {year:"numeric",month:"numeric",day:"numeric
 S.admin				=input.admin			|| false;
 S.query				=input.query !==undefined ? input.query : "file";
 S.shortcuts			=input.shortcuts !==undefined ? input.shortcuts : "focus";
+S.account			=false;
+S.domain			=location.hostname;
+S.object			=input.object || S.domain.substring(0,50);
 
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
@@ -32,7 +35,7 @@ S.shortcuts			=input.shortcuts !==undefined ? input.shortcuts : "focus";
 
 //Go to another file
 S.to=function(input){
-	//console.log(input);
+	console.log(input);
 	
 	var obj=input || {};
 	
@@ -51,11 +54,11 @@ S.to=function(input){
 		
 		getTime+=types[currentType] && types[currentType].currentTime || 0;
 		
-		//console.log(getTime);
+		console.log(getTime);
 		
 		obj.time=getTime+(parseFloat(obj.time.substring(1))*(obj.time[0]==='-' ? -1 : 1));
 		
-		//console.log(obj.time);
+		console.log(obj.time);
 		
 		//Don't go below 0
 		if(obj.time<0) obj.time=0;
@@ -82,7 +85,7 @@ S.to=function(input){
 			//If the time passed is greater than the total time, the story will end
 		}
 		
-		//console.log(obj.time,obj.file);
+		console.log(obj.time,obj.file);
 	}
 	
 	Object.assign(obj,{
@@ -104,7 +107,7 @@ S.to=function(input){
 		}
 	}
 	
-	//console.log(obj.file,S.currentFile,thisType,obj.time);
+	console.log(obj.file,S.currentFile,thisType,obj.time);
 	
 	//Change the title if requested
 	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
@@ -130,7 +133,7 @@ S.to=function(input){
 			//Run the event that users can read
 			S.window.dispatchEvent(new CustomEvent("end"));
 			
-			//console.log("Ended!");
+			console.log("Ended!");
 			return;
 		}
 	}
@@ -149,7 +152,7 @@ S.to=function(input){
 			newURL+=(newURL.indexOf("?")>-1 ? '&' : '?') +(S.query+'='+(S.currentFile+1));
 		}
 		
-		//console.log(newURL);
+		console.log(newURL);
 		
 		//Either replace or push the state
 		history[obj.replaceState ? "replaceState" : "pushState"]({},"",newURL);
@@ -175,7 +178,7 @@ S.to=function(input){
 	//If switching types, do some cleanup
 	if(currentType!=newType){
 		content.innerHTML="";
-		//console.log(types);
+		console.log(types);
 		content.appendChild(thisType);
 	}
 	
@@ -202,7 +205,7 @@ S.to=function(input){
 		case "video":
 			thisType.src=src;
 			
-			//console.log(thisType.src);
+			console.log(thisType.src);
 			
 			!overlay.classList.contains("showpony-overlay-visible") && thisType.play();
 			
@@ -236,7 +239,7 @@ S.to=function(input){
 			break;
 		//Visual Novels/Kinetic Novels/Interactive Fiction
 		case "multimedia":
-			//console.log(currentType);
+			console.log(currentType);
 		
 			//If the previous type was different, use the new type (or if we're scrubbing and not moving along as normal)
 			//if(currentType!=newType || overlay.style.visibility=="visible"){
@@ -374,7 +377,7 @@ S.fullscreen=function(type){
 
 //When the viewer inputs to Showpony (click, space, general action)
 S.input=function(){
-	//console.log(currentType);
+	console.log(currentType);
 	
 	//Function differently depending on medium
 	switch(currentType){
@@ -392,7 +395,7 @@ S.input=function(){
 			//If a wait timer was going, stop it.
 			clearTimeout(waitTimer);
 		
-			//console.log(S.charsHidden);
+			console.log(S.charsHidden);
 		
 			//If all letters are displayed
 			if(S.charsHidden<1){
@@ -400,7 +403,7 @@ S.input=function(){
 			}
 			else //If some S.objects have yet to be displayed
 			{
-				//console.log(S.textboxes);
+				console.log(S.textboxes);
 				
 				//Go through each textbox and display all of its text
 				Object.keys(S.textboxes).forEach(
@@ -424,7 +427,7 @@ S.input=function(){
 S.close=function(){
 	//Replace the container with the original element
 	
-	//console.log(windowClick);
+	console.log(windowClick);
 	
 	//Remove the window event listener
 	window.removeEventListener("click",windowClick);
@@ -489,38 +492,46 @@ function startup(){
 	//currentFile is -1 before we load
 	S.currentFile=-1;
 	
-	//Find where to start from
-	S.start=!isNaN(input.start) ? input.start : S.files.length-1;
-	
-	//If querystrings are in use, consider the querystring in the URL
-	if(S.query){
-		window.addEventListener(
-			"popstate"
-			,function(){
-				var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+	//For now, all stories will get remote accounts from heybard.com
+	POSTRemote(
+		function(response){
+			if(response.name) input.start=response.bookmark;
+			
+			//Find where to start from
+			S.start=!isNaN(input.start) ? input.start : S.files.length-1;
+			
+			//If querystrings are in use, consider the querystring in the URL
+			if(S.query){
+				window.addEventListener(
+					"popstate"
+					,function(){
+						var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+						
+						if(page){
+							S.to({file:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
+						}
+					}
+				);
 				
-				if(page){
-					S.to({file:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
-				}
+				var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+			
+				//Add in the time if it needs it, otherwise pass nothing
+				S.to({
+					file: page ? parseInt(page[0].split("=")[1])-1 : S.start
+					,popstate:page ? true : false
+					,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
+					,scrollToTop:false
+				});
+			}else{
+				//Start
+				S.to({file:S.start,scrollToTop:false});
 			}
-		);
-		
-		var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
-	
-		//Add in the time if it needs it, otherwise pass nothing
-		S.to({
-			file: page ? parseInt(page[0].split("=")[1])-1 : S.start
-			,popstate:page ? true : false
-			,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
-			,scrollToTop:false
-		});
-	}else{
-		//Start
-		S.to({file:S.start,scrollToTop:false});
-	}
-	
-	//Set input to null in hopes that garbage collection will come pick it up
-	input=null;
+			
+			//Set input to null in hopes that garbage collection will come pick it up
+			input=null;
+		}
+		,{'call':'get','object':S.object}
+	);
 }
 
 //Update the scrubber's position
@@ -568,7 +579,7 @@ function scrub(inputPercent){
 	
 	//Move the progress bar
 	progress.style.left=(inputPercent*100)+"%";
-	////console.log(current,inputPercent,duration,newPart);
+	//console.log(current,inputPercent,duration,newPart);
 	
 	//Set the overlay text (the current time)
 	overlayText.innerHTML="<p>"+replaceInfoText(
@@ -585,7 +596,7 @@ function replaceInfoText(value,fileNum,current,left){
 	
 	if(fileNum===undefined) fileNum=S.currentFile;
 	
-	//console.log(current,left,types[currentType]);
+	console.log(current,left,types[currentType]);
 	
 	if(current===undefined){
 		//var currentType=getMedium(S.files[S.currentFile]);
@@ -595,7 +606,7 @@ function replaceInfoText(value,fileNum,current,left){
 		
 		//var currentTime=0;
 		
-		//console.log(currentTime);
+		console.log(currentTime);
 		
 		//Look through the videos for the right one
 		var l=S.currentFile;
@@ -772,7 +783,7 @@ function POST(onSuccess,obj){
 			if(ajax.readyState==4){
 				if(ajax.status==200){
 					var response=JSON.parse(ajax.responseText);
-					//console.log(response);
+					console.log(response);
 					
 					if(response.success){
 						onSuccess(response);
@@ -781,6 +792,41 @@ function POST(onSuccess,obj){
 					}
 				}else{
 					alert("Failed to load Showpony class file.");
+				}
+			}
+		}
+	);
+}
+
+//Make a POST call to heybard.com
+function POSTRemote(onSuccess,obj){
+	//Prepare the form data
+	var formData=new FormData();
+	formData.append('call',obj.call);
+	formData.append('object',S.object);
+	
+	//Special values, if passed
+	obj.file!==undefined && formData.append('file',obj.file);
+	
+	var ajax=new XMLHttpRequest();
+	ajax.open("POST","http://localhost/heybard/api/account.php");
+	ajax.send(formData);
+	
+	ajax.addEventListener(
+		"readystatechange"
+		,function(){
+			if(ajax.readyState==4){
+				if(ajax.status==200){
+					var response=JSON.parse(ajax.responseText);
+					console.log(response);
+					
+					if(response.success){
+						onSuccess && onSuccess(response);
+					}else{
+						console.log(response.message);
+					}
+				}else{
+					console.log("Failed to load Hey Bard account.");
 				}
 			}
 		}
@@ -857,7 +903,7 @@ function runMM(inputNum){
 	
 	//If we've ended manually or reached the end, stop running immediately and end it all
 	if(S.currentLine>=S.lines.length){
-		//console.log("Ending!");
+		console.log("Ending!");
 		S.to({file:"+1"});
 		return;
 	}
@@ -879,7 +925,7 @@ function runMM(inputNum){
 	if(text[0]==">"){
 		var vals=text.replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/);
 		
-		//console.log(text,vals);
+		console.log(text,vals);
 		
 		//We run a function based on the value passed.
 		//If it returns multimediaSettings, we use those new ones over the old ones.
@@ -895,7 +941,7 @@ function runMM(inputNum){
 			multimediaSettings.wait=null;
 		}
 		
-		////console.log(multimediaSettings,S.currentLine);
+		//console.log(multimediaSettings,S.currentLine);
 		
 		if(!multimediaSettings.go){
 			return;
@@ -1213,7 +1259,7 @@ var multimediaFunction={
 		//images will be either an array or a string
 		var imageNames=vals[2];
 		
-		//console.log(vals);
+		console.log(vals);
 		
 		if(imageNames){
 			//Get all the values (colors, etc) out of here as possible
@@ -1221,7 +1267,7 @@ var multimediaFunction={
 				imageNames=imageNames[0].split(",");
 			}
 			
-			//console.log(imageNames);
+			console.log(imageNames);
 			
 			images.push("url('resources/characters/"+folder+"/"+imageNames+"')");
 			
@@ -1308,7 +1354,7 @@ var multimediaFunction={
 		//images will be either an array or a string
 		var imageNames=vals[2];
 		
-		//console.log(vals);
+		console.log(vals);
 		
 		if(imageNames){
 			//Get all the values (colors, etc) out of here as possible
@@ -1316,7 +1362,7 @@ var multimediaFunction={
 				imageNames=imageNames[0].split(",");
 			}
 			
-			//console.log(imageNames);
+			console.log(imageNames);
 			
 			//if(i>0){
 			//	images+=',';
@@ -1429,7 +1475,7 @@ function Character(){
 	//Go through the file and add in all of the images
 	for(let i=0;i<S.lines.length;i++){
 		if(S.lines[i].match(/@CH ben/)){
-			//console.log(S.lines[i]);
+			console.log(S.lines[i]);
 			//cha.imgDiv(i,images[i]);
 		}
 	}*/
@@ -1474,7 +1520,7 @@ function replaceArray(string,fromArray,toArray){
 window.addEventListener(
 	"keydown"
 	,function(event){
-		//console.log(document.activeElement);
+		console.log(document.activeElement);
 		
 		//Adjust response based on shortcuts setting
 		if(S.shortcuts==='always'){
@@ -1611,7 +1657,7 @@ overlay.addEventListener(
 		//If we were scrubbing
 		if(scrubbing===true){
 			scrubbing=false;
-			//console.log("We were scrubbing!");
+			console.log("We were scrubbing!");
 			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
 			if(S.scrubLoad==false){
 				//Load the file our pointer's on
@@ -1674,6 +1720,21 @@ if(S.title){
 		}
 	);
 }
+
+//Update the bookmark
+window.addEventListener(
+	"blur"
+	,function(){
+		console.log("Blurred!");
+		POSTRemote(
+			null
+			,{
+				'call':'bookmark'
+				,'file':S.currentFile
+			}
+		);
+	}
+);
 
 ///////////////////////////////////////
 /////////////////START/////////////////
@@ -1769,7 +1830,7 @@ if(S.admin){
 		var pass=null;
 		if(type==="login") if(!(pass=prompt("What's your password?"))) return;
 		
-		//console.log(type,pass);
+		console.log(type,pass);
 		
 		POST(
 			function(response){
@@ -1849,7 +1910,7 @@ if(S.admin){
 					//Remove the file from the arrays
 					S.files.splice(thisFile,1);
 
-					//console.log(thisFile,S.files.length);
+					console.log(thisFile,S.files.length);
 					
 					//If still on that file, refresh it
 					if(thisFile===S.currentFile){
@@ -1859,7 +1920,7 @@ if(S.admin){
 							thisFile=S.files.length-1;
 						}
 						
-						//console.log(thisFile,S.currentFile);
+						console.log(thisFile,S.currentFile);
 						
 						S.to({file:thisFile,refresh:true,replaceState:true})
 					}
@@ -1884,7 +1945,7 @@ if(S.admin){
 		}
 	);
 	
-	//console.log(account);
+	console.log(account);
 }
 
 }

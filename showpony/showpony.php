@@ -5,12 +5,12 @@ error_reporting(E_ALL);
 ini_set('display_errors',1);
 
 class Showpony{
-	protected static $password='password'; #NULL will disable admin access. Using a string will set that as the password and allow admin access.
+	protected static $hash='$2y$10$CiuxajafBgiE5Y7pha9p5.AD185.Bxnk6GLyhPehGH1k0sa2LZ6fm'; #NULL will disable admin access. Using a string will set that as the password and allow admin access.
 	
 	#Initialize the class
 	function __construct($inputArray){
 		#Log out if there's no password
-		if(!self::$password) unset($_SESSION['showpony_admin']);
+		if(!self::$hash) unset($_SESSION['showpony_admin']);
 		
 		#This object is sent to the user as JSON
 		$response=[
@@ -32,12 +32,12 @@ class Showpony{
 				$response=$this->getFiles($response);
 			}else{ #Admin functions
 				#If no password, exit
-				if(!self::$password || ($response['call']!=='login' && empty($_SESSION['showpony_admin']))) echo "You aren't logged in or don't have admin set up! Try refreshing and logging in again, or check out Showpony's wiki on GitHub for setting up or disabling admin.";
+				if(!self::$hash || ($response['call']!=='login' && empty($_SESSION['showpony_admin']))) echo "You aren't logged in or don't have admin set up! Try refreshing and logging in again, or check out Showpony's wiki on GitHub for setting up or disabling admin.";
 				else{
 					#Try logging in with the passed password
 					if($response['call']==='login'){
 						#If the password's right, set the session and get the files
-						if($_SESSION['showpony_admin']=($_POST['password']==self::$password)) $response=$this->getFiles($response);
+						if($_SESSION['showpony_admin']=password_verify($_POST['password'],self::$hash)) $response=$this->getFiles($response);
 						#Wrong password
 						else echo 'Wrong password!';
 					}
