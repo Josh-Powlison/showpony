@@ -25,9 +25,9 @@ S.dateFormat		=input.dateFormat		|| {year:"numeric",month:"numeric",day:"numeric
 S.admin				=input.admin			|| false;
 S.query				=input.query !==undefined ? input.query : "file";
 S.shortcuts			=input.shortcuts !==undefined ? input.shortcuts : "focus";
-S.account			=false;
+S.user				=null;
 S.domain			=location.hostname;
-S.object			=input.object || S.domain.substring(0,50);
+S.object			=input.object || S.domain.substring(0,30);
 
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
@@ -434,9 +434,6 @@ S.close=function(){
 	
 	//Reset the window to what it was before
 	S.window.parentNode.replaceChild(S.originalWindow,S.window);
-	
-	//Remove this object
-	S=null;
 }
 
 ///////////////////////////////////////
@@ -492,13 +489,13 @@ function startup(){
 	//currentFile is -1 before we load
 	S.currentFile=-1;
 	
+	S.start=!isNaN(input.start) ? input.start : S.files.length-1;
+	
 	//For now, all stories will get remote accounts from heybard.com
 	POSTRemote(
 		function(response){
-			if(response.name) input.start=response.bookmark;
-			
-			//Find where to start from
-			S.start=!isNaN(input.start) ? input.start : S.files.length-1;
+			//If a bookmark was set, use it; otherwise, use the default part
+			if(!isNaN(response.bookmark)) S.start=response.bookmark;
 			
 			//If querystrings are in use, consider the querystring in the URL
 			if(S.query){
@@ -764,7 +761,7 @@ function GET(src,onSuccess){
 function POST(onSuccess,obj){
 	//Prepare the form data
 	var formData=new FormData();
-	formData.append('showpony-call',obj.call);
+	formData.append('call',obj.call);
 	formData.append('path',S.path);
 	
 	//Special values, if passed
@@ -1724,6 +1721,7 @@ if(S.title){
 //Update the bookmark
 window.addEventListener(
 	"blur"
+	//Also, before unload
 	,function(){
 		console.log("Blurred!");
 		POSTRemote(
