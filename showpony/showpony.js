@@ -2,8 +2,20 @@ function Showpony(input){
 
 "use strict";
 
-//Startup errors
-if(!input.window) throw "Error: no window value passed to Showpony object. I recommend passing a <div> element to the window value.";
+//If an input object doesn't exist, make one
+if(!input) input={};
+
+//If no window was passed
+if(!input.window){
+	//Make one!
+	document.currentScript.insertAdjacentElement('afterend',input.window=document.createElement("div"));
+	
+	input.window.style.cssText=`
+		width:100%;
+		height:480px;
+		margin:auto;
+	`;
+}
 
 ///////////////////////////////////////
 ///////////PUBLIC VARIABLES////////////
@@ -12,9 +24,9 @@ if(!input.window) throw "Error: no window value passed to Showpony object. I rec
 //Engine settings
 const S=this;
 S.window			=input.window;
-S.originalWindow	=input.window.cloneNode(true);
+S.originalWindow	=S.window.cloneNode(true);
 S.files				=input.files			|| "get";
-S.path				=input.path				|| "";
+S.path				=input.path!==undefined ? input.path : "files/";
 S.loadingClass		=input.loadingClass		|| null;
 S.scrubLoad			=input.scrubLoad		|| false;
 S.info				=input.info				|| "[0pc] | [0pl]";
@@ -26,8 +38,7 @@ S.admin				=input.admin			|| false;
 S.query				=input.query !==undefined ? input.query : "file";
 S.shortcuts			=input.shortcuts !==undefined ? input.shortcuts : "focus";
 S.user				=null;
-S.domain			=location.hostname;
-S.object			=input.object || S.domain.substring(0,30);
+S.object			=input.object || location.hostname.substring(0,30);
 
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
@@ -184,7 +195,7 @@ S.to=function(input){
 	
 	var src=(
 		S.files[S.currentFile][0]=="x"
-		? "showpony/showpony.php?showpony-get="+S.path+S.files[S.currentFile]
+		? "showpony/showpony.php?get="+S.path+S.files[S.currentFile]
 		: S.path+S.files[S.currentFile]
 	);
 	
@@ -460,6 +471,7 @@ var waitForInput=false
 	//Buttons
 	,menuButton=m("menu-button showpony-button-preview","button")
 	,fullscreenButton=m("fullscreen-button showpony-button-preview","button")
+	,menuButtons=m("menu-buttons","div")
 	,captionsButton=m("captions-button","button")
 	,types={
 		image:m("block","img")
@@ -478,6 +490,8 @@ menuButton.alt="Menu";
 fullscreenButton.alt="Fullscreen";
 captionsButton.alt="Closed Captions/Subtitles";
 continueNotice.innerHTML="...";
+
+frag([menuButton,fullscreenButton],menuButtons);
 
 frag([progress,overlayText],overlay);
 
@@ -712,7 +726,7 @@ function replaceInfoText(value,fileNum,current,left){
 		
 		//Return the value
 		return padStart(String(
-			Math.floor(floorValue)
+			floorValue|0
 		),input[1]);
 	}
 	
@@ -783,6 +797,10 @@ function POST(onSuccess,obj){
 					console.log(response);
 					
 					if(response.success){
+						loggedIn=response.admin;
+						
+						if(response.files) S.files=response.files;
+						
 						onSuccess(response);
 					}else{
 						alert(response.message);
@@ -1539,8 +1557,6 @@ window.addEventListener(
 				(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.msFullscreenElement)
 			) return;
 		}
-		
-		//event.preventDefault();
 
 		var keys={
 			32: function(){S.input();}				//Spacebar
@@ -1593,13 +1609,7 @@ window.addEventListener(
 window.addEventListener(
 	"mousemove"
 	,function(event){
-		
-		//Only read mousemove over the overlay
-		//if(event.target!==this) return;
-		
-		if(scrubbing===false){
-			return;
-		}
+		if(scrubbing===false) return;
 		
 		if(scrubbing!==true){
 			if(Math.abs(scrubbing-event.clientX)>screen.width/100){
@@ -1747,7 +1757,7 @@ if(window.getComputedStyle(S.window).getPropertyValue('position')=="static"){
 S.window.innerHTML="";
 
 //And fill it up again!
-frag([content,overlay,menuButton,fullscreenButton],S.window);
+frag([content,overlay,menuButtons],S.window);
 
 S.window.classList.add("showpony");
 
@@ -1757,11 +1767,7 @@ if(S.window.tabIndex<0) S.window.tabIndex=0;
 //If the user's getting the files remotely, make the call
 if(S.files==="get"){
 	POST(
-		function(response){
-			S.files=response.files;
-			loggedIn=response.admin;
-			startup();
-		}
+		startup
 		,{call:"getFiles"}
 	);
 }else startup();
@@ -1832,9 +1838,7 @@ if(S.admin){
 		
 		POST(
 			function(response){
-				S.files=response.files;
-				
-				S.window.classList[(loggedIn=response.admin) ? "add" : "remove"]("showpony-editor");
+				S.window.classList[loggedIn ? "add" : "remove"]("showpony-editor");
 				
 				S.to({reload:true,scrollToTop:false,replaceState:true});
 			}
