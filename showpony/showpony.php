@@ -1,19 +1,27 @@
 <?php
-session_start();
+###PHP 7 required (and recommended, because it's MUST faster)###
 
-error_reporting(E_ALL);
-ini_set('display_errors',1);
+#You can disable this
+session_start();
 
 #NULL will disable admin access. Using a string will set that as the password and allow admin access.
 static $password='password';
 
+#Uncomment the below to show errors
+/*
+error_reporting(E_ALL);
+ini_set('display_errors',1);
+//*/
+
 #Log out if there's no password
 if(!$password) unset($_SESSION['showpony_admin']);
 
-#Get a private file (if admin)
+#Get a private file
 if(!empty($_GET['get'])){
+	#If we aren't logged in, block the effort
 	if(empty($_SESSION['showpony_admin'])) die("You need to be logged in to access private files.");
 	
+	#The file path
 	$file=dirname(__FILE__,2).'/'.$_GET['get'];
 
 	#These headers are required to scrub media (yes, you read that right)
@@ -27,14 +35,16 @@ if(!empty($_GET['get'])){
 	#This object is sent to the user as JSON
 	$response=[];
 	
-	#Go to the files directory
-	chdir(dirname(__FILE__,2).'/'.($_POST['path'] ?? $_GET['get']));
+	#Go to the story's file directory
+	chdir(dirname(__FILE__,2).'/'.$_POST['path']);
 	
 	#We'll store all errors and code that's echoed, so we can send that info to the user (in a way that won't break the JSON object).
 	ob_start();
 	
+	#If the user's seeking to log out, log them out
 	if($_POST['call']==='logout') unset($_SESSION['showpony_admin']);
 	
+	#If we're making a call that doesn't require admin permissions, check it
 	if(
 		$_POST['call']==='login'
 		|| $_POST['call']==='logout'
@@ -75,6 +85,7 @@ if(!empty($_GET['get'])){
 	}
 	#Admin functions: must be logged in
 	else{
+		#If not logged in (or admin is disabled), let the user know and don't make a call
 		if(empty($_SESSION['showpony_admin'])) echo "You aren't logged in or don't have admin set up! Try refreshing and logging in again, or check out Showpony's wiki on GitHub for setting up or disabling admin.";
 		
 		#Try renaming the file, and pass the new filename to the user
@@ -90,6 +101,7 @@ if(!empty($_GET['get'])){
 		elseif($_POST['call']==='deleteFile') $response["success"]=unlink($_POST['name']);
 	}
 	
+	#Pass any echoed statements or errors to the response object
 	$response['message']=ob_get_clean();
 	$response['admin']=$_SESSION['showpony_admin'] ?? false;
 	
