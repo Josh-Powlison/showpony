@@ -4,7 +4,6 @@
 	<title>Showpony Demo</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale:1">
-	<link rel="stylesheet" href="showpony/showpony.css">
 </head>
 <body>
 <main>
@@ -18,8 +17,8 @@
 <link rel="stylesheet" href="styles.css">
 
 <!--The only two files you need to directly call to get a Showpony object up-and-running!-->
-<link rel="stylesheet" href="showpony/showpony.css">
-<script src="showpony/showpony.js"></script>
+<link rel="stylesheet" href="showpony/styles.css">
+<script src="showpony/script.js"></script>
 	
 <h2>Examples</h2>
 
@@ -40,7 +39,6 @@
 				,start:0
 				,title:"Orbit: [n] (Part [0pc])"
 				,admin:true
-				,heybard:true
 				,object:"orbit.com"
 			});
 		}
@@ -263,61 +261,35 @@ bye
 
 <h2>Using Showpony</h2>
 
-<p>You need a div to put your Showpony object in, and it needs to have some size to it. The following will do for all of our examples:</p>
-
-<pre class="css">
-<h3>CSS</h3>
-.story{
-	width:640px;
-	height:480px;
-	margin:auto;
-}
-</pre>
+<p>You can put the files on your website and load the CSS and JS files to get Showpony working:</p>
 
 <pre class="html">
 <h3>HTML</h3>
-&lt;div class="story" id="showpony"&gt;&lt;/div&gt;
+&lt;link rel="stylesheet" href="showpony/styles.css"&gt;
+&lt;script src="showpony/script.js"&gt;&lt;/script&gt;
+
+&lt;script&gt;/*Load your script file, or put your JavaScript in here*/&lt;/script&gt;
 </pre>
 
-<h3>Basic Setup</h3>
+<h3>1-Line Setup</h3>
 
-<p>Once you've loaded the JavaScript and CSS files included (showpony.js and showpony.css), you can create a Showpony object:</p>
-
-<div class="story" id="basic"></div>
-<script>
-	window.addEventListener(
-		"load"
-		,function(){
-			showponyBasic=new Showpony({
-				window:document.getElementById("basic")
-				,path:"examples/orbit/" //The path to the story files. Remember the slash!
-			});
-		}
-	);
-</script>
+<script>new Showpony</script>
 
 <pre class="js">
 <h3>JavaScript</h3>
-new Showpony({
-	window:document.getElementById("showpony")
-	,path:"examples/orbit/"
-});
+new Showpony
 </pre>
-
-<p><strong>window</strong> is the div or element Showpony will display in.</p>
-
-<p><strong>path</strong> is the path to the files you want Showpony to use, which will likely be a folder name followed by a slash.</p>
 
 <p>Showpony will automatically:</p>
 
 <ol>
-	<li>Get the files from the path specified.</li>
-	<li>Load each of the files and get their info.</li>
+	<li>Make a Showpony window. (It will be 480 pixels tall, and fill the width of whatever space it's put into)</li>
+	<li>Get files from the "files" folder.</li>
 	<li>Save and load the user's place (by reading the URL).</li>
 	<li>Start the user from the final file (like most online webcomics do).</li>
 </ol>
 
-<p>Those options may sound perfect to you- if so, great! But if you want something a little different, you'll need to customize Showpony further. And that, fortunately, is really easy!</p>
+<p>Those options may sound perfect to you- if so, great! But if you want something a little different, don't worry- all of the above options can be overwritten. You'll need to customize Showpony further for that, which is fortunately really easy!</p>
 
 <h3>Custom Setup</h3>
 
@@ -402,11 +374,18 @@ new Showpony({
 
 <p><strong>dateFormat</strong> sets the format of dates in info. This object is passed directly to an <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DateTimeFormat" target="_blank"> the Intl.DateTimeFormat</a> object's options. Look under "Syntax", "Parameters", "options" at the link for more info. <em>Defaults to {year:"numeric",month:"numeric",day:"numeric"}</em></p>
 
-<h3>Advanced Showpony</h3>
+<h3>This Showpony knows a few tricks...</h3>
 
 <p>You can do more with Showpony too: it fires events, has a built-in admin panel, and more! If you want to get into those pieces, head over to the <a href="https://github.com/Josh-Powlison/showpony/wiki" target="_blank">Wiki</a> on Github!</p>
 
+<h3>Other questions</h3>
+
+<p>If you want a place to load Showpony from my website, I don't currently have a recommended link- I'll be updating my own files without warning fairly regularly and assuming you've got copies on your own site so that won't affect you.</p>
+
+<p>If I'm at a place where there's a good, stable version, and you'd like to just load the files from my site, shoot me an email at joshuapowlison@gmail.com! I don't think I'd have a problem with that; if I do at the time, I'll let you know, but ask 'cause I probably can!</p>
+
 <small>Works copyright of their respective creators as stated. Showpony branding copyright of Josh Powlison. "Grand Hotel" font is Copyright (c) 2012 by Brian J. Bonislawsky and Jim Lyles DBA Astigmatic (AOETI) (astigma@astigmatic.com), with Reserved Font Name "Grand Hotel"</small>
+
 
 </main>
 </body>

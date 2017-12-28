@@ -29,69 +29,66 @@
 /*Menu scrub bar*/
 .showpony-progress{
 	position:absolute;
-	top:10em;
+	top:0;
 	bottom:0;
 	width:.5em;
 	transform:translate(-.25em,0);
-	background-color:#fff;
-	pointer-events:none;
-}
-
-/*Menu scrub bar ball*/
-.showpony-progress::after{
-	content: " ";
-	position:absolute;
-	border:solid white .5em;
-	border-radius:100%;
-	transform:translate(-.75em,-1.5em);
-	box-sizing:border-box;
-	width:2em;
-	height:2em;
+	background-color:#ffffff61;
 	pointer-events:none;
 }
 
 .showpony-overlay-text{
 	position:absolute;
 	width:100%;
+	height:100%;
 	color:white;
 	text-align:center;
 	pointer-events:none;
+	display:flex;
+	font-size:1.5em;
+	justify-content:center;
+	align-items:center;
+}
+
+.showpony-menu-buttons{
+	position:absolute;
+	top:0;
+	right:0;
+	opacity:0;
+	z-index:1001;
+	transition:opacity .2s;
+	background-color:#000000aa;
+}
+
+.showpony-menu-buttons:hover
+,.showpony-menu-buttons:focus{
+	opacity:1;
 }
 
 .showpony-menu-button
 ,.showpony-fullscreen-button
 ,.showpony-captions-button{
-	position:absolute;
-	top:0;
+	float:left;
 	border:none;
-	width:3em;
-	height:3em;
+	width:5em;
+	height:5em;
 	cursor:pointer;
 	background-size:cover;
 	transition:opacity .5s;
-	background-color:rgba(0,0,0,0);
-	z-index:1001;
+	opacity:.5;
+	background-color:#000000;
 }
 
 .showpony-fullscreen-button{
-	right:0;
 	background-position:0% 10%;
 }
 
-/*Showing the button without the overlay*/
-.showpony-button-preview{
-	opacity:0;
-	background-color:rgba(0,0,0,.25);
-	border-radius:10%;
-}
-
-.showpony-button-preview:hover
-,.showpony-button-preview:focus{
-	opacity:1;
+.showpony-menu-button:hover
+,.showpony-fullscreen-button:hover{
+	opacity:.75;
 }
 
 .showpony-menu-button{
-	left:0;
 	background-position:0% 0%;
 }
 
@@ -122,6 +119,11 @@
 	width:100%;
 	height:100%;
 }
+
+:-webkit-full-screen:focus{
+	outline:0;
+}
+
 /* Other browsers seem to display correctly in fullscreen
 ,:-moz-full-screen
 ,:-ms-fullscreen

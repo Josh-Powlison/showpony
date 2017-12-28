@@ -27,6 +27,7 @@ S.window			=input.window;
 S.originalWindow	=S.window.cloneNode(true);
 S.files				=input.files			|| "get";
 S.path				=input.path!==undefined ? input.path : "files/";
+S.language			=input.language			|| ""
 S.loadingClass		=input.loadingClass		|| null;
 S.scrubLoad			=input.scrubLoad		|| false;
 S.info				=input.info				|| "[0pc] | [0pl]";
@@ -195,8 +196,8 @@ S.to=function(input){
 	
 	var src=(
 		S.files[S.currentFile][0]=="x"
-		? "showpony/showpony.php?get="+S.path+S.files[S.currentFile]
-		: S.path+S.files[S.currentFile]
+		? "showpony/ajax.php?get="+S.path+S.language+S.files[S.currentFile]
+		: S.path+S.language+S.files[S.currentFile]
 	);
 	
 	//Refresh the file, if requested we do so
@@ -597,13 +598,16 @@ function scrub(inputPercent){
 		S.info
 		,newPart
 		,Math.floor(newTime)
-		,duration-Math.floor(newTime)
 	)+"</p>";
 }
 
-function replaceInfoText(value,fileNum,current,left){
+function replaceInfoText(value,fileNum,current){
 	var floorValue=1;
 	var duration=S.files.map(function(e){return getLength(e);}).reduce((a,b) => a+b,0);
+	
+	var left=duration-current;
+	
+	console.log(
 	
 	if(fileNum===undefined) fileNum=S.currentFile;
 	
@@ -764,7 +768,7 @@ function GET(src,onSuccess){
 						content.classList.remove(S.loadingClass);
 					}
 				}else{
-					alert("Failed to load file called: "+S.path+S.files[S.currentFile]);
+					alert("Failed to load file called: "+S.path+S.language+S.files[S.currentFile]);
 				}
 			}
 		}
@@ -776,7 +780,7 @@ function POST(onSuccess,obj){
 	//Prepare the form data
 	var formData=new FormData();
 	formData.append('call',obj.call);
-	formData.append('path',S.path);
+	formData.append('path',S.path+S.language);
 	
 	//Special values, if passed
 	obj.password && formData.append('password',obj.password);
@@ -785,7 +789,7 @@ function POST(onSuccess,obj){
 	obj.files && formData.append('files',obj.files);
 	
 	var ajax=new XMLHttpRequest();
-	ajax.open("POST","showpony/showpony.php");
+	ajax.open("POST","showpony/ajax.php");
 	ajax.send(formData);
 	
 	ajax.addEventListener(
