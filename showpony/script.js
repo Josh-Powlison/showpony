@@ -607,8 +607,6 @@ function replaceInfoText(value,fileNum,current){
 	
 	var left=duration-current;
 	
-	console.log(
-	
 	if(fileNum===undefined) fileNum=S.currentFile;
 	
 	console.log(current,left,types[currentType]);
