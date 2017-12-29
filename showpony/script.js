@@ -23,23 +23,30 @@ if(!input.window){
 
 //Engine settings
 const S=this;
-S.window			=input.window;
-S.originalWindow	=S.window.cloneNode(true);
-S.files				=input.files			|| "get";
-S.path				=input.path!==undefined ? input.path : "files/";
-S.language			=input.language			|| ""
-S.loadingClass		=input.loadingClass		|| null;
-S.scrubLoad			=input.scrubLoad		|| false;
-S.info				=input.info				|| "[0pc] | [0pl]";
-S.data				=input.data				|| {};
-S.defaultDuration	=input.defaultDuration	|| 10;
-S.title				=input.title			|| false;
-S.dateFormat		=input.dateFormat		|| {year:"numeric",month:"numeric",day:"numeric"};
-S.admin				=input.admin			|| false;
-S.query				=input.query !==undefined ? input.query : "file";
-S.shortcuts			=input.shortcuts !==undefined ? input.shortcuts : "focus";
-S.user				=null;
-S.object			=input.object || location.hostname.substring(0,30);
+
+//Set default values
+function setD(v,val){
+	S[v]=(input[v]!==undefined ? input[v] : val);
+}
+
+//Set defaults
+setD('window');
+S.originalWindow=S.window.cloneNode(true);
+setD('files','get');
+setD('path','files/');
+setD('language','');
+setD('loadingClass',null);
+setD('scrubLoad',false);
+setD('info','[0pc] | [0pl]');
+setD('data',{});
+setD('defaultDuration',10);
+setD('title',false);
+setD('dateFormat',{year:"numeric",month:"numeric",day:"numeric"});
+setD('admin',false);
+setD('query','file');
+setD('shortcuts','focus');
+setD('user',null);
+setD('object',location.hostname.substring(0,30));
 
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
@@ -157,12 +164,8 @@ S.to=function(input){
 		var search=new RegExp('(\\?|&)'+S.query+'=','i')
 			,newURL=document.location.href;
 		
-		if(search.test(newURL)){
-			var replace=new RegExp('((\\?|&)'+S.query+')=?[^&]+','i');
-			newURL=newURL.replace(replace,'$1='+(S.currentFile+1));
-		}else{
-			newURL+=(newURL.indexOf("?")>-1 ? '&' : '?') +(S.query+'='+(S.currentFile+1));
-		}
+		if(search.test(newURL)) newURL=newURL.replace(new RegExp('((\\?|&)'+S.query+')=?[^&]+','i'),'$1='+(S.currentFile+1));
+		else newURL+=(newURL.indexOf("?")>-1 ? '&' : '?') +(S.query+'='+(S.currentFile+1));
 		
 		console.log(newURL);
 		
@@ -336,9 +339,7 @@ S.menu=function(event){
 			
 			//Play/pause video or audio
 			types[currentType].play && types[currentType].pause();
-		}else{
-			types[currentType].play && types[currentType].play();
-		}
+		}else types[currentType].play && types[currentType].play();
 	}
 	
 	scrubbing=false;
@@ -394,12 +395,9 @@ S.input=function(){
 	//Function differently depending on medium
 	switch(currentType){
 		case "image":
-			S.to({file:"+1"});
-			break;
-		case "audio":
-		case "video":
-			S.menu();
-			break;
+			S.to({file:"+1"}); break;
+		case "audio": case "video":
+			S.menu(); break;
 		case "multimedia":
 			//If the player is making choices right now
 			if(waitForInput) return;
@@ -410,9 +408,7 @@ S.input=function(){
 			console.log(S.charsHidden);
 		
 			//If all letters are displayed
-			if(S.charsHidden<1){
-				runMM();
-			}
+			if(S.charsHidden<1) runMM();
 			else //If some S.objects have yet to be displayed
 			{
 				console.log(S.textboxes);
@@ -437,10 +433,6 @@ S.input=function(){
 
 //Close ShowPony
 S.close=function(){
-	//Replace the container with the original element
-	
-	console.log(windowClick);
-	
 	//Remove the window event listener
 	window.removeEventListener("click",windowClick);
 	
@@ -504,11 +496,13 @@ function startup(){
 	//currentFile is -1 before we load
 	S.currentFile=-1;
 	
-	S.start=!isNaN(input.start) ? input.start : S.files.length-1;
+	//If not an int, get the final part (like if the text reads "last")
+	S.start=parseInt(input.start) || S.files.length-1;
 	
 	//For now, all stories will get remote accounts from heybard.com
 	POSTRemote(
-		function(response){
+		false
+		,function(response){
 			//If a bookmark was set, use it; otherwise, use the default part
 			if(!isNaN(response.bookmark)) S.start=response.bookmark;
 			
@@ -519,9 +513,7 @@ function startup(){
 					,function(){
 						var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
 						
-						if(page){
-							S.to({file:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
-						}
+						if(page) S.to({file:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
 					}
 				);
 				
@@ -534,15 +526,13 @@ function startup(){
 					,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
 					,scrollToTop:false
 				});
-			}else{
-				//Start
-				S.to({file:S.start,scrollToTop:false});
-			}
+			//Start
+			}else S.to({file:S.start,scrollToTop:false});
 			
 			//Set input to null in hopes that garbage collection will come pick it up
 			input=null;
 		}
-		,{'call':'get','object':S.object}
+		,{'call':'get'}
 	);
 }
 
@@ -582,17 +572,14 @@ function scrub(inputPercent){
 				newPart=i;
 			
 				break;
-			}else{
-				//Otherwise, go to the next one (and subtract the duration from the total duration)
-				newTime-=getLength(S.files[i]);
-			}
+			//Otherwise, go to the next one (and subtract the duration from the total duration)
+			}else newTime-=getLength(S.files[i]);
 		}
 	}
 	
 	//Move the progress bar
 	progress.style.left=(inputPercent*100)+"%";
-	//console.log(current,inputPercent,duration,newPart);
-	
+
 	//Set the overlay text (the current time)
 	overlayText.innerHTML="<p>"+replaceInfoText(
 		S.info
@@ -609,24 +596,16 @@ function replaceInfoText(value,fileNum,current){
 	
 	if(fileNum===undefined) fileNum=S.currentFile;
 	
-	console.log(current,left,types[currentType]);
-	
 	if(current===undefined){
 		//var currentType=getMedium(S.files[S.currentFile]);
 		
 		//Use the currentTime of the object, if it has one
 		var currentTime=types[currentType] && types[currentType].currentTime || 0;
 		
-		//var currentTime=0;
-		
-		console.log(currentTime);
-		
 		//Look through the videos for the right one
 		var l=S.currentFile;
-		for(var i=0;i<l;i++){
-			//Add the times of previous videos 7to get the actual time in the piece
-			currentTime+=getLength(S.files[i]);
-		}
+		//Add the times of previous videos 7to get the actual time in the piece
+		for(var i=0;i<l;i++) currentTime+=getLength(S.files[i]);
 		
 		var inputPercent=currentTime / duration
 			,newPart=S.currentFile;
@@ -644,15 +623,8 @@ function replaceInfoText(value,fileNum,current){
 			var name=S.files[fileNum].match(/\(.*\)/);
 			
 			//If there's a name, return it; otherwise, return blank space
-			if(name){
-				//Get rid of the parentheses, but also replace safemark characters
-				return safeFilename(
-					name[0].replace(/(^\(|\)$)/g,'')
-					,"from"
-				);
-			}else{
-				return "";
-			}
+			//Get rid of the parentheses, but also replace safemark characters
+			return name ? safeFilename(name[0].replace(/(^\(|\)$)/g,''),"from") : "";
 		}else if(input[1]=="d"){
 			//Get the name, remove the parentheses (skip over "x")
 			var date=S.files[fileNum].match(/\d[^(]+(?!\()\S?/);
@@ -677,9 +649,7 @@ function replaceInfoText(value,fileNum,current){
 					"default"
 					,S.dateFormat
 				).format(date);
-			}else{
-				return "";
-			}
+			}else return "";
 			
 			
 		}
@@ -727,9 +697,7 @@ function replaceInfoText(value,fileNum,current){
 		}
 		
 		//Return the value
-		return padStart(String(
-			floorValue|0
-		),input[1]);
+		return padStart(floorValue|0,input[1]);
 	}
 	
 	return value.replace(/\[[^\]]*\]/g,infoNaming);
@@ -737,10 +705,13 @@ function replaceInfoText(value,fileNum,current){
 
 //Pad the beginning of a value with leading zeroes
 function padStart(input,length){
-	//Return if length is 0
-	if(!length || length==0) return input;
+	//Make input a string
+	input=String(input);
 	
-	var padded=('000000000'+String(input)).slice(-length);
+	//Return if length is 0
+	if(!length) return input;
+	
+	var padded=('000000000'+input).slice(-length);
 	
 	//Return either the input or the padded value, whichever is longer
 	return input.length>padded.length ? input : padded;
@@ -762,9 +733,7 @@ function GET(src,onSuccess){
 				if(ajax.status==200){
 					onSuccess(ajax);
 					//Remove loadingClass
-					if(S.loadingClass){
-						content.classList.remove(S.loadingClass);
-					}
+					if(S.loadingClass) content.classList.remove(S.loadingClass);
 				}else{
 					alert("Failed to load file called: "+S.path+S.language+S.files[S.currentFile]);
 				}
@@ -816,14 +785,17 @@ function POST(onSuccess,obj){
 }
 
 //Make a POST call to heybard.com
-function POSTRemote(onSuccess,obj){
+function POSTRemote(event,onSuccess,obj){
+	//Defaults to a bookmark update
+	obj=obj || {};
+	
 	//Prepare the form data
 	var formData=new FormData();
-	formData.append('call',obj.call);
+	formData.append('call',obj.call || 'bookmark');
 	formData.append('object',S.object);
 	
 	//Special values, if passed
-	obj.file!==undefined && formData.append('file',obj.file);
+	formData.append('file',S.currentFile);
 	
 	var ajax=new XMLHttpRequest();
 	ajax.open("POST","http://localhost/heybard/api/account.php");
@@ -837,11 +809,10 @@ function POSTRemote(onSuccess,obj){
 					var response=JSON.parse(ajax.responseText);
 					console.log(response);
 					
-					if(response.success){
-						onSuccess && onSuccess(response);
-					}else{
-						console.log(response.message);
-					}
+					console.log(onSuccess);
+					
+					if(response.success) onSuccess && onSuccess(response);
+					else console.log(response.message);
 				}else{
 					console.log("Failed to load Hey Bard account.");
 				}
@@ -869,9 +840,6 @@ function getMedium(name){
 		case ".wav":
 			return "audio";
 			break;
-		case ".txt":
-		case ".kn":
-		case ".vn":
 		case ".mm":
 			return "multimedia";
 			break;
@@ -897,9 +865,7 @@ function frag(inputArray,inputParent){
 	var fragment=document.createDocumentFragment();
 	
 	var l=inputArray.length;
-	for(var i=0;i<l;i++){
-		fragment.appendChild(inputArray[i]);
-	}
+	for(var i=0;i<l;i++) fragment.appendChild(inputArray[i]);
 	
 	inputParent.appendChild(fragment);
 }
@@ -960,11 +926,8 @@ function runMM(inputNum){
 		
 		//console.log(multimediaSettings,S.currentLine);
 		
-		if(!multimediaSettings.go){
-			return;
-		}else{
-			multimediaSettings.go=false;
-		}
+		if(!multimediaSettings.go) return;
+		else multimediaSettings.go=false;
 	}
 	
 	//If the textbox hasn't been created, create it!
@@ -978,9 +941,8 @@ function runMM(inputNum){
 		S.textboxes[multimediaSettings.textbox].innerHTML="";
 		runMM();
 		return;
-	}else{ //If we're typing in the old textbox
-		S.textboxes[multimediaSettings.textbox].innerHTML="";
-	}
+	//If we're typing in the old textbox
+	}else S.textboxes[multimediaSettings.textbox].innerHTML="";
 	
 	//STEP 2: Design the text//
 	
@@ -1050,12 +1012,10 @@ function runMM(inputNum){
 				
 				//Pass over the closing bracket
 				continue;
-				break;
 			//Lines breaks
 			case '#':
 				fragment.appendChild(document.createElement("br"));
 				continue;
-				break;
 			default:
 				//Handle punctuation
 				if(i!=text.length && text[i+1]==' '){
@@ -1090,9 +1050,7 @@ function runMM(inputNum){
 		//On displaying, do this:
 		showChar.addEventListener("animationstart",function(event){
 			//If the animation ended on a child, don't continue! (animations are applied to children for text effects)
-			if(this!=event.target){
-				return;
-			}
+			if(this!=event.target) return;
 			
 			//If the element's currently hidden (the animation that ended is for unhiding)
 			if(this.style.visibility!="visible"){		
@@ -1108,9 +1066,7 @@ function runMM(inputNum){
 				}
 				
 				//Scroll to the newly displayed letter
-				if(this.getBoundingClientRect().bottom>this.parentNode.getBoundingClientRect().bottom){
-					this.parentNode.scrollTop+=this.getBoundingClientRect().height;
-				}
+				if(this.getBoundingClientRect().bottom>this.parentNode.getBoundingClientRect().bottom) this.parentNode.scrollTop+=this.getBoundingClientRect().height;
 			}
 		});
 	}
@@ -1139,12 +1095,8 @@ function runMM(inputNum){
 }
 
 var multimediaFunction={
-	'en':function(){
-		S.to({file:"+1"});
-	}
-	,'go':function(vals){
-		runMM(S.lines.indexOf(vals[1])+1 || null);
-	}
+	'en':()=> S.to({file:"+1"})
+	,'go':vals=> runMM(S.lines.indexOf(vals[1])+1 || null)
 	,'in':function(vals){
 		var thisButton=m("kn-choice","button");
 		thisButton.innerHTML=vals[2];
@@ -1165,19 +1117,13 @@ var multimediaFunction={
 		
 		runMM();
 	}
-	,'if':function(vals){
-		//IF	val		==	val		goto
-		if(operators[vals[2]](
-			ifParse(vals[1])
-			,ifParse(vals[3])
-		)){
-			runMM(S.lines.indexOf(vals[4])+1 || null);
-		}else{
-			runMM();
-		}
+	//IF	val		==	val		goto
+	,'if':vals=>{
+		if(operators[vals[2]](vals[1],vals[3])) runMM(S.lines.indexOf(vals[4])+1 || null);
+		else runMM();
 	}
+	//DS	var		=	val
 	,'ds':function(vals){
-		//DS	var		=	val
 		S.data[vals[1]]=operators[vals[2]](
 			ifParse(S.data[vals[1]])
 			,ifParse(vals[3])
@@ -1199,23 +1145,22 @@ var multimediaFunction={
 		//Go to the next line
 		runMM();
 	}
-	,'ev':function(vals){
-		//EV	event
-		
+	//EV	event
+	,'ev':vals=>{
 		//Dispatch the event the user requested to
 		S.window.dispatchEvent(new CustomEvent(vals[1]));
 		
 		//Go to the next line
 		runMM();
 	}
-	,'wt':function(vals){
+	,'wt':vals=>{
 		//If there's a waitTimer, clear it out
 		clearTimeout(waitTimer);
 		
 		//If a value was included, wait 
 		waitTimer=vals[1] && setTimeout(runMM,parseFloat(vals[1])*1000);
 	}
-	,'au':function(vals){
+	,'au':vals=>{
 		//If the audio doesn't exist
 		if(!S.objects[vals[1]]){
 			//Add them in!
@@ -1252,12 +1197,9 @@ var multimediaFunction={
 	}
 	,'st':function(vals){
 		//If it's the window
-		if(vals[1]=="window"){
-			content.style.cssText+=vals[2];
+		if(vals[1]=="window") content.style.cssText+=vals[2];
 		//If it's a general element
-		}else{
-			(S.objects[vals[1]] || S.textboxes[vals[1]]).style.cssText+=vals[2];
-		}
+		else (S.objects[vals[1]] || S.textboxes[vals[1]]).style.cssText+=vals[2];
 		
 		//Go to the next line
 		runMM();
@@ -1267,9 +1209,7 @@ var multimediaFunction={
 		var folder=vals[1].split('#')[0];
 
 		//If an object with that name doesn't exist
-		if(!S.objects[vals[1]]){
-			S.objects[vals[1]]=new Character();
-		}
+		if(!S.objects[vals[1]]) S.objects[vals[1]]=new Character();
 		
 		var images=[];
 		
@@ -1280,9 +1220,7 @@ var multimediaFunction={
 		
 		if(imageNames){
 			//Get all the values (colors, etc) out of here as possible
-			if(imageNames.indexOf(",")>-1){
-				imageNames=imageNames[0].split(",");
-			}
+			if(imageNames.indexOf(",")>-1) imageNames=imageNames[0].split(",");
 			
 			console.log(imageNames);
 			
@@ -1335,22 +1273,16 @@ var multimediaFunction={
 						if(search[ii].style.backgroundImage==images[i]){
 							found=true;
 							search[ii].style.opacity=1;
-						}else{
-							search[ii].style.opacity=0;
-						}
+						}else search[ii].style.opacity=0;
 					}
 				}
 				
-				if(!found){
-					S.objects[vals[1]].imgDiv(i,images[i]);
-				}
+				if(!found) S.objects[vals[1]].imgDiv(i,images[i]);
 			}
 		}
 		
 		//If a 4th value exists, adjust 'left' if a character or 'zIndex' if a background
-		if(vals[3]){
-			S.objects[vals[1]].el.style.left=vals[3];
-		}
+		if(vals[3]) S.objects[vals[1]].el.style.left=vals[3];
 		
 		//Go to the next line
 		runMM();
@@ -1375,9 +1307,7 @@ var multimediaFunction={
 		
 		if(imageNames){
 			//Get all the values (colors, etc) out of here as possible
-			if(imageNames.indexOf(",")>-1){
-				imageNames=imageNames[0].split(",");
-			}
+			if(imageNames.indexOf(",")>-1) imageNames=imageNames[0].split(",");
 			
 			console.log(imageNames);
 			
@@ -1420,9 +1350,7 @@ var multimediaFunction={
 		}
 		
 		//If a 4th value exists, adjust 'left' if a character or 'zIndex' if a background
-		if(vals[3]){
-			S.objects[vals[1]].el.style.zIndex=vals[3];
-		}
+		if(vals[3]) S.objects[vals[1]].el.style.zIndex=vals[3];
 		
 		//Go to the next line
 		runMM();
@@ -1444,23 +1372,20 @@ var multimediaFunction={
 
 //Check values inline
 var operators={
-	'+'		:function(a,b){return a+b;}
-	,'-'	:function(a,b){return a-b;}
-	,'='	:function(a,b){return b;}
-	,'=='	:function(a,b){return a==b;}
-	,'<'	:function(a,b){return a<b;}
-	,'>'	:function(a,b){return a>b;}
-	,'<='	:function(a,b){return a<=b;}
-	,'>='	:function(a,b){return a>=b;}
-	,'!'	:function(a,b){return a!=b;}
+	'+'		:(a,b)=> a+b
+	,'-'	:(a,b)=> a-b
+	,'='	:(a,b)=> b
+	,'=='	:(a,b)=> a==b
+	,'<'	:(a,b)=> a<b
+	,'>'	:(a,b)=> a>b
+	,'<='	:(a,b)=> a<=b
+	,'>='	:(a,b)=> a>=b
+	,'!'	:(a,b)=> a!=b
 };
 
 //If a value's a number, return it as one
 function ifParse(input){
-	return parseFloat(input)==input
-		? parseFloat(input)
-		: input
-	;
+	return isNaN(input) ? input : parseFloat(input);
 }
 
 function Character(){
@@ -1522,9 +1447,7 @@ function safeFilename(string,type){
 //Replace an array of values
 function replaceArray(string,fromArray,toArray){
 	var l=fromArray.length;
-	for(var i=0;i<l;i++){
-		string=string.replace(fromArray[i],toArray[i])
-	}
+	for(var i=0;i<l;i++) string=string.replace(fromArray[i],toArray[i])
 	
 	return string;
 }
@@ -1537,12 +1460,10 @@ function replaceArray(string,fromArray,toArray){
 window.addEventListener(
 	"keydown"
 	,function(event){
-		console.log(document.activeElement);
-		
 		//Adjust response based on shortcuts setting
-		if(S.shortcuts==='always'){
-			//Proceed if always enabled
-		}
+		
+		//Proceed if always enabled
+		if(S.shortcuts==='always'){}
 		else if(!S.shortcuts || S.shortcuts==='never'){
 			//If shortcuts disabled
 			return;
@@ -1561,14 +1482,14 @@ window.addEventListener(
 		}
 
 		var keys={
-			32: function(){S.input();}				//Spacebar
-			,37: function(){S.to({time:"-10"});}	//Left arrow
-			,39: function(){S.to({time:"+10"});}	//Right arrow
-			,36: function(){S.to({file:"first"});}	//Home
-			,35: function(){S.to({file:"last"});}	//End
-			,177: function(){S.to({file:"-1"});}	//Previous
-			,176: function(){S.to({file:"+1"});}	//Next
-			,179: function(){S.menu();}				//Play/pause
+			32: ()=> S.input()				//Spacebar
+			,37: ()=> S.to({time:"-10"})	//Left arrow
+			,39: ()=>S.to({time:"+10"})	//Right arrow
+			,36: ()=>S.to({file:"first"})	//Home
+			,35: ()=>S.to({file:"last"})	//End
+			,177: ()=>S.to({file:"-1"})	//Previous
+			,176: ()=>S.to({file:"+1"})	//Next
+			,179: ()=>S.menu()				//Play/pause
 		};
 		
 		if(keys[event.keyCode]){
@@ -1614,11 +1535,8 @@ window.addEventListener(
 		if(scrubbing===false) return;
 		
 		if(scrubbing!==true){
-			if(Math.abs(scrubbing-event.clientX)>screen.width/100){
-				scrubbing=true;
-			}else{
-				return;
-			}
+			if(Math.abs(scrubbing-event.clientX)>screen.width/100) scrubbing=true;
+			else return;
 		}
 		
 		scrub(
@@ -1634,17 +1552,12 @@ overlay.addEventListener(
 	"touchmove"
 	,function(event){
 		
-		if(scrubbing===false){
-			scrubbing=event.changedTouches[0].clientX;
-		}
+		if(scrubbing===false) scrubbing=event.changedTouches[0].clientX;
 		
 		//You have to swipe farther than you move the cursor to adjust the position
 		if(scrubbing!==true){
-			if(Math.abs(scrubbing-event.changedTouches[0].clientX)>screen.width/20){
-				scrubbing=true;
-			}else{
-				return;
-			}
+			if(Math.abs(scrubbing-event.changedTouches[0].clientX)>screen.width/20) scrubbing=true;
+			else return;
 		}
 		
 		//Don't want the users to accidentally swipe to another page!
@@ -1670,7 +1583,7 @@ overlay.addEventListener(
 			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
 			if(S.scrubLoad==false){
 				//Load the file our pointer's on
-			scrub(
+				scrub(
 					(event.changedTouches[0].clientX-S.window.getBoundingClientRect().left)
 					/
 					(S.window.getBoundingClientRect().width)
@@ -1702,58 +1615,34 @@ fullscreenButton.addEventListener(
 
 captionsButton.addEventListener(
 	"click"
-	,function(){
-		event.stopPropagation();
-	}
+	,()=> event.stopPropagation()
 );
 
 content.addEventListener(
 	"click"
-	,function(){
-		S.input();
-	}
+	,()=> S.input()
 );
 
+//Update title info
 if(S.title){
-	types.audio.addEventListener(
-		"timeupdate"
-		,function(){
-			document.title=replaceInfoText(S.title,S.currentFile);
-		}
-	);
+	types.audio.addEventListener("timeupdate",updateTitle);
+	types.video.addEventListener("timeupdate",updateTitle);
 	
-	types.video.addEventListener(
-		"timeupdate"
-		,function(){
-			document.title=replaceInfoText(S.title,S.currentFile);
-		}
-	);
+	function updateTitle(){
+		document.title=replaceInfoText(S.title,S.currentFile);
+	}
 }
 
 //Update the bookmark
-window.addEventListener(
-	"blur"
-	//Also, before unload
-	,function(){
-		console.log("Blurred!");
-		POSTRemote(
-			null
-			,{
-				'call':'bookmark'
-				,'file':S.currentFile
-			}
-		);
-	}
-);
+	//Also, before unload (Need to add in)
+window.addEventListener("blur",POSTRemote);
 
 ///////////////////////////////////////
 /////////////////START/////////////////
 ///////////////////////////////////////
 
 //If the window is statically positioned, set it to relative! (so positions of children work)
-if(window.getComputedStyle(S.window).getPropertyValue('position')=="static"){
-	S.window.style.position="relative";
-}
+if(window.getComputedStyle(S.window).getPropertyValue('position')=="static") S.window.style.position="relative";
 
 //Empty the current window
 S.window.innerHTML="";
@@ -1767,12 +1656,8 @@ S.window.classList.add("showpony");
 if(S.window.tabIndex<0) S.window.tabIndex=0;
 
 //If the user's getting the files remotely, make the call
-if(S.files==="get"){
-	POST(
-		startup
-		,{call:"getFiles"}
-	);
-}else startup();
+if(S.files==="get") POST(startup,{call:"getFiles"});
+else startup();
 
 ///////////////////////////////////////
 /////////////////ADMIN/////////////////
@@ -1806,7 +1691,7 @@ if(S.admin){
 	//Edit/adjust file details
 	S.window.addEventListener(
 		"contextmenu"
-		,function(event){
+		,event=>{
 			event.preventDefault();
 			editor();
 		}
@@ -1829,7 +1714,7 @@ if(S.admin){
 		uploadDate.value=(S.files[S.currentFile].match(/\d(.(?!\())+\d*/) || [""])[0].replace(/;/g,':');
 	}
 	
-	logoutButton.addEventListener("click",function(){account("logout");});
+	logoutButton.addEventListener("click",()=>account("logout"));
 	
 	//Must be set to a variable to be called outside the enclosing "if" statement
 	var account=function(type){
@@ -1839,7 +1724,7 @@ if(S.admin){
 		console.log(type,pass);
 		
 		POST(
-			function(response){
+			response=>{
 				S.window.classList[loggedIn ? "add" : "remove"]("showpony-editor");
 				
 				S.to({reload:true,scrollToTop:false,replaceState:true});
@@ -1866,7 +1751,7 @@ if(S.admin){
 		;
 		
 		POST(
-			function(response){
+			response=>{
 				S.files[thisFile]=response.file;
 				
 				//Sort the files by order
@@ -1890,7 +1775,7 @@ if(S.admin){
 			var thisFile=S.currentFile;
 			
 			POST(
-				function(response){
+				response=>{
 					S.files[thisFile]=response.file;
 					
 					//If still on that file, refresh it
@@ -1906,7 +1791,7 @@ if(S.admin){
 	);
 	
 	deleteFile.addEventListener("click"
-		,function(){
+		,()=>{
 			var thisFile=S.currentFile;
 			
 			POST(
@@ -1914,17 +1799,11 @@ if(S.admin){
 					//Remove the file from the arrays
 					S.files.splice(thisFile,1);
 
-					console.log(thisFile,S.files.length);
-					
 					//If still on that file, refresh it
 					if(thisFile===S.currentFile){
 					
 						//Don't go past the last file
-						if(thisFile>=S.files.length){
-							thisFile=S.files.length-1;
-						}
-						
-						console.log(thisFile,S.currentFile);
+						if(thisFile>=S.files.length) thisFile=S.files.length-1;
 						
 						S.to({file:thisFile,refresh:true,replaceState:true})
 					}
@@ -1935,18 +1814,14 @@ if(S.admin){
 	);
 	
 	newFile.addEventListener("click"
-		,function(){
-			POST(
-				function(response){
-					//Add the file to the array
-					S.files.push(response.file);
-					
-					S.to({file:"last"});
-					scrub();
-				}
-				,{call:"newFile"}
-			);
-		}
+		,()=>POST(
+			response=>{
+				//Add the file to the array
+				S.files.push(response.file);
+				S.to({file:"last"});
+			}
+			,{call:"newFile"}
+		)
 	);
 	
 	console.log(account);
