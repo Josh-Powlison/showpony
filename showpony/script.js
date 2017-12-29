@@ -890,7 +890,7 @@ function runMM(inputNum){
 		S.to({file:"+1"});
 		return;
 	}
-
+	
 	var text=S.lines[S.currentLine];
 	
 	//Replace all variables (including variables inside variables) with the right name
@@ -1124,6 +1124,11 @@ var multimediaFunction={
 	}
 	//DS	var		=	val
 	,'ds':function(vals){
+		//If a value's a number, return it as one
+		function ifParse(input){
+			return isNaN(input) ? input : parseFloat(input);
+		}
+		
 		S.data[vals[1]]=operators[vals[2]](
 			ifParse(S.data[vals[1]])
 			,ifParse(vals[3])
@@ -1164,7 +1169,7 @@ var multimediaFunction={
 		//If the audio doesn't exist
 		if(!S.objects[vals[1]]){
 			//Add them in!
-			let el=document.createElement("audio");
+			var el=document.createElement("audio");
 			
 			el.src="resources/audio/"+vals[1];
 			el.preload=true;
@@ -1226,35 +1231,6 @@ var multimediaFunction={
 			
 			images.push("url('resources/characters/"+folder+"/"+imageNames+"')");
 			
-			/*
-			for(var i=0;i<imageNames.length;i++){
-				
-				if(vals[0]=="ch")
-				{
-					images.push("url('resources/characters/"+folder+"/"+imageNames[i]+"')");
-				}
-				else
-				{
-					if(i>0){
-						images+=',';
-					}
-					
-					//If it's a color or gradient, treat it as such
-					if(imageNames[i].match(/(#|gradient\(|rgb\(|rgba\()/)){
-						S.objects[vals[1]].el.style.backgroundColor=imageNames[i];
-					}
-					else //Otherwise, assume it's an image
-					{
-						//If there's no extension set, assume .jpg 
-						if(!imageNames[i].match(/\.[^\.]+$/)){
-							imageNames[i]+=".jpg";
-						}
-						
-						images+="url('resources/backgrounds/"+imageNames[i]+"')";
-					}
-				}
-			}*/
-			
 			//Go through each image and add a div
 			let l=images.length;
 			for(var i=0;i<l;i++){
@@ -1288,9 +1264,6 @@ var multimediaFunction={
 		runMM();
 	}
 	,'bg':function(vals){
-		//Get the folder, which is the name without anything after a hash
-		var folder=vals[1].split('#')[0];
-
 		//If an object with that name doesn't exist
 		if(!S.objects[vals[1]]){
 			//Add a background
@@ -1298,59 +1271,12 @@ var multimediaFunction={
 			content.appendChild(S.objects[vals[1]]);
 		}
 		
-		var images=(vals[0]=="ch" ? [] : '');
+		//If it's a color or gradient, treat it as such
+		if(/(#|gradient\(|rgb\(|rgba\()/.test(vals[2])) S.objects[vals[1]].style.backgroundColor=vals[2];
+		else S.objects[vals[1]].style.backgroundImage="url('resources/backgrounds/"+vals[2]+"')";
 		
-		//images will be either an array or a string
-		var imageNames=vals[2];
-		
-		console.log(vals);
-		
-		if(imageNames){
-			//Get all the values (colors, etc) out of here as possible
-			if(imageNames.indexOf(",")>-1) imageNames=imageNames[0].split(",");
-			
-			console.log(imageNames);
-			
-			//if(i>0){
-			//	images+=',';
-			//}
-			
-			//If it's a color or gradient, treat it as such
-			if(/(#|gradient\(|rgb\(|rgba\()/.test(imageNames)){
-				S.objects[vals[1]].style.backgroundColor=imageNames;
-			}
-			else //Otherwise, assume it's an image
-			{
-				images+="url('resources/backgrounds/"+imageNames+"')";
-			}
-			
-			/*
-			for(var i=0;i<imageNames.length;i++){
-				
-				if(i>0){
-					images+=',';
-				}
-				
-				//If it's a color or gradient, treat it as such
-				if(imageNames[i].match(/(#|gradient\(|rgb\(|rgba\()/)){
-					S.objects[vals[1]].el.style.backgroundColor=imageNames[i];
-				}
-				else //Otherwise, assume it's an image
-				{
-					//If there's no extension set, assume .jpg 
-					if(!imageNames[i].match(/\.[^\.]+$/)){
-						imageNames[i]+=".jpg";
-					}
-					
-					images+="url('resources/backgrounds/"+imageNames[i]+"')";
-				}
-			}*/
-			
-			S.objects[vals[1]].style.backgroundImage=images;
-		}
-		
-		//If a 4th value exists, adjust 'left' if a character or 'zIndex' if a background
-		if(vals[3]) S.objects[vals[1]].el.style.zIndex=vals[3];
+		//z-index will either be a custom value or -10 (so it goes behind characters)
+		S.objects[vals[1]].style.zIndex=vals[3]!==undefined ? vals[3] : -10;
 		
 		//Go to the next line
 		runMM();
@@ -1382,11 +1308,6 @@ var operators={
 	,'>='	:(a,b)=> a>=b
 	,'!'	:(a,b)=> a!=b
 };
-
-//If a value's a number, return it as one
-function ifParse(input){
-	return isNaN(input) ? input : parseFloat(input);
-}
 
 function Character(){
 	var cha=this;
@@ -1425,29 +1346,17 @@ function Character(){
 	content.appendChild(cha.el);
 };
 
-//Replace unsafe characters for filenames with safe ones
+//Replace unsafe characters for filenames with safe ones, and vice-versa
 function safeFilename(string,type){
-	if(type=="from"){
-		string=replaceArray(
-			string
-			,["[fs]","[bs]","[gt]","[lt]","[c]","[a]","[q]","[qm]","[b]"]
-			,["/","\\",">","<",":","*",'"',"?","|"]
-		);
-	}else{
-		string=replaceArray(
-			string
-			,["/","\\",">","<",":","*",'"',"?","|"]
-			,["[fs]","[bs]","[gt]","[lt]","[c]","[a]","[q]","[qm]","[b]"]
-		);
-	}
-	
-	return string;
-}
+	var a=["[fs]","[bs]","[gt]","[lt]","[c]","[a]","[q]","[qm]","[b]"];
+	var b=["/","\\",">","<",":","*",'"',"?","|"];
 
-//Replace an array of values
-function replaceArray(string,fromArray,toArray){
-	var l=fromArray.length;
-	for(var i=0;i<l;i++) string=string.replace(fromArray[i],toArray[i])
+	//Swap out values if changing TO a filename
+	if(type!=='from') [a,b]=[b,a];
+	
+	var l=a.length;
+	
+	for(var i=0;i<l;i++) string=string.replace(a[i],b[i])
 	
 	return string;
 }
@@ -1618,10 +1527,7 @@ captionsButton.addEventListener(
 	,()=> event.stopPropagation()
 );
 
-content.addEventListener(
-	"click"
-	,()=> S.input()
-);
+content.addEventListener("click",()=> S.input());
 
 //Update title info
 if(S.title){
@@ -1823,8 +1729,6 @@ if(S.admin){
 			,{call:"newFile"}
 		)
 	);
-	
-	console.log(account);
 }
 
 }
