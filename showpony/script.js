@@ -37,7 +37,7 @@ setD('path','files/');
 setD('language','');
 setD('loadingClass',null);
 setD('scrubLoad',false);
-setD('info','[0pc] | [0pl]');
+setD('info','[Current File] | [Files Left]');
 setD('data',{});
 setD('defaultDuration',10);
 setD('title',false);
@@ -259,7 +259,7 @@ S.to=function(input){
 			//If the previous type was different, use the new type (or if we're scrubbing and not moving along as normal)
 			//if(currentType!=newType || overlay.style.visibility=="visible"){
 				content.innerHTML="";
-				S.objects={};
+				S.objects={window:S.window};
 				S.textboxes={};
 			//}
 			
@@ -589,12 +589,7 @@ function scrub(inputPercent){
 }
 
 function replaceInfoText(value,fileNum,current){
-	var floorValue=1;
 	var duration=S.files.map(function(e){return getLength(e);}).reduce((a,b) => a+b,0);
-	
-	var left=duration-current;
-	
-	if(fileNum===undefined) fileNum=S.currentFile;
 	
 	if(current===undefined){
 		//var currentType=getMedium(S.files[S.currentFile]);
@@ -613,91 +608,108 @@ function replaceInfoText(value,fileNum,current){
 		var current=Math.floor(inputPercent*duration)
 			,left=duration-Math.floor(inputPercent*duration)
 		;
+	}else{
+		var left=duration-current;
 	}
+	
+	//Save all the values to instantly pass them through
+	var values={
+		name:{
+			current:"Untitled"
+		}
+		,date:{
+			current:"Undated"
+		}
+		,file:{
+			current:	fileNum+1
+			,left:		S.files.length-(fileNum+1)
+			,total:		S.files.length
+		}
+		,percent:{
+			current:	(inputPercent*100)|0
+			,left:		((1-inputPercent)*100)|0
+			,total:		100
+		}
+		,hours:{
+			current:	(current / 3600)|0
+			,left:		(left / 3600)|0
+			,total:		(duration / 3600)|0
+		}
+		,minutes:{
+			current:	((current % 3600) / 60)|0
+			,left:		((left % 3600) / 60)|0
+			,total:		((duration % 3600) / 60)|0
+		}
+		,seconds:{
+			current:	(current % 60)|0
+			,left:		(left % 60)|0
+			,total:		(duration % 60)|0
+		}
+	}
+	
+	//Get the name, remove the parentheses (skip over "x")
+	var date=S.files[fileNum].match(/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/);
+
+	//If there's a date, return it; otherwise, return blank space
+	if(date){
+		date=date[0]
+			.split(/[\s-:;]+/)
+		;
+		
+		console.log(date);
+		
+		date=new Date(Date.UTC(
+			date[0]			//Year
+			,date[1]-1 || 0	//Month
+			,date[2] || 0	//Date
+			,date[3] || 0	//Hours
+			,date[4] || 0	//Minutes
+			,date[5] || 0	//Seconds
+			,date[6] || 0	//Milliseconds
+		));
+		
+		values.date.current=new Intl.DateTimeFormat(
+			"default"
+			,S.dateFormat
+		).format(date);
+	}
+	
+	//Name
+	//Get the name, remove the parentheses
+	var name=S.files[fileNum].match(/\(.*\)/);
+	
+	//If there's a name, return it; otherwise, return blank space
+	//Get rid of the parentheses, but also replace safemark characters
+	if(name) values.name.current=safeFilename(name[0].replace(/(^\(|\)$)/g,''),"from");
 	
 	//Use special naming convention to replace values correctly
 	function infoNaming(input){
-		//Name
-		if(input[1]=="n"){
-			//Get the name, remove the parentheses
-			var name=S.files[fileNum].match(/\(.*\)/);
-			
-			//If there's a name, return it; otherwise, return blank space
-			//Get rid of the parentheses, but also replace safemark characters
-			return name ? safeFilename(name[0].replace(/(^\(|\)$)/g,''),"from") : "";
-		}else if(input[1]=="d"){
-			//Get the name, remove the parentheses (skip over "x")
-			var date=S.files[fileNum].match(/\d[^(]+(?!\()\S?/);
-			
-			//If there's a date, return it; otherwise, return blank space
-			if(date){
-				date=date[0]
-					.split(/[\s-:;]+/)
-				;
-				
-				date=new Date(Date.UTC(
-					date[0]			//Year
-					,date[1]-1 || 0	//Month
-					,date[2] || 0	//Date
-					,date[3] || 0	//Hours
-					,date[4] || 0	//Minutes
-					,date[5] || 0	//Seconds
-					,date[6] || 0	//Milliseconds
-				));
-				
-				return new Intl.DateTimeFormat(
-					"default"
-					,S.dateFormat
-				).format(date);
-			}else return "";
-			
-			
-		}
-		//Percentage complete
-		if(input[2]=="%"){
-			//Pass a calculation based on whether it's the percentage left or the current percentage (the total is, of course, 100)
-			floorValue=
-				input[3]=="l" ? ((1-inputPercent)*100)
-				: (inputPercent*100)
-			;
-		}else
-		//File numbers
-		if(input[2]=="p"){
-			//Pass a calculation based on whether the number of files left, total, or the number of the current file was asked for
-			floorValue=
-				input[3]=="l" ? S.files.length-(fileNum+1)
-				: input[3]=="t" ? S.files.length
-				: fileNum+1
-			;
-		}
-		else //Times
-		{
-			//Total times
-			if(input[3]=="t"){
-				//Pass a calculation based on whether hours, minutes, or seconds were asked for
-				floorValue=
-					input[2]=="h" ? duration / 3600
-					: input[2]=="m" ? (duration % 3600) / 60
-					: duration % 60
-				;
-			}else{ //Current time or time left
-				var val=
-					input[3]=="l"
-					? left
-					: current
-				;
-				
-				//Pass a calculation based on whether hours, minutes, or seconds were asked for
-				floorValue=
-					input[2]=="h" ? val / 3600
-					: input[2]=="m" ? (val % 3600) / 60
-					: val % 60
-				;
-			}
-		}
+		//Choose the right type
+		
+		//Defaults (we don't bother searching for these)
+		var type="file", value="current";
+		
+		//Get the type
+		if(/name|title/i.test(input)) type="name";
+		else if(/date|release/i.test(input)) type="date";
+		else if(/%|percent/i.test(input)) type="percent";
+		else if(/hour/i.test(input)) type="hours";
+		else if(/min/i.test(input)) type="minutes";
+		else if(/sec/i.test(input)) type="seconds";
+		
+		//Get the value type
+		if(/left|remain/i.test(input)) value="left";
+		else if(/total|all/i.test(input)) value="total";
+		
+		console.log(type,value,values[type][value]);
+		
+		var pad=parseInt(input.match(/[0-9]+/i)) || 0;
+		
+		console.log(pad);
 		
 		//Return the value
-		return padStart(floorValue|0,input[1]);
+		return padStart(values[type][value],pad);
+		//return padStart(floorValue|0,input[1]);
 	}
 	
 	return value.replace(/\[[^\]]*\]/g,infoNaming);
@@ -985,10 +997,7 @@ function runMM(inputNum){
 				}
 				
 				//If nothing's inside, reset to defaults
-				if(values==''){
-					//Reset to defaults
-					charDefaults();
-				}
+				if(values=='') charDefaults();
 				else //If code's inside, adjust display
 				{
 					values=values.split(',');
@@ -1096,8 +1105,8 @@ function runMM(inputNum){
 
 var multimediaFunction={
 	'en':()=> S.to({file:"+1"})
-	,'go':vals=> runMM(S.lines.indexOf(vals[1])+1 || null)
-	,'in':function(vals){
+	,'go':vals=> runMM(S.lines.indexOf(vals[1])!==-1 ? S.lines.indexOf(vals[1])+1 : null)
+	,'in':vals=>{
 		var thisButton=m("kn-choice","button");
 		thisButton.innerHTML=vals[2];
 		
@@ -1123,7 +1132,7 @@ var multimediaFunction={
 		else runMM();
 	}
 	//DS	var		=	val
-	,'ds':function(vals){
+	,'ds':vals=>{
 		//If a value's a number, return it as one
 		function ifParse(input){
 			return isNaN(input) ? input : parseFloat(input);
@@ -1200,88 +1209,77 @@ var multimediaFunction={
 		//Go to the next line
 		runMM();
 	}
-	,'st':function(vals){
-		//If it's the window
-		if(vals[1]=="window") content.style.cssText+=vals[2];
-		//If it's a general element
-		else (S.objects[vals[1]] || S.textboxes[vals[1]]).style.cssText+=vals[2];
+	,'st':vals=>{
+		//Update style of either the object or textbox
+		(S.objects[vals[1]] || S.textboxes[vals[1]]).style.cssText+=vals[2];
 		
 		//Go to the next line
 		runMM();
 	}
-	,'ch':function(vals){
+	,'ch':vals=>{
 		//Get the folder, which is the name without anything after a hash
 		var folder=vals[1].split('#')[0];
-
-		//If an object with that name doesn't exist
-		if(!S.objects[vals[1]]) S.objects[vals[1]]=new Character();
 		
-		var images=[];
+		//If an object with that name doesn't exist, make it!
+		if(!S.objects[vals[1]]) content.appendChild(S.objects[vals[1]]=m("character"));
 		
-		//images will be either an array or a string
-		var imageNames=vals[2];
+		var cha=S.objects[vals[1]];
 		
-		console.log(vals);
+		//Get the image names
+		var imageNames=vals[2].split(",");
 		
-		if(imageNames){
-			//Get all the values (colors, etc) out of here as possible
-			if(imageNames.indexOf(",")>-1) imageNames=imageNames[0].split(",");
+		//Go through each image and add a div
+		let l=imageNames.length;
+		for(var i=0;i<l;i++){
+			var image="url('resources/characters/"+folder+"/"+imageNames[i]+"')";
 			
-			console.log(imageNames);
+			//If the image already exists
+			var found=false;
 			
-			images.push("url('resources/characters/"+folder+"/"+imageNames+"')");
-			
-			//Go through each image and add a div
-			let l=images.length;
-			for(var i=0;i<l;i++){
-				//If the image already exists
-				var found=false;
+			//If the layer exists
+			if(cha.children[i]){
+				//If this value doesn't exist in the layer
 				
-				//If the layer exists
-				if(S.objects[vals[1]].el.children[i]){
-					//If this value doesn't exist in the layer
+				var search=cha.children[i].children;
+				
+				for(var ii=0,len=search.length;ii<len;ii++){
 					
-					var search=S.objects[vals[1]].el.children[i].children;
-					
-					let ll=search.length;
-					for(var ii=0;ii<ll;ii++){
-						
-						if(search[ii].style.backgroundImage==images[i]){
-							found=true;
-							search[ii].style.opacity=1;
-						}else search[ii].style.opacity=0;
-					}
+					//Set the opacity right, and if it's 1, we found the image!
+					if(search[ii].style.opacity=(search[ii].style.backgroundImage==image ? 1 : 0)) found=true;
 				}
+			}else{
+				//If the layer doesn't exist, make it
+				cha.appendChild(document.createElement("div"));
+			}
+			
+			//If either the layer or the image doesn't exist, we add it!
+			if(!found){
+				//Add a backgroundImage
+				var thisImg=m("character-image");
+				thisImg.style.backgroundImage=image;
 				
-				if(!found) S.objects[vals[1]].imgDiv(i,images[i]);
+				cha.children[i].appendChild(thisImg);
 			}
 		}
 		
 		//If a 4th value exists, adjust 'left' if a character or 'zIndex' if a background
-		if(vals[3]) S.objects[vals[1]].el.style.left=vals[3];
+		if(vals[3]) S.objects[vals[1]].style.left=vals[3];
 		
 		//Go to the next line
 		runMM();
 	}
-	,'bg':function(vals){
-		//If an object with that name doesn't exist
-		if(!S.objects[vals[1]]){
-			//Add a background
-			S.objects[vals[1]]=m("background");
-			content.appendChild(S.objects[vals[1]]);
-		}
+	,'bg':vals=>{
+		//If the background doesn't exist, make it
+		if(!S.objects[vals[1]]) content.appendChild(S.objects[vals[1]]=m("background"));
 		
 		//If it's a color or gradient, treat it as such
 		if(/(#|gradient\(|rgb\(|rgba\()/.test(vals[2])) S.objects[vals[1]].style.backgroundColor=vals[2];
 		else S.objects[vals[1]].style.backgroundImage="url('resources/backgrounds/"+vals[2]+"')";
 		
-		//z-index will either be a custom value or -10 (so it goes behind characters)
-		S.objects[vals[1]].style.zIndex=vals[3]!==undefined ? vals[3] : -10;
-		
 		//Go to the next line
 		runMM();
 	}
-	,'tb':function(vals,multimediaSettings){
+	,'tb':(vals,multimediaSettings)=>{
 		//Set the current textbox
 		multimediaSettings.textbox=vals[1];
 		
@@ -1309,54 +1307,15 @@ var operators={
 	,'!'	:(a,b)=> a!=b
 };
 
-function Character(){
-	var cha=this;
-	cha.el=m("character");
-
-	//Add a backgroundImage
-	cha.imgDiv=function(inputLayer,inputBackground){
-		var thisImg=document.createElement("div");
-		
-		thisImg.style.cssText=`
-			background-image:`+inputBackground+`;
-			background-position:50% -20%;
-			background-repeat:no-repeat;
-			background-size:contain;
-			opacity:1;
-		`;
-		
-		//If the layer doesn't exist, add it in
-		if(!cha.el.children[inputLayer]){
-			var newLayer=document.createElement("div");				
-			cha.el.appendChild(newLayer);
-		}
-		
-		cha.el.children[inputLayer].appendChild(thisImg);
-	}
-	
-	/*
-	//Go through the file and add in all of the images
-	for(let i=0;i<S.lines.length;i++){
-		if(S.lines[i].match(/@CH ben/)){
-			console.log(S.lines[i]);
-			//cha.imgDiv(i,images[i]);
-		}
-	}*/
-	
-	content.appendChild(cha.el);
-};
-
 //Replace unsafe characters for filenames with safe ones, and vice-versa
 function safeFilename(string,type){
 	var a=["[fs]","[bs]","[gt]","[lt]","[c]","[a]","[q]","[qm]","[b]"];
 	var b=["/","\\",">","<",":","*",'"',"?","|"];
 
-	//Swap out values if changing TO a filename
+	//Swap values if changing TO a filename instead of FROM a filename
 	if(type!=='from') [a,b]=[b,a];
 	
-	var l=a.length;
-	
-	for(var i=0;i<l;i++) string=string.replace(a[i],b[i])
+	for(var i=0,len=a.length;i<len;i++) string=string.replace(a[i],b[i])
 	
 	return string;
 }
@@ -1409,7 +1368,7 @@ window.addEventListener(
 );
 
 //We need to set this as a variable to remove it later on
-var windowClick=function(event){
+var windowClick=event=>{
 	event.stopPropagation();
 	S.menu(event);
 };
@@ -1420,7 +1379,7 @@ window.addEventListener("click",windowClick);
 //On mousedown, we prepare to move the cursor
 overlay.addEventListener(
 	"mousedown"
-	,function(event){
+	,event=>{
 		//Only read mousemove over the overlay
 		if(event.target!==this) return;
 		
@@ -1430,7 +1389,7 @@ overlay.addEventListener(
 
 window.addEventListener(
 	"mouseup"
-	,function(){
+	,()=>{
 		//If mouse goes up and we aren't scrubbing, set scrubbing to false.
 		//Otherwise, right-clicks can be read wrong
 		if(scrubbing!==true) scrubbing=false;
@@ -1440,7 +1399,7 @@ window.addEventListener(
 //On dragging
 window.addEventListener(
 	"mousemove"
-	,function(event){
+	,event=>{
 		if(scrubbing===false) return;
 		
 		if(scrubbing!==true){
@@ -1459,7 +1418,7 @@ window.addEventListener(
 //On dragging
 overlay.addEventListener(
 	"touchmove"
-	,function(event){
+	,event=>{
 		
 		if(scrubbing===false) scrubbing=event.changedTouches[0].clientX;
 		
@@ -1483,7 +1442,7 @@ overlay.addEventListener(
 //On touch end, don't keep moving the bar to the user's touch
 overlay.addEventListener(
 	"touchend"
-	,function(event){
+	,event=>{
 		
 		//If we were scrubbing
 		if(scrubbing===true){
@@ -1507,7 +1466,7 @@ overlay.addEventListener(
 
 menuButton.addEventListener(
 	"click"
-	,function(event){
+	,event=>{
 		event.stopPropagation();
 		S.menu();
 	}
@@ -1516,7 +1475,7 @@ menuButton.addEventListener(
 
 fullscreenButton.addEventListener(
 	"click"
-	,function(event){
+	,event=>{
 		event.stopPropagation();
 		S.fullscreen();
 	}
