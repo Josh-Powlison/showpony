@@ -893,33 +893,16 @@ function runMM(inputNum){
 		//We run a function based on the value passed.
 		//If it returns multimediaSettings, we use those new ones over the old ones.
 		multimediaSettings=multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals,multimediaSettings) || multimediaSettings;
-		
-		if(multimediaSettings.text){
-			text=multimediaSettings.text;
-			multimediaSettings.text=null;
-		}
-		
-		if(multimediaSettings.wait){
-			wait=multimediaSettings.wait;
-			multimediaSettings.wait=null;
-		}
-		
 		//console.log(multimediaSettings,S.currentLine);
 		
 		if(!multimediaSettings.go) return;
-		else multimediaSettings.go=false;
+		multimediaSettings.go=false;
 	}
 	
 	//If the textbox hasn't been created, create it!
 	if(!S.textboxes[multimediaSettings.textbox]) content.appendChild(S.textboxes[multimediaSettings.textbox]=m("textbox"));
 	
-	//If there's nothing passed, clear the current textbox and continue on to the next line.
-	if(vals && !vals[2]){
-		S.textboxes[multimediaSettings.textbox].innerHTML="";
-		runMM();
-		return;
-	//If we're typing in the old textbox
-	}else S.textboxes[multimediaSettings.textbox].innerHTML="";
+	S.textboxes[multimediaSettings.textbox].innerHTML="";
 	
 	//STEP 2: Design the text//
 	
@@ -1307,13 +1290,13 @@ window.addEventListener(
 		}
 
 		var keys={
-			32: ()=> S.input()				//Spacebar
-			,37: ()=> S.to({time:"-10"})	//Left arrow
-			,39: ()=>S.to({time:"+10"})	//Right arrow
+			32: ()=>S.input()				//Spacebar
+			,37: ()=>S.to({time:"-10"})		//Left arrow
+			,39: ()=>S.to({time:"+10"})		//Right arrow
 			,36: ()=>S.to({file:"first"})	//Home
 			,35: ()=>S.to({file:"last"})	//End
-			,177: ()=>S.to({file:"-1"})	//Previous
-			,176: ()=>S.to({file:"+1"})	//Next
+			,177: ()=>S.to({file:"-1"})		//Previous
+			,176: ()=>S.to({file:"+1"})		//Next
 			,179: ()=>S.menu()				//Play/pause
 		};
 		
@@ -1429,7 +1412,6 @@ menuButton.addEventListener(
 	}
 );
 
-
 fullscreenButton.addEventListener(
 	"click"
 	,event=>{
@@ -1447,12 +1429,10 @@ content.addEventListener("click",()=> S.input());
 
 //Update title info
 if(S.title){
+	function updateTitle(){document.title=replaceInfoText(S.title,S.currentFile);}
+	
 	types.audio.addEventListener("timeupdate",updateTitle);
 	types.video.addEventListener("timeupdate",updateTitle);
-	
-	function updateTitle(){
-		document.title=replaceInfoText(S.title,S.currentFile);
-	}
 }
 
 //Update the bookmark
