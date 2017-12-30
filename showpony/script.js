@@ -11,7 +11,8 @@ if(!input.window){
 	document.currentScript.insertAdjacentElement('afterend',input.window=document.createElement("div"));
 	
 	input.window.style.cssText=`
-		width:100%;
+		width:640px;
+		max-width:100%;
 		height:480px;
 		margin:auto;
 	`;
@@ -59,17 +60,13 @@ S.to=function(input){
 	var obj=input || {};
 	
 	//Relative file
-	if(obj.file && (obj.file[0]==='+' || obj.file[0]==='-')){
-		obj.file=S.currentFile+(parseInt(obj.file.substring(1))*(obj.file[0]==='-' ? -1 : 1))
-	}
+	if(obj.file && (obj.file[0]==='+' || obj.file[0]==='-')) obj.file=S.currentFile+(parseInt(obj.file.substring(1))*(obj.file[0]==='-' ? -1 : 1));
 	
 	//Relative time
 	if(obj.time && (obj.time[0]==='+' || obj.time[0]==='-')){
 		var getTime=0;
 		//Add the times of previous videos to get the actual time in the piece
-		for(var i=0;i<S.currentFile;i++){
-			getTime+=getLength(S.files[i]);
-		}
+		for(var i=0;i<S.currentFile;i++) getTime+=getLength(S.files[i]);
 		
 		getTime+=types[currentType] && types[currentType].currentTime || 0;
 		
@@ -86,10 +83,6 @@ S.to=function(input){
 	//If a time is passed but no file, get file and time based on the place in the total
 	if(obj.time!==undefined && obj.file===undefined){
 		obj.file=0;
-		
-		//Relative time
-		/*if(obj.time[0]==='+') obj.time=
-		if(obj.time[0]==='-') obj.time=*/
 		
 		//Look through the videos for the right one
 		var l=S.files.length;
@@ -384,8 +377,6 @@ S.fullscreen=function(type){
 		? document[fs[1]]()
 		: S.window[fs[2]]()
 	;
-	
-	return;
 }
 
 //When the viewer inputs to Showpony (click, space, general action)
@@ -597,10 +588,8 @@ function replaceInfoText(value,fileNum,current){
 		//Use the currentTime of the object, if it has one
 		var currentTime=types[currentType] && types[currentType].currentTime || 0;
 		
-		//Look through the videos for the right one
-		var l=S.currentFile;
 		//Add the times of previous videos 7to get the actual time in the piece
-		for(var i=0;i<l;i++) currentTime+=getLength(S.files[i]);
+		for(var i=0;i<S.currentFile;i++) currentTime+=getLength(S.files[i]);
 		
 		var inputPercent=currentTime / duration
 			,newPart=S.currentFile;
@@ -608,9 +597,7 @@ function replaceInfoText(value,fileNum,current){
 		var current=Math.floor(inputPercent*duration)
 			,left=duration-Math.floor(inputPercent*duration)
 		;
-	}else{
-		var left=duration-current;
-	}
+	}else var left=duration-current;
 	
 	//Save all the values to instantly pass them through
 	var values={
@@ -652,9 +639,7 @@ function replaceInfoText(value,fileNum,current){
 
 	//If there's a date, return it; otherwise, return blank space
 	if(date){
-		date=date[0]
-			.split(/[\s-:;]+/)
-		;
+		date=date[0].split(/[\s-:;]+/);
 		
 		console.log(date);
 		
@@ -785,12 +770,8 @@ function POST(onSuccess,obj){
 						if(response.files) S.files=response.files;
 						
 						onSuccess(response);
-					}else{
-						alert(response.message);
-					}
-				}else{
-					alert("Failed to load Showpony class file.");
-				}
+					}else alert(response.message);
+				}else alert("Failed to load Showpony class file.");
 			}
 		}
 	);
@@ -819,9 +800,6 @@ function POSTRemote(event,onSuccess,obj){
 			if(ajax.readyState==4){
 				if(ajax.status==200){
 					var response=JSON.parse(ajax.responseText);
-					console.log(response);
-					
-					console.log(onSuccess);
 					
 					if(response.success) onSuccess && onSuccess(response);
 					else console.log(response.message);
@@ -835,38 +813,35 @@ function POSTRemote(event,onSuccess,obj){
 
 //Get the medium of a file
 function getMedium(name){
-	//Get the extension
-	switch(name.match(/\.[^.]+$/)[0]){
-		case ".jpg":
-		case ".jpeg":
-		case ".png":
-		case ".gif":
-		case ".svg":
+	//Get the extension- fast!
+	switch(name.slice((name.lastIndexOf(".") - 1 >>> 0) + 2)){
+		case "jpg":
+		case "jpeg":
+		case "png":
+		case "gif":
+		case "svg":
 			return "image";
 			break;
-		case ".mp4":
-		case ".webm":
+		case "mp4":
+		case "webm":
 			return "video";
 			break;
-		case ".mp3":
-		case ".wav":
+		case "mp3":
+		case "wav":
 			return "audio";
 			break;
-		case ".mm":
+		case "mm":
 			return "multimedia";
 			break;
-		case ".html":
-		case ".txt":
-			return "text";
-			break;
+		//All else defaults to text
 		default:
-			return null;
+			return "text";
 			break;
 	}
 }
 
 function getLength(file){
-	var get=file.match(/[^\s)]+(?=\..+$)/);
+	var get=/[^\s)]+(?=\.)/.exec(file);
 
 	//Return the value in the file or the default duration
 	return (get ? parseFloat(get[0]) : S.defaultDuration);
@@ -876,8 +851,7 @@ function getLength(file){
 function frag(inputArray,inputParent){
 	var fragment=document.createDocumentFragment();
 	
-	var l=inputArray.length;
-	for(var i=0;i<l;i++) fragment.appendChild(inputArray[i]);
+	for(var i=0, len=inputArray.length;i<len;i++) fragment.appendChild(inputArray[i]);
 	
 	inputParent.appendChild(fragment);
 }
@@ -906,14 +880,8 @@ function runMM(inputNum){
 	var text=S.lines[S.currentLine];
 	
 	//Replace all variables (including variables inside variables) with the right name
-	while(text.match(/[^\[]+(?=\])/g)){
-		var match=text.match(/[^\[]+(?=\])/g)[0];
-		
-		text=text.replace(
-			'['+match+']'
-			,S.data[match]
-		);
-	}
+	var match;
+	while(match=/[^\[]+(?=\])/g.exec(text)) text=text.replace('['+match[0]+']',S.data[match[0]]);
 
 	var wait=true; //Assume waiting time
 	
@@ -943,10 +911,7 @@ function runMM(inputNum){
 	}
 	
 	//If the textbox hasn't been created, create it!
-	if(!S.textboxes[multimediaSettings.textbox]){
-		S.textboxes[multimediaSettings.textbox]=m("textbox");
-		content.appendChild(S.textboxes[multimediaSettings.textbox]);
-	}
+	if(!S.textboxes[multimediaSettings.textbox]) content.appendChild(S.textboxes[multimediaSettings.textbox]=m("textbox"));
 	
 	//If there's nothing passed, clear the current textbox and continue on to the next line.
 	if(vals && !vals[2]){
@@ -1062,7 +1027,7 @@ function runMM(inputNum){
 			if(this!=event.target) return;
 			
 			//If the element's currently hidden (the animation that ended is for unhiding)
-			if(this.style.visibility!="visible"){		
+			if(this.style.visibility!=="visible"){		
 				S.charsHidden--;
 				this.style.visibility="visible";
 				
@@ -1178,12 +1143,10 @@ var multimediaFunction={
 		//If the audio doesn't exist
 		if(!S.objects[vals[1]]){
 			//Add them in!
-			var el=document.createElement("audio");
+			var el=S.objects[vals[1]]=document.createElement("audio");
 			
 			el.src="resources/audio/"+vals[1];
 			el.preload=true;
-			
-			S.objects[vals[1]]=el;
 			
 			content.appendChild(S.objects[vals[1]]);
 		}
@@ -1229,8 +1192,7 @@ var multimediaFunction={
 		var imageNames=vals[2].split(",");
 		
 		//Go through each image and add a div
-		let l=imageNames.length;
-		for(var i=0;i<l;i++){
+		for(var i=0, len=imageNames.length;i<len;i++){
 			var image="url('resources/characters/"+folder+"/"+imageNames[i]+"')";
 			
 			//If the image already exists
@@ -1242,15 +1204,10 @@ var multimediaFunction={
 				
 				var search=cha.children[i].children;
 				
-				for(var ii=0,len=search.length;ii<len;ii++){
-					
-					//Set the opacity right, and if it's 1, we found the image!
-					if(search[ii].style.opacity=(search[ii].style.backgroundImage==image ? 1 : 0)) found=true;
-				}
-			}else{
-				//If the layer doesn't exist, make it
-				cha.appendChild(document.createElement("div"));
-			}
+				//Set the opacity right, and if it's 1, we found the image!
+				for(var ii=0,len=search.length;ii<len;ii++) if(search[ii].style.opacity=(search[ii].style.backgroundImage==image ? 1 : 0)) found=true;
+			//If the layer doesn't exist, make it
+			}else cha.appendChild(document.createElement("div"));
 			
 			//If either the layer or the image doesn't exist, we add it!
 			if(!found){
@@ -1368,7 +1325,7 @@ window.addEventListener(
 );
 
 //We need to set this as a variable to remove it later on
-var windowClick=event=>{
+var windowClick=function(event){
 	event.stopPropagation();
 	S.menu(event);
 };
@@ -1379,7 +1336,7 @@ window.addEventListener("click",windowClick);
 //On mousedown, we prepare to move the cursor
 overlay.addEventListener(
 	"mousedown"
-	,event=>{
+	,function(event){
 		//Only read mousemove over the overlay
 		if(event.target!==this) return;
 		
@@ -1389,7 +1346,7 @@ overlay.addEventListener(
 
 window.addEventListener(
 	"mouseup"
-	,()=>{
+	,function(){
 		//If mouse goes up and we aren't scrubbing, set scrubbing to false.
 		//Otherwise, right-clicks can be read wrong
 		if(scrubbing!==true) scrubbing=false;
@@ -1399,7 +1356,7 @@ window.addEventListener(
 //On dragging
 window.addEventListener(
 	"mousemove"
-	,event=>{
+	,function(event){
 		if(scrubbing===false) return;
 		
 		if(scrubbing!==true){
@@ -1418,7 +1375,7 @@ window.addEventListener(
 //On dragging
 overlay.addEventListener(
 	"touchmove"
-	,event=>{
+	,function(event){
 		
 		if(scrubbing===false) scrubbing=event.changedTouches[0].clientX;
 		
@@ -1442,7 +1399,7 @@ overlay.addEventListener(
 //On touch end, don't keep moving the bar to the user's touch
 overlay.addEventListener(
 	"touchend"
-	,event=>{
+	,function(event){
 		
 		//If we were scrubbing
 		if(scrubbing===true){
