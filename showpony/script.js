@@ -26,28 +26,27 @@ if(!input.window){
 const S=this;
 
 //Set default values
-function setD(v,val){
+function d(v,val){
 	S[v]=(input[v]!==undefined ? input[v] : val);
 }
 
-//Set defaults
-setD('window');
+S.window=input.window;
 S.originalWindow=S.window.cloneNode(true);
-setD('files','get');
-setD('path','files/');
-setD('language','');
-setD('loadingClass',null);
-setD('scrubLoad',false);
-setD('info','[Current File] | [Files Left]');
-setD('data',{});
-setD('defaultDuration',10);
-setD('title',false);
-setD('dateFormat',{year:"numeric",month:"numeric",day:"numeric"});
-setD('admin',false);
-setD('query','file');
-setD('shortcuts','focus');
-setD('user',null);
-setD('object',location.hostname.substring(0,30));
+d('files','get');
+d('path','files/');
+d('language','');
+d('loadingClass',null);
+d('scrubLoad',false);
+d('info','[Current File] | [Files Left]');
+d('data',{});
+d('defaultDuration',10);
+d('title',false);
+d('dateFormat',{year:"numeric",month:"numeric",day:"numeric"});
+d('admin',false);
+d('query','file');
+d('shortcuts','focus');
+d('user',null);
+d('object',location.hostname.substring(0,30));
 
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
@@ -70,11 +69,7 @@ S.to=function(input){
 		
 		getTime+=types[currentType] && types[currentType].currentTime || 0;
 		
-		console.log(getTime);
-		
 		obj.time=getTime+(parseFloat(obj.time.substring(1))*(obj.time[0]==='-' ? -1 : 1));
-		
-		console.log(obj.time);
 		
 		//Don't go below 0
 		if(obj.time<0) obj.time=0;
@@ -206,49 +201,20 @@ S.to=function(input){
 	}
 	
 	//Display the medium based on the file extension
-	switch(newType){
+	switch(currentType=newType){
 		case "image":
 			thisType.src=src;
 			break;
 		case "video":
-			thisType.src=src;
-			
-			console.log(thisType.src);
-			
-			!overlay.classList.contains("showpony-overlay-visible") && thisType.play();
-			
-			//When the player's finished with a file
-			thisType.addEventListener(
-				"ended"
-				,function(){
-					//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
-					if(overlay.classList.contains("showpony-overlay-visible")) return;
-					
-					S.to({file:"+1"});
-				}
-			);
-			break;
 		case "audio":
 			//Adjust the source
 			thisType.src=src;
 			
+			//Play it if the menu isn't open
 			!overlay.classList.contains("showpony-overlay-visible") && thisType.play();
-			
-			//When the player's finished with a file
-			thisType.addEventListener(
-				"ended"
-				,function(){
-					//If we're scrubbing the media, don't check for ended (this can trigger and interrupt our media scrubbing)
-					if(overlay.classList.contains("showpony-overlay-visible")) return;
-					
-					S.to({file:"+1"});
-				}
-			);
 			break;
 		//Visual Novels/Kinetic Novels/Interactive Fiction
 		case "multimedia":
-			console.log(currentType);
-		
 			//If the previous type was different, use the new type (or if we're scrubbing and not moving along as normal)
 			//if(currentType!=newType || overlay.style.visibility=="visible"){
 				content.innerHTML="";
@@ -276,9 +242,6 @@ S.to=function(input){
 	
 	//Update the time
 	thisType.currentTime=obj.time;
-	
-	//Track the file type used here for when we next switch
-	currentType=getMedium(S.files[S.currentFile]);
 	
 	//Update the title if it's set
 	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
@@ -323,9 +286,6 @@ S.menu=function(event){
 	
 	else //If we aren't moving the bar
 	{
-		menuButton.classList.toggle("showpony-button-preview");
-		fullscreenButton.classList.toggle("showpony-button-preview");
-		
 		//On toggling classes, returns "true" if just added
 		if(overlay.classList.toggle("showpony-overlay-visible")){
 			scrub();
@@ -476,7 +436,6 @@ captionsButton.alt="Closed Captions/Subtitles";
 continueNotice.innerHTML="...";
 
 frag([menuButton,fullscreenButton],menuButtons);
-
 frag([progress,overlayText],overlay);
 
 ///////////////////////////////////////
@@ -862,6 +821,12 @@ function m(c,el){
 	a.className="showpony-"+c;
 	
 	return a;
+}
+
+//When video or audio ends
+function mediaEnd(){
+	//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
+	if(!overlay.classList.contains("showpony-overlay-visible")) S.to({file:"+1"});
 }
 
 //Run multimedia (interactive fiction, visual novels, etc)
@@ -1427,6 +1392,10 @@ captionsButton.addEventListener(
 
 content.addEventListener("click",()=> S.input());
 
+//When we finish playing a video or audio file
+types.video.addEventListener("ended",mediaEnd);
+types.audio.addEventListener("ended",mediaEnd);
+
 //Update title info
 if(S.title){
 	function updateTitle(){document.title=replaceInfoText(S.title,S.currentFile);}
@@ -1522,8 +1491,6 @@ if(S.admin){
 	var account=function(type){
 		var pass=null;
 		if(type==="login") if(!(pass=prompt("What's your password?"))) return;
-		
-		console.log(type,pass);
 		
 		POST(
 			response=>{
