@@ -5,17 +5,10 @@ function Showpony(input){
 //If an input object doesn't exist, make one
 if(!input) input={};
 
-//If no window was passed
+//If no window was passed, make one!
 if(!input.window){
-	//Make one!
 	document.currentScript.insertAdjacentElement('afterend',input.window=document.createElement("div"));
-	
-	input.window.style.cssText=`
-		width:640px;
-		max-width:100%;
-		height:480px;
-		margin:auto;
-	`;
+	input.window.className="showpony-default";
 }
 
 ///////////////////////////////////////
@@ -26,9 +19,7 @@ if(!input.window){
 const S=this;
 
 //Set default values
-function d(v,val){
-	S[v]=(input[v]!==undefined ? input[v] : val);
-}
+function d(v,val){S[v]=(input[v]!==undefined ? input[v] : val);}
 
 S.window=input.window;
 S.originalWindow=S.window.cloneNode(true);
@@ -185,20 +176,11 @@ S.to=function(input){
 		content.appendChild(thisType);
 	}
 	
-	var src=(
-		S.files[S.currentFile][0]=="x"
-		? "showpony/ajax.php?get="+S.path+S.language+S.files[S.currentFile]
-		: S.path+S.language+S.files[S.currentFile]
-	);
+	//How we get the file depends on whether or not it's private
+	var src=(S.files[S.currentFile][0]=="x" ? "showpony/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile];
 	
-	//Refresh the file, if requested we do so
-	if(obj.refresh){
-		src+=(
-			S.files[S.currentFile][0]=="x"
-				? "&refresh-"+Date.now()
-				: '?refresh-'+Date.now()
-		);
-	}
+	//Refresh the file, if requested we do so, by adding a query
+	if(obj.refresh) src+=(S.files[S.currentFile][0]==="x" ? "&" : "?")+"refresh-"+Date.now();
 	
 	//Display the medium based on the file extension
 	switch(currentType=newType){
@@ -222,18 +204,13 @@ S.to=function(input){
 				S.textboxes={};
 			//}
 			
-			GET(
-				src
-				,function(ajax){
-					//Get each line (taking into account and ignoring extra lines)
-					S.lines=ajax.responseText.match(/[^\r\n]+/g);
-					
-					runMM(0);
-				}
-			);
+			GET(src,ajax=>{
+				S.lines=ajax.responseText.match(/[^\r\n]+/g); //Get each line (taking into account and ignoring extra lines)
+				runMM(0);
+			});
 			break;
 		case "text":
-			GET(src,function(ajax){content.innerHTML=ajax.responseText;});
+			GET(src,ajax=>{content.innerHTML=ajax.responseText;});
 			break;
 		default:
 			alert("Extension not recognized or supported!");
@@ -262,23 +239,8 @@ S.to=function(input){
 
 //Toggle the menu
 S.menu=function(event){
-	//If we're moving the bar right now, ignore clicking but do set scrubbing to false
-	
-	if(scrubbing===true){
-		scrubbing=false;
-	
-		//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
-		if(S.scrubLoad==false){
-			//Load the file our cursor's on
-			scrub(
-				(event.clientX-S.window.getBoundingClientRect().left)
-				/
-				(S.window.getBoundingClientRect().width)
-			);
-		}
-		
-		return;
-	}
+	//If we're moving the bar right now, ignore clicking (only for clicking, touches are checked elsewhere)
+	if(event && !event.changedTouches && userScrub(event)) return;
 	
 	//We can cancel moving the bar outside of the overlay, but we can't do anything else.
 	//Exit if we're not targeting the overlay.
@@ -295,8 +257,6 @@ S.menu=function(event){
 		}else types[currentType].play && types[currentType].play();
 	}
 	
-	scrubbing=false;
-	
 	//Send an event when toggling the menu
 	S.window.dispatchEvent(
 		new CustomEvent("menu"
@@ -309,34 +269,63 @@ S.menu=function(event){
 	);
 };
 
+function userScrub(){
+	var touch=event.changedTouches ? true : false;
+	var pos=touch ? event.changedTouches[0].clientX : event.clientX;
+	
+	if(scrubbing===true){
+		scrubbing=false;
+	
+		//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
+		if(S.scrubLoad==false){
+			//Load the file our pointer's on
+			scrub(
+				(pos-S.window.getBoundingClientRect().left)
+				/
+				(S.window.getBoundingClientRect().width)
+			);
+		}
+		
+		return true; //Exit the function
+	}
+	
+	//scrubbing needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
+	scrubbing=false;
+}
+
 //Toggle fullscreen
 S.fullscreen=function(type){
 	//Get fullscreen type
-	var fs=S.window.requestFullscreen //Normal
-			? [
-				"fullscreenElement"
-				,"exitFullscreen"
-				,"requestFullscreen"
-			]
-		: S.window.webkitRequestFullscreen //Webkit
-			? [
-				"webkitFullscreenElement"
-				,"webkitExitFullscreen"
-				,"webkitRequestFullscreen"
-			]
-		: //FF
-			[
-				"mozFullScreenElement"
-				,"mozCancelFullScreen"
-				,"mozRequestFullScreen"
-			]
+	var browser=S.window.requestFullscreen ?
+			{
+				element:"fullscreenElement"
+				,request:"requestFullscreen"
+				,exit:"exitFullscreen"
+			}
+		: S.window.webkitRequestFullscreen ?
+			{
+				element:"webkitFullscreenElement"
+				,request:"webkitRequestFullscreen"
+				,exit:"webkitExitFullscreen"
+			}
+		: S.window.mozRequestFullScreen ?
+			{
+			element:"mozFullScreenElement"
+			,request:"mozRequestFullScreen"
+			,exit:"mozCancelFullScreen"
+			}
+		: null
 	;
 	
-	//Use the 3 fullscreen values above to use fullscreen mode on various browsers.
-	document[fs[0]]
-		? document[fs[1]]()
-		: S.window[fs[2]]()
-	;
+	//If a fullscreen-supporting browser wasn't found, return
+	if(!browser) return;
+	
+	//If fullscreen and not requesting, exit
+	if(document[browser.element]){
+		type!=="request" && document[browser.exit]();
+	}else{ //If not fullscreen and not exiting, request
+		type!=="exit" && S.window[browser.request]();
+	}
 }
 
 //When the viewer inputs to Showpony (click, space, general action)
@@ -538,6 +527,33 @@ function scrub(inputPercent){
 	)+"</p>";
 }
 
+//Drag on the menu to go to any part
+function moveOverlay(event){
+	//Mouse and touch work slightly differently
+	var touch=event.changedTouches ? true : false;
+	var pos=touch ? event.changedTouches[0].clientX : event.clientX;
+	
+	if(scrubbing===false){
+		if(touch) scrubbing=pos;
+		else return;
+	}
+		
+	//You have to swipe farther than you move the cursor to adjust the position
+	if(scrubbing!==true){
+		if(Math.abs(scrubbing-pos)>screen.width/(touch ? 20 : 100)) scrubbing=true;
+		else return;
+	}
+	
+	//Don't want the users to accidentally swipe to another page!
+	if(touch) event.preventDefault();
+	
+	scrub(
+		(pos-S.window.getBoundingClientRect().left)
+		/
+		(S.window.getBoundingClientRect().width)
+	);
+}
+
 function replaceInfoText(value,fileNum,current){
 	var duration=S.files.map(function(e){return getLength(e);}).reduce((a,b) => a+b,0);
 	
@@ -561,7 +577,7 @@ function replaceInfoText(value,fileNum,current){
 	//Save all the values to instantly pass them through
 	var values={
 		name:{
-			current:"Untitled"
+			current:getName(S.files[fileNum])
 		}
 		,date:{
 			current:"Undated"
@@ -594,7 +610,7 @@ function replaceInfoText(value,fileNum,current){
 	}
 	
 	//Get the name, remove the parentheses (skip over "x")
-	var date=S.files[fileNum].match(/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/);
+	var date=/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.exec(S.files[fileNum]);
 
 	//If there's a date, return it; otherwise, return blank space
 	if(date){
@@ -618,14 +634,6 @@ function replaceInfoText(value,fileNum,current){
 		).format(date);
 	}
 	
-	//Name
-	//Get the name, remove the parentheses
-	var name=S.files[fileNum].match(/\(.*\)/);
-	
-	//If there's a name, return it; otherwise, return blank space
-	//Get rid of the parentheses, but also replace safemark characters
-	if(name) values.name.current=safeFilename(name[0].replace(/(^\(|\)$)/g,''),"from");
-	
 	//Use special naming convention to replace values correctly
 	function infoNaming(input){
 		//Choose the right type
@@ -645,18 +653,13 @@ function replaceInfoText(value,fileNum,current){
 		if(/left|remain/i.test(input)) value="left";
 		else if(/total|all/i.test(input)) value="total";
 		
-		console.log(type,value,values[type][value]);
-		
 		var pad=parseInt(input.match(/[0-9]+/i)) || 0;
-		
-		console.log(pad);
 		
 		//Return the value
 		return padStart(values[type][value],pad);
-		//return padStart(floorValue|0,input[1]);
 	}
 	
-	return value.replace(/\[[^\]]*\]/g,infoNaming);
+	return value.replace(/\[[^\]]+\]/g,infoNaming);
 }
 
 //Pad the beginning of a value with leading zeroes
@@ -671,6 +674,19 @@ function padStart(input,length){
 	
 	//Return either the input or the padded value, whichever is longer
 	return input.length>padded.length ? input : padded;
+}
+
+//Get a file's name
+function getName(input){
+	return safeFilename(
+		input.replace(/(^[^(]+\()|(\)[^)]+$)/g,'')
+		,"from"
+	)
+};
+
+//Get a file's date
+function getDate(input){
+	return input.replace(/x|\s?(\(|\.).+/g,'').replace(/;/g,':');
 }
 
 //Make a GET call
@@ -1229,48 +1245,42 @@ function safeFilename(string,type){
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
 
-//Keyboard presses
-window.addEventListener(
-	"keydown"
-	,function(event){
-		//Adjust response based on shortcuts setting
-		
-		//Proceed if always enabled
-		if(S.shortcuts==='always'){}
-		else if(!S.shortcuts || S.shortcuts==='never'){
-			//If shortcuts disabled
-			return;
-		}else if(S.shortcuts==='fullscreen'){
-			//If isn't fullscreen
-			if(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.msFullscreenElement) return;
-		}else{ //Default to "focus"
-			//Return if not focused
-			if(
-				//If isn't selected
-				(S.window!==document.activeElement)
-				&&
-				//If isn't fullscreen
-				(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.msFullscreenElement)
-			) return;
+//If shortcut keys are enabled
+if(S.shortcuts){
+	//Keyboard presses
+	window.addEventListener(
+		"keydown"
+		,function(event){
+			console.log("HI!",S.shortcuts);
+			
+			//If shortcuts aren't always enabled, perform checks
+			if(S.shortcuts!=='always'){
+				//Exit if it isn't fullscreen
+				if(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.fullscreenElement){
+					console.log("Not full");
+					//If needs to be focused
+					if(S.shortcuts!=='fullscreen' && S.window!==document.activeElement) return;
+				}
+			}
+			
+			var shortcutKeys={
+				32: ()=>S.input()				//Spacebar
+				,37: ()=>S.to({time:"-10"})		//Left arrow
+				,39: ()=>S.to({time:"+10"})		//Right arrow
+				,36: ()=>S.to({file:"first"})	//Home
+				,35: ()=>S.to({file:"last"})	//End
+				,177: ()=>S.to({file:"-1"})		//Previous
+				,176: ()=>S.to({file:"+1"})		//Next
+				,179: ()=>S.menu()				//Play/pause
+			};
+			
+			if(shortcutKeys[event.keyCode]){
+				event.preventDefault();
+				shortcutKeys[event.keyCode]();
+			}
 		}
-
-		var keys={
-			32: ()=>S.input()				//Spacebar
-			,37: ()=>S.to({time:"-10"})		//Left arrow
-			,39: ()=>S.to({time:"+10"})		//Right arrow
-			,36: ()=>S.to({file:"first"})	//Home
-			,35: ()=>S.to({file:"last"})	//End
-			,177: ()=>S.to({file:"-1"})		//Previous
-			,176: ()=>S.to({file:"+1"})		//Next
-			,179: ()=>S.menu()				//Play/pause
-		};
-		
-		if(keys[event.keyCode]){
-			event.preventDefault();
-			keys[event.keyCode]();
-		}
-	}
-);
+	);
+}
 
 //We need to set this as a variable to remove it later on
 var windowClick=function(event){
@@ -1281,93 +1291,17 @@ var windowClick=function(event){
 //On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
 window.addEventListener("click",windowClick);
 
-//On mousedown, we prepare to move the cursor
-overlay.addEventListener(
-	"mousedown"
-	,function(event){
-		//Only read mousemove over the overlay
-		if(event.target!==this) return;
-		
-		scrubbing=event.clientX;
-	}
-);
+//On mousedown, we prepare to move the cursor (but not over overlay buttons)
+overlay.addEventListener("mousedown",function(event){if(event.target===this) scrubbing=event.clientX;});
 
-window.addEventListener(
-	"mouseup"
-	,function(){
-		//If mouse goes up and we aren't scrubbing, set scrubbing to false.
-		//Otherwise, right-clicks can be read wrong
-		if(scrubbing!==true) scrubbing=false;
-	}
-);
-
-//On dragging
-window.addEventListener(
-	"mousemove"
-	,function(event){
-		if(scrubbing===false) return;
-		
-		if(scrubbing!==true){
-			if(Math.abs(scrubbing-event.clientX)>screen.width/100) scrubbing=true;
-			else return;
-		}
-		
-		scrub(
-			(event.clientX-S.window.getBoundingClientRect().left)
-			/
-			(S.window.getBoundingClientRect().width)
-		);
-	}
-);
-
-//On dragging
-overlay.addEventListener(
-	"touchmove"
-	,function(event){
-		
-		if(scrubbing===false) scrubbing=event.changedTouches[0].clientX;
-		
-		//You have to swipe farther than you move the cursor to adjust the position
-		if(scrubbing!==true){
-			if(Math.abs(scrubbing-event.changedTouches[0].clientX)>screen.width/20) scrubbing=true;
-			else return;
-		}
-		
-		//Don't want the users to accidentally swipe to another page!
-		event.preventDefault();
-		
-		scrub(
-			(event.changedTouches[0].clientX-S.window.getBoundingClientRect().left)
-			/
-			(S.window.getBoundingClientRect().width)
-		);
-	}
-);
-
+//If mouse goes up and we aren't scrubbing, set scrubbing to false. Otherwise, right-clicks can be read wrong.
+window.addEventListener("mouseup",function(){if(scrubbing!==true) scrubbing=false;});
 //On touch end, don't keep moving the bar to the user's touch
-overlay.addEventListener(
-	"touchend"
-	,function(event){
-		
-		//If we were scrubbing
-		if(scrubbing===true){
-			scrubbing=false;
-			console.log("We were scrubbing!");
-			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
-			if(S.scrubLoad==false){
-				//Load the file our pointer's on
-				scrub(
-					(event.changedTouches[0].clientX-S.window.getBoundingClientRect().left)
-					/
-					(S.window.getBoundingClientRect().width)
-				);
-			}
-		}
-		
-		//scrubbing needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
-		scrubbing=false;
-	}
-);
+overlay.addEventListener("touchend",userScrub);
+
+//On dragging
+window.addEventListener("mousemove",moveOverlay);
+overlay.addEventListener("touchmove",moveOverlay);
 
 menuButton.addEventListener(
 	"click"
@@ -1387,7 +1321,7 @@ fullscreenButton.addEventListener(
 
 captionsButton.addEventListener(
 	"click"
-	,()=> event.stopPropagation()
+	,event=> event.stopPropagation()
 );
 
 content.addEventListener("click",()=> S.input());
@@ -1476,13 +1410,9 @@ if(S.admin){
 	}
 	
 	function updateEditor(){
-		//Get the name, remove the parentheses
-		uploadName.value=safeFilename(
-			(S.files[S.currentFile].match(/\(.*\)/) || [""])[0].replace(/(^\(|\)$)/g,'')
-			,"from"
-		);
-		
-		uploadDate.value=(S.files[S.currentFile].match(/\d(.(?!\())+\d*/) || [""])[0].replace(/;/g,':');
+		//Remove extra values to get these ones
+		uploadName.value=getName(S.files[S.currentFile]);
+		uploadDate.value=getDate(S.files[S.currentFile]);
 	}
 	
 	logoutButton.addEventListener("click",()=>account("logout"));
@@ -1505,7 +1435,6 @@ if(S.admin){
 	function renameFile(){
 		var thisFile=S.currentFile;
 		var date=uploadDate.value;
-		var x=(S.files[thisFile][0]=='x') ? 'x': '';
 		
 		//Test that the date is safe (must match setup)
 		if(!(/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.test(date))){
@@ -1513,7 +1442,7 @@ if(S.admin){
 			return;
 		}
 		
-		var fileName=x
+		var fileName=(S.files[thisFile][0]==='x') ? 'x': ''
 			+date.replace(/:/g,';') //date (replace : with ; so it's Windows safe)
 			+" ("+safeFilename(uploadName.value,"to")+")" //name
 			+S.files[thisFile].match(/\.\w+$/) //ext
@@ -1568,14 +1497,8 @@ if(S.admin){
 					//Remove the file from the arrays
 					S.files.splice(thisFile,1);
 
-					//If still on that file, refresh it
-					if(thisFile===S.currentFile){
-					
-						//Don't go past the last file
-						if(thisFile>=S.files.length) thisFile=S.files.length-1;
-						
-						S.to({file:thisFile,refresh:true,replaceState:true})
-					}
+					//If still on the file we're deleting, reload the file
+					if(thisFile===S.currentFile) S.to({file:thisFile,reload:true,replaceState:true})
 				}
 				,{call:"deleteFile",name:S.files[thisFile]}
 			);

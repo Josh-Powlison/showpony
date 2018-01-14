@@ -4,6 +4,13 @@
 	overflow:hidden;
 }
 
+/*Default CSS for a created Showpony window (only used when one isn't specified in the CSS)*/
+.showpony-default{
+	width:640px;
+	height:480px;
+	margin:auto;
+}
+
 .showpony-overlay{
 	position:absolute;
 	left:0;
