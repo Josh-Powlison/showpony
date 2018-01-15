@@ -170,10 +170,13 @@ S.to=function(input){
 	waitTimer=null;
 	
 	//If switching types, do some cleanup
-	if(currentType!=newType){
+	if(currentType!=newType || newType==='multimedia'){ //Reset for multimedia engine- for now!
 		content.innerHTML="";
 		console.log(types);
 		content.appendChild(thisType);
+		S.objects={window:S.window};
+		S.textboxes={};
+		S.lines=[];
 	}
 	
 	//How we get the file depends on whether or not it's private
@@ -182,46 +185,23 @@ S.to=function(input){
 	//Refresh the file, if requested we do so, by adding a query
 	if(obj.refresh) src+=(S.files[S.currentFile][0]==="x" ? "&" : "?")+"refresh-"+Date.now();
 	
+	currentType=newType;
+	
 	//Display the medium based on the file extension
-	switch(currentType=newType){
-		case "image":
-			thisType.src=src;
-			break;
-		case "video":
-		case "audio":
-			//Adjust the source
-			thisType.src=src;
-			
-			//Play it if the menu isn't open
-			!overlay.classList.contains("showpony-overlay-visible") && thisType.play();
-			break;
-		//Visual Novels/Kinetic Novels/Interactive Fiction
-		case "multimedia":
-			//If the previous type was different, use the new type (or if we're scrubbing and not moving along as normal)
-			//if(currentType!=newType || overlay.style.visibility=="visible"){
-				content.innerHTML="";
-				S.objects={window:S.window};
-				S.textboxes={};
-			//}
-			
-			GET(src,ajax=>{
-				S.lines=ajax.responseText.match(/[^\r\n]+/g); //Get each line (taking into account and ignoring extra lines)
-				runMM(0);
-			});
-			break;
-		case "text":
-			GET(src,ajax=>{content.innerHTML=ajax.responseText;});
-			break;
-		default:
-			alert("Extension not recognized or supported!");
-			break;
+	if(currentType==='text') GET(src,ajax=>{content.innerHTML=ajax.responseText;});
+	else if(currentType==='multimedia'){
+		GET(src,ajax=>{
+			S.lines=ajax.responseText.match(/[^\r\n]+/g); //Get each line (taking into account and ignoring extra lines)
+			runMM(0);
+		});
+	}else{
+		//Adjust the source
+		thisType.src=src;
+		if(currentType==='video' || currentType==='audio') !overlay.classList.contains("showpony-overlay-visible") && thisType.play();
 	}
 	
-	//Update the time
-	thisType.currentTime=obj.time;
-	
-	//Update the title if it's set
-	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
+	thisType.currentTime=obj.time; //Update the time
+	if(S.title) document.title=replaceInfoText(S.title,S.currentFile); //Update the title if it's set
 	
 	//Run custom event for checking time
 	S.window.dispatchEvent(
@@ -1236,8 +1216,7 @@ function safeFilename(string,type){
 	//Swap values if changing TO a filename instead of FROM a filename
 	if(type!=='from') [a,b]=[b,a];
 	
-	for(var i=0,len=a.length;i<len;i++) string=string.replace(a[i],b[i])
-	
+	for(var i=0,len=a.length;i<len;i++) string=string.replace(a[i],b[i]);
 	return string;
 }
 
@@ -1251,8 +1230,6 @@ if(S.shortcuts){
 	window.addEventListener(
 		"keydown"
 		,function(event){
-			console.log("HI!",S.shortcuts);
-			
 			//If shortcuts aren't always enabled, perform checks
 			if(S.shortcuts!=='always'){
 				//Exit if it isn't fullscreen
@@ -1264,14 +1241,14 @@ if(S.shortcuts){
 			}
 			
 			var shortcutKeys={
-				32: ()=>S.input()				//Spacebar
-				,37: ()=>S.to({time:"-10"})		//Left arrow
-				,39: ()=>S.to({time:"+10"})		//Right arrow
-				,36: ()=>S.to({file:"first"})	//Home
-				,35: ()=>S.to({file:"last"})	//End
-				,177: ()=>S.to({file:"-1"})		//Previous
-				,176: ()=>S.to({file:"+1"})		//Next
-				,179: ()=>S.menu()				//Play/pause
+				32: 	()=>S.input()				//Spacebar
+				,37:	()=>S.to({time:"-10"})		//Left arrow
+				,39:	()=>S.to({time:"+10"})		//Right arrow
+				,36:	()=>S.to({file:"first"})	//Home
+				,35:	()=>S.to({file:"last"})		//End
+				,177:	()=>S.to({file:"-1"})		//Previous
+				,176:	()=>S.to({file:"+1"})		//Next
+				,179:	()=>S.menu()				//Play/pause
 			};
 			
 			if(shortcutKeys[event.keyCode]){
@@ -1494,7 +1471,7 @@ if(S.admin){
 			
 			POST(
 				function(response){
-					//Remove the file from the arrays
+					//Remove the file from the array
 					S.files.splice(thisFile,1);
 
 					//If still on the file we're deleting, reload the file
