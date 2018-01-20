@@ -290,9 +290,9 @@ S.fullscreen=function(type){
 			}
 		: S.window.mozRequestFullScreen ?
 			{
-			element:"mozFullScreenElement"
-			,request:"mozRequestFullScreen"
-			,exit:"mozCancelFullScreen"
+				element:"mozFullScreenElement"
+				,request:"mozRequestFullScreen"
+				,exit:"mozCancelFullScreen"
 			}
 		: null
 	;
@@ -301,11 +301,9 @@ S.fullscreen=function(type){
 	if(!browser) return;
 	
 	//If fullscreen and not requesting, exit
-	if(document[browser.element]){
-		type!=="request" && document[browser.exit]();
-	}else{ //If not fullscreen and not exiting, request
-		type!=="exit" && S.window[browser.request]();
-	}
+	if(document[browser.element]) type!=="request" && document[browser.exit]();
+	//If not fullscreen and not exiting, request
+	else type!=="exit" && S.window[browser.request]();
 }
 
 //When the viewer inputs to Showpony (click, space, general action)
