@@ -380,10 +380,11 @@ var waitForInput=false
 	,progress=m("progress")
 	,content=m("content")
 	//Buttons
-	,menuButton=m("menu-button showpony-button-preview","button")
-	,fullscreenButton=m("fullscreen-button showpony-button-preview","button")
-	,menuButtons=m("menu-buttons","div")
+	,menuButton=m("button showpony-menu-button showpony-button-preview","button")
+	,fullscreenButton=m("button showpony-fullscreen-button showpony-button-preview","button")
 	,captionsButton=m("captions-button","button")
+	,accountButton=m("button showpony-account-button showpony-button-preview","button")
+	,menuButtons=m("menu-buttons","div")
 	,types={
 		image:m("block","img")
 		,audio:m("block","audio")
@@ -399,10 +400,11 @@ content.className="showpony-content";
 
 menuButton.alt="Menu";
 fullscreenButton.alt="Fullscreen";
+accountButton.alt="Hey Bard! Account";
 captionsButton.alt="Closed Captions/Subtitles";
 continueNotice.innerHTML="...";
 
-frag([menuButton,fullscreenButton],menuButtons);
+frag([menuButton,fullscreenButton,accountButton],menuButtons);
 frag([progress,overlayText],overlay);
 
 ///////////////////////////////////////
@@ -1278,6 +1280,7 @@ overlay.addEventListener("touchend",userScrub);
 window.addEventListener("mousemove",moveOverlay);
 overlay.addEventListener("touchmove",moveOverlay);
 
+//Menu buttons
 menuButton.addEventListener(
 	"click"
 	,event=>{
@@ -1291,6 +1294,14 @@ fullscreenButton.addEventListener(
 	,event=>{
 		event.stopPropagation();
 		S.fullscreen();
+	}
+);
+
+accountButton.addEventListener(
+	"click"
+	,event=>{
+		event.stopPropagation();
+		window.open("http://localhost/heybard/index.html");
 	}
 );
 
@@ -1345,13 +1356,13 @@ else startup();
 
 if(S.admin){
 	var editorUI=m("editor-ui")
-		,uploadFileButton=m("upload-file","label")
+		,uploadFileButton=m("button showpony-upload-file","label")
 		,uploadFile=document.createElement("input")
-		,uploadDate=m("editor-date","input")
-		,uploadName=m("editor-name","input")
-		,deleteFile=m("delete-file","button")
-		,newFile=m("new-file","button")
-		,logoutButton=m("logout","button")
+		,uploadDate=m("button showpony-editor-date","input")
+		,uploadName=m("button showpony-editor-name","input")
+		,deleteFile=m("button showpony-delete-file","button")
+		,newFile=m("button showpony-new-file","button")
+		,logoutButton=m("button showpony-logout","button")
 	;
 
 	uploadName.type=uploadDate.type="text";
