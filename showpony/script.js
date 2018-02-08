@@ -56,7 +56,7 @@ S.to=function(input){
 	if(obj.time && (obj.time[0]==='+' || obj.time[0]==='-')){
 		var getTime=0;
 		//Add the times of previous videos to get the actual time in the piece
-		for(var i=0;i<S.currentFile;i++) getTime+=getLength(S.files[i]);
+		for(let i=0;i<S.currentFile;i++) getTime+=getLength(S.files[i]);
 		
 		getTime+=types[currentType] && types[currentType].currentTime || 0;
 		
@@ -72,7 +72,7 @@ S.to=function(input){
 		
 		//Look through the videos for the right one
 		var l=S.files.length;
-		for(var i=0;i<l;i++){
+		for(let i=0;i<l;i++){
 			var length=getLength(S.files[i]);
 			
 			//If we've reached the file, exit
@@ -188,12 +188,25 @@ S.to=function(input){
 	currentType=newType;
 	
 	//Display the medium based on the file extension
-	if(currentType==='text') GET(src,ajax=>{content.innerHTML=ajax.responseText;});
-	else if(currentType==='multimedia'){
-		GET(src,ajax=>{
-			S.lines=ajax.responseText.match(/[^\r\n]+/g); //Get each line (taking into account and ignoring extra lines)
-			runMM(0);
-		});
+	//Multmedia Engine/Text/Copy
+	if(currentType==='multimedia' || currentType==='text'){
+		fetch(src,{credentials:'include'})
+			.then(response=>{
+				return response.text();
+			})
+			.then(text=>{
+				if(currentType==='multimedia'){
+					//Get each line (taking into account and ignoring extra lines)
+					S.lines=text.match(/[^\r\n]+/g);
+					runMM(0);
+				//Regular text
+				}else content.innerHTML=text;
+			})
+			.catch((error)=>{
+				alert(error);
+			})
+		;
+	//Image/Audio/Video
 	}else{
 		//Adjust the source
 		thisType.src=src;
@@ -308,44 +321,35 @@ S.fullscreen=function(type){
 
 //When the viewer inputs to Showpony (click, space, general action)
 S.input=function(){
-	console.log(currentType);
+	if(currentType==='image') S.to({file:"+1"});
+	else if(currentType==='audio' || currentType==='video') S.menu();
+	else if(currentType==='multimedia'){
+		//If the player is making choices right now
+		if(waitForInput) return;
 	
-	//Function differently depending on medium
-	switch(currentType){
-		case "image":
-			S.to({file:"+1"}); break;
-		case "audio": case "video":
-			S.menu(); break;
-		case "multimedia":
-			//If the player is making choices right now
-			if(waitForInput) return;
-		
-			//If a wait timer was going, stop it.
-			clearTimeout(waitTimer);
-		
-			console.log(S.charsHidden);
-		
-			//If all letters are displayed
-			if(S.charsHidden<1) runMM();
-			else //If some S.objects have yet to be displayed
-			{
-				console.log(S.textboxes);
-				
-				//Go through each textbox and display all of its text
-				Object.keys(S.textboxes).forEach(
-					function(key){
-						let l=S.textboxes[key].children.length;
-						for(let i=0;i<l;i++){
-							//Skip over non-span tags
-							if(S.textboxes[key].children[i].tagName!=="SPAN") continue;
-							
-							//Remove the delay so they're displayed immediately
-							S.textboxes[key].children[i].children[0].style.animationDelay="0s";
-						}
+		//If a wait timer was going, stop it.
+		clearTimeout(waitTimer);
+	
+		console.log(S.charsHidden);
+	
+		//If all letters are displayed
+		if(S.charsHidden<1) runMM();
+		else //If some S.objects have yet to be displayed
+		{
+			//Go through each textbox and display all of its text
+			Object.keys(S.textboxes).forEach(
+				function(key){
+					let l=S.textboxes[key].children.length;
+					for(let i=0;i<l;i++){
+						//Skip over non-span tags
+						if(S.textboxes[key].children[i].tagName!=="SPAN") continue;
+						
+						//Remove the delay so they're displayed immediately
+						S.textboxes[key].children[i].children[0].style.animationDelay="0s";
 					}
-				);
-			}
-			break;
+				}
+			);
+		}
 	}
 }
 
@@ -355,7 +359,7 @@ S.close=function(){
 	window.removeEventListener("click",windowClick);
 	
 	//Reset the window to what it was before
-	S.window.parentNode.replaceChild(S.originalWindow,S.window);
+	S.window.replaceWith(S.originalWindow);
 }
 
 ///////////////////////////////////////
@@ -411,50 +415,6 @@ frag([progress,overlayText],overlay);
 ///////////PRIVATE FUNCTIONS///////////
 ///////////////////////////////////////
 
-function startup(){
-	//currentFile is -1 before we load
-	S.currentFile=-1;
-	
-	//If not an int, get the final part (like if the text reads "last")
-	S.start=parseInt(input.start) || S.files.length-1;
-	
-	//For now, all stories will get remote accounts from heybard.com
-	POSTRemote(
-		false
-		,function(response){
-			//If a bookmark was set, use it; otherwise, use the default part
-			if(!isNaN(response.bookmark)) S.start=response.bookmark;
-			
-			//If querystrings are in use, consider the querystring in the URL
-			if(S.query){
-				window.addEventListener(
-					"popstate"
-					,function(){
-						var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
-						
-						if(page) S.to({file:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
-					}
-				);
-				
-				var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
-			
-				//Add in the time if it needs it, otherwise pass nothing
-				S.to({
-					file: page ? parseInt(page[0].split("=")[1])-1 : S.start
-					,popstate:page ? true : false
-					,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
-					,scrollToTop:false
-				});
-			//Start
-			}else S.to({file:S.start,scrollToTop:false});
-			
-			//Set input to null in hopes that garbage collection will come pick it up
-			input=null;
-		}
-		,{'call':'get'}
-	);
-}
-
 //Update the scrubber's position
 function scrub(inputPercent){
 	var duration=S.files.map(function(e){return getLength(e);}).reduce((a,b) => a+b,0);
@@ -465,7 +425,7 @@ function scrub(inputPercent){
 		var currentTime=types[currentType] && types[currentType].currentTime || 0;
 		
 		//Add the times of previous videos to get the actual time in the piece
-		for(var i=0;i<S.currentFile;i++) currentTime+=getLength(S.files[i]);
+		for(let i=0;i<S.currentFile;i++) currentTime+=getLength(S.files[i]);
 		
 		var inputPercent=currentTime / duration
 			,newPart=S.currentFile;
@@ -481,7 +441,7 @@ function scrub(inputPercent){
 		
 		//Look through the media for the right one
 		var l=S.files.length;
-		for(var i=0;i<l;i++){
+		for(let i=0;i<l;i++){
 			//If the duration's within this one, stop at this one
 			if(i==l-1 || newTime<getLength(S.files[i])){
 			//If this is the media!
@@ -544,7 +504,7 @@ function replaceInfoText(value,fileNum,current){
 		var currentTime=types[currentType] && types[currentType].currentTime || 0;
 		
 		//Add the times of previous videos 7to get the actual time in the piece
-		for(var i=0;i<S.currentFile;i++) currentTime+=getLength(S.files[i]);
+		for(let i=0;i<S.currentFile;i++) currentTime+=getLength(S.files[i]);
 		
 		var inputPercent=currentTime / duration
 			,newPart=S.currentFile;
@@ -633,27 +593,14 @@ function replaceInfoText(value,fileNum,current){
 		if(/left|remain/i.test(input)) value="left";
 		else if(/total|all/i.test(input)) value="total";
 		
-		var pad=parseInt(input.match(/[0-9]+/i)) || 0;
-		
 		//Return the value
-		return padStart(values[type][value],pad);
+		return String(values[type][value]).padStart(
+			/\d+/.exec(input) || 0
+			,'0'
+		);
 	}
 	
 	return value.replace(/\[[^\]]+\]/g,infoNaming);
-}
-
-//Pad the beginning of a value with leading zeroes
-function padStart(input,length){
-	//Make input a string
-	input=String(input);
-	
-	//Return if length is 0
-	if(!length) return input;
-	
-	var padded=('000000000'+input).slice(-length);
-	
-	//Return either the input or the padded value, whichever is longer
-	return input.length>padded.length ? input : padded;
 }
 
 //Get a file's name
@@ -669,33 +616,8 @@ function getDate(input){
 	return input.replace(/x|\s?(\(|\.).+/g,'').replace(/;/g,':');
 }
 
-//Make a GET call
-function GET(src,onSuccess){
-	//Add loadingClass
-	S.loadingClass && S.window.classList.add(S.loadingClass);
-	
-	var ajax=new XMLHttpRequest();
-	ajax.open("GET",src);
-	ajax.send();
-	
-	ajax.addEventListener(
-		"readystatechange"
-		,function(){
-			if(ajax.readyState==4){
-				if(ajax.status==200){
-					onSuccess(ajax);
-					//Remove loadingClass
-					if(S.loadingClass) content.classList.remove(S.loadingClass);
-				}else{
-					alert("Failed to load file called: "+S.path+S.language+S.files[S.currentFile]);
-				}
-			}
-		}
-	);
-}
-
 //Make a POST call
-function POST(onSuccess,obj){
+function POST(obj){
 	//Prepare the form data
 	var formData=new FormData();
 	formData.append('call',obj.call);
@@ -707,63 +629,26 @@ function POST(onSuccess,obj){
 	obj.newName && formData.append('newName',obj.newName);
 	obj.files && formData.append('files',obj.files);
 	
-	var ajax=new XMLHttpRequest();
-	ajax.open("POST","showpony/ajax.php");
-	ajax.send(formData);
-	
-	ajax.addEventListener(
-		"readystatechange"
-		,function(){
-			if(ajax.readyState==4){
-				if(ajax.status==200){
-					var response=JSON.parse(ajax.responseText);
-					console.log(response);
-					
-					if(response.success){
-						loggedIn=response.admin;
-						
-						if(response.files) S.files=response.files;
-						
-						onSuccess(response);
-					}else alert(response.message);
-				}else alert("Failed to load Showpony class file.");
-			}
-		}
-	);
-}
-
-//Make a POST call to heybard.com
-function POSTRemote(event,onSuccess,obj){
-	//Defaults to a bookmark update
-	obj=obj || {};
-	
-	//Prepare the form data
-	var formData=new FormData();
-	formData.append('call',obj.call || 'bookmark');
-	formData.append('object',S.object);
-	
-	//Special values, if passed
-	formData.append('file',S.currentFile);
-	
-	var ajax=new XMLHttpRequest();
-	ajax.open("POST","http://localhost/heybard/api/account.php");
-	ajax.send(formData);
-	
-	ajax.addEventListener(
-		"readystatechange"
-		,function(){
-			if(ajax.readyState==4){
-				if(ajax.status==200){
-					var response=JSON.parse(ajax.responseText);
-					
-					if(response.success) onSuccess && onSuccess(response);
-					else console.log(response.message);
-				}else{
-					console.log("Failed to load Hey Bard account.");
-				}
-			}
-		}
-	);
+	return new Promise(function(resolve,reject){
+		
+		//Make the call
+		fetch("showpony/ajax.php",{method:'post',body:formData,credentials:'include'})
+		.then(response=>{
+			return response.json();
+		})
+		//Work with the json
+		.then(json=>{
+			if(json.success){
+				loggedIn=json.admin;
+				if(json.files) S.files=json.files;
+				
+				resolve(json);
+			}else reject(json.message);
+		})
+		.catch(response=>{
+			alert(response);
+		});
+	});
 }
 
 //Get the medium of a file
@@ -806,7 +691,7 @@ function getLength(file){
 function frag(inputArray,inputParent){
 	var fragment=document.createDocumentFragment();
 	
-	for(var i=0, len=inputArray.length;i<len;i++) fragment.appendChild(inputArray[i]);
+	for(let i=0, len=inputArray.length;i<len;i++) fragment.appendChild(inputArray[i]);
 	
 	inputParent.appendChild(fragment);
 }
@@ -1136,7 +1021,7 @@ var multimediaFunction={
 		var imageNames=vals[2].split(",");
 		
 		//Go through each image and add a div
-		for(var i=0, len=imageNames.length;i<len;i++){
+		for(let i=0, len=imageNames.length;i<len;i++){
 			var image="url('resources/characters/"+folder+"/"+imageNames[i]+"')";
 			
 			//If the image already exists
@@ -1149,7 +1034,7 @@ var multimediaFunction={
 				var search=cha.children[i].children;
 				
 				//Set the opacity right, and if it's 1, we found the image!
-				for(var ii=0,len=search.length;ii<len;ii++) if(search[ii].style.opacity=(search[ii].style.backgroundImage==image ? 1 : 0)) found=true;
+				for(let ii=0,len=search.length;ii<len;ii++) if(search[ii].style.opacity=(search[ii].style.backgroundImage==image ? 1 : 0)) found=true;
 			//If the layer doesn't exist, make it
 			}else cha.appendChild(document.createElement("div"));
 			
@@ -1216,7 +1101,7 @@ function safeFilename(string,type){
 	//Swap values if changing TO a filename instead of FROM a filename
 	if(type!=='from') [a,b]=[b,a];
 	
-	for(var i=0,len=a.length;i<len;i++) string=string.replace(a[i],b[i]);
+	for(let i=0,len=a.length;i<len;i++) string=string.replace(a[i],b[i]);
 	return string;
 }
 
@@ -1310,7 +1195,7 @@ captionsButton.addEventListener(
 	,event=> event.stopPropagation()
 );
 
-content.addEventListener("click",()=> S.input());
+content.addEventListener("click",()=>{S.input();});
 
 //When we finish playing a video or audio file
 types.video.addEventListener("ended",mediaEnd);
@@ -1326,7 +1211,7 @@ if(S.title){
 
 //Update the bookmark
 	//Also, before unload (Need to add in)
-window.addEventListener("blur",POSTRemote);
+//window.addEventListener("blur",POSTRemote);
 
 ///////////////////////////////////////
 /////////////////START/////////////////
@@ -1347,8 +1232,76 @@ S.window.classList.add("showpony");
 if(S.window.tabIndex<0) S.window.tabIndex=0;
 
 //If the user's getting the files remotely, make the call
-if(S.files==="get") POST(startup,{call:"getFiles"});
-else startup();
+new Promise(function(resolve,reject){
+	//currentFile is -1 before we load
+	S.currentFile=-1;
+	
+	//If getting, run a promise to check success
+	if(S.files==="get"){
+		console.log("Return stuff!");
+		POST({call:"getFiles"})
+			.then(response=>resolve(response))
+			.catch(response=>reject(response));
+	}
+	
+	//Skip to catch if not true
+	resolve();
+})
+//Get Hey Bard account
+.then(()=>new Promise(function(resolve,reject){
+	console.log("hey!");
+	if(typeof HeyBard==='function'){
+		HeyBard({id:S.object})
+		.then(response=>{
+			console.log("Success!",response);
+			//If a bookmark was set, use it; otherwise, use the default part
+			if(!isNaN(response.bookmark)) resolve(response.bookmark);
+			else resolve(response.bookmark);
+		})
+		.catch(response=>{
+			resolve();
+		})
+		;
+	}else{
+		console.log("Accounts not available");
+		resolve();
+	}
+}))
+//Get bookmarks going
+.then((start)=>{
+	//Start at either the passed number or the one requested to be started at if none was passed
+	S.start=(!isNaN(start) ? start : parseInt(input.start) || S.files.length-1);
+	
+	//If querystrings are in use, consider the querystring in the URL
+	if(S.query){
+		window.addEventListener(
+			"popstate"
+			,function(){
+				var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+				
+				if(page) S.to({file:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
+			}
+		);
+		
+		var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+	
+		//Add in the time if it needs it, otherwise pass nothing
+		S.to({
+			file: page ? parseInt(page[0].split("=")[1])-1 : S.start
+			,popstate:page ? true : false
+			,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
+			,scrollToTop:false
+		});
+	//Start
+	}else S.to({file:S.start,scrollToTop:false});
+	
+	//Set input to null in hopes that garbage collection will come pick it up
+	input=null;
+})
+//On failure (or not getting)
+.catch((response)=>{
+	console.log("Failure!");
+})
 
 ///////////////////////////////////////
 /////////////////ADMIN/////////////////
@@ -1408,14 +1361,15 @@ if(S.admin){
 		var pass=null;
 		if(type==="login") if(!(pass=prompt("What's your password?"))) return;
 		
-		POST(
-			response=>{
-				S.window.classList[loggedIn ? "add" : "remove"]("showpony-editor");
+		POST({call:type,password:pass})
+		.then(response=>{
+			S.window.classList[loggedIn ? "add" : "remove"]("showpony-editor");
 				
-				S.to({reload:true,scrollToTop:false,replaceState:true});
-			}
-			,{call:type,password:pass}
-		);
+			S.to({reload:true,scrollToTop:false,replaceState:true});
+		})
+		.catch(response=>{
+			alert(response);
+		});
 	}
 	
 	function renameFile(){
@@ -1434,18 +1388,16 @@ if(S.admin){
 			+S.files[thisFile].match(/\.\w+$/) //ext
 		;
 		
-		POST(
-			response=>{
-				S.files[thisFile]=response.file;
-				
-				//Sort the files by order
-				S.files.sort();
-				
-				S.to({file:S.files.indexOf(response.file),scrollToTop:false,replaceState:true});
-				scrub();
-			}
-			,{call:"renameFile",name:S.files[thisFile],newName:fileName}
-		);
+		POST({call:"renameFile",name:S.files[thisFile],newName:fileName})
+		.then(response=>{
+			S.files[thisFile]=response.file;
+			
+			//Sort the files by order
+			S.files.sort();
+			
+			S.to({file:S.files.indexOf(response.file),scrollToTop:false,replaceState:true});
+			scrub();
+		});
 	}
 	
 	//EVENT LISTENERS//
@@ -1458,19 +1410,17 @@ if(S.admin){
 		,function(){
 			var thisFile=S.currentFile;
 			
-			POST(
-				response=>{
-					S.files[thisFile]=response.file;
-					
-					//If still on that file, refresh it
-					S.currentFile===thisFile && S.to({file:thisFile,refresh:true,scrollToTop:false,replaceState:true})
-				}
-				,{
-					call:"uploadFile"
-					,name:S.files[thisFile]
-					,files:uploadFile.files[0]
-				}
-			);
+			POST({
+				call:"uploadFile"
+				,name:S.files[thisFile]
+				,files:uploadFile.files[0]
+			})
+			.then(response=>{
+				S.files[thisFile]=response.file;
+				
+				//If still on that file, refresh it
+				S.currentFile===thisFile && S.to({file:thisFile,refresh:true,scrollToTop:false,replaceState:true})
+			});
 		}
 	);
 	
@@ -1478,28 +1428,29 @@ if(S.admin){
 		,()=>{
 			var thisFile=S.currentFile;
 			
-			POST(
-				function(response){
-					//Remove the file from the array
-					S.files.splice(thisFile,1);
+			POST({call:"deleteFile",name:S.files[thisFile]})
+			.then(response=>{
+				//Remove the file from the array
+				S.files.splice(thisFile,1);
 
-					//If still on the file we're deleting, reload the file
-					if(thisFile===S.currentFile) S.to({file:thisFile,reload:true,replaceState:true})
-				}
-				,{call:"deleteFile",name:S.files[thisFile]}
-			);
+				//If still on the file we're deleting, reload the file
+				if(thisFile===S.currentFile) S.to({file:thisFile,reload:true,replaceState:true})
+			});
 		}
 	);
 	
 	newFile.addEventListener("click"
-		,()=>POST(
-			response=>{
+		,function(){
+			POST({call:"newFile"})
+			.then(response=>{
 				//Add the file to the array
 				S.files.push(response.file);
 				S.to({file:"last"});
-			}
-			,{call:"newFile"}
-		)
+			})
+			.catch(
+				
+			);
+		}
 	);
 }
 
