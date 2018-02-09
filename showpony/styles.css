@@ -11,36 +11,26 @@
 	margin:auto;
 }
 
-.showpony-overlay{
-	position:absolute;
-	left:0;
-	top:0;
-	right:0;
-	bottom:0;
-	background-color:rgba(0,0,0,.75);
-	visibility:hidden;
-	-ms-user-select:none;
-	-moz-user-select:none;
-	-webkit-user-select:none;
-	user-select:none;
-	font-family:sans-serif;
-	z-index:1000;
-	pointer-events:none;
-}
-
-.showpony-overlay-visible{
-	visibility:visible;
-	pointer-events:auto;
-}
-
 /*Menu scrub bar*/
 .showpony-progress{
 	position:absolute;
-	top:0;
 	bottom:0;
+	top:5em;
 	width:.5em;
 	transform:translate(-.25em,0);
-	background-color:#ffffff61;
+	background-color:#fff;
+	pointer-events:none;
+}
+
+.showpony-progress::after{
+	content:" ";
+	position:absolute;
+	border:solid white .5em;
+	border-radius:100%;
+	transform:translate(-.75em,-1.5em);
+	box-sizing:border-box;
+	width:2em;
+	height:2em;
 	pointer-events:none;
 }
 
@@ -50,46 +40,64 @@
 	height:100%;
 	color:white;
 	text-align:center;
+	cursor:pointer;
+	
+	-ms-user-select:none;
+	-moz-user-select:none;
+	-webkit-user-select:none;
+	user-select:none;
+	
 	pointer-events:none;
+	
 	display:flex;
-	font-size:1.5em;
+	font-size:1rem;
 	justify-content:center;
-	align-items:center;
 }
 
 .showpony-menu-buttons{
 	position:absolute;
 	top:0;
+	left:0;
 	right:0;
-	opacity:0;
+	bottom:80%;
 	z-index:1001;
-	transition:opacity .2s;
-	background-color:#000000aa;
+	opacity:0;
+	cursor:none;
+	transition:opacity .2s,background-color .1s;
+	background-color:rgba(0,0,0,.25);
 }
 
 .showpony-menu-buttons:hover
-,.showpony-menu-buttons:focus{
+,.showpony-menu-buttons-show{
 	opacity:1;
+	cursor:auto;
+	animation:hide-menu 1s linear 2s;
+	animation-fill-mode:forwards;
+}
+
+.showpony-menu-buttons-show{
+	background-color:rgba(0,0,0,.5);
+	bottom:0;
 }
 
 .showpony-menu-buttons button{
-	float:left;
 	border:none;
-	width:5em;
-	height:5em;
+	width:3rem;
+	height:3rem;
+	pointer-events:auto;
 	cursor:pointer;
 	background-size:cover;
-	transition:opacity .5s;
-	opacity:.5;
-	background-color:#000000;
+	background-color:#00000000;
 }
 
 .showpony-menu-button{
 	background-position:0% 0%;
+	float:left;
 }
 
 .showpony-fullscreen-button{
 	background-position:0% 10%;
+	float:right;
 }
 
 .showpony-captions-button{
@@ -98,6 +106,7 @@
 
 .showpony-account-button{
 	background-position:0% 100%;
+	float:left;
 }
 
 .showpony-menu-buttons button:hover{
@@ -412,17 +421,11 @@
 	height:1em;
 }
 
-.showpony-editor-name
-,.showpony-editor-date{
+.showpony-editor-ui>input{
 	padding-left:1.75em;
 }
 
-.showpony-editor-date
-,.showpony-editor-name
-,.showpony-upload-file
-,.showpony-new-file
-,.showpony-delete-file
-,.showpony-logout{
+.showpony-editor-ui>*{
 	color:white;
 	font-size:1.25em;
 	
@@ -434,15 +437,13 @@
 	box-sizing:border-box;
 }
 
-.showpony-editor-date:hover
-,.showpony-editor-name:hover
-,.showpony-editor-file:hover{
+.showpony-editor-ui>input:hover
+,.showpony-editor-ui>label:hover{
 	background-color:rgba(0,0,0,.25);
 }
 
-.showpony-editor-date:focus
-,.showpony-editor-name:focus
-,.showpony-editor-file:focus{
+.showpony-editor-ui>input:hover
+,.showpony-editor-ui>label:hover{
 	background-color:rgba(0,0,0,1);
 }
 
@@ -462,10 +463,8 @@
 	background-position:50% 60%;
 }
 
-.showpony-upload-file
-,.showpony-new-file
-,.showpony-delete-file
-,.showpony-logout{
+.showpony-editor-ui>label
+,.showpony-editor-ui>button{
 	cursor:pointer;
 	width:2.5em;
 	min-height:1.25em;

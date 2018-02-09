@@ -210,7 +210,7 @@ S.to=function(input){
 	}else{
 		//Adjust the source
 		thisType.src=src;
-		if(currentType==='video' || currentType==='audio') !overlay.classList.contains("showpony-overlay-visible") && thisType.play();
+		if(currentType==='video' || currentType==='audio') !menuButtons.classList.contains("showpony-menu-buttons-show") && thisType.play();
 	}
 	
 	thisType.currentTime=obj.time; //Update the time
@@ -237,12 +237,12 @@ S.menu=function(event){
 	
 	//We can cancel moving the bar outside of the overlay, but we can't do anything else.
 	//Exit if we're not targeting the overlay.
-	if(event && event.target!==overlay) return;
+	if(event && event.target!==menuButtons) return;
 	
 	else //If we aren't moving the bar
 	{
 		//On toggling classes, returns "true" if just added
-		if(overlay.classList.toggle("showpony-overlay-visible")){
+		if(menuButtons.classList.toggle("showpony-menu-buttons-show")){
 			scrub();
 			
 			//Play/pause video or audio
@@ -255,7 +255,7 @@ S.menu=function(event){
 		new CustomEvent("menu"
 		,{detail:{
 			open:(
-				overlay.classList.contains("showpony-overlay-visible") ? true
+				menuButtons.classList.contains("showpony-menu-buttons-show") ? true
 				: false
 			)
 		}})
@@ -379,12 +379,10 @@ var waitForInput=false
 	,currentType=null
 	,loggedIn=false //Logged in as admin
 	//Elements
-	,overlay=m("overlay")
 	,overlayText=m("overlay-text")
 	,progress=m("progress")
 	,content=m("content")
 	//Buttons
-	,menuButton=m("button showpony-menu-button showpony-button-preview","button")
 	,fullscreenButton=m("button showpony-fullscreen-button showpony-button-preview","button")
 	,captionsButton=m("captions-button","button")
 	,accountButton=m("button showpony-account-button showpony-button-preview","button")
@@ -402,14 +400,12 @@ var waitForInput=false
 
 content.className="showpony-content";
 
-menuButton.alt="Menu";
 fullscreenButton.alt="Fullscreen";
 accountButton.alt="Hey Bard! Account";
 captionsButton.alt="Closed Captions/Subtitles";
 continueNotice.innerHTML="...";
 
-frag([menuButton,fullscreenButton,accountButton],menuButtons);
-frag([progress,overlayText],overlay);
+frag([fullscreenButton,accountButton,overlayText,progress],menuButtons);
 
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
@@ -707,7 +703,7 @@ function m(c,el){
 //When video or audio ends
 function mediaEnd(){
 	//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
-	if(!overlay.classList.contains("showpony-overlay-visible")) S.to({file:"+1"});
+	if(!menuButtons.classList.contains("showpony-menu-buttons-show")) S.to({file:"+1"});
 }
 
 //Run multimedia (interactive fiction, visual novels, etc)
@@ -1154,26 +1150,18 @@ var windowClick=function(event){
 window.addEventListener("click",windowClick);
 
 //On mousedown, we prepare to move the cursor (but not over overlay buttons)
-overlay.addEventListener("mousedown",function(event){if(event.target===this) scrubbing=event.clientX;});
+menuButtons.addEventListener("mousedown",function(event){if(event.target===this) scrubbing=event.clientX;});
 
 //If mouse goes up and we aren't scrubbing, set scrubbing to false. Otherwise, right-clicks can be read wrong.
 window.addEventListener("mouseup",function(){if(scrubbing!==true) scrubbing=false;});
 //On touch end, don't keep moving the bar to the user's touch
-overlay.addEventListener("touchend",userScrub);
+menuButtons.addEventListener("touchend",userScrub);
 
 //On dragging
 window.addEventListener("mousemove",moveOverlay);
-overlay.addEventListener("touchmove",moveOverlay);
+menuButtons.addEventListener("touchmove",moveOverlay);
 
 //Menu buttons
-menuButton.addEventListener(
-	"click"
-	,event=>{
-		event.stopPropagation();
-		S.menu();
-	}
-);
-
 fullscreenButton.addEventListener(
 	"click"
 	,event=>{
@@ -1224,7 +1212,7 @@ if(window.getComputedStyle(S.window).getPropertyValue('position')=="static") S.w
 S.window.innerHTML="";
 
 //And fill it up again!
-frag([content,overlay,menuButtons],S.window);
+frag([content,menuButtons],S.window);
 
 S.window.classList.add("showpony");
 
