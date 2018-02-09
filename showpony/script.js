@@ -383,9 +383,9 @@ var waitForInput=false
 	,progress=m("progress")
 	,content=m("content")
 	//Buttons
-	,fullscreenButton=m("button showpony-fullscreen-button showpony-button-preview","button")
+	,fullscreenButton=m("button showpony-fullscreen-button","button")
 	,captionsButton=m("captions-button","button")
-	,accountButton=m("button showpony-account-button showpony-button-preview","button")
+	,accountButton=m("button showpony-account-button","button")
 	,overlay=m("overlay","div")
 	,types={
 		image:m("block","img")
@@ -394,14 +394,15 @@ var waitForInput=false
 		,multimedia:m("multimedia")
 		,text:m("text")
 	}
-	
 	,continueNotice=m("continue")
 ;
 
 content.className="showpony-content";
 
 fullscreenButton.alt="Fullscreen";
+fullscreenButton.title="Fullscreen Toggle";
 accountButton.alt="Hey Bard! Account";
+accountButton.title="Save a bookmark with a free Hey Bard! Account";
 captionsButton.alt="Closed Captions/Subtitles";
 continueNotice.innerHTML="...";
 
@@ -417,14 +418,20 @@ function scrub(inputPercent){
 	
 	//If no inputPercent was passed, estimate it
 	if(typeof(inputPercent)==='undefined'){
+		console.log("estimating!");
+		
 		//Use the currentTime of the object, if it has one
-		var currentTime=types[currentType] && types[currentType].currentTime || 0;
+		var newTime=types[currentType] && types[currentType].currentTime || 0;
+		
+		console.log(newTime);
 		
 		//Add the times of previous videos to get the actual time in the piece
-		for(let i=0;i<S.currentFile;i++) currentTime+=getLength(S.files[i]);
+		for(let i=0;i<S.currentFile;i++) newTime+=getLength(S.files[i]);
 		
-		var inputPercent=currentTime / duration
+		var inputPercent=newTime / duration
 			,newPart=S.currentFile;
+			
+		console.log(inputPercent,newPart);
 	}else{ //if inputPercent WAS passed
 	
 		//Clamp inputPercent between 0 and 1
@@ -1189,12 +1196,16 @@ content.addEventListener("click",()=>{S.input();});
 types.video.addEventListener("ended",mediaEnd);
 types.audio.addEventListener("ended",mediaEnd);
 
-//Update title info
-if(S.title){
-	function updateTitle(){document.title=replaceInfoText(S.title,S.currentFile);}
+//On moving through time, update info and title
+types.audio.addEventListener("timeupdate",updateInfo);
+types.video.addEventListener("timeupdate",updateInfo);
+
+function updateInfo(){
+	//Update the title, if set up for it
+	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
 	
-	types.audio.addEventListener("timeupdate",updateTitle);
-	types.video.addEventListener("timeupdate",updateTitle);
+	//Update the scrub bar
+	scrub();
 }
 
 //Update the bookmark

@@ -68,6 +68,7 @@
 }
 
 .showpony-overlay:hover
+,.showpony-overlay:active
 ,.showpony-overlay-show{
 	opacity:1;
 	cursor:auto;
@@ -88,11 +89,7 @@
 	cursor:pointer;
 	background-size:cover;
 	background-color:#00000000;
-}
-
-.showpony-menu-button{
-	background-position:0% 0%;
-	float:left;
+	transition:opacity .1s;
 }
 
 .showpony-fullscreen-button{
@@ -100,13 +97,13 @@
 	float:right;
 }
 
-.showpony-captions-button{
-
-}
-
 .showpony-account-button{
 	background-position:0% 100%;
 	float:left;
+}
+
+.showpony-captions-button{
+
 }
 
 .showpony-overlay button:hover{
