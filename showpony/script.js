@@ -153,10 +153,11 @@ S.to=function(input){
 	}
 	
 	//If we aren't moving the bar, update the overlay
-	scrubbing===false && scrub();
-	
-	//Go to the top of the page (if we didn't come here by autoloading)
-	obj.scrollToTop && S.window.scrollIntoView();
+	if(scrubbing===false){
+		scrub();
+		//Go to the top of the page (if we didn't come here by autoloading)
+		if(obj.scrollToTop) S.window.scrollIntoView();
+	}
 	
 	var newType=getMedium(S.files[S.currentFile])
 		,thisType=types[newType];
@@ -449,7 +450,7 @@ function scrub(inputPercent){
 			if(i==l-1 || newTime<getLength(S.files[i])){
 			//If this is the media!
 				//If we allow scrubbing or we're not moving the bar, we can load the file
-				if(S.scrubLoad!==false || scrubbing===false) S.to({file:i,time:newTime});
+				if(S.scrubLoad!==false || scrubbing===false) S.to({file:i,time:newTime,scrollToTop:false});
 				
 				newPart=i;
 			
