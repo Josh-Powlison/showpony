@@ -74,7 +74,7 @@ if(!empty($_GET['get'])){
 						if($file[0]!="x" && !rename($file,$file='x'.$file)) $response['success']=false;
 						
 						#Don't add hidden files if we aren't logged in
-						if(!$_SESSION['showpony_admin']) continue;
+						if(empty($_SESSION['showpony_admin'])) continue;
 					}
 				}
 				

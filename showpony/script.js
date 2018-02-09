@@ -37,7 +37,8 @@ d('admin',false);
 d('query','file');
 d('shortcuts','focus');
 d('user',null);
-d('object',location.hostname.substring(0,30));
+d('HeyBardID',location.hostname.substring(0,30));
+d('bookmark',"file");
 
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
@@ -45,8 +46,6 @@ d('object',location.hostname.substring(0,30));
 
 //Go to another file
 S.to=function(input){
-	console.log(input);
-	
 	var obj=input || {};
 	
 	//Relative file
@@ -386,7 +385,6 @@ var waitForInput=false
 	//Buttons
 	,fullscreenButton=m("button showpony-fullscreen-button","button")
 	,captionsButton=m("captions-button","button")
-	,accountButton=m("button showpony-account-button","button")
 	,overlay=m("overlay","div")
 	,types={
 		image:m("block","img")
@@ -402,16 +400,24 @@ content.className="showpony-content";
 
 fullscreenButton.alt="Fullscreen";
 fullscreenButton.title="Fullscreen Toggle";
-accountButton.alt="Hey Bard! Account";
-accountButton.title="Save a bookmark with a free Hey Bard! Account";
 captionsButton.alt="Closed Captions/Subtitles";
 continueNotice.innerHTML="...";
 
-frag([fullscreenButton,accountButton,overlayText,progress],overlay);
+frag([fullscreenButton,overlayText,progress],overlay);
 
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
 ///////////////////////////////////////
+
+function getCurrentTime(){
+	//Use the currentTime of the object, if it has one
+	var newTime=types[currentType] && types[currentType].currentTime || 0;
+	
+	//Add the times of previous videos to get the actual time in the piece
+	for(let i=0;i<S.currentFile;i++) newTime+=getLength(S.files[i]);
+	
+	return newTime;
+}
 
 //Update the scrubber's position
 function scrub(inputPercent){
@@ -419,20 +425,11 @@ function scrub(inputPercent){
 	
 	//If no inputPercent was passed, estimate it
 	if(typeof(inputPercent)==='undefined'){
-		console.log("estimating!");
-		
 		//Use the currentTime of the object, if it has one
-		var newTime=types[currentType] && types[currentType].currentTime || 0;
-		
-		console.log(newTime);
-		
-		//Add the times of previous videos to get the actual time in the piece
-		for(let i=0;i<S.currentFile;i++) newTime+=getLength(S.files[i]);
+		var newTime=getCurrentTime();
 		
 		var inputPercent=newTime / duration
 			,newPart=S.currentFile;
-			
-		console.log(inputPercent,newPart);
 	}else{ //if inputPercent WAS passed
 	
 		//Clamp inputPercent between 0 and 1
@@ -507,7 +504,7 @@ function replaceInfoText(value,fileNum,current){
 		//Use the currentTime of the object, if it has one
 		var currentTime=types[currentType] && types[currentType].currentTime || 0;
 		
-		//Add the times of previous videos 7to get the actual time in the piece
+		//Add the times of previous videos to get the actual time in the piece
 		for(let i=0;i<S.currentFile;i++) currentTime+=getLength(S.files[i]);
 		
 		var inputPercent=currentTime / duration
@@ -1178,14 +1175,6 @@ fullscreenButton.addEventListener(
 	}
 );
 
-accountButton.addEventListener(
-	"click"
-	,event=>{
-		event.stopPropagation();
-		window.open("http://localhost/heybard/index.html");
-	}
-);
-
 captionsButton.addEventListener(
 	"click"
 	,event=> event.stopPropagation()
@@ -1202,16 +1191,26 @@ types.audio.addEventListener("timeupdate",updateInfo);
 types.video.addEventListener("timeupdate",updateInfo);
 
 function updateInfo(){
+	//If using queries with time, adjust query on time update
+	if(S.query && S.bookmark==="time"){
+		console.log("hey!");
+		var search=new RegExp('(\\?|&)'+S.query+'=','i')
+			,newURL=document.location.href;
+		
+		if(search.test(newURL)) newURL=newURL.replace(new RegExp('((\\?|&)'+S.query+')=?[^&]+','i'),'$1='+(Math.floor(getCurrentTime())));
+		else newURL+=(newURL.indexOf("?")>-1 ? '&' : '?') +(S.query+'='+(Math.floor(getCurrentTime())));
+		
+		console.log(newURL);
+		
+		history.replaceState({},"",newURL);
+	}
+	
 	//Update the title, if set up for it
 	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
 	
 	//Update the scrub bar
 	scrub();
 }
-
-//Update the bookmark
-	//Also, before unload (Need to add in)
-//window.addEventListener("blur",POSTRemote);
 
 ///////////////////////////////////////
 /////////////////START/////////////////
@@ -1242,65 +1241,152 @@ new Promise(function(resolve,reject){
 		POST({call:"getFiles"})
 			.then(response=>resolve(response))
 			.catch(response=>reject(response));
+	}else{
+		//Skip to catch if not true
+		resolve();
 	}
-	
-	//Skip to catch if not true
-	resolve();
 })
 //Get Hey Bard account
 .then(()=>new Promise(function(resolve,reject){
-	console.log("hey!");
-	if(typeof HeyBard==='function'){
-		HeyBard({id:S.object})
-		.then(response=>{
-			console.log("Success!",response);
-			//If a bookmark was set, use it; otherwise, use the default part
-			if(!isNaN(response.bookmark)) resolve(response.bookmark);
-			else resolve(response.bookmark);
-		})
-		.catch(response=>{
-			resolve();
-		})
-		;
-	}else{
-		console.log("Accounts not available");
+	//If Hey Bard is disabled, skip over this!
+	if(S.HeyBardID===null){
+		console.log("Hey Bard accounts aren't enabled for this Showpony.");
 		resolve();
+		return;
+	}else{
+	//If Hey Bard is enabled
+		//Make a button
+		var accountButton=m("button showpony-account-button","button");
+		overlay.appendChild(accountButton);
+		
+		accountButton.addEventListener(
+			"click"
+			,event=>{
+				event.stopPropagation();
+				window.open("http://localhost/heybard/index.html");
+			}
+		);
+		accountButton.alt="Hey Bard! Account";
+		
+		if(typeof HeyBard==='function'){
+			HeyBard({id:S.HeyBardID})
+			.then(response=>{
+				console.log("Success!",response);
+				
+				//See if an account exists for the user
+				if(response.account){
+					accountButton.style.backgroundColor="green";
+					//Set the text for the Hey Bard button accordingly
+					accountButton.title="Hello, "+response.name+"! We'll save your bookmarks for you!";
+				}else{
+					//Set the text for the Hey Bard button accordingly
+					accountButton.title="Save a bookmark with a free Hey Bard! Account";
+				}
+				
+				//Use this to save bookmarks
+				function saveBookmark(){
+					console.log("Hello!",S.currentTime,S.currentFile);
+					HeyBard(
+						{
+							id:S.HeyBardID
+							//Pass either the time or the current file, whichever is chosen by the client
+							,bookmark:S.bookmark==="time" ? Math.floor(getCurrentTime()) : S.currentFile
+						}
+					);
+				}
+				
+				//Save user bookmarks when leaving the page
+				window.addEventListener("blur",saveBookmark);
+				
+				//If a bookmark was set, use it; otherwise, use the default part
+				if(!isNaN(response.bookmark)) resolve(response.bookmark);
+				else resolve(response.bookmark);
+			})
+			.catch(response=>{
+				accountButton.style.backgroundColor="yellow";
+				//Set the text for the Hey Bard button accordingly
+				accountButton.title="Failed to call Hey Bard's servers. Please try again later!";
+				
+				resolve();
+			})
+			;
+		}else{
+			accountButton.style.backgroundColor="red";
+			//Set the text for the Hey Bard button accordingly
+			accountButton.title="Failed to load the necessary script to use Hey Bard accounts.";
+			
+			console.log("Script for enabling HeyBard isn't loaded.");
+			resolve();
+		}
 	}
 }))
 //Get bookmarks going
 .then((start)=>{
-	//Start at either the passed number or the one requested to be started at if none was passed
-	S.start=(!isNaN(start) ? start : parseInt(input.start) || S.files.length-1);
+	//Start at the first legit number: start, input.start, or the last file
+	S.start=(
+		!isNaN(start)
+		? start
+		: !isNaN(input.start)
+		? parseInt(input.start)
+		: S.files.length-1
+	);
 	
 	//If querystrings are in use, consider the querystring in the URL
 	if(S.query){
-		window.addEventListener(
-			"popstate"
-			,function(){
-				var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
-				
-				if(page) S.to({file:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
-			}
-		);
-		
-		var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
-	
-		//Add in the time if it needs it, otherwise pass nothing
-		S.to({
-			file: page ? parseInt(page[0].split("=")[1])-1 : S.start
-			,popstate:page ? true : false
-			,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
-			,scrollToTop:false
-		});
+		if(S.bookmark==="time"){
+			window.addEventListener(
+				"popstate"
+				,function(){
+					var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+					
+					if(page) S.to({time:parseInt(page[0].split("=")[1]),popstate:true,scrollToTop:false});
+				}
+			);
+			
+			var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+			
+			//Add in the time if it needs it, otherwise pass nothing
+			S.to({
+				time: page ? parseInt(page[0].split("=")[1]) : S.start
+				,popstate:page ? true : false
+				,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
+				,scrollToTop:false
+			});
+
+		}else{
+			window.addEventListener(
+				"popstate"
+				,function(){
+					var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+					
+					if(page) S.to({file:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
+				}
+			);
+			
+			var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+			
+			//Add in the time if it needs it, otherwise pass nothing
+			S.to({
+				file: page ? parseInt(page[0].split("=")[1])-1 : S.start
+				,popstate:page ? true : false
+				,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
+				,scrollToTop:false
+			});
+		}
 	//Start
-	}else S.to({file:S.start,scrollToTop:false});
+	}else{
+		//Use time or file to bookmark, whichever is requested
+		if(S.bookmark==="time") S.to({time:S.start,scrollToTop:false});
+		else S.to({file:S.start,scrollToTop:false});
+	}
 	
 	//Set input to null in hopes that garbage collection will come pick it up
 	input=null;
 })
 //On failure (or not getting)
 .catch((response)=>{
-	console.log("Failure!");
+	console.log("Failure!",response);
+	alert("Failed to load the Showpony object");
 })
 
 ///////////////////////////////////////
