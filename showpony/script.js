@@ -210,7 +210,7 @@ S.to=function(input){
 	}else{
 		//Adjust the source
 		thisType.src=src;
-		if(currentType==='video' || currentType==='audio') !menuButtons.classList.contains("showpony-menu-buttons-show") && thisType.play();
+		if(currentType==='video' || currentType==='audio') !overlay.classList.contains("showpony-overlay-show") && thisType.play();
 	}
 	
 	thisType.currentTime=obj.time; //Update the time
@@ -237,12 +237,12 @@ S.menu=function(event){
 	
 	//We can cancel moving the bar outside of the overlay, but we can't do anything else.
 	//Exit if we're not targeting the overlay.
-	if(event && event.target!==menuButtons) return;
+	if(event && event.target!==overlay) return;
 	
 	else //If we aren't moving the bar
 	{
 		//On toggling classes, returns "true" if just added
-		if(menuButtons.classList.toggle("showpony-menu-buttons-show")){
+		if(overlay.classList.toggle("showpony-overlay-show")){
 			scrub();
 			
 			//Play/pause video or audio
@@ -255,7 +255,7 @@ S.menu=function(event){
 		new CustomEvent("menu"
 		,{detail:{
 			open:(
-				menuButtons.classList.contains("showpony-menu-buttons-show") ? true
+				overlay.classList.contains("showpony-overlay-show") ? true
 				: false
 			)
 		}})
@@ -386,7 +386,7 @@ var waitForInput=false
 	,fullscreenButton=m("button showpony-fullscreen-button showpony-button-preview","button")
 	,captionsButton=m("captions-button","button")
 	,accountButton=m("button showpony-account-button showpony-button-preview","button")
-	,menuButtons=m("menu-buttons","div")
+	,overlay=m("overlay","div")
 	,types={
 		image:m("block","img")
 		,audio:m("block","audio")
@@ -405,7 +405,7 @@ accountButton.alt="Hey Bard! Account";
 captionsButton.alt="Closed Captions/Subtitles";
 continueNotice.innerHTML="...";
 
-frag([fullscreenButton,accountButton,overlayText,progress],menuButtons);
+frag([fullscreenButton,accountButton,overlayText,progress],overlay);
 
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
@@ -703,7 +703,7 @@ function m(c,el){
 //When video or audio ends
 function mediaEnd(){
 	//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
-	if(!menuButtons.classList.contains("showpony-menu-buttons-show")) S.to({file:"+1"});
+	if(!overlay.classList.contains("showpony-overlay-show")) S.to({file:"+1"});
 }
 
 //Run multimedia (interactive fiction, visual novels, etc)
@@ -1150,16 +1150,16 @@ var windowClick=function(event){
 window.addEventListener("click",windowClick);
 
 //On mousedown, we prepare to move the cursor (but not over overlay buttons)
-menuButtons.addEventListener("mousedown",function(event){if(event.target===this) scrubbing=event.clientX;});
+overlay.addEventListener("mousedown",function(event){if(event.target===this) scrubbing=event.clientX;});
 
 //If mouse goes up and we aren't scrubbing, set scrubbing to false. Otherwise, right-clicks can be read wrong.
 window.addEventListener("mouseup",function(){if(scrubbing!==true) scrubbing=false;});
 //On touch end, don't keep moving the bar to the user's touch
-menuButtons.addEventListener("touchend",userScrub);
+overlay.addEventListener("touchend",userScrub);
 
 //On dragging
 window.addEventListener("mousemove",moveOverlay);
-menuButtons.addEventListener("touchmove",moveOverlay);
+overlay.addEventListener("touchmove",moveOverlay);
 
 //Menu buttons
 fullscreenButton.addEventListener(
@@ -1212,7 +1212,7 @@ if(window.getComputedStyle(S.window).getPropertyValue('position')=="static") S.w
 S.window.innerHTML="";
 
 //And fill it up again!
-frag([content,menuButtons],S.window);
+frag([content,overlay],S.window);
 
 S.window.classList.add("showpony");
 

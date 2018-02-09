@@ -54,7 +54,7 @@
 	justify-content:center;
 }
 
-.showpony-menu-buttons{
+.showpony-overlay{
 	position:absolute;
 	top:0;
 	left:0;
@@ -67,20 +67,20 @@
 	background-color:rgba(0,0,0,.25);
 }
 
-.showpony-menu-buttons:hover
-,.showpony-menu-buttons-show{
+.showpony-overlay:hover
+,.showpony-overlay-show{
 	opacity:1;
 	cursor:auto;
 	animation:hide-menu 1s linear 2s;
 	animation-fill-mode:forwards;
 }
 
-.showpony-menu-buttons-show{
+.showpony-overlay-show{
 	background-color:rgba(0,0,0,.5);
 	bottom:0;
 }
 
-.showpony-menu-buttons button{
+.showpony-overlay button{
 	border:none;
 	width:3rem;
 	height:3rem;
@@ -109,7 +109,7 @@
 	float:left;
 }
 
-.showpony-menu-buttons button:hover{
+.showpony-overlay button:hover{
 	opacity:.75;
 }
 
