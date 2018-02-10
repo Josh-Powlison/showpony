@@ -234,9 +234,6 @@ S.to=function(input){
 
 //Toggle the menu
 S.menu=function(event){
-	//If we're moving the bar right now, ignore clicking (only for clicking, touches are checked elsewhere)
-	if(event && !event.changedTouches && userScrub(event)) return;
-	
 	//We can cancel moving the bar outside of the overlay, but we can't do anything else.
 	//Exit if we're not targeting the overlay.
 	if(event && event.target!==overlay) return;
@@ -1152,7 +1149,15 @@ if(S.shortcuts){
 }
 
 //We need to set this as a variable to remove it later on
+//This needs to be click- otherwise, you could click outside of Showpony, release inside, and the menu would toggle. This results in messy scenarios when you're using the UI.
 var windowClick=function(event){
+	//If we just ended scrubbing, don't toggle the menu at all
+	if(scrubbing==="out"){
+		scrubbing=false;
+		return;
+	}
+	
+	console.log("WindowClick");
 	event.stopPropagation();
 	S.menu(event);
 };
@@ -1160,11 +1165,24 @@ var windowClick=function(event){
 //On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
 window.addEventListener("click",windowClick);
 
+window.addEventListener("mouseup",function(event){
+	console.log("Mouseup");
+	
+	//If we're not scrubbing, set scrubbing to false and return
+	if(scrubbing!==true){
+		scrubbing=false;
+		return;
+	}
+	
+	//Scrub the bar
+	userScrub(event);
+	
+	scrubbing="out";
+});
+
 //On mousedown, we prepare to move the cursor (but not over overlay buttons)
 overlay.addEventListener("mousedown",function(event){if(event.target===this) scrubbing=event.clientX;});
 
-//If mouse goes up and we aren't scrubbing, set scrubbing to false. Otherwise, right-clicks can be read wrong.
-window.addEventListener("mouseup",function(){if(scrubbing!==true) scrubbing=false;});
 //On touch end, don't keep moving the bar to the user's touch
 overlay.addEventListener("touchend",userScrub);
 
@@ -1176,7 +1194,6 @@ overlay.addEventListener("touchmove",moveOverlay);
 fullscreenButton.addEventListener(
 	"click"
 	,event=>{
-		event.stopPropagation();
 		S.fullscreen();
 	}
 );
@@ -1212,7 +1229,7 @@ function updateInfo(){
 	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
 	
 	//Update the scrub bar
-	scrub();
+	if(scrubbing!==true) scrub();
 }
 
 ///////////////////////////////////////
