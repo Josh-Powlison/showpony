@@ -42,11 +42,6 @@
 	text-align:center;
 	cursor:pointer;
 	
-	-ms-user-select:none;
-	-moz-user-select:none;
-	-webkit-user-select:none;
-	user-select:none;
-	
 	pointer-events:none;
 	
 	display:flex;
@@ -65,6 +60,11 @@
 	cursor:none;
 	transition:opacity .2s,background-color .1s;
 	background-color:rgba(0,0,0,.25);
+	
+	-ms-user-select:none;
+	-moz-user-select:none;
+	-webkit-user-select:none;
+	user-select:none;
 }
 
 .showpony-overlay:hover
@@ -137,6 +137,20 @@ button.showpony-account-button{
 	height:100%;
 	cursor:pointer;
 	object-fit:contain;
+}
+
+/*Logo display*/
+.showpony-logo{
+	position:absolute;
+	bottom:0;
+	right:0;
+	width:2rem;
+	height:2rem;
+	background-image:url("http://showpony.heybard.com/design-files/logo.svg");
+	filter:invert(1);
+	background-size:75%;
+	background-position:center;
+	background-repeat:no-repeat;
 }
 
 /*Fullscreen display*/

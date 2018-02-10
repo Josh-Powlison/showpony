@@ -385,6 +385,7 @@ var waitForInput=false
 	//Buttons
 	,fullscreenButton=m("button showpony-fullscreen-button","button")
 	,captionsButton=m("captions-button","button")
+	,showponyLogo=m("logo","a")
 	,overlay=m("overlay","div")
 	,types={
 		image:m("block","img")
@@ -403,7 +404,10 @@ fullscreenButton.title="Fullscreen Toggle";
 captionsButton.alt="Closed Captions/Subtitles";
 continueNotice.innerHTML="...";
 
-frag([fullscreenButton,overlayText,progress],overlay);
+showponyLogo.href="https://showpony.heybard.com/";
+showponyLogo.target="_blank";
+
+frag([fullscreenButton,overlayText,progress,showponyLogo],overlay);
 
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
