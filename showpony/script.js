@@ -155,7 +155,9 @@ S.to=function(input){
 	if(scrubbing===false){
 		scrub();
 		//Go to the top of the page (if we didn't come here by autoloading)
-		if(obj.scrollToTop) S.window.scrollIntoView();
+		if(obj.scrollToTop){
+			S.window.scrollIntoView();
+		}
 	}
 	
 	var newType=getMedium(S.files[S.currentFile])
@@ -1264,7 +1266,18 @@ new Promise(function(resolve,reject){
 			"click"
 			,event=>{
 				event.stopPropagation();
-				window.open("http://localhost/heybard/index.html");
+				
+				//Open up Hey Bard for accounts
+				
+				//Create the URL
+				var goTo="http://localhost/heybard/index.html";
+				
+				//Add in the story's querystring data so we know what to remove (if the user wants to continue from a bookmark
+				if(S.query) goTo+="?queryBookmarkName="+S.query;
+				goTo+="?returnTo="+location.href;
+				
+				//Go to the page
+				location.href=goTo;
 			}
 		);
 		accountButton.alt="Hey Bard! Account";
@@ -1299,6 +1312,7 @@ new Promise(function(resolve,reject){
 				
 				//Save user bookmarks when leaving the page
 				window.addEventListener("blur",saveBookmark);
+				window.addEventListener("beforeunload",saveBookmark);
 				
 				//If a bookmark was set, use it; otherwise, use the default part
 				if(!isNaN(response.bookmark)) resolve(response.bookmark);
