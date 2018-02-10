@@ -262,7 +262,7 @@ S.menu=function(event){
 	);
 };
 
-function userScrub(){
+function userScrub(event){
 	var touch=event.changedTouches ? true : false;
 	var pos=touch ? event.changedTouches[0].clientX : event.clientX;
 	
@@ -1193,14 +1193,11 @@ types.video.addEventListener("timeupdate",updateInfo);
 function updateInfo(){
 	//If using queries with time, adjust query on time update
 	if(S.query && S.bookmark==="time"){
-		console.log("hey!");
 		var search=new RegExp('(\\?|&)'+S.query+'=','i')
 			,newURL=document.location.href;
 		
 		if(search.test(newURL)) newURL=newURL.replace(new RegExp('((\\?|&)'+S.query+')=?[^&]+','i'),'$1='+(Math.floor(getCurrentTime())));
 		else newURL+=(newURL.indexOf("?")>-1 ? '&' : '?') +(S.query+'='+(Math.floor(getCurrentTime())));
-		
-		console.log(newURL);
 		
 		history.replaceState({},"",newURL);
 	}
@@ -1275,10 +1272,11 @@ new Promise(function(resolve,reject){
 				
 				//See if an account exists for the user
 				if(response.account){
-					accountButton.style.backgroundColor="green";
 					//Set the text for the Hey Bard button accordingly
 					accountButton.title="Hello, "+response.name+"! We'll save your bookmarks for you!";
+					accountButton.innerHTML=response.name;
 				}else{
+					accountButton.innerHTML="Log in for bookmarks!";
 					//Set the text for the Hey Bard button accordingly
 					accountButton.title="Save a bookmark with a free Hey Bard! Account";
 				}
@@ -1303,7 +1301,7 @@ new Promise(function(resolve,reject){
 				else resolve(response.bookmark);
 			})
 			.catch(response=>{
-				accountButton.style.backgroundColor="yellow";
+				accountButton.innerHTML="HEY BARD FAILED";
 				//Set the text for the Hey Bard button accordingly
 				accountButton.title="Failed to call Hey Bard's servers. Please try again later!";
 				
@@ -1311,7 +1309,7 @@ new Promise(function(resolve,reject){
 			})
 			;
 		}else{
-			accountButton.style.backgroundColor="red";
+			accountButton.innerHTML="SCRIPT MISSING";
 			//Set the text for the Hey Bard button accordingly
 			accountButton.title="Failed to load the necessary script to use Hey Bard accounts.";
 			

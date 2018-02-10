@@ -97,9 +97,18 @@
 	float:right;
 }
 
-.showpony-account-button{
+button.showpony-account-button{
 	background-position:0% 100%;
 	float:left;
+	
+	font-size:1em;
+	width:9rem;
+	font-weight:bold;
+	background-size:33%;
+	background-position-x:100%;
+	background-repeat:no-repeat;
+	background-color:rgba(256,256,256,.75);
+	overflow-wrap:break-word;
 }
 
 .showpony-captions-button{
