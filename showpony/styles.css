@@ -168,6 +168,7 @@ button.showpony-account-button{
 	font-size:.75em;
 	padding:.5em;
 	pointer-events:none;
+	text-align:right;
 	
 	display:none;
 }

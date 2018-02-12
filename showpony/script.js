@@ -141,19 +141,12 @@ S.to=function(input){
 	
 	if(S.currentFile<0) S.currentFile=0;
 	
-	//If we're using queries
-	if(S.query && !obj.popstate){
-		var search=new RegExp('(\\?|&)'+S.query+'=','i')
-			,newURL=document.location.href;
-		
-		if(search.test(newURL)) newURL=newURL.replace(new RegExp('((\\?|&)'+S.query+')=?[^&]+','i'),'$1='+(S.currentFile+1));
-		else newURL+=(newURL.indexOf("?")>-1 ? '&' : '?') +(S.query+'='+(S.currentFile+1));
-		
-		console.log(newURL);
-		
-		//Either replace or push the state
-		history[obj.replaceState ? "replaceState" : "pushState"]({},"",newURL);
+	//Update info on file load
+	if(!obj.popstate){
+		console.log("Update info!");
+		updateInfo(false,obj.replaceState ? false : true);
 	}
+	
 	
 	//If we aren't moving the bar, update the overlay
 	if(scrubbing===false){
@@ -220,7 +213,6 @@ S.to=function(input){
 	}
 	
 	thisType.currentTime=obj.time; //Update the time
-	if(S.title) document.title=replaceInfoText(S.title,S.currentFile); //Update the title if it's set
 	
 	//Run custom event for checking time
 	S.window.dispatchEvent(
@@ -1219,16 +1211,27 @@ types.audio.addEventListener("ended",mediaEnd);
 types.audio.addEventListener("timeupdate",updateInfo);
 types.video.addEventListener("timeupdate",updateInfo);
 
-function updateInfo(){
+function updateInfo(event,pushState){
 	//If using queries with time, adjust query on time update
-	if(S.query && S.bookmark==="time"){
-		var search=new RegExp('(\\?|&)'+S.query+'=','i')
-			,newURL=document.location.href;
+	if(S.query){
+		var newURL=document.location.href
+			,newQuery=""
+		;
 		
-		if(search.test(newURL)) newURL=newURL.replace(new RegExp('((\\?|&)'+S.query+')=?[^&]+','i'),'$1='+(Math.floor(getCurrentTime())));
-		else newURL+=(newURL.indexOf("?")>-1 ? '&' : '?') +(S.query+'='+(Math.floor(getCurrentTime())));
+		//Choose whether to add an ampersand or ?
+		//Choose a ? if one doesn't exist or it exists behind the query
+		newQuery=(newURL.indexOf("?")===-1 || new RegExp("\\?(?="+S.query+"=)").test(newURL)) ? "?" : "&";
 		
-		history.replaceState({},"",newURL);
+		newQuery+=S.query+"="+(
+			S.bookmark==="time"
+			? (Math.floor(getCurrentTime()))	//Time
+			: (S.currentFile+1)					//File
+		);
+		
+		//Replace either the case or the end
+		newURL=newURL.replace(new RegExp("(((\\?|&)"+S.query+")=?[^&]+)|$"),newQuery);
+		
+		history[pushState ? "pushState" : "replaceState"]({},"",newURL);
 	}
 	
 	//Update the title, if set up for it
@@ -1371,7 +1374,7 @@ new Promise(function(resolve,reject){
 				,function(){
 					var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
 					
-					if(page) S.to({time:parseInt(page[0].split("=")[1]),popstate:true,scrollToTop:false});
+					if(page) S.to({time:parseInt(page[0].split("=")[1]),popstate:true,scrollToTop:false});//xxx
 				}
 			);
 			
