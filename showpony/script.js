@@ -35,7 +35,7 @@ d('defaultDuration',10);
 d('title',false);
 d('dateFormat',{year:"numeric",month:"numeric",day:"numeric"});
 d('admin',false);
-d('query','file');
+d('query','part');
 d('shortcuts','focus');
 d('user',null);
 d('HeyBardID',location.hostname.substring(0,30));
@@ -100,14 +100,11 @@ S.to=function(input){
 	});
 		
 		/*
-	//Don't continue if the file is the same and we aren't trying to refresh
-	if(obj.file==S.currentFile){
-		//Set the time to the new time though
-		if(thisType){
-			thisType.currentTime=obj.time;
-		}
-	}
-	
+	//Don't continue if the file is the same and not refreshable
+	if(obj.file===S.currentFile && !types[getMedium(S.files[S.currentFile])].hasOwnProperty('currentTime')){
+		return;
+	}*/
+	/*
 	console.log(obj.file,S.currentFile,thisType,obj.time);
 	
 	//Change the title if requested
@@ -143,8 +140,13 @@ S.to=function(input){
 	
 	//Update info on file load
 	if(!obj.popstate){
-		console.log("Update info!");
-		updateInfo(false,obj.replaceState ? false : true);
+		console.log("Update info!",scrubbing);
+		//Only allow adding to history if we aren't scrubbing
+		
+		var popstate=!obj.replaceState;
+		if(scrubbing===true) popstate=false; //Only replace history if we're scrubbing right now
+		
+		updateInfo(null,popstate);
 	}
 	
 	
@@ -265,13 +267,14 @@ function userScrub(event){
 		scrubbing=false;
 	
 		//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
-		if(S.scrubLoad==false){
+		if(S.scrubLoad===false){
 			//Load the file our pointer's on
 			scrub(
 				(pos-S.window.getBoundingClientRect().left)
 				/
 				(S.window.getBoundingClientRect().width)
 			);
+			
 		}
 		
 		return true; //Exit the function
@@ -454,7 +457,7 @@ function scrub(inputPercent){
 				if(S.scrubLoad!==false || scrubbing===false) S.to({file:i,time:newTime,scrollToTop:false});
 				
 				newPart=i;
-			
+				
 				break;
 			//Otherwise, go to the next one (and subtract the duration from the total duration)
 			}else newTime-=getLength(S.files[i]);
@@ -485,7 +488,16 @@ function moveOverlay(event){
 		
 	//You have to swipe farther than you move the cursor to adjust the position
 	if(scrubbing!==true){
-		if(Math.abs(scrubbing-pos)>screen.width/(touch ? 20 : 100)) scrubbing=true;
+		if(Math.abs(scrubbing-pos)>screen.width/(touch ? 20 : 100)){ 
+			scrubbing=true;
+			
+			//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
+			if(S.scrubLoad){
+				console.log("Release!");
+				//Add a new state on releasing
+				updateInfo(null,true);
+			}
+		}
 		else return;
 	}
 	
@@ -1212,6 +1224,12 @@ types.audio.addEventListener("timeupdate",updateInfo);
 types.video.addEventListener("timeupdate",updateInfo);
 
 function updateInfo(event,pushState){
+	//Update the title, if set up for it
+	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
+	
+	//Update the scrub bar
+	if(scrubbing!==true) scrub();
+	
 	//If using queries with time, adjust query on time update
 	if(S.query){
 		var newURL=document.location.href
@@ -1233,12 +1251,6 @@ function updateInfo(event,pushState){
 		
 		history[pushState ? "pushState" : "replaceState"]({},"",newURL);
 	}
-	
-	//Update the title, if set up for it
-	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
-	
-	//Update the scrub bar
-	if(scrubbing!==true) scrub();
 }
 
 ///////////////////////////////////////
@@ -1368,46 +1380,46 @@ new Promise(function(resolve,reject){
 	
 	//If querystrings are in use, consider the querystring in the URL
 	if(S.query){
-		if(S.bookmark==="time"){
-			window.addEventListener(
-				"popstate"
-				,function(){
-					var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+		window.addEventListener(
+			"popstate"
+			,function(){
+				var page=(new RegExp(S.query+'[^&]+','i').exec(window.location.href));
+				
+				//If we found a page
+				if(page){
+					if(S.bookmark==="time"){
+						page=parseInt(page[0].split("=")[1]);
+						
+						console.log(S,page,getCurrentTime());
+						if(page===getCurrentTime()) return;
 					
-					if(page) S.to({time:parseInt(page[0].split("=")[1]),popstate:true,scrollToTop:false});//xxx
-				}
-			);
-			
-			var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
-			
-			//Add in the time if it needs it, otherwise pass nothing
-			S.to({
-				time: page ? parseInt(page[0].split("=")[1]) : S.start
-				,popstate:page ? true : false
-				,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
-				,scrollToTop:false
-			});
-
-		}else{
-			window.addEventListener(
-				"popstate"
-				,function(){
-					var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+						S.to({time:page,popstate:true,scrollToTop:false});
+					}else{
+						page=parseInt(page[0].split("=")[1])-1;
+						
+						console.log(S,page,S.currentFile);
+						if(page===S.currentFile) return;
 					
-					if(page) S.to({file:parseInt(page[0].split("=")[1])-1,popstate:true,scrollToTop:false});
+						S.to({file:page,popstate:true,scrollToTop:false});
+					}
 				}
-			);
-			
-			var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
-			
-			//Add in the time if it needs it, otherwise pass nothing
-			S.to({
-				file: page ? parseInt(page[0].split("=")[1])-1 : S.start
-				,popstate:page ? true : false
-				,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
-				,scrollToTop:false
-			});
-		}
+			}
+		);
+		
+		var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+		if(page) page=parseInt(page[0].split("=")[1]);
+		
+		//General pass object
+		var passObj={
+			popstate:page ? true : false
+			,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
+			,scrollToTop:false
+		};
+		
+		if(S.bookmark==="time") passObj.time=(page!==null) ? page : S.start;
+		else passObj.file=(page!==null) ? page-1 : S.start;
+		
+		S.to(passObj);
 	//Start
 	}else{
 		//Use time or file to bookmark, whichever is requested
@@ -1417,6 +1429,8 @@ new Promise(function(resolve,reject){
 	
 	//Set input to null in hopes that garbage collection will come pick it up
 	input=null;
+	
+	//if(scrubbing===false) updateInfo();
 })
 //On failure (or not getting)
 .catch((response)=>{
