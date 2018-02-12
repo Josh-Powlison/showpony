@@ -29,6 +29,7 @@ d('language','');
 d('loadingClass',null);
 d('scrubLoad',false);
 d('info','[Current File] | [Files Left]');
+d('credits',null);
 d('data',{});
 d('defaultDuration',10);
 d('title',false);
@@ -39,6 +40,9 @@ d('shortcuts','focus');
 d('user',null);
 d('HeyBardID',location.hostname.substring(0,30));
 d('bookmark',"file");
+d('startPaused',false);
+
+var HeyBardConnection;
 
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
@@ -385,6 +389,7 @@ var waitForInput=false
 	,fullscreenButton=m("button showpony-fullscreen-button","button")
 	,captionsButton=m("captions-button","button")
 	,showponyLogo=m("logo","a")
+	,credits=m("credits","small")
 	,overlay=m("overlay","div")
 	,types={
 		image:m("block","img")
@@ -396,6 +401,8 @@ var waitForInput=false
 	,continueNotice=m("continue")
 ;
 
+if(S.startPaused) overlay.classList.add("showpony-overlay-show");
+
 content.className="showpony-content";
 
 fullscreenButton.alt="Fullscreen";
@@ -406,7 +413,9 @@ continueNotice.innerHTML="...";
 showponyLogo.href="https://showpony.heybard.com/";
 showponyLogo.target="_blank";
 
-frag([fullscreenButton,overlayText,progress,showponyLogo],overlay);
+if(S.credits) credits.innerHTML=S.credits;
+
+frag([fullscreenButton,overlayText,progress,showponyLogo,credits],overlay);
 
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
@@ -1157,7 +1166,6 @@ var windowClick=function(event){
 		return;
 	}
 	
-	console.log("WindowClick");
 	event.stopPropagation();
 	S.menu(event);
 };
@@ -1166,8 +1174,6 @@ var windowClick=function(event){
 window.addEventListener("click",windowClick);
 
 window.addEventListener("mouseup",function(event){
-	console.log("Mouseup");
-	
 	//If we're not scrubbing, set scrubbing to false and return
 	if(scrubbing!==true){
 		scrubbing=false;
@@ -1284,52 +1290,45 @@ new Promise(function(resolve,reject){
 			,event=>{
 				event.stopPropagation();
 				
-				//Open up Hey Bard for accounts
-				
-				//Create the URL
-				var goTo="http://localhost/heybard/index.html";
-				
-				//Add in the story's querystring data so we know what to remove (if the user wants to continue from a bookmark
-				if(S.query) goTo+="?queryBookmarkName="+S.query;
-				goTo+="?returnTo="+location.href;
-				
-				//Go to the page
-				location.href=goTo;
+				//Go to Hey Bard's web page to get your account
+				location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
 			}
 		);
 		accountButton.alt="Hey Bard! Account";
 		
 		if(typeof HeyBard==='function'){
-			HeyBard({id:S.HeyBardID})
+			//Make a Hey Bard connection
+			HeyBardConnection=new HeyBard(S.HeyBardID);
+			
+			console.log(HeyBardConnection);
+			
+			HeyBardConnection.getAccount()
 			.then(response=>{
 				console.log("Success!",response);
 				
-				//See if an account exists for the user
-				if(response.account){
+				//If an account exists for the user
+				if(response.account!==null){
 					//Set the text for the Hey Bard button accordingly
-					accountButton.title="Hello, "+response.name+"! We'll save your bookmarks for you!";
-					accountButton.innerHTML=response.name;
+					accountButton.title="Hello, "+response.account+"! We'll save your bookmarks for you!";
+					accountButton.innerHTML=response.account;
+					
+					//Set a function to save bookmarks
+					function saveBookmark(){
+						console.log("Hello!",S.currentTime,S.currentFile);
+						
+						//Pass either the time or the current file, whichever is chosen by the client
+						HeyBardConnection.saveBookmark(S.bookmark==="time" ? Math.floor(getCurrentTime()) : S.currentFile);
+					}
+					
+					//Save user bookmarks when leaving the page
+					window.addEventListener("blur",saveBookmark);
+					window.addEventListener("beforeunload",saveBookmark);
 				}else{
+				//If an account doesn't exist for the user
 					accountButton.innerHTML="Log in for bookmarks!";
 					//Set the text for the Hey Bard button accordingly
 					accountButton.title="Save a bookmark with a free Hey Bard! Account";
 				}
-				
-				//Use this to save bookmarks
-				function saveBookmark(){
-					console.log("Hello!",S.currentTime,S.currentFile);
-					HeyBard(
-						{
-							id:S.HeyBardID
-							//Pass either the time or the current file, whichever is chosen by the client
-							,bookmark:S.bookmark==="time" ? Math.floor(getCurrentTime()) : S.currentFile
-						}
-					);
-				}
-				
-				//Save user bookmarks when leaving the page
-				window.addEventListener("blur",saveBookmark);
-				window.addEventListener("beforeunload",saveBookmark);
 				
 				//If a bookmark was set, use it; otherwise, use the default part
 				if(!isNaN(response.bookmark)) resolve(response.bookmark);
