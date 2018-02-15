@@ -144,19 +144,27 @@ button.showpony-account-button{
 	position:absolute;
 	bottom:0;
 	left:0;
-	width:2rem;
-	height:2rem;
-	background-image:url("http://showpony.heybard.com/design-files/logo.svg");
-	filter:invert(1);
-	background-size:75%;
-	background-position:center;
-	background-repeat:no-repeat;
+	stroke:currentColor;
 	
 	display:none;
 }
 
 .showpony-overlay-show .showpony-logo{
 	display:block;
+}
+
+.showpony-overlay button, .showpony-overlay a{
+	pointer-events:auto;
+}
+
+.showpony-overlay a{
+	color:#fff;
+}
+
+.showpony-overlay svg{
+	fill:currentColor;
+	height:2em;
+	margin:.25em;
 }
 
 /*Credits display*/
