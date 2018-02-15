@@ -11,6 +11,36 @@
 	margin:auto;
 }
 
+/*Loading Setup*/
+.showpony-loading{
+	min-width:4em;
+	min-height:4em;
+}
+
+.showpony-loading::after{
+	content:" ";
+	display:block;
+	position:absolute;
+	border:inset white .5em;
+	border-radius:100%;
+	top:50%;
+	left:50%;
+	width:4em;
+	height:4em;
+	box-sizing:border-box;
+	pointer-events:none;
+	animation:spin 3s linear infinite;
+}
+
+@keyframes spin{
+	0%{
+		transform:translate(-2em,-2em) rotate(0deg);
+	}
+	100%{
+		transform:translate(-2em,-2em) rotate(360deg);
+	}
+}
+
 /*Menu scrub bar*/
 .showpony-progress{
 	position:absolute;
@@ -18,7 +48,7 @@
 	top:5em;
 	width:.5em;
 	transform:translate(-.25em,0);
-	background-color:#fff;
+	background:linear-gradient(#fff 0%,#ffffff00 125%);
 	pointer-events:none;
 }
 
@@ -38,7 +68,6 @@
 	position:absolute;
 	width:100%;
 	height:100%;
-	color:white;
 	text-align:center;
 	cursor:pointer;
 	
@@ -55,6 +84,7 @@
 	left:0;
 	right:0;
 	bottom:80%;
+	color:#fff;
 	z-index:1001;
 	opacity:0;
 	cursor:none;
@@ -172,7 +202,6 @@ button.showpony-account-button{
 	position:absolute;
 	bottom:0;
 	right:0;
-	color:#fff;
 	font-size:.75em;
 	padding:.5em;
 	pointer-events:none;

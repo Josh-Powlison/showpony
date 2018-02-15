@@ -411,7 +411,7 @@ showponyLogo.target="_blank";
 
 if(S.credits) useIcons(S.credits);
 
-frag([fullscreenButton,overlayText,progress,showponyLogo,credits],overlay);
+frag([progress,overlayText,fullscreenButton,showponyLogo,credits],overlay);
 
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
@@ -624,12 +624,15 @@ function replaceInfoText(value,fileNum,current){
 //Use icons (social media, etc)
 function useIcons(input){
 	
-	credits.innerHTML="LOADING";
-	
 	var images=input.match(/[^><\s]+(\.logo)/ig);
 	
 	//If no images, return
-	if(!images) return input;
+	if(!images){
+		credits.innerHTML=input;
+		return;
+	}
+	
+	credits.classList.add("showpony-loading");
 	
 	//Create promises for fetching the images
 	var promises=[];
@@ -639,16 +642,13 @@ function useIcons(input){
 		
 		promises[i]=fetch(url)
 			.then(response=>{
-				//On failure
-				console.log(response.status);
-				if(response.status>=200 && response.status<300) 
-					return response.text();
+				//On success
+				if(response.status>=200 && response.status<300) return response.text();
+				//On failure (404)
 				else throw Error("Couldn't retrieve file! "+response.status);
 			})
 			.then(svg=>{
-				console.log(svg,"hey!");
 				input=input.replace(images[i],svg);
-				console.log(input);
 			})
 			.catch(response=>{
 				input=input.replace(images[i],images[i].replace(".logo",""));
@@ -658,7 +658,7 @@ function useIcons(input){
 	
 	//Once all SVGs are retrieved, continue
 	Promise.all(promises).then(response=>{
-		console.log(input);
+		credits.classList.remove("showpony-loading");
 		credits.innerHTML=input;
 	});
 }
@@ -1303,12 +1303,6 @@ function updateInfo(event,pushState){
 //If the window is statically positioned, set it to relative! (so positions of children work)
 if(window.getComputedStyle(S.window).getPropertyValue('position')=="static") S.window.style.position="relative";
 
-//Empty the current window
-S.window.innerHTML="";
-
-//And fill it up again!
-frag([content,overlay],S.window);
-
 S.window.classList.add("showpony");
 
 //Set tabIndex so it's selectable (if it's not already set)
@@ -1316,6 +1310,8 @@ if(S.window.tabIndex<0) S.window.tabIndex=0;
 
 //If the user's getting the files remotely, make the call
 new Promise(function(resolve,reject){
+	S.window.classList.add("showpony-loading");
+	
 	//currentFile is -1 before we load
 	S.currentFile=-1;
 	
@@ -1329,6 +1325,12 @@ new Promise(function(resolve,reject){
 		//Skip to catch if not true
 		resolve();
 	}
+	
+	//Empty the current window
+	S.window.innerHTML="";
+
+	//And fill it up again!
+	frag([content,overlay],S.window);
 })
 //Get Hey Bard account
 .then(()=>new Promise(function(resolve,reject){
@@ -1473,12 +1475,14 @@ new Promise(function(resolve,reject){
 	//Set input to null in hopes that garbage collection will come pick it up
 	input=null;
 	
+	S.window.classList.remove("showpony-loading");
+	
 	//if(scrubbing===false) updateInfo();
 })
 //On failure (or not getting)
 .catch((response)=>{
-	console.log("Failure!",response);
-	alert("Failed to load the Showpony object");
+	S.window.classList.remove("showpony-loading");
+	alert("Failed to sucessfully load the Showpony object! "+response);
 })
 
 ///////////////////////////////////////
