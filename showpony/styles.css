@@ -48,8 +48,9 @@
 .showpony-progress{
 	position:absolute;
 	bottom:0;
-	top:5em;
+	top:5.5em;
 	width:.5em;
+	min-height:1em;
 	transform:translate(-.25em,0);
 	background:linear-gradient(#fff 0%,#ffffff00 125%);
 	pointer-events:none;
