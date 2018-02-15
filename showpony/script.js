@@ -50,6 +50,8 @@ var HeyBardConnection;
 
 //Go to another file
 S.to=function(input){
+	content.classList.add("showpony-loading");
+	
 	var obj=input || {};
 	
 	//Relative file
@@ -202,8 +204,11 @@ S.to=function(input){
 					runMM(0);
 				//Regular text
 				}else content.innerHTML=text;
+				
+				content.classList.remove("showpony-loading");
 			})
 			.catch((error)=>{
+				content.classList.remove("showpony-loading");
 				alert(error);
 			})
 		;
@@ -1258,6 +1263,11 @@ captionsButton.addEventListener(
 
 content.addEventListener("click",()=>{S.input();});
 
+//On loading resources, don't show loading
+types.image.addEventListener("load",function(){content.classList.remove("showpony-loading");});
+types.video.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});
+types.audio.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});
+
 //When we finish playing a video or audio file
 types.video.addEventListener("ended",mediaEnd);
 types.audio.addEventListener("ended",mediaEnd);
@@ -1310,7 +1320,7 @@ if(S.window.tabIndex<0) S.window.tabIndex=0;
 
 //If the user's getting the files remotely, make the call
 new Promise(function(resolve,reject){
-	S.window.classList.add("showpony-loading");
+	content.classList.add("showpony-loading");
 	
 	//currentFile is -1 before we load
 	S.currentFile=-1;
@@ -1475,13 +1485,12 @@ new Promise(function(resolve,reject){
 	//Set input to null in hopes that garbage collection will come pick it up
 	input=null;
 	
-	S.window.classList.remove("showpony-loading");
+	//We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
 	
 	//if(scrubbing===false) updateInfo();
 })
 //On failure (or not getting)
 .catch((response)=>{
-	S.window.classList.remove("showpony-loading");
 	alert("Failed to sucessfully load the Showpony object! "+response);
 })
 

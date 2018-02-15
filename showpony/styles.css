@@ -29,14 +29,17 @@
 	height:4em;
 	box-sizing:border-box;
 	pointer-events:none;
-	animation:spin 3s linear infinite;
+	animation:spin 3s linear infinite .5s;
+	visibility:hidden;
 }
 
 @keyframes spin{
 	0%{
+		visibility:visible;
 		transform:translate(-2em,-2em) rotate(0deg);
 	}
 	100%{
+		visibility:visible;
 		transform:translate(-2em,-2em) rotate(360deg);
 	}
 }
