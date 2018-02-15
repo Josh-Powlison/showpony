@@ -41,6 +41,7 @@ d('user',null);
 d('HeyBardID',location.hostname.substring(0,30));
 d('bookmark',"file");
 d('startPaused',false);
+d('preloadNext',true);
 
 var HeyBardConnection;
 
@@ -100,6 +101,8 @@ S.to=function(input){
 		,popstate:obj.popstate || false
 		,replaceState:obj.replaceState || false
 	});
+	
+	var sameFile=S.currentFile===obj.file;
 		
 		/*
 	//Don't continue if the file is the same and not refreshable
@@ -144,6 +147,12 @@ S.to=function(input){
 	if(!obj.popstate){
 		console.log("Update info!",scrubbing);
 		//Only allow adding to history if we aren't scrubbing
+		
+		//If the same file, and not a medium where time changes it (like images), replace history state instead
+		if(sameFile && currentType!=="video" && currentType!=="audio"){
+			console.log("Same!");
+			obj.replaceState=true;
+		}
 		
 		var popstate=!obj.replaceState;
 		if(scrubbing===true) popstate=false; //Only replace history if we're scrubbing right now
@@ -210,6 +219,18 @@ S.to=function(input){
 			.catch((error)=>{
 				content.classList.remove("showpony-loading");
 				alert(error);
+			})
+			//After all that, try preloading the next file
+			.then(()=>{
+				//If we can't preload or are on the last file, don't preload!
+				if(!S.preloadNext || S.currentFile>=S.files.length-1) return;
+				
+				//How we get the file depends on whether or not it's private
+				var src=(S.files[S.currentFile+1][0]=="x" ? "showpony/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile];
+				
+				//Preload next file, if there is a next file
+				console.log("Preloading next!");
+				fetch(src);
 			})
 		;
 	//Image/Audio/Video
@@ -1264,9 +1285,27 @@ captionsButton.addEventListener(
 content.addEventListener("click",()=>{S.input();});
 
 //On loading resources, don't show loading
-types.image.addEventListener("load",function(){content.classList.remove("showpony-loading");});
+types.image.addEventListener("load",function(){
+	content.classList.remove("showpony-loading");
+	
+	if(!S.preloadNext) return;
+	
+	//Preload next file, if there is a next file
+	if(S.currentFile!==S.files.length-1){
+		var src=(S.files[S.currentFile+1][0]=="x" ? "showpony/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile+1];
+		
+		console.log("Preloading");
+		
+		var img=new Image();
+		img.src=src;
+	}
+});
 types.video.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});
 types.audio.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});
+
+//Preload next file, if there is a next file
+/*types.video.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});
+types.audio.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});*/
 
 //When we finish playing a video or audio file
 types.video.addEventListener("ended",mediaEnd);
