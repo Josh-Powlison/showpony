@@ -1453,7 +1453,7 @@ new Promise(function(resolve,reject){
 						return HeyBardConnection.saveBookmark(S.bookmark==="time" ? Math.floor(getCurrentTime()) : S.currentFile);
 					}
 					
-					var saveBookmark=S.saveBookmark();
+					var saveBookmark=S.saveBookmark;
 					
 					//Save user bookmarks when leaving the page
 					window.addEventListener("blur",saveBookmark);
