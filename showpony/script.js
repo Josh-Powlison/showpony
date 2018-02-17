@@ -1399,8 +1399,34 @@ new Promise(function(resolve,reject){
 			,event=>{
 				event.stopPropagation();
 				
-				//Go to Hey Bard's web page to get your account
-				location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
+				//Try saving a bookmark before you leave
+				if(typeof(S.saveBookmark)==='function'){
+					console.log("hey!");
+					var sB=S.saveBookmark();
+					
+					//If something was returned (like a promise)
+					if(sB){
+						console.log(sB);
+						sB.then(()=>{
+							console.log("Success saving!");
+							
+							//Go to Hey Bard's web page to get your account
+							location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
+						})
+						//If it fails, let the user know
+						.catch((response)=>alert(response))
+						;
+					//Regardless of whether or not we got something back, go there
+					}else{
+						location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
+					}
+				//If we can't save a bookmark (the user's probably not logged in)
+				}else{
+					//Just use the link
+					location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
+				}
+				
+				
 			}
 		);
 		accountButton.alt="Hey Bard! Account";
@@ -1422,16 +1448,21 @@ new Promise(function(resolve,reject){
 					accountButton.innerHTML=response.account;
 					
 					//Set a function to save bookmarks
-					function saveBookmark(){
-						console.log("Hello!",S.currentTime,S.currentFile);
-						
+					S.saveBookmark=function(){
 						//Pass either the time or the current file, whichever is chosen by the client
-						HeyBardConnection.saveBookmark(S.bookmark==="time" ? Math.floor(getCurrentTime()) : S.currentFile);
+						return HeyBardConnection.saveBookmark(S.bookmark==="time" ? Math.floor(getCurrentTime()) : S.currentFile);
 					}
+					
+					var saveBookmark=S.saveBookmark();
 					
 					//Save user bookmarks when leaving the page
 					window.addEventListener("blur",saveBookmark);
 					window.addEventListener("beforeunload",saveBookmark);
+					
+					//Showpony deselection (to help with Firefox and Edge's lack of support for "beforeunload")
+					S.window.addEventListener("focusout",saveBookmark);
+					S.window.addEventListener("blur",saveBookmark);
+					console.log("Update!");
 				}else{
 				//If an account doesn't exist for the user
 					accountButton.innerHTML="Log in for bookmarks!";
@@ -1439,8 +1470,10 @@ new Promise(function(resolve,reject){
 					accountButton.title="Save a bookmark with a free Hey Bard! Account";
 				}
 				
-				//If a bookmark was set, use it; otherwise, use the default part
-				if(!isNaN(response.bookmark)) resolve(response.bookmark);
+				console.log(HeyBardConnection);
+				
+				//"False" can be read as 0, so if bookmark is returned as false don't pass the value.
+				if(response.bookmark===false) resolve();
 				else resolve(response.bookmark);
 			})
 			.catch(response=>{
