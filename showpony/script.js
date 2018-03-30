@@ -179,8 +179,7 @@ S.to=function(input){
 	//Multimedia engine resets
 		content.style.cssText=null; //Remove any styles applied to the content
 		waitForInput=false;
-		clearTimeout(waitTimer);
-		waitTimer=null;
+		if(waitTimer) waitTimer.end();
 			
 		S.charsHidden=0;
 		
@@ -419,7 +418,7 @@ S.input=function(){
 		if(waitForInput) return;
 	
 		//If a wait timer was going, stop it.
-		clearTimeout(waitTimer);
+		if(waitTimer) waitTimer.end();
 	
 		console.log(S.charsHidden);
 	
@@ -522,6 +521,9 @@ types.multimedia.play=function(){
 		}
 	}
 	
+	//Resume waitTimer
+	waitTimer.resume();
+	
 	//Add timer support later
 }
 
@@ -539,6 +541,9 @@ types.multimedia.pause=function(){
 			S.objects[key].wasPlaying=false;
 		}
 	}
+	
+	//Pause waitTimer
+	waitTimer.pause();
 	
 	//Add timer support later
 }
@@ -910,7 +915,7 @@ function runMM(inputNum){
 	//We've run through!
 	if(runTo===false && content.classList.contains("showpony-loading")){
 		console.log("Enable!",S.currentLine,runTo);
-		clearTimeout(waitTimer);
+		if(waitTimer) waitTimer.end();
 		
 		console.log(S.objects,objectBuffer);
 		
@@ -1151,6 +1156,31 @@ function runMM(inputNum){
 	}*/
 }
 
+function powerTimer(callback,delay){
+	//Thanks to https://stackoverflow.com/questions/3969475/javascript-pause-settimeout
+
+    var timerId,start,remaining=delay;
+
+    this.pause=function(){
+        window.clearTimeout(timerId);
+        remaining-=new Date()-start;
+    };
+
+    this.resume=function(){
+		if(remaining<=0) return;
+		
+        start=new Date();
+        window.clearTimeout(timerId);
+        timerId=window.setTimeout(callback,remaining);
+    };
+
+	this.end=function(){
+		window.clearTimeout(timerId);
+	}
+	
+    this.resume();
+}
+
 var multimediaFunction={
 	'en':()=> S.to({file:"+1"})
 	,'go':vals=> runMM(S.lines.indexOf(vals[1])!==-1 ? S.lines.indexOf(vals[1])+1 : null)
@@ -1217,7 +1247,7 @@ var multimediaFunction={
 	}
 	,'wt':vals=>{
 		//If there's a waitTimer, clear it out
-		clearTimeout(waitTimer);
+		if(waitTimer) waitTimer.end();
 		
 		//Skip waiting if we're running through
 		if(runTo){
@@ -1226,7 +1256,8 @@ var multimediaFunction={
 		}
 		
 		//If a value was included, wait 
-		waitTimer=vals[1] && setTimeout(runMM,parseFloat(vals[1])*1000);
+		if(vals[1]) waitTimer=new powerTimer(runMM,parseFloat(vals[1])*1000);
+		//waitTimer=vals[1] && setTimeout(runMM,parseFloat(vals[1])*1000);
 	}
 	,'au':vals=>{
 		//If the audio doesn't exist
