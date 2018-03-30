@@ -183,6 +183,9 @@ S.to=function(input){
 			
 		S.charsHidden=0;
 		
+		//Remove the continue notice
+		continueNotice.remove();
+		
 		//Empty out textboxes
 		if(S.textboxes){
 			console.log(S.textboxes);
@@ -277,6 +280,9 @@ S.to=function(input){
 						console.log(keyframes);
 						
 						runTo=keyframes[Math.floor(keyframes.length*(obj.time/getLength(S.files[S.currentFile])))];
+						
+						//Pause if needed
+						if(overlay.classList.contains("showpony-overlay-show")) content.classList.add("showpony-paused");
 						
 						runMM(0);
 					//Regular text
@@ -1136,8 +1142,12 @@ function runMM(inputNum){
 					}
 				}
 				
-				//Scroll to the newly displayed letter
-				if(this.getBoundingClientRect().bottom>this.parentNode.getBoundingClientRect().bottom) this.parentNode.scrollTop+=this.getBoundingClientRect().height;
+				var textbox=this.closest(".showpony-textbox");
+				
+				//Scroll to the newly displayed letter (based on the regular height of the letter)
+				if(this.parentNode.getBoundingClientRect().bottom>textbox.getBoundingClientRect().bottom){
+					textbox.scrollTop+=this.parentNode.getBoundingClientRect().height;
+				}
 			}
 		});
 	}
