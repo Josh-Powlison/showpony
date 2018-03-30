@@ -1099,8 +1099,8 @@ function runMM(inputNum){
 		//This character is adding to the list of hidden S.objects
 		S.charsHidden++;
 		
-		//Set the display time here
-		showChar.style.animationDelay=totalWait+"s";
+		//Set the display time here- but if we're paused, no delay!
+		if(!content.classList.contains("showpony-paused")) showChar.style.animationDelay=totalWait+"s";
 		
 		//Add the char to the document fragment
 		fragment.appendChild(thisChar);
@@ -1257,7 +1257,9 @@ var multimediaFunction={
 		
 		//If a value was included, wait 
 		if(vals[1]) waitTimer=new powerTimer(runMM,parseFloat(vals[1])*1000);
-		//waitTimer=vals[1] && setTimeout(runMM,parseFloat(vals[1])*1000);
+		
+		//If we're paused, pause the timer
+		if(content.classList.contains("showpony-paused")) waitTimer.pause();
 	}
 	,'au':vals=>{
 		//If the audio doesn't exist
