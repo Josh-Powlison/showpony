@@ -510,6 +510,39 @@ frag([progress,overlayText,fullscreenButton,showponyLogo,credits],overlay);
 ///////////PRIVATE FUNCTIONS///////////
 ///////////////////////////////////////
 
+//Play and pause multimedia
+types.multimedia.play=function(){
+	content.classList.remove("showpony-paused");
+	console.log("play");
+	
+	//Go through objects that were playing- unpause them
+	for(var key in S.objects){
+		if(S.objects[key].wasPlaying){
+			S.objects[key].play();
+		}
+	}
+	
+	//Add timer support later
+}
+
+types.multimedia.pause=function(){
+	content.classList.add("showpony-paused");
+	console.log("pause");
+	
+	//Go through objects that can be played- pause them, and track that
+	for(var key in S.objects){
+		//If it can play, and it is playing
+		if(S.objects[key].play && S.objects[key].paused===false){
+			S.objects[key].wasPlaying=true;
+			S.objects[key].pause();
+		}else{
+			S.objects[key].wasPlaying=false;
+		}
+	}
+	
+	//Add timer support later
+}
+
 function getCurrentTime(){
 	//Use the currentTime of the object, if it has one
 	var newTime=types[currentType] && types[currentType].currentTime || 0;
@@ -1205,7 +1238,7 @@ var multimediaFunction={
 			el.preload=true;
 			
 			content.appendChild(S.objects[vals[1]]);
-		}
+		}else el=S.objects[vals[1]];
 		
 		//If we're buffering, add it to the buffer so it's not deleted later
 		if(runTo) objectBuffer[vals[1]]=S.objects[vals[1]];
@@ -1215,15 +1248,21 @@ var multimediaFunction={
 		for(let i=2;i<l;i++){
 			switch(vals[i]){
 				case "loop":
-					S.objects[vals[1]].loop=true;
+					el.loop=true;
 					break;
 				case "play":
 				case "pause":
-					S.objects[vals[1]][vals[i]]();
+					el[vals[i]]();
+					
+					//Pause the audio if we're paused; it can start playing later
+					if(vals[i]==="play" && content.classList.contains("showpony-paused")){
+						el.wasPlaying=true;
+						el.pause();
+					}
 					break;
 				case "stop":
-					S.objects[vals[1]].currentTime=0;
-					S.objects[vals[1]].pause();
+					el.currentTime=0;
+					el.pause();
 					break;
 			}
 		}
