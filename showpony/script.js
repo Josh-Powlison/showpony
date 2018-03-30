@@ -49,7 +49,7 @@ var HeyBardConnection;
 ///////////PUBLIC FUNCTIONS////////////
 ///////////////////////////////////////
 
-var objectBuffer;
+var objectBuffer, textboxBuffer;
 
 //Go to another file
 S.to=function(input){
@@ -189,10 +189,23 @@ S.to=function(input){
 			for(var key in S.textboxes){
 				S.textboxes[key].innerHTML="";
 			};
+			
+			//Get rid of local styles
+			for(var key in S.textboxes){
+				S.textboxes[key].removeAttribute("style");
+			};
 		}
+		
+		//Get rid of local styles
+		for(var key in S.objects){
+			//Except for the window and content, of course!
+			if(key==="window" || key==="content") continue;
+			S.objects[key].removeAttribute("style");
+		};
 		
 		//Save buffer to check later
 		objectBuffer={window:S.window,content:content};
+		textboxBuffer={};
 	
 	//If switching types, do some cleanup
 	if(currentType!=newType){
@@ -851,6 +864,17 @@ function runMM(inputNum){
 			}
 		};
 		
+		if(S.textboxes){
+			//Get rid of unused, uncreated textboxes
+			for(var key in S.textboxes){
+				//Get rid of the object if it doesn't exist
+				if(!textboxBuffer[key]){
+					S.textboxes[key].remove();
+					delete S.textboxes[key];
+				}
+			};
+		}
+		
 		content.offsetHeight; //Trigger reflow to flush CSS changes
 		content.classList.remove("showpony-loading");
 	}
@@ -886,6 +910,8 @@ function runMM(inputNum){
 	
 	//If the textbox hasn't been created, create it!
 	if(!S.textboxes[multimediaSettings.textbox]) content.appendChild(S.textboxes[multimediaSettings.textbox]=m("textbox"));
+	
+	if(runTo) textboxBuffer[multimediaSettings.textbox]=S.textboxes[multimediaSettings.textbox];
 	
 	S.textboxes[multimediaSettings.textbox].innerHTML="";
 	
