@@ -422,6 +422,9 @@ S.input=function(){
 	
 		console.log(S.charsHidden);
 	
+		//Remove the continue notice
+		continueNotice.remove();
+	
 		//If all letters are displayed
 		if(S.charsHidden<1) runMM();
 		else //If some S.objects have yet to be displayed
@@ -495,7 +498,6 @@ content.className="showpony-content";
 fullscreenButton.alt="Fullscreen";
 fullscreenButton.title="Fullscreen Toggle";
 captionsButton.alt="Closed Captions/Subtitles";
-continueNotice.innerHTML="...";
 
 showponyLogo.href="https://showpony.heybard.com/";
 showponyLogo.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -197)"><path fill="none" stroke-width="9.5" d="M32.5 245.5v-40.1s-21.9-2.2-21.9 40m56.9.1v-40.1s21.9-2.2 21.9 40"/><circle cx="77.4" cy="275.5" r="9.4" fill="none" stroke-width="7.7"/><circle cx="22.6" cy="275.5" r="9.4" fill="none" stroke-width="7.7"/><path stroke-width=".3" d="M50.1 266.7c-2.4 3-19.1 0-11 8 6.1 5.8 29 2.5 15.2-17-16.4.6-44.4-12.6-15.3-25.7 39.2-17.7 42.5 44.5 23.6 55.6-44.7 26.3-53.5-49-12.5-20.9z"/></g></svg>';
@@ -671,6 +673,9 @@ function replaceInfoText(value,fileNum,current){
 		,date:{
 			current:"Undated"
 		}
+		,medium:{
+			current:"<img src='"+getMedium(S.files[fileNum])+".svg'>"
+		}
 		,file:{
 			current:	fileNum+1
 			,left:		S.files.length-(fileNum+1)
@@ -737,6 +742,7 @@ function replaceInfoText(value,fileNum,current){
 		else if(/hour/i.test(input)) type="hours";
 		else if(/min/i.test(input)) type="minutes";
 		else if(/sec/i.test(input)) type="seconds";
+		else if(/medi/i.test(input)) type="medium";
 		
 		//Get the value type
 		if(/left|remain/i.test(input)) value="left";
@@ -1124,6 +1130,9 @@ function runMM(inputNum){
 					if(!multimediaSettings.wait){
 						runMM();
 						return;
+					}else{
+						//If we need player input, notify them:
+						content.appendChild(continueNotice);
 					}
 				}
 				
@@ -1255,8 +1264,10 @@ var multimediaFunction={
 			return;
 		}
 		
-		//If a value was included, wait 
+		//If a value was included, wait for the set time
 		if(vals[1]) waitTimer=new powerTimer(runMM,parseFloat(vals[1])*1000);
+		//Otherwise, let the user know to continue it
+		else content.appendChild(continueNotice);
 		
 		//If we're paused, pause the timer
 		if(content.classList.contains("showpony-paused")) waitTimer.pause();
