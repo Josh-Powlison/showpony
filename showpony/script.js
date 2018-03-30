@@ -49,7 +49,7 @@ var HeyBardConnection;
 ///////////PUBLIC FUNCTIONS////////////
 ///////////////////////////////////////
 
-var objectBuffer, textboxBuffer;
+var objectBuffer, textboxBuffer, keyframes;
 
 //Go to another file
 S.to=function(input){
@@ -179,6 +179,7 @@ S.to=function(input){
 	//Multimedia engine resets
 		content.style.cssText=null; //Remove any styles applied to the content
 		waitForInput=false;
+		clearTimeout(waitTimer);
 		waitTimer=null;
 			
 		S.charsHidden=0;
@@ -233,7 +234,7 @@ S.to=function(input){
 		if(currentType==='multimedia'){
 			console.log(content);
 			
-			runTo=Math.floor(S.lines.length*(obj.time/getLength(S.files[S.currentFile])));
+			runTo=keyframes[Math.floor(keyframes.length*(obj.time/getLength(S.files[S.currentFile])))];
 			
 			runMM(0);
 		}
@@ -251,7 +252,32 @@ S.to=function(input){
 						//Get each line (taking into account and ignoring extra lines)
 						S.lines=text.match(/[^\r\n]+/g);
 						
-						runTo=Math.floor(S.lines.length*(obj.time/getLength(S.files[S.currentFile])));
+						//Get keyframes from the text- beginning, end, (? ->)and waiting points
+						keyframes=[];
+						
+						for(let i=0;i<S.lines.length;i++){
+							//If there aren't any keyframes, wait would also be a suitable start
+							if(keyframes.length===0){
+								console.log(S.lines[i],/>^\s+WT/i.test(S.lines[i]));
+								if(/^>\s+WT/i.test(S.lines[i])){
+									keyframes.push(i);
+									continue;
+								}
+							}
+							
+							//If it's a user input spot, add the point immediately after the last keyframe- things let up to this, let it all happen
+							console.log(S.lines[i],/^>\s+WT$/i.test(S.lines[i]))
+							if(/^>\s+WT$/i.test(S.lines[i])){
+								keyframes.push(keyframes[keyframes.length-1]+1);
+								continue;
+							}
+							
+							if(S.lines[i].indexOf(">")!==0) keyframes.push(i);
+						}
+						
+						console.log(keyframes);
+						
+						runTo=keyframes[Math.floor(keyframes.length*(obj.time/getLength(S.files[S.currentFile])))];
 						
 						runMM(0);
 					//Regular text
@@ -879,6 +905,15 @@ function runMM(inputNum){
 		content.classList.remove("showpony-loading");
 	}
 	
+	//Update the scrubbar if the frame we're on is a keyframe
+	if(keyframes.includes(S.currentLine)){
+		//Set the time of the element
+		types[currentType].currentTime=(keyframes.indexOf(S.currentLine)/keyframes.length)*getLength(S.files[S.currentFile]);
+		
+		//Adjust the scrubbar
+		scrub();
+	}
+	
 	//If we've ended manually or reached the end, stop running immediately and end it all
 	if(S.currentLine>=S.lines.length){
 		console.log("Ending!");
@@ -891,10 +926,8 @@ function runMM(inputNum){
 	//Replace all variables (including variables inside variables) with the right name
 	var match;
 	while(match=/[^\[]+(?=\])/g.exec(text)) text=text.replace('['+match[0]+']',S.data[match[0]]);
-
-	var wait=true; //Assume waiting time
 	
-	if(text[0]==">"){
+	if(text[0]===">"){
 		var vals=text.replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/);
 		
 		//console.log(text,vals);
@@ -904,16 +937,31 @@ function runMM(inputNum){
 		multimediaSettings=multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals,multimediaSettings) || multimediaSettings;
 		//console.log(multimediaSettings,S.currentLine);
 		
-		if(!multimediaSettings.go) return;
-		multimediaSettings.go=false;
+		//If it's a textbox
+		if(vals[0].toLowerCase()==='tb'){
+			//multimediaSettings.go=false;
+			//If there's text passed, use it; if not, empty the textbox
+			text=vals[2];
+			console.log(vals,text);
+		}else return; //Return if it's not a textbox
+	}else{
+		//If it's regular text display, use the regular settings
+		multimediaSettings.wait=true; //Assume we're waiting at the end time
+		multimediaSettings.textbox="main";
+		if(S.textboxes.main) S.textboxes.main.innerHTML="";
 	}
 	
 	//If the textbox hasn't been created, create it!
 	if(!S.textboxes[multimediaSettings.textbox]) content.appendChild(S.textboxes[multimediaSettings.textbox]=m("textbox"));
 	
-	if(runTo) textboxBuffer[multimediaSettings.textbox]=S.textboxes[multimediaSettings.textbox];
+	//If no text was passed, empty the textbox and continue
+	if(typeof(text)==='undefined'){
+		S.textboxes[multimediaSettings.textbox].innerHTML="";
+		runMM();
+		return;
+	}
 	
-	S.textboxes[multimediaSettings.textbox].innerHTML="";
+	if(runTo) textboxBuffer[multimediaSettings.textbox]=S.textboxes[multimediaSettings.textbox];
 	
 	//If we're running through, skip displaying text until we get to the right point
 	if(runTo){
@@ -1034,7 +1082,8 @@ function runMM(inputNum){
 				
 				//If there are no more S.objects to show
 				if(S.charsHidden<1){
-					if(!wait){
+					//If we aren't waiting to continue, continue
+					if(!multimediaSettings.wait){
 						runMM();
 						return;
 					}
@@ -1260,8 +1309,7 @@ var multimediaFunction={
 		multimediaSettings.text=vals[2];
 		
 		//Turn off automatic waiting for this, we're assuming waiting is off
-		multimediaSettings.wait=false;
-		multimediaSettings.go=true;
+		multimediaSettings.wait=false;	//Wait at the end of the text display
 		
 		return multimediaSettings;
 	}
