@@ -49,6 +49,8 @@ var HeyBardConnection;
 ///////////PUBLIC FUNCTIONS////////////
 ///////////////////////////////////////
 
+var objectBuffer;
+
 //Go to another file
 S.to=function(input){
 	content.classList.add("showpony-loading");
@@ -175,15 +177,25 @@ S.to=function(input){
 		,thisType=types[newType];
 	
 	//Multimedia engine resets
-	content.style.cssText=null; //Remove any styles applied to the content
-	waitForInput=false;
-	waitTimer=null;
+		content.style.cssText=null; //Remove any styles applied to the content
+		waitForInput=false;
+		waitTimer=null;
+			
+		S.charsHidden=0;
 		
-	S.charsHidden=0;
-	//S.currentLine=0; //start from beginning
+		//Empty out textboxes
+		if(S.textboxes){
+			console.log(S.textboxes);
+			for(var key in S.textboxes){
+				S.textboxes[key].innerHTML="";
+			};
+		}
+		
+		//Save buffer to check later
+		objectBuffer={window:S.window,content:content};
 	
 	//If switching types, do some cleanup
-	if(currentType!=newType){ //Reset for multimedia engine- for now!
+	if(currentType!=newType){
 		content.innerHTML="";
 		console.log(types);
 		content.appendChild(thisType);
@@ -827,6 +839,18 @@ function runMM(inputNum){
 	if(runTo===false && content.classList.contains("showpony-loading")){
 		console.log("Enable!",S.currentLine,runTo);
 		clearTimeout(waitTimer);
+		
+		console.log(S.objects,objectBuffer);
+		
+		//Get rid of unused, uncreated objects
+		for(var key in S.objects){
+			//Get rid of the object if it doesn't exist
+			if(!objectBuffer[key]){
+				S.objects[key].remove();
+				delete S.objects[key];
+			}
+		};
+		
 		content.offsetHeight; //Trigger reflow to flush CSS changes
 		content.classList.remove("showpony-loading");
 	}
@@ -1108,6 +1132,9 @@ var multimediaFunction={
 			content.appendChild(S.objects[vals[1]]);
 		}
 		
+		//If we're buffering, add it to the buffer so it's not deleted later
+		if(runTo) objectBuffer[vals[1]]=S.objects[vals[1]];
+		
 		//Go through the passed parameters and apply them
 		let l=vals.length;
 		for(let i=2;i<l;i++){
@@ -1142,6 +1169,9 @@ var multimediaFunction={
 		
 		//If an object with that name doesn't exist, make it!
 		if(!S.objects[vals[1]]) content.appendChild(S.objects[vals[1]]=m("character"));
+		
+		//If we're buffering, add it to the buffer so it's not deleted later
+		if(runTo) objectBuffer[vals[1]]=S.objects[vals[1]];
 		
 		var cha=S.objects[vals[1]];
 		
@@ -1185,6 +1215,9 @@ var multimediaFunction={
 	,'bg':vals=>{
 		//If the background doesn't exist, make it
 		if(!S.objects[vals[1]]) content.appendChild(S.objects[vals[1]]=m("background"));
+		
+		//If we're buffering, add it to the buffer so it's not deleted later
+		if(runTo) objectBuffer[vals[1]]=S.objects[vals[1]];
 		
 		//If it's a color or gradient, treat it as such
 		if(/(#|gradient\(|rgb\(|rgba\()/.test(vals[2])) S.objects[vals[1]].style.backgroundColor=vals[2];
