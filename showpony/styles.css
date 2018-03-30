@@ -291,7 +291,7 @@ button.showpony-account-button{
 	width:100%;
 	height:100%;
 	z-index:-100;
-	position:absolute;
+	/*position:absolute;*/ /*The background flickers when switching between parts if the background is the same with this on. If we run into problems later on with background positioning, we may need to turn this back on.*/
 	background-position:50% 50%;
 	background-repeat:no-repeat;
 	background-size:cover;
