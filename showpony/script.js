@@ -166,7 +166,8 @@ S.to=function(input){
 		scrub();
 		//Go to the top of the page (if we didn't come here by autoloading)
 		if(obj.scrollToTop){
-			S.window.scrollIntoView();
+			//Check that it's not below the viewport top already
+			if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
 		}
 	}
 	
