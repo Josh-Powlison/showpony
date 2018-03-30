@@ -38,7 +38,7 @@ d('admin',false);
 d('query','part');
 d('shortcuts','focus');
 d('user',null);
-d('HeyBardID',location.hostname.substring(0,30));
+d('HeyBardID',location.hostname.substring(0,20));
 d('bookmark',"file");
 d('startPaused',false);
 d('preloadNext',true);
@@ -135,7 +135,7 @@ S.to=function(input){
 		if(!obj || !obj.reload){
 			//Run the event that users can read
 			S.window.dispatchEvent(new CustomEvent("end"));
-			
+			content.classList.remove("showpony-loading");
 			console.log("Ended!");
 			return;
 		}
@@ -145,12 +145,12 @@ S.to=function(input){
 	
 	//Update info on file load
 	if(!obj.popstate){
-		console.log("Update info!",scrubbing);
+		//console.log("Update info!",scrubbing);
 		//Only allow adding to history if we aren't scrubbing
 		
 		//If the same file, and not a medium where time changes it (like images), replace history state instead
 		if(sameFile && currentType!=="video" && currentType!=="audio"){
-			console.log("Same!");
+			//console.log("Same!");
 			obj.replaceState=true;
 		}
 		
@@ -174,19 +174,19 @@ S.to=function(input){
 		,thisType=types[newType];
 	
 	//Multimedia engine resets
-	S.lines=null;
-	S.charsHidden=0;
-	S.currentLine=0;
 	content.style.cssText=null; //Remove any styles applied to the content
 	waitForInput=false;
 	waitTimer=null;
+		
+	S.charsHidden=0;
+	//S.currentLine=0; //start from beginning
 	
 	//If switching types, do some cleanup
-	if(currentType!=newType || newType==='multimedia'){ //Reset for multimedia engine- for now!
+	if(currentType!=newType){ //Reset for multimedia engine- for now!
 		content.innerHTML="";
 		console.log(types);
 		content.appendChild(thisType);
-		S.objects={window:S.window};
+		S.objects={window:S.window,content:content};
 		S.textboxes={};
 		S.lines=[];
 	}
@@ -199,45 +199,60 @@ S.to=function(input){
 	
 	currentType=newType;
 	
-	//Display the medium based on the file extension
-	//Multmedia Engine/Text/Copy
-	if(currentType==='multimedia' || currentType==='text'){
-		fetch(src,{credentials:'include'})
-			.then(response=>{
-				return response.text();
-			})
-			.then(text=>{
-				if(currentType==='multimedia'){
-					//Get each line (taking into account and ignoring extra lines)
-					S.lines=text.match(/[^\r\n]+/g);
-					runMM(0);
-				//Regular text
-				}else content.innerHTML=text;
-				
-				content.classList.remove("showpony-loading");
-			})
-			.catch((error)=>{
-				content.classList.remove("showpony-loading");
-				alert(error);
-			})
-			//After all that, try preloading the next file
-			.then(()=>{
-				//If we can't preload or are on the last file, don't preload!
-				if(!S.preloadNext || S.currentFile>=S.files.length-1) return;
-				
-				//How we get the file depends on whether or not it's private
-				var src=(S.files[S.currentFile+1][0]=="x" ? "showpony/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile];
-				
-				//Preload next file, if there is a next file
-				console.log("Preloading next!");
-				fetch(src);
-			})
-		;
-	//Image/Audio/Video
+	console.log("HEY!!!!!!",S.currentFile);
+	
+	//If it's the same file, check the type and see if special action needs to be taken!
+	if(sameFile){
+		//Special multimedia engine prep
+		if(currentType==='multimedia'){
+			console.log(content);
+			
+			runTo=Math.floor(S.lines.length*(obj.time/getLength(S.files[S.currentFile])));
+			
+			runMM(0);
+		}
+	//If it's not the same file, load it!
 	}else{
-		//Adjust the source
-		thisType.src=src;
-		if(currentType==='video' || currentType==='audio') !overlay.classList.contains("showpony-overlay-show") && thisType.play();
+		//Display the medium based on the file extension
+		//Multmedia Engine/Text/Copy
+		if(currentType==='multimedia' || currentType==='text'){
+			fetch(src,{credentials:'include'})
+				.then(response=>{
+					return response.text();
+				})
+				.then(text=>{
+					if(currentType==='multimedia'){
+						//Get each line (taking into account and ignoring extra lines)
+						S.lines=text.match(/[^\r\n]+/g);
+						
+						runTo=Math.floor(S.lines.length*(obj.time/getLength(S.files[S.currentFile])));
+						
+						runMM(0);
+					//Regular text
+					}else content.innerHTML=text;
+				})
+				.catch((error)=>{
+					alert(error);
+				})
+				//After all that, try preloading the next file
+				.then(()=>{
+					//If we can't preload or are on the last file, don't preload!
+					if(!S.preloadNext || S.currentFile>=S.files.length-1) return;
+					
+					//How we get the file depends on whether or not it's private
+					var src=(S.files[S.currentFile+1][0]=="x" ? "showpony/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile];
+					
+					//Preload next file, if there is a next file
+					//console.log("Preloading next!");
+					fetch(src);
+				})
+			;
+		//Image/Audio/Video
+		}else{
+			//Adjust the source
+			thisType.src=src;
+			if(currentType==='video' || currentType==='audio') !overlay.classList.contains("showpony-overlay-show") && thisType.play();
+		}
 	}
 	
 	thisType.currentTime=obj.time; //Update the time
@@ -796,11 +811,24 @@ function mediaEnd(){
 	if(!overlay.classList.contains("showpony-overlay-show")) S.to({file:"+1"});
 }
 
+var runTo=false;
+
 //Run multimedia (interactive fiction, visual novels, etc)
 function runMM(inputNum){
 	
 	//Go to either the specified line or the next one
 	S.currentLine=(inputNum!==undefined ? inputNum : S.currentLine+1);
+	
+	//Run through if we're running to a point; if we're there or beyond though, stop running through
+	if(runTo!==false && S.currentLine>=runTo) runTo=false;
+	
+	//We've run through!
+	if(runTo===false && content.classList.contains("showpony-loading")){
+		console.log("Enable!",S.currentLine,runTo);
+		clearTimeout(waitTimer);
+		content.offsetHeight; //Trigger reflow to flush CSS changes
+		content.classList.remove("showpony-loading");
+	}
 	
 	//If we've ended manually or reached the end, stop running immediately and end it all
 	if(S.currentLine>=S.lines.length){
@@ -820,7 +848,7 @@ function runMM(inputNum){
 	if(text[0]==">"){
 		var vals=text.replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/);
 		
-		console.log(text,vals);
+		//console.log(text,vals);
 		
 		//We run a function based on the value passed.
 		//If it returns multimediaSettings, we use those new ones over the old ones.
@@ -835,6 +863,13 @@ function runMM(inputNum){
 	if(!S.textboxes[multimediaSettings.textbox]) content.appendChild(S.textboxes[multimediaSettings.textbox]=m("textbox"));
 	
 	S.textboxes[multimediaSettings.textbox].innerHTML="";
+	
+	//If we're running through, skip displaying text until we get to the right point
+	if(runTo){
+		console.log(S.currentLine,runTo);
+		runMM(undefined);
+		return;
+	}
 	
 	//STEP 2: Design the text//
 	
@@ -1050,6 +1085,12 @@ var multimediaFunction={
 	,'wt':vals=>{
 		//If there's a waitTimer, clear it out
 		clearTimeout(waitTimer);
+		
+		//Skip waiting if we're running through
+		if(runTo){
+			runMM();
+			return;
+		}
 		
 		//If a value was included, wait 
 		waitTimer=vals[1] && setTimeout(runMM,parseFloat(vals[1])*1000);

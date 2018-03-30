@@ -33,6 +33,12 @@
 	visibility:hidden;
 }
 
+/*Automatic loading with these, and disable animations*/
+.showpony-loading,.showpony-loading *{
+	transition:none !important; /*Disables/automatically runs to the end point of transitions while loading*/
+	animation-play-state:paused !important; /*Disables general animations and text animations, so we freeze while loading*/
+}
+
 @keyframes spin{
 	0%{
 		visibility:visible;
@@ -157,6 +163,7 @@ button.showpony-account-button{
 	width:100%;
 	height:100%;
 	position:absolute;
+	transition:all 1s;
 	
 	-ms-user-select:none;
 	-moz-user-select:none;
@@ -245,6 +252,10 @@ button.showpony-account-button{
 	display:block;
 	text-align:left;
 	margin:auto;
+}*/
+/*
+.showpony-no-transition *{
+	transition:none !important;
 }*/
 
 .showpony-textbox{
