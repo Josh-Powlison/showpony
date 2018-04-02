@@ -1323,9 +1323,11 @@ var multimediaFunction={
 					el.pause();
 					break;
 				default:
+				
 					var value=parseFloat(vals[i].substr(1));
+					console.log("AUDIO",vals[i],value);
 					//Speed
-					if(vals[i][0]==='s') el.currentTime=value;
+					if(vals[i][0]==='s') el.playbackRate=value;
 					//Current time
 					else if(vals[i][0]==='t') el.currentTime=value;
 					//Current volume
