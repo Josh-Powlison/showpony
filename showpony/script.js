@@ -544,8 +544,6 @@ types.multimedia.pause=function(){
 	
 	//Pause waitTimer
 	waitTimer.pause();
-	
-	//Add timer support later
 }
 
 function getCurrentTime(){
@@ -1187,6 +1185,7 @@ function powerTimer(callback,delay){
 
 	this.end=function(){
 		window.clearTimeout(timerId);
+		remaining=0;
 	}
 	
     this.resume();
