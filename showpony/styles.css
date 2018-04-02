@@ -370,6 +370,11 @@ button.showpony-account-button{
 	display:inline-block;
 }
 
+.showpony-char-anim{
+	position:relative;
+	display:inline-block;
+}
+
 .showpony-char-placeholder{
 	visibility:hidden;
 }
@@ -384,19 +389,8 @@ button.showpony-account-button{
 	100% {visibility:visible;}
 }
 
-.kn-display-fade{
-	animation:kn-fade .1s linear;
-	animation-fill-mode:forwards;
-}
-
-@keyframes kn-display-fade{
-	0% {visibility:visible;opacity:0;}
-	100% {visibility:visible;opacity:1;}
-}
-
 .showpony-char-shout>.showpony-char{
-	animation:kn-shout .1s linear;
-	animation-fill-mode:forwards;
+	animation:kn-shout .1s linear forwards;
 }
 
 @keyframes kn-shout{
@@ -404,68 +398,113 @@ button.showpony-account-button{
 	100% {visibility:visible;transform:scale(1);}
 }
 
-@keyframes kn-sing{
-	0% {transform:translate(0,-.2em);}
-	50% {transform:translate(0,.2em);}
-	100% {transform:translate(0,-.2em);}
+.showpony-char-fade>.showpony-char{
+	animation:kn-fade .1s linear forwards;
 }
 
-@keyframes kn-shake{
-	0% {transform:translate(.05em,.125em);} 
-	25% {transform:translate(-.05em,-.125em);}
-	50% {transform:translate(-.05em,.125em);} 
-	75% {transform:translate(.05em,-.125em);} 
-	100% {transform:translate(.05em,.125em);}
+@keyframes kn-fade{
+	0% {visibility:visible;opacity:0;}
+	100% {visibility:visible;opacity:1;}
 }
 
-@keyframes kn-display-smoke {
+.showpony-char-blur>.showpony-char{
+	animation:kn-blur 1s linear forwards;
+}
+
+@keyframes kn-blur {
   0% {
-	transform:
-	  translate(-.5em,-1.5em)
-	  rotate(-40deg)
-	  skewX(80deg)
-	  scale(2);
-	opacity: 0;
-	filter:blur(.5em);
-  }
-  to {
-	transform:none;
-	opacity:1;
-	filter:blur(0em);
-  }
-}
-
-@keyframes kn-display-blur {
-  0% {
+	  visibility:visible;
 	opacity:0;
 	filter:blur(.5em);
   }
   to {
+	  visibility:visible;
 	opacity:1;
 	filter:blur(0em);
   }
 }
 
-@keyframes kn-display-smoke-mirror {
-  0% {
-	transform:
-	  translate(.5em,-1.5em)
-	  rotate(40deg) 
-	  skewX(-80deg)
-	  scale(2);
-	opacity: 0;
-	filter:blur(.5em)
-  }
-  to {
-	transform:none;
-	opacity:1;
-	filter:blur(0em);
+.showpony-char-smoke:nth-child(odd)>.showpony-char{
+	animation:kn-smoke 1s ease forwards;
+}
+
+.showpony-char-smoke:nth-child(even)>.showpony-char{
+	animation:kn-smoke-mirror 1s ease forwards;
+}
+
+@keyframes kn-smoke{
+	0%{
+		visibility:visible;
+		transform:
+		translate(-.5em,-1.5em)
+		rotate(-40deg)
+		skewX(80deg)
+		scale(2);
+		opacity: 0;
+		filter:blur(.5em);
+	}
+	to{
+		visibility:visible;
+		transform:none;
+		opacity:1;
+		filter:blur(0em);
 	}
 }
 
-@keyframes kn-display-glitch{
-	0% {transform:;}
-	100% {opacity:1;}
+@keyframes kn-smoke-mirror {
+	0%{
+		visibility:visible;
+		transform:
+		translate(.5em,-1.5em)
+		rotate(40deg) 
+		skewX(-80deg)
+		scale(2);
+		opacity: 0;
+		filter:blur(.5em)
+	}
+	to{
+		visibility:visible;
+		transform:none;
+		opacity:1;
+		filter:blur(0em);
+	}
+}
+
+.showpony-char-sing .showpony-char-anim{
+	animation:kn-sing 1.5s ease-in-out infinite;
+}
+
+@keyframes kn-sing{
+	0%{transform:translate(0,-.2em);}
+	50%{transform:translate(0,.2em);}
+	100%{transform:translate(0,-.2em);}
+}
+
+.showpony-char-shake .showpony-char-anim{
+	animation:kn-shake .2s linear infinite;
+}
+
+@keyframes kn-shake{
+	0%{transform:translate(.05em,.125em);} 
+	25%{transform:translate(-.05em,-.125em);}
+	50%{transform:translate(-.05em,.125em);} 
+	75%{transform:translate(.05em,-.125em);} 
+	100%{transform:translate(.05em,.125em);}
+}
+
+.showpony-char-bold{
+	font-weight:bold;
+}
+
+.showpony-char-italic{
+	font-style:italic;
+}
+
+/*.showpony-char-scramble::before{
+	visibility:hidden;
+	content:'L';
+	animation:scramble 1s infinite;
+	position:absolute;
 }
 
 @keyframes scramble{
@@ -479,14 +518,7 @@ button.showpony-account-button{
 	70%{content:'!';}
 	80%{content:'&';}
 	90%{content:'$';}
-}
-
-.kn-scramble::before{
-	visibility:hidden;
-	content:'L';
-	animation:scramble 1s 1;
-	position:absolute;
-}
+}*/
 
 .showpony-kn-choice{
 	text-align:left;
@@ -503,14 +535,6 @@ button.showpony-account-button{
 	background-color:#fff;
 	color:#000;
 }
-
-.showpony-kn-char-shout{animation:kn-shout .1s linear forwards;}
-.showpony-kn-char-fade{animation:kn-fade 1s linear forwards;}
-.showpony-kn-char-blur{animation:kn-blur 1s linear forwards;}
-.showpony-kn-char-glitch{animation:kn-glitch 1s linear infinite;}
-.showpony-kn-char-smoke{animation:kn-smoke 1s ease forwards;}
-.showpony-kn-char-sing{animation:kn-sing 1.5s ease-in-out infinite;}
-.showpony-kn-char-shake{animation:kn-shake .2s linear infinite;}
 
 /***EDITOR***/
 

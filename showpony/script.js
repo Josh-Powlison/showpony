@@ -1031,6 +1031,7 @@ function runMM(inputNum){
 	//The total time we're waiting until x happens
 	var totalWait=0;
 	var fragment=document.createDocumentFragment();
+	var charNum=0; //The number of the letter (for order-specific values)
 	
 	var l=text.length;
 	for(let i=0;i<l;i++){	
@@ -1085,6 +1086,9 @@ function runMM(inputNum){
 					if(/[.!?:;-]/.test(text[i])) waitTime*=20;
 					if(/[,]/.test(text[i])) waitTime*=10;
 				}
+				
+				//The number of characters is going up!
+				charNum++;
 
 				break;
 		}
@@ -1092,10 +1096,12 @@ function runMM(inputNum){
 		//Make the char based on charElement
 		var thisChar=charElement.cloneNode(false);
 		
-		let showChar=m("char","span");
-		let hideChar=m("char-placeholder","span");
-		hideChar.innerHTML=showChar.innerHTML=text[i];
+		let showChar=m("char","span");				//Display char (appear, shout, etc), parent to animChar
+		let animChar=m("char-anim","span");				//Constant animation character (singing, shaking...)
+		let hideChar=m("char-placeholder","span");	//Hidden char for positioning
+		hideChar.innerHTML=animChar.innerHTML=text[i];
 		
+		frag([animChar],showChar);
 		frag([showChar,hideChar],thisChar);
 		
 		//This character is adding to the list of hidden S.objects
@@ -1103,6 +1109,15 @@ function runMM(inputNum){
 		
 		//Set the display time here- but if we're paused, no delay!
 		if(!content.classList.contains("showpony-paused")) showChar.style.animationDelay=totalWait+"s";
+		
+		//Set animation timing for animChar, based on the type of animation
+		if(thisChar.classList.contains("showpony-char-sing")){
+			animChar.style.animationDelay=-(charNum*.1)+"s";
+		}
+		
+		if(thisChar.classList.contains("showpony-char-shake")){
+			animChar.style.animationDelay=-(Math.random()*3)+"s";
+		}
 		
 		//Add the char to the document fragment
 		fragment.appendChild(thisChar);
@@ -1116,7 +1131,7 @@ function runMM(inputNum){
 			if(this!=event.target) return;
 			
 			//If the element's currently hidden (the animation that ended is for unhiding)
-			if(this.style.visibility!=="visible"){		
+			if(this.style.visibility!=="visible"){
 				S.charsHidden--;
 				this.style.visibility="visible";
 				
@@ -1138,6 +1153,9 @@ function runMM(inputNum){
 				if(this.parentNode.getBoundingClientRect().bottom>textbox.getBoundingClientRect().bottom){
 					textbox.scrollTop+=this.parentNode.getBoundingClientRect().height;
 				}
+				
+				//Add post-appearance animations
+				
 			}
 		});
 	}
