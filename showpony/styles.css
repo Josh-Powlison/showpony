@@ -13,8 +13,6 @@
 
 /*Loading Setup*/
 .showpony-loading{
-	min-width:4em;
-	min-height:4em;
 }
 
 .showpony-loading::after{
@@ -43,8 +41,8 @@
 /*Automatic loading with these, and disable animations*/
 .showpony-paused,.showpony-paused *{
 	transition:none !important; /*Disables/automatically runs to the end point of transitions while loading*/
-	animation-duration:0s !important; /*The goal here is that animations will go to the end; long animations won't play through and mess up */
 	animation-play-state:paused !important; /*Disables general animations and text animations, so we freeze while loading*/
+	animation-duration:0s !important; /*The goal here is that animations will go to the end; long animations won't play through and mess up */
 }
 
 @keyframes spin{

@@ -179,7 +179,9 @@ S.to=function(input){
 	//Multimedia engine resets
 		content.style.cssText=null; //Remove any styles applied to the content
 		waitForInput=false;
-		if(waitTimer) waitTimer.end();
+		if(waitTimer.remaining>0){
+			waitTimer.end();
+		}
 			
 		S.charsHidden=0;
 		
@@ -424,22 +426,39 @@ S.input=function(){
 		if(waitForInput) return;
 	
 		//If a wait timer was going, stop it.
-		if(waitTimer) waitTimer.end();
+		if(waitTimer.remaining>0){
+			console.log(waitTimer,waitTimer.remaining);
+			console.log("Animations");
+			//Run all animations, end all transitions
+			content.classList.add("showpony-loading");
+			content.offsetHeight; //Trigger reflow to flush CSS changes
+			content.classList.remove("showpony-loading");
+			
+			waitTimer.end();
+		}
 	
 		console.log(S.charsHidden);
 	
 		//Remove the continue notice
 		continueNotice.remove();
-	
+		
 		//If all letters are displayed
 		if(S.charsHidden<1) runMM();
 		else //If some S.objects have yet to be displayed
 		{
+			
+			//Run all animations, end all transitions
+			content.classList.add("showpony-loading");
+			content.offsetHeight; //Trigger reflow to flush CSS changes
+			content.classList.remove("showpony-loading");
+			
 			//Display all letters
 			content.querySelectorAll(".showpony-char").forEach(function(key){
 				//Remove the delay so they're displayed immediately
 				key.style.animationDelay=null;
 			});
+			
+			console.log("Animations 2");
 		}
 	}
 }
@@ -466,7 +485,7 @@ var multimediaSettings={
 //Waiting for user input
 var waitForInput=false
 	,scrubbing=false
-	,waitTimer=null
+	,waitTimer=new powerTimer(function(){},0)
 	,currentType=null
 	,loggedIn=false //Logged in as admin
 	//Elements
@@ -917,7 +936,9 @@ function runMM(inputNum){
 	//We've run through!
 	if(runTo===false && content.classList.contains("showpony-loading")){
 		console.log("Enable!",S.currentLine,runTo);
-		if(waitTimer) waitTimer.end();
+		if(waitTimer.remaining>0){
+			waitTimer.end();
+		}
 		
 		console.log(S.objects,objectBuffer);
 		
@@ -1186,27 +1207,33 @@ function runMM(inputNum){
 function powerTimer(callback,delay){
 	//Thanks to https://stackoverflow.com/questions/3969475/javascript-pause-settimeout
 
-    var timerId,start,remaining=delay;
+	const pT=this;
+	
+    var timerId,start;
+	pT.remaining=delay;
 
-    this.pause=function(){
+    pT.pause=function(){
         window.clearTimeout(timerId);
-        remaining-=new Date()-start;
+        pT.remaining-=new Date()-start;
     };
 
-    this.resume=function(){
-		if(remaining<=0) return;
+    pT.resume=function(){
+		if(pT.remaining<=0) return;
 		
         start=new Date();
         window.clearTimeout(timerId);
-        timerId=window.setTimeout(callback,remaining);
+        timerId=window.setTimeout(function(){
+			callback();
+			pT.end();
+		},pT.remaining);
     };
 
-	this.end=function(){
+	pT.end=function(){
 		window.clearTimeout(timerId);
-		remaining=0;
+		pT.remaining=0;
 	}
 	
-    this.resume();
+    pT.resume();
 }
 
 var multimediaFunction={
@@ -1275,7 +1302,9 @@ var multimediaFunction={
 	}
 	,'wt':vals=>{
 		//If there's a waitTimer, clear it out
-		if(waitTimer) waitTimer.end();
+		if(waitTimer.remaining>0){
+			waitTimer.end();
+		}
 		
 		//Skip waiting if we're running through
 		if(runTo){
@@ -1298,6 +1327,10 @@ var multimediaFunction={
 			var el=S.objects[vals[1]]=document.createElement("audio");
 			
 			el.src="resources/audio/"+vals[1];
+			
+			//If an extension isn't specified, assume mp3
+			if(el.src.indexOf(".")===-1) el.src+='.mp3';
+			
 			el.preload=true;
 			
 			content.appendChild(S.objects[vals[1]]);
