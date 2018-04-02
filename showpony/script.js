@@ -49,7 +49,7 @@ var HeyBardConnection;
 ///////////PUBLIC FUNCTIONS////////////
 ///////////////////////////////////////
 
-var objectBuffer, textboxBuffer, keyframes;
+var objectBuffer, keyframes;
 
 //Go to another file
 S.to=function(input){
@@ -188,29 +188,18 @@ S.to=function(input){
 		//Remove the continue notice
 		continueNotice.remove();
 		
-		//Empty out textboxes
-		if(S.textboxes){
-			console.log(S.textboxes);
-			for(var key in S.textboxes){
-				S.textboxes[key].innerHTML="";
-			};
-			
-			//Get rid of local styles
-			for(var key in S.textboxes){
-				S.textboxes[key].removeAttribute("style");
-			};
-		}
-		
 		//Get rid of local styles
 		for(var key in S.objects){
 			//Except for the window and content, of course!
 			if(key==="window" || key==="content") continue;
 			S.objects[key].removeAttribute("style");
+			
+			//Empty out textboxes
+			if(S.objects[key].classList.contains("showpony-textbox")) S.objects[key].innerHTML="";
 		};
 		
 		//Save buffer to check later
 		objectBuffer={window:S.window,content:content};
-		textboxBuffer={};
 	
 	//If switching types, do some cleanup
 	if(currentType!=newType){
@@ -218,7 +207,6 @@ S.to=function(input){
 		console.log(types);
 		content.appendChild(thisType);
 		S.objects={window:S.window,content:content};
-		S.textboxes={};
 		S.lines=[];
 	}
 	
@@ -951,17 +939,6 @@ function runMM(inputNum){
 			}
 		};
 		
-		if(S.textboxes){
-			//Get rid of unused, uncreated textboxes
-			for(var key in S.textboxes){
-				//Get rid of the object if it doesn't exist
-				if(!textboxBuffer[key]){
-					S.textboxes[key].remove();
-					delete S.textboxes[key];
-				}
-			};
-		}
-		
 		content.offsetHeight; //Trigger reflow to flush CSS changes
 		content.classList.remove("showpony-loading");
 	}
@@ -1009,20 +986,20 @@ function runMM(inputNum){
 		//If it's regular text display, use the regular settings
 		multimediaSettings.wait=true; //Assume we're waiting at the end time
 		multimediaSettings.textbox="main";
-		if(S.textboxes.main) S.textboxes.main.innerHTML="";
+		if(S.objects.main) S.objects.main.innerHTML="";
 	}
 	
 	//If the textbox hasn't been created, create it!
-	if(!S.textboxes[multimediaSettings.textbox]) content.appendChild(S.textboxes[multimediaSettings.textbox]=m("textbox"));
+	if(!S.objects[multimediaSettings.textbox]) content.appendChild(S.objects[multimediaSettings.textbox]=m("textbox"));
 	
 	//If no text was passed, empty the textbox and continue
 	if(typeof(text)==='undefined'){
-		S.textboxes[multimediaSettings.textbox].innerHTML="";
+		S.objects[multimediaSettings.textbox].innerHTML="";
 		runMM();
 		return;
 	}
 	
-	if(runTo) textboxBuffer[multimediaSettings.textbox]=S.textboxes[multimediaSettings.textbox];
+	if(runTo) objectBuffer[multimediaSettings.textbox]=S.objects[multimediaSettings.textbox];
 	
 	//If we're running through, skip displaying text until we get to the right point
 	if(runTo){
@@ -1182,26 +1159,7 @@ function runMM(inputNum){
 	}
 	
 	//Add the chars to the textbox
-	S.textboxes[multimediaSettings.textbox].appendChild(fragment);
-
-	/*
-	//Add animations that span the whole thing, so they're in sync
-	var e=S.textboxes[multimediaSettings.textbox].children;
-	l=e.length;
-	for(let i=0;i<l;i++){
-
-		if(
-			e[i].dataset.animations=="shake"
-			|| e[i].dataset.animations=="sing"
-		){
-			e[i].children[0].classList.add("showpony-kn-char-"+e[i].dataset.animations);
-			e[i].children[0].style.animationDelay=
-				(e[i].dataset.animations=="sing"
-					? "-"+(i/20)+"s"
-					: "-"+Math.random()+"s"
-			);
-		}
-	}*/
+	S.objects[multimediaSettings.textbox].appendChild(fragment);
 }
 
 function powerTimer(callback,delay){
@@ -1243,7 +1201,7 @@ var multimediaFunction={
 		var thisButton=m("kn-choice","button");
 		thisButton.innerHTML=vals[2];
 		
-		S.textboxes["main"].appendChild(thisButton);
+		S.objects["main"].appendChild(thisButton);
 		
 		//On clicking a button, go to the right place
 		thisButton.addEventListener("click",function(event){
@@ -1346,6 +1304,9 @@ var multimediaFunction={
 				case "loop":
 					el.loop=true;
 					break;
+				case "unloop":
+					el.loop=false;
+					break;
 				case "play":
 				case "pause":
 					el[vals[i]]();
@@ -1358,7 +1319,17 @@ var multimediaFunction={
 					break;
 				case "stop":
 					el.currentTime=0;
+					el.wasPlaying=false;
 					el.pause();
+					break;
+				default:
+					var value=parseFloat(vals[i].substr(1));
+					//Speed
+					if(vals[i][0]==='s') el.currentTime=value;
+					//Current time
+					else if(vals[i][0]==='t') el.currentTime=value;
+					//Current volume
+					else if(vals[i][0]==='v') el.volume=value;
 					break;
 			}
 		}
@@ -1367,8 +1338,8 @@ var multimediaFunction={
 		runMM();
 	}
 	,'st':vals=>{
-		//Update style of either the object or textbox
-		(S.objects[vals[1]] || S.textboxes[vals[1]]).style.cssText+=vals[2];
+		//Update the object's style
+		S.objects[vals[1]].style.cssText+=vals[2];
 		
 		//Go to the next line
 		runMM();
@@ -1453,7 +1424,7 @@ var multimediaFunction={
 			}
 		}
 		
-		//If a 4th value exists, adjust 'left' if a character or 'zIndex' if a background
+		//If a 4th value exists, adjust 'left'
 		if(vals[3]) S.objects[vals[1]].style.left=vals[3];
 		
 		//Go to the next line
@@ -1469,6 +1440,9 @@ var multimediaFunction={
 		//If it's a color or gradient, treat it as such
 		if(/(#|gradient\(|rgb\(|rgba\()/.test(vals[2])) S.objects[vals[1]].style.backgroundColor=vals[2];
 		else S.objects[vals[1]].style.backgroundImage="url('resources/backgrounds/"+vals[2]+"')";
+		
+		//If a 4th value exists, adjust 'zIndex'
+		if(vals[3]) S.objects[vals[1]].style.zIndex=vals[3];
 		
 		//Go to the next line
 		runMM();

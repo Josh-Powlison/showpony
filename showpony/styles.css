@@ -12,9 +12,6 @@
 }
 
 /*Loading Setup*/
-.showpony-loading{
-}
-
 .showpony-loading::after{
 	content:" ";
 	display:block;
