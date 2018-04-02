@@ -1341,45 +1341,82 @@ var multimediaFunction={
 		runMM();
 	}
 	,'ch':vals=>{
-		//Get the folder, which is the name without anything after a hash
+		//Get the folder, which is the character name. Anything after a hash is an id; it's not a part of the folder name.
 		var folder=vals[1].split('#')[0];
 		
-		//If an object with that name doesn't exist, make it!
-		if(!S.objects[vals[1]]) content.appendChild(S.objects[vals[1]]=m("character"));
+		//If an object with the name doesn't exist, make it!
+		if(!S.objects[vals[1]]){
+			content.appendChild(S.objects[vals[1]]=m("character"));
+		}
 		
-		//If we're buffering, add it to the buffer so it's not deleted later
+		//If we're buffering, add this character listing to the buffer so it's not deleted later
 		if(runTo) objectBuffer[vals[1]]=S.objects[vals[1]];
 		
 		var cha=S.objects[vals[1]];
 		
-		//Get the image names
-		var imageNames=vals[2].split(",");
+		//Check for images for this character; go through future lines
+		var lines=[vals[2]];
 		
-		//Go through each image and add a div
-		for(let i=0, len=imageNames.length;i<len;i++){
-			var image="url('resources/characters/"+folder+"/"+imageNames[i]+"')";
+		var reg=new RegExp('^>\\s+CH\\s+'+vals[1]+'\\s','i');
+			console.log(reg);
+		
+		//Go through the rest of the lines, looking for images to preload
+		for(let i=S.currentLine;i<S.lines.length;i++){
 			
-			//If the image already exists
-			var found=false;
+			//If this character is listed on this line
+			if(reg.test(S.lines[i])){
+				console.log("found!");
+				//Add the image names to the images to load
+				lines.push(S.lines[i].replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/)[2]);
+			}
+		}
+		
+		//Character level
+		for(let i=0,len=lines.length;i<len;i++){
 			
-			//If the layer exists
-			if(cha.children[i]){
-				//If this value doesn't exist in the layer
+			//Get the image names passed (commas separate layers)
+			var imageNames=lines[i].split(",");
+		
+			//Layer level
+			//Go through each passed image and see if it exists
+			for(let ii=0,len=imageNames.length;ii<len;ii++){
+				//If there's no period, add ".png" to the end- assume the extension
+				if(imageNames[ii].indexOf(".")===-1) imageNames[ii]+=".png";
 				
-				var search=cha.children[i].children;
+				var image="url('resources/characters/"+folder+"/"+imageNames[ii]+"')";
 				
-				//Set the opacity right, and if it's 1, we found the image!
-				for(let ii=0,len=search.length;ii<len;ii++) if(search[ii].style.opacity=(search[ii].style.backgroundImage==image ? 1 : 0)) found=true;
-			//If the layer doesn't exist, make it
-			}else cha.appendChild(document.createElement("div"));
-			
-			//If either the layer or the image doesn't exist, we add it!
-			if(!found){
-				//Add a backgroundImage
-				var thisImg=m("character-image");
-				thisImg.style.backgroundImage=image;
+				//If the image already exists
+				var found=false;
 				
-				cha.children[i].appendChild(thisImg);
+				//If the layer exists, search it
+				if(cha.children[ii]){
+					//Search the layer!
+					var search=cha.children[ii].children;
+					
+					//Set the opacity right, and if it's 1, we found the image!
+					for(let iii=0,len=search.length;iii<len;iii++){
+						var match=search[iii].style.backgroundImage.replace(/'/g,'"')==image.replace(/'/g,'"');
+						
+						//If this is the first image, it's the one we asked for; we don't want to make preloads visible, after all!
+						if(i===0) search[iii].style.opacity=match ? 1 : 0;
+						
+						if(match==true) found=true;
+					}
+				//If the layer doesn't exist, make it!
+				}else cha.appendChild(document.createElement("div"));
+				
+				//Image level
+				//If the image doesn't exist in the layer, we add it!
+				if(!found){
+					//Add a backgroundImage
+					var thisImg=m("character-image");
+					thisImg.style.backgroundImage=image;
+					
+					//If this isn't the first image, hide it immediately (it's being preloaded, we don't want to see it yet!)
+					if(i!==0) thisImg.style.opacity=0;
+					
+					cha.children[ii].appendChild(thisImg);
+				}
 			}
 		}
 		
