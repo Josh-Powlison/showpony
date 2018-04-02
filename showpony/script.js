@@ -435,19 +435,11 @@ S.input=function(){
 		if(S.charsHidden<1) runMM();
 		else //If some S.objects have yet to be displayed
 		{
-			//Go through each textbox and display all of its text
-			Object.keys(S.textboxes).forEach(
-				function(key){
-					let l=S.textboxes[key].children.length;
-					for(let i=0;i<l;i++){
-						//Skip over non-span tags
-						if(S.textboxes[key].children[i].tagName!=="SPAN") continue;
-						
-						//Remove the delay so they're displayed immediately
-						S.textboxes[key].children[i].children[0].style.animationDelay="0s";
-					}
-				}
-			);
+			//Display all letters
+			content.querySelectorAll(".showpony-char").forEach(function(key){
+				//Remove the delay so they're displayed immediately
+				key.style.animationDelay=null;
+			});
 		}
 	}
 }
