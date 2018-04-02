@@ -1322,16 +1322,15 @@ var multimediaFunction={
 					el.wasPlaying=false;
 					el.pause();
 					break;
-				default:
-				
+				default: //Other features
 					var value=parseFloat(vals[i].substr(1));
 					console.log("AUDIO",vals[i],value);
-					//Speed
-					if(vals[i][0]==='s') el.playbackRate=value;
+					//Current volume
+					if(vals[i][0]==='v') el.volume=value;
 					//Current time
 					else if(vals[i][0]==='t') el.currentTime=value;
-					//Current volume
-					else if(vals[i][0]==='v') el.volume=value;
+					//Speed
+					else if(vals[i][0]==='s') el.playbackRate=value;
 					break;
 			}
 		}
