@@ -230,6 +230,7 @@ S.to=function(input){
 			
 			runMM(0);
 		}
+		else content.classList.remove("showpony-loading");
 	//If it's not the same file, load it!
 	}else{
 		//Display the medium based on the file extension
@@ -276,7 +277,14 @@ S.to=function(input){
 						
 						runMM(0);
 					//Regular text
-					}else content.innerHTML=text;
+					}else{
+						thisType.innerHTML="";
+						
+						if(S.currentFile>0) thisType.appendChild(textPrev);
+						thisType.innerHTML+=text;
+						if(S.currentFile<S.files.length-1) thisType.appendChild(textNext);
+						content.classList.remove("showpony-loading");
+					}
 				})
 				.catch((error)=>{
 					alert(error);
@@ -493,8 +501,15 @@ var waitForInput=false
 		,multimedia:m("multimedia")
 		,text:m("text")
 	}
+	//Text
+	,textPrev=m("text-prev","button")
+	,textNext=m("text-next","button")
+	//Multimedia
 	,continueNotice=m("continue")
 ;
+
+textPrev.innerHTML="Previous";
+textNext.innerHTML="Next";
 
 if(S.startPaused) overlay.classList.add("showpony-overlay-show");
 
@@ -1580,6 +1595,19 @@ captionsButton.addEventListener(
 
 content.addEventListener("click",()=>{S.input();});
 
+//Navigate text
+textPrev.addEventListener("click",function(){
+	console.log("Hey!");
+	S.to({file:"-1"});
+	types.text.scrollTo(0,99999);
+});
+
+textNext.addEventListener("click",function(){
+	console.log("Hey!");
+	S.to({file:"+1"});
+	types.text.scrollTo(0,0);
+});
+
 //On loading resources, don't show loading
 types.image.addEventListener("load",function(){
 	content.classList.remove("showpony-loading");
@@ -1596,6 +1624,7 @@ types.image.addEventListener("load",function(){
 		img.src=src;
 	}
 });
+
 types.video.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});
 types.audio.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});
 

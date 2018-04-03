@@ -29,14 +29,8 @@
 }
 
 /*Automatic loading with these, and disable animations*/
-.showpony-loading,.showpony-loading *{
-	transition:none !important; /*Disables/automatically runs to the end point of transitions while loading*/
-	animation-play-state:paused !important; /*Disables general animations and text animations, so we freeze while loading*/
-	animation-duration:0s !important; /*The goal here is that animations will go to the end; long animations won't play through and mess up */
-}
-
-/*Automatic loading with these, and disable animations*/
-.showpony-paused,.showpony-paused *{
+.showpony-loading,.showpony-loading *
+,.showpony-paused,.showpony-paused *{
 	transition:none !important; /*Disables/automatically runs to the end point of transitions while loading*/
 	animation-play-state:paused !important; /*Disables general animations and text animations, so we freeze while loading*/
 	animation-duration:0s !important; /*The goal here is that animations will go to the end; long animations won't play through and mess up */
@@ -172,6 +166,8 @@ button.showpony-account-button{
 	-moz-user-select:none;
 	-webkit-user-select:none;
 	user-select:none;
+	
+	color:white;
 }
 
 .showpony-block{
@@ -239,11 +235,42 @@ button.showpony-account-button{
 	outline:0;
 }
 
-/* Other browsers seem to display correctly in fullscreen
-,:-moz-full-screen
-,:-ms-fullscreen
-,:full-screen
-,:fullscreen*/
+/***TEXT***/
+.showpony-text{
+	overflow:auto;
+	height:100%;
+	width:100%;
+	padding:1em;
+	box-sizing:border-box;
+	background-color:white;
+	color:black;
+}
+
+.showpony-text-prev:hover
+,.showpony-text-next:hover{
+	background-color:rgba(0,0,0,.25);
+}
+	
+.showpony-text-prev
+,.showpony-text-next{
+	position:relative;
+	height:7em;
+	max-height:40%;
+	width:100%;
+	left:0;
+	background-color:rgba(0,0,0,0);
+	transition:background-color 1s;
+	pointer-events:auto;
+	cursor:pointer;
+	margin:auto;
+	display:block;
+}
+
+.showpony-text-prev{
+}
+
+.showpony-text-next{
+}
 
 /***MULTIMEDIA***/
 
@@ -255,10 +282,6 @@ button.showpony-account-button{
 	display:block;
 	text-align:left;
 	margin:auto;
-}*/
-/*
-.showpony-no-transition *{
-	transition:none !important;
 }*/
 
 .showpony-textbox{
@@ -337,7 +360,8 @@ button.showpony-account-button{
 	animation:arrow-point 1s ease infinite alternate 3s;
 	background-size:contain;
 	background-repeat:no-repeat;
-	background-image:url("arrow.svg");
+	background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none' viewBox='0 0 10 10'%3E%3Cg fill='%23fff'%3E%3Cpath d='M.35 3.14h3.27v3.71H.35z'/%3E%3Cpath d='M2.23.7L9.65 5 2.23 9.3z'/%3E%3C/g%3E%3C/svg%3E");
+	filter:drop-shadow(0 0 1px #000);
 }
 
 @keyframes arrow-point{
@@ -419,52 +443,6 @@ button.showpony-account-button{
   }
 }
 
-.showpony-char-smoke:nth-child(odd)>.showpony-char{
-	animation:kn-smoke 1s ease forwards;
-}
-
-.showpony-char-smoke:nth-child(even)>.showpony-char{
-	animation:kn-smoke-mirror 1s ease forwards;
-}
-
-@keyframes kn-smoke{
-	0%{
-		visibility:visible;
-		transform:
-		translate(-.5em,-1.5em)
-		rotate(-40deg)
-		skewX(80deg)
-		scale(2);
-		opacity: 0;
-		filter:blur(.5em);
-	}
-	to{
-		visibility:visible;
-		transform:none;
-		opacity:1;
-		filter:blur(0em);
-	}
-}
-
-@keyframes kn-smoke-mirror {
-	0%{
-		visibility:visible;
-		transform:
-		translate(.5em,-1.5em)
-		rotate(40deg) 
-		skewX(-80deg)
-		scale(2);
-		opacity: 0;
-		filter:blur(.5em)
-	}
-	to{
-		visibility:visible;
-		transform:none;
-		opacity:1;
-		filter:blur(0em);
-	}
-}
-
 .showpony-char-sing .showpony-char-anim{
 	animation:kn-sing 1.5s ease-in-out infinite;
 }
@@ -494,26 +472,6 @@ button.showpony-account-button{
 .showpony-char-italic{
 	font-style:italic;
 }
-
-/*.showpony-char-scramble::before{
-	visibility:hidden;
-	content:'L';
-	animation:scramble 1s infinite;
-	position:absolute;
-}
-
-@keyframes scramble{
-	0%{content:'*';visibility:visible;}
-	10%{content:'1';}
-	20%{content:'/';}
-	30%{content:'0';}
-	40%{content:'?';}
-	50%{content:'1';}
-	60%{content:'@';}
-	70%{content:'!';}
-	80%{content:'&';}
-	90%{content:'$';}
-}*/
 
 .showpony-kn-choice{
 	text-align:left;
