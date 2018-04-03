@@ -629,9 +629,9 @@ function scrub(inputPercent){
 	//If no inputPercent was passed, estimate it
 	if(typeof(inputPercent)==='undefined'){
 		//Use the currentTime of the object, if it has one
-		var newTime=getCurrentTime();
+		var timeInTotal=getCurrentTime();
 		
-		var inputPercent=newTime / duration
+		var inputPercent=timeInTotal / duration
 			,newPart=S.currentFile;
 	}else{ //if inputPercent WAS passed
 	
@@ -639,7 +639,8 @@ function scrub(inputPercent){
 		inputPercent= inputPercent <= 0 ? 0 : inputPercent >= 1 ? 1 : inputPercent;
 		
 		//Go to the time
-		var newTime=duration*inputPercent
+		var timeInTotal=duration*inputPercent
+			,newTime=duration*inputPercent
 			,newPart=0
 		;
 		
@@ -662,12 +663,12 @@ function scrub(inputPercent){
 	
 	//Move the progress bar
 	progress.style.left=(inputPercent*100)+"%";
-
+	
 	//Set the overlay text (the current time)
 	overlayText.innerHTML="<p>"+replaceInfoText(
 		S.info
 		,newPart
-		,Math.floor(newTime)
+		,Math.floor(timeInTotal)
 	)+"</p>";
 }
 
