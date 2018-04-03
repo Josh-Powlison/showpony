@@ -25,8 +25,7 @@ S.window=input.window;
 S.originalWindow=S.window.cloneNode(true);
 
 /*VARIABLE				DEFAULT VALUE										*/
-d('files'			,	'get'												);
-d('path'			,	'files/'											);
+d('get'				,	'files/'											);
 d('language'		,	''													);
 d('scrubLoad'		,	false												);
 d('info'			,	'[Current File] | [Files Left]'						);
@@ -43,6 +42,16 @@ d('bookmark'		,	"file"												);
 d('preloadNext'		,	true												);
 d('infiniteText'	,	false												);
 d('infiniteImage'	,	false												);
+
+//If passed a path
+if(typeof(S.get)=="string"){
+	S.files="get";
+	S.path=S.get;
+//If passed an array of files
+}else{
+	S.files=S.get;
+	S.path="";
+}
 
 var HeyBardConnection;
 
