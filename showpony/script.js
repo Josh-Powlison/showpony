@@ -1644,25 +1644,32 @@ content.addEventListener("click",()=>{S.input();});
 ///TEXT///
 //Navigate text
 pagePrev.addEventListener("click",function(){
-	console.log("Hey!");
-	S.to({file:"-1"});
 	event.stopPropagation();
 	
-	//Go to end of previous file, if it's one that used this. Otherwise, go to the beginning of it.
-	//S.to({file:S.currentFile-1,time:getLength(S.files[S.currentFile-1])});
+	var goToFile=S.currentFile-1;
+	
+	//Go to end of previous file, if it's one that uses scrolling. Otherwise, go to the beginning of it.
+	if(getMedium(S.files[goToFile])=="text"){
+		S.to({file:goToFile,time:getLength(S.files[goToFile])});
+	}else{
+	//For most media, go to the beginning.
+		S.to({file:"-1"});
+	}
 });
 
 pageNext.addEventListener("click",function(event){
+	event.stopPropagation();
 	//Go to next file
 	S.to({file:"+1"});
-	event.stopPropagation();
 });
 
 //Update the scrub bar when scrolling
 pageTurn.addEventListener("scroll",function(event){
 	//Set current time to percent scrolled
-	pageTurn.currentTime=getLength(S.files[S.currentFile])*(pageTurn.scrollTop/pageTurn.scrollHeight);
+	types[currentType].currentTime=getLength(S.files[S.currentFile])*(pageTurn.scrollTop/pageTurn.scrollHeight);
+	
 	updateInfo();
+	
 	event.stopPropagation();
 });
 
