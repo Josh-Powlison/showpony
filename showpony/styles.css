@@ -248,28 +248,32 @@ button.showpony-account-button{
 
 .showpony-text-prev:hover
 ,.showpony-text-next:hover{
-	background-color:rgba(0,0,0,.25);
+	opacity:.7;
 }
 	
 .showpony-text-prev
 ,.showpony-text-next{
 	position:relative;
-	height:7em;
+	height:14em;
 	max-height:40%;
 	width:100%;
 	left:0;
-	background-color:rgba(0,0,0,0);
-	transition:background-color 1s;
+	opacity:.1;
+	transition:opacity .2s;
 	pointer-events:auto;
 	cursor:pointer;
 	margin:auto;
 	display:block;
+	border:none;
+	margin:0;
 }
 
 .showpony-text-prev{
+	background:linear-gradient(black,white);
 }
 
 .showpony-text-next{
+	background:linear-gradient(white,black);
 }
 
 /***MULTIMEDIA***/

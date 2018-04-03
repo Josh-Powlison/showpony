@@ -229,8 +229,14 @@ S.to=function(input){
 			runTo=keyframes[Math.floor(keyframes.length*(obj.time/getLength(S.files[S.currentFile])))];
 			
 			runMM(0);
+		}else{
+			//If text, scroll to specified spot
+			if(currentType==="text"){
+				types.text.scrollTo(0,types.text.scrollHeight*(obj.time/getLength(S.files[S.currentFile])));
+			}
+			
+			content.classList.remove("showpony-loading");
 		}
-		else content.classList.remove("showpony-loading");
 	//If it's not the same file, load it!
 	}else{
 		//Display the medium based on the file extension
@@ -278,11 +284,17 @@ S.to=function(input){
 						runMM(0);
 					//Regular text
 					}else{
-						thisType.innerHTML="";
+						//Put in the text
+						thisType.innerHTML=text;
 						
-						if(S.currentFile>0) thisType.appendChild(textPrev);
-						thisType.innerHTML+=text;
-						if(S.currentFile<S.files.length-1) thisType.appendChild(textNext);
+						//Add loading buttons
+						if(S.currentFile>0) thisType.insertAdjacentElement('afterbegin',textPrev);
+						if(S.currentFile<S.files.length-1) thisType.insertAdjacentElement('beforeend',textNext);
+						
+						//Scroll to spot
+						types.text.scrollTo(0,types.text.scrollHeight*(obj.time/getLength(S.files[S.currentFile])));
+						
+						//Stop loading
 						content.classList.remove("showpony-loading");
 					}
 				})
@@ -507,9 +519,6 @@ var waitForInput=false
 	//Multimedia
 	,continueNotice=m("continue")
 ;
-
-textPrev.innerHTML="Previous";
-textNext.innerHTML="Next";
 
 if(S.startPaused) overlay.classList.add("showpony-overlay-show");
 
@@ -1506,6 +1515,17 @@ function safeFilename(string,type){
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
 
+var shortcutKeys={
+	32: 	()=>S.input()				//Spacebar
+	,37:	()=>S.to({time:"-10"})		//Left arrow
+	,39:	()=>S.to({time:"+10"})		//Right arrow
+	,36:	()=>S.to({file:"first"})	//Home
+	,35:	()=>S.to({file:"last"})		//End
+	,177:	()=>S.to({file:"-1"})		//Previous
+	,176:	()=>S.to({file:"+1"})		//Next
+	,179:	()=>S.menu()				//Play/pause
+};
+
 //If shortcut keys are enabled
 if(S.shortcuts){
 	//Keyboard presses
@@ -1521,17 +1541,6 @@ if(S.shortcuts){
 					if(S.shortcuts!=='fullscreen' && S.window!==document.activeElement) return;
 				}
 			}
-			
-			var shortcutKeys={
-				32: 	()=>S.input()				//Spacebar
-				,37:	()=>S.to({time:"-10"})		//Left arrow
-				,39:	()=>S.to({time:"+10"})		//Right arrow
-				,36:	()=>S.to({file:"first"})	//Home
-				,35:	()=>S.to({file:"last"})		//End
-				,177:	()=>S.to({file:"-1"})		//Previous
-				,176:	()=>S.to({file:"+1"})		//Next
-				,179:	()=>S.menu()				//Play/pause
-			};
 			
 			if(shortcutKeys[event.keyCode]){
 				event.preventDefault();
@@ -1595,19 +1604,26 @@ captionsButton.addEventListener(
 
 content.addEventListener("click",()=>{S.input();});
 
+///TEXT///
 //Navigate text
 textPrev.addEventListener("click",function(){
-	console.log("Hey!");
-	S.to({file:"-1"});
-	types.text.scrollTo(0,99999);
+	//Go to end of previous file
+	S.to({file:S.currentFile-1,time:getLength(S.files[S.currentFile-1])});
 });
 
 textNext.addEventListener("click",function(){
-	console.log("Hey!");
+	//Go to next file
 	S.to({file:"+1"});
-	types.text.scrollTo(0,0);
 });
 
+//Update the scrub bar when scrolling
+types.text.addEventListener("scroll",function(){
+	//Set current time to percent scrolled
+	types.text.currentTime=getLength(S.files[S.currentFile])*(types.text.scrollTop/types.text.scrollHeight);
+	updateInfo();
+});
+
+///IMAGES///
 //On loading resources, don't show loading
 types.image.addEventListener("load",function(){
 	content.classList.remove("showpony-loading");
@@ -1625,6 +1641,7 @@ types.image.addEventListener("load",function(){
 	}
 });
 
+///VIDEO AND AUDIO///
 types.video.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});
 types.audio.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});
 
