@@ -30,7 +30,7 @@
 
 /*Automatic loading with these, and disable animations*/
 .showpony-loading,.showpony-loading *
-,.showpony-paused,.showpony-paused *{
+,.showpony-paused .showpony-content, .showpony-paused  .showpony-content *{
 	transition:none !important; /*Disables/automatically runs to the end point of transitions while loading*/
 	animation-play-state:paused !important; /*Disables general animations and text animations, so we freeze while loading*/
 	animation-duration:0s !important; /*The goal here is that animations will go to the end; long animations won't play through and mess up */
@@ -106,14 +106,14 @@
 
 .showpony-overlay:hover
 ,.showpony-overlay:active
-,.showpony-overlay-show{
+,.showpony-paused .showpony-overlay{
 	opacity:1;
 	cursor:auto;
 	animation:hide-menu 1s linear 2s;
 	animation-fill-mode:forwards;
 }
 
-.showpony-overlay-show{
+.showpony-paused .showpony-overlay{
 	background-color:rgba(0,0,0,.5);
 	bottom:0;
 }
@@ -189,7 +189,7 @@ button.showpony-account-button{
 	display:none;
 }
 
-.showpony-overlay-show .showpony-logo{
+.showpony-paused .showpony-logo{
 	display:block;
 }
 
@@ -220,7 +220,7 @@ button.showpony-account-button{
 	display:none;
 }
 
-.showpony-overlay-show .showpony-credits{
+.showpony-paused .showpony-credits{
 	display:block;
 }
 

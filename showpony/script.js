@@ -333,7 +333,7 @@ S.to=function(input){
 		}else{
 			//Adjust the source
 			thisType.src=src;
-			if((currentType==='video' || currentType==='audio') && !overlay.classList.contains("showpony-overlay-show")){
+			if((currentType==='video' || currentType==='audio') && !S.window.classList.contains("showpony-paused")){
 				thisType.play();
 				console.log("Play");
 			}
@@ -368,17 +368,17 @@ S.menu=function(event){
 	else //If we aren't moving the bar
 	{
 		//On toggling classes, returns "true" if just added
-		if(overlay.classList.toggle("showpony-overlay-show")){
+		if(S.window.classList.toggle("showpony-paused")){
 			scrub();
 			
 			//Add paused class
-			content.classList.add("showpony-paused");
+			S.window.classList.add("showpony-paused");
 			
 			//Pause media
 			types[currentType].play && types[currentType].pause();
 		}else{
 			//Remove paused class
-			content.classList.remove("showpony-paused");
+			S.window.classList.remove("showpony-paused");
 			
 			//Play media
 			types[currentType].play && types[currentType].play();
@@ -390,7 +390,7 @@ S.menu=function(event){
 		new CustomEvent("menu"
 		,{detail:{
 			open:(
-				overlay.classList.contains("showpony-overlay-show") ? true
+				S.window.classList.contains("showpony-paused") ? true
 				: false
 			)
 		}})
@@ -556,8 +556,7 @@ var waitForInput=false
 content.className="showpony-content";
 
 if(S.startPaused){
-	overlay.classList.add("showpony-overlay-show");
-	content.classList.add("showpony-paused");
+	S.window.classList.add("showpony-paused");
 }
 
 
@@ -967,7 +966,7 @@ function m(c,el){
 //When video or audio ends
 function mediaEnd(){
 	//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
-	if(!overlay.classList.contains("showpony-overlay-show")) S.to({file:"+1"});
+	if(!S.window.classList.contains("showpony-paused")) S.to({file:"+1"});
 	console.log("MEDIA END");
 }
 
@@ -1167,7 +1166,7 @@ function runMM(inputNum){
 		S.charsHidden++;
 		
 		//Set the display time here- but if we're paused, no delay!
-		if(!content.classList.contains("showpony-paused")) showChar.style.animationDelay=totalWait+"s";
+		if(!S.window.classList.contains("showpony-paused")) showChar.style.animationDelay=totalWait+"s";
 		
 		//Set animation timing for animChar, based on the type of animation
 		if(thisChar.classList.contains("showpony-char-sing")){
@@ -1337,7 +1336,7 @@ var multimediaFunction={
 		else content.appendChild(continueNotice);
 		
 		//If we're paused, pause the timer
-		if(content.classList.contains("showpony-paused")) waitTimer.pause();
+		if(S.window.classList.contains("showpony-paused")) waitTimer.pause();
 	}
 	,'au':vals=>{
 		//If the audio doesn't exist
@@ -1373,7 +1372,7 @@ var multimediaFunction={
 					el[vals[i]]();
 					
 					//Pause the audio if we're paused; it can start playing later
-					if(vals[i]==="play" && content.classList.contains("showpony-paused")){
+					if(vals[i]==="play" && S.window.classList.contains("showpony-paused")){
 						el.wasPlaying=true;
 						el.pause();
 					}
