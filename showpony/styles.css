@@ -236,7 +236,7 @@ button.showpony-account-button{
 }
 
 /***TEXT***/
-.showpony-text{
+.showpony-page-turn{
 	overflow:auto;
 	height:100%;
 	width:100%;
@@ -246,13 +246,13 @@ button.showpony-account-button{
 	color:black;
 }
 
-.showpony-text-prev:hover
-,.showpony-text-next:hover{
+.showpony-page-prev:hover
+,.showpony-page-next:hover{
 	opacity:.7;
 }
 	
-.showpony-text-prev
-,.showpony-text-next{
+.showpony-page-prev
+,.showpony-page-next{
 	position:relative;
 	height:14em;
 	max-height:40%;
@@ -268,11 +268,11 @@ button.showpony-account-button{
 	margin:0;
 }
 
-.showpony-text-prev{
+.showpony-page-prev{
 	background:linear-gradient(black,white);
 }
 
-.showpony-text-next{
+.showpony-page-next{
 	background:linear-gradient(white,black);
 }
 

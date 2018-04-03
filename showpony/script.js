@@ -42,6 +42,8 @@ d('HeyBardID',location.hostname.substring(0,20));
 d('bookmark',"file");
 d('startPaused',false);
 d('preloadNext',true);
+d('infiniteText',false);
+d('infiniteImage',false);
 
 var HeyBardConnection;
 
@@ -205,9 +207,16 @@ S.to=function(input){
 	if(currentType!=newType){
 		content.innerHTML="";
 		console.log(types);
-		content.appendChild(thisType);
 		S.objects={window:S.window,content:content};
 		S.lines=[];
+		
+		//Use either infinite text or page turn, whichever is requested
+		if(newType==="text"){
+			content.appendChild(S.infiniteText ? pageInfinite : pageTurn);
+		}else{
+			//General setup
+			content.appendChild(types[newType]);
+		}
 	}
 	
 	//How we get the file depends on whether or not it's private
@@ -217,8 +226,6 @@ S.to=function(input){
 	if(obj.refresh) src+=(S.files[S.currentFile][0]==="x" ? "&" : "?")+"refresh-"+Date.now();
 	
 	currentType=newType;
-	
-	console.log("HEY!!!!!!",S.currentFile);
 	
 	//If it's the same file, check the type and see if special action needs to be taken!
 	if(sameFile){
@@ -232,7 +239,11 @@ S.to=function(input){
 		}else{
 			//If text, scroll to specified spot
 			if(currentType==="text"){
-				types.text.scrollTo(0,types.text.scrollHeight*(obj.time/getLength(S.files[S.currentFile])));
+				//Infinite scrolling
+				if(S.infiniteText){//Scroll to the right spot
+				}else{ //Page turn
+					pageTurn.scrollTo(0,pageTurn.scrollHeight*(obj.time/getLength(S.files[S.currentFile])));
+				}
 			}
 			
 			content.classList.remove("showpony-loading");
@@ -257,7 +268,6 @@ S.to=function(input){
 						for(let i=0;i<S.lines.length;i++){
 							//If there aren't any keyframes, wait would also be a suitable start
 							if(keyframes.length===0){
-								console.log(S.lines[i],/>^\s+WT/i.test(S.lines[i]));
 								if(/^>\s+WT/i.test(S.lines[i])){
 									keyframes.push(i);
 									continue;
@@ -265,7 +275,6 @@ S.to=function(input){
 							}
 							
 							//If it's a user input spot, add the point immediately after the last keyframe- things let up to this, let it all happen
-							console.log(S.lines[i],/^>\s+WT$/i.test(S.lines[i]))
 							if(/^>\s+WT$/i.test(S.lines[i])){
 								keyframes.push(keyframes[keyframes.length-1]+1);
 								continue;
@@ -274,28 +283,34 @@ S.to=function(input){
 							if(S.lines[i].indexOf(">")!==0) keyframes.push(i);
 						}
 						
-						console.log(keyframes);
-						
 						runTo=keyframes[Math.floor(keyframes.length*(obj.time/getLength(S.files[S.currentFile])))];
 						
-						//Pause if needed
-						if(overlay.classList.contains("showpony-overlay-show")) content.classList.add("showpony-paused");
-						
 						runMM(0);
+						
+						//Move the scrubbar to the right spot
+						scrub();
 					//Regular text
 					}else{
-						//Put in the text
-						thisType.innerHTML=text;
+						//Use either page infinite or page turn, whichever is requested
+						if(S.infiniteText){ //Infinite text
+							//Jump to the file if it's visible? Or just remove everything and start from it?
+						}else{ //Page turning
+							//Put in the text
+							pageTurn.innerHTML=text;
+							
+							//Add loading buttons
+							if(S.currentFile>0) pageTurn.insertAdjacentElement('afterbegin',pagePrev);
+							if(S.currentFile<S.files.length-1) pageTurn.insertAdjacentElement('beforeend',pageNext);
+							
+							//Scroll to spot
+							pageTurn.scrollTo(0,pageTurn.scrollHeight*(obj.time/getLength(S.files[S.currentFile])));
+							
+							//Stop loading
+							content.classList.remove("showpony-loading");
+						}
 						
-						//Add loading buttons
-						if(S.currentFile>0) thisType.insertAdjacentElement('afterbegin',textPrev);
-						if(S.currentFile<S.files.length-1) thisType.insertAdjacentElement('beforeend',textNext);
-						
-						//Scroll to spot
-						types.text.scrollTo(0,types.text.scrollHeight*(obj.time/getLength(S.files[S.currentFile])));
-						
-						//Stop loading
-						content.classList.remove("showpony-loading");
+						//Move the scrubbar to the right spot
+						scrub();
 					}
 				})
 				.catch((error)=>{
@@ -318,7 +333,13 @@ S.to=function(input){
 		}else{
 			//Adjust the source
 			thisType.src=src;
-			if(currentType==='video' || currentType==='audio') !overlay.classList.contains("showpony-overlay-show") && thisType.play();
+			if((currentType==='video' || currentType==='audio') && !overlay.classList.contains("showpony-overlay-show")){
+				thisType.play();
+				console.log("Play");
+			}
+			
+			//Move the scrubbar to the right spot
+			scrub();
 		}
 	}
 	
@@ -350,9 +371,18 @@ S.menu=function(event){
 		if(overlay.classList.toggle("showpony-overlay-show")){
 			scrub();
 			
-			//Play/pause video or audio
+			//Add paused class
+			content.classList.add("showpony-paused");
+			
+			//Pause media
 			types[currentType].play && types[currentType].pause();
-		}else types[currentType].play && types[currentType].play();
+		}else{
+			//Remove paused class
+			content.classList.remove("showpony-paused");
+			
+			//Play media
+			types[currentType].play && types[currentType].play();
+		}
 	}
 	
 	//Send an event when toggling the menu
@@ -513,16 +543,23 @@ var waitForInput=false
 		,multimedia:m("multimedia")
 		,text:m("text")
 	}
-	//Text
-	,textPrev=m("text-prev","button")
-	,textNext=m("text-next","button")
+	//Page turning
+	,pageTurn=m("page-turn")
+	,pagePrev=m("page-prev","button")
+	,pageNext=m("page-next","button")
+	//Infinite pages
+	,pageInfinite=m("page-infinite")
 	//Multimedia
 	,continueNotice=m("continue")
 ;
 
-if(S.startPaused) overlay.classList.add("showpony-overlay-show");
-
 content.className="showpony-content";
+
+if(S.startPaused){
+	overlay.classList.add("showpony-overlay-show");
+	content.classList.add("showpony-paused");
+}
+
 
 fullscreenButton.alt="Fullscreen";
 fullscreenButton.title="Fullscreen Toggle";
@@ -542,7 +579,6 @@ frag([progress,overlayText,fullscreenButton,showponyLogo,credits],overlay);
 
 //Play and pause multimedia
 types.multimedia.play=function(){
-	content.classList.remove("showpony-paused");
 	console.log("play");
 	
 	//Go through objects that were playing- unpause them
@@ -559,7 +595,6 @@ types.multimedia.play=function(){
 }
 
 types.multimedia.pause=function(){
-	content.classList.add("showpony-paused");
 	console.log("pause");
 	
 	//Go through objects that can be played- pause them, and track that
@@ -932,6 +967,7 @@ function m(c,el){
 function mediaEnd(){
 	//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
 	if(!overlay.classList.contains("showpony-overlay-show")) S.to({file:"+1"});
+	console.log("MEDIA END");
 }
 
 var runTo=false;
@@ -1606,21 +1642,34 @@ content.addEventListener("click",()=>{S.input();});
 
 ///TEXT///
 //Navigate text
-textPrev.addEventListener("click",function(){
-	//Go to end of previous file
-	S.to({file:S.currentFile-1,time:getLength(S.files[S.currentFile-1])});
+pagePrev.addEventListener("click",function(){
+	console.log("Hey!");
+	S.to({file:"-1"});
+	event.stopPropagation();
+	
+	//Go to end of previous file, if it's one that used this. Otherwise, go to the beginning of it.
+	//S.to({file:S.currentFile-1,time:getLength(S.files[S.currentFile-1])});
 });
 
-textNext.addEventListener("click",function(){
+pageNext.addEventListener("click",function(event){
 	//Go to next file
 	S.to({file:"+1"});
+	event.stopPropagation();
 });
 
 //Update the scrub bar when scrolling
-types.text.addEventListener("scroll",function(){
+pageTurn.addEventListener("scroll",function(event){
 	//Set current time to percent scrolled
-	types.text.currentTime=getLength(S.files[S.currentFile])*(types.text.scrollTop/types.text.scrollHeight);
+	pageTurn.currentTime=getLength(S.files[S.currentFile])*(pageTurn.scrollTop/pageTurn.scrollHeight);
 	updateInfo();
+	event.stopPropagation();
+});
+
+//Infinite scrolling setup
+pageInfinite.addEventListener("scroll",function(){
+	if(pageInfinite.scrollTop=0){
+		console.log("Load next!");
+	}
 });
 
 ///IMAGES///
