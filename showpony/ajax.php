@@ -60,7 +60,7 @@ if(!empty($_GET['get'])){
 			#Run through the files
 			foreach(scandir('.') as &$file){
 				#Ignore folders and hidden files
-				if($file[0]==".") continue;
+				if($file[0]==="." || $file[0]==="~") continue;
 
 				#Ignore files that have dates in their filenames set to later
 				$date;
