@@ -23,27 +23,26 @@ function d(v,val){S[v]=(input[v]!==undefined ? input[v] : val);}
 
 S.window=input.window;
 S.originalWindow=S.window.cloneNode(true);
-d('files','get');
-d('path','files/');
-d('language','');
-d('loadingClass',null);
-d('scrubLoad',false);
-d('info','[Current File] | [Files Left]');
-d('credits',null);
-d('data',{});
-d('defaultDuration',10);
-d('title',false);
-d('dateFormat',{year:"numeric",month:"numeric",day:"numeric"});
-d('admin',false);
-d('query','part');
-d('shortcuts','focus');
-d('user',null);
-d('HeyBardID',location.hostname.substring(0,20));
-d('bookmark',"file");
-d('startPaused',false);
-d('preloadNext',true);
-d('infiniteText',false);
-d('infiniteImage',false);
+
+/*VARIABLE				DEFAULT VALUE										*/
+d('files'			,	'get'												);
+d('path'			,	'files/'											);
+d('language'		,	''													);
+d('scrubLoad'		,	false												);
+d('info'			,	'[Current File] | [Files Left]'						);
+d('credits'			,	null												);
+d('data'			,	{}													);
+d('defaultDuration'	,	10													);
+d('title'			,	false												);
+d('dateFormat'		,	{year:"numeric",month:"numeric",day:"numeric"}		);
+d('admin'			,	false												);
+d('query'			,	'part'												);
+d('shortcuts'		,	'focus'												);
+d('HeyBardID'		,	location.hostname.substring(0,20)					);
+d('bookmark'		,	"file"												);
+d('preloadNext'		,	true												);
+d('infiniteText'	,	false												);
+d('infiniteImage'	,	false												);
 
 var HeyBardConnection;
 
@@ -552,13 +551,6 @@ var waitForInput=false
 	//Multimedia
 	,continueNotice=m("continue")
 ;
-
-content.className="showpony-content";
-
-if(S.startPaused){
-	S.window.classList.add("showpony-paused");
-}
-
 
 fullscreenButton.alt="Fullscreen";
 fullscreenButton.title="Fullscreen Toggle";
