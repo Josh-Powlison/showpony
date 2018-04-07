@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Showpony Demo</title>
+	<meta name="description" content="A free multimedia engine for the web with automatic bookmarking, a simple API, and a light footprint!">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
+	<link rel="stylesheet" href="styles.css">
+	
+	<!--Favicons-->
+	<link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png">
+	<link rel="manifest" href="/favicons/manifest.json">
+	<link rel="mask-icon" href="/favicons/safari-pinned-tab.svg" color="#5bbad5">
+	<link rel="shortcut icon" href="/favicons/favicon.ico">
+	<meta name="msapplication-config" content="/favicons/browserconfig.xml">
+	<meta name="theme-color" content="#ffffff">
+</head>
+<body>
+<main>
+
+<img id="logo" src="design-files/logo.svg">
+<h1>Showpony</h1>
+
+<p>Showpony is a powerful, easy-to-use, efficient multimedia engine for the web!</p>
+
+<link rel="stylesheet" href="../test/styles.css">
+
+<!--Remote Hey Bard script-->
+<!--<script src="https://heybard.com/apis/accounts/script.js"></script>-->
+<!--Local Hey Bard script-->
+<script src="../../heybard/apis/accounts/script.js"></script>
+
+<script src="../test/script.js"></script>
+	
+<p><a href="https://github.com/Josh-Powlison/showpony" target="_blank">Download Showpony Here!</a></p>
+
+<h2>Showpony's already being used in production!</h2>
+
+<a href="http://gameplanmanga.com" target="_blank"><img src="images/gameplan-banner.jpg"></a>
+
+<h2>What's your medium?</h2>
+
+<!--<h3>Multimedia</h3>
+
+<div class="story showpony-paused" id="multimedia"></div>
+<script>
+	showponyEcocrystals=new Showpony({
+		window:document.getElementById("multimedia")
+		,path:"examples/combo/" //The path to the story files. Remember the slash!
+		,info:"Combo test<br>[Current File] | [File Left]"
+		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><br>by Josh Powlison"
+		,query:false
+		,start:0
+		,HeyBardID:null
+	});
+</script>-->
+
+<h3>Comics</h3>
+
+<div class="story" id="entreprenewb"></div>
+<script>
+	showponyEntreprenewb=new Showpony({
+		window:document.getElementById("entreprenewb")
+		,get:"examples/entreprenewb/" //The path to the story files. Remember the slash!
+		,info:"Entreprenewb<br>[Current File] | [File Left]"
+		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a href='https://www.webtoons.com/en/challenge/entreprenewb/list?title_no=58042' target='_blank'>LineWebtoon.logo</a><br>Entreprenewb by Josh Powlison, Public Domain"
+		,query:false
+		,start:0
+		,HeyBardID:null
+	});
+</script>
+
+<h3>Video</h3>
+
+<div class="story showpony-paused" id="sintel"></div>
+<script>
+	showponySintel=new Showpony({
+		window:document.getElementById("sintel")
+		,get:["examples/sintel/(Sintel) 52.mp4"] //The path to the story files. Remember the slash!
+		,info:"Sintel Trailer<br>[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
+		,title:"Sintel [Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
+		,credits:"<a href='https://blender.org/' target='_blank'>Blender.logo</a><br>© copyright Blender Foundation | www.sintel.org"
+		,query:"sintel"
+		,start:0
+		,HeyBardID:null
+		//,HeyBardID:"sintel-test"
+		,bookmark:"time"
+	});
+</script>
+
+<h3>Text</h3>
+
+<div class="story" id="ecocrystals"></div>
+<script>
+	showponyEcocrystals=new Showpony({
+		window:document.getElementById("ecocrystals")
+		,get:"examples/ecocrystals/" //The path to the story files. Remember the slash!
+		,info:"Ecocrystals<br>[Current File] | [File Left]"
+		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><br>by Josh Powlison"
+		,query:false
+		,start:0
+		,HeyBardID:null
+	});
+</script>
+
+<h3>Kinetic Novel</h3>
+
+<div class="story showpony-paused" id="party"></div>
+<script>
+	showponyParty=new Showpony({
+		window:document.getElementById("party")
+		,get:"examples/late-to-the-party/" //The path to the story files. Remember the slash!
+		,info:"Late to the Party<br>[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
+		,query:false
+		,start:0
+		,HeyBardID:null
+		,credits:"Written by Josh Powlison<br>Characters by konett (<a href='http://cosmickonett.tumblr.com' target='_blank'>cosmickonett.tumblr.com</a>) under CC-BY-3.0"
+	});
+</script>
+
+<h3>Audio</h3>
+
+<div class="story showpony-paused" id="bob-and-susie"></div>
+<script>
+	showponyBobAndSusie=new Showpony({
+		window:document.getElementById("bob-and-susie")
+		,get:"examples/bob-and-susie/" //The path to the story files. Remember the slash!
+		,info:"The Adventures of Bob and Susie<br>[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
+		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a href='https://soundcloud.com/joshuapowlison/sets/the-adventures-of-bob-and' target='_blank'>Soundcloud.logo</a><br>The Adventures of Bob and Susie by Josh Powlison, Public Domain"
+		,query:false
+		,start:0
+		,HeyBardID:null
+	});
+</script>
+
+<h2>Using Showpony</h2>
+
+<p>Start by downloading <a href="https://github.com/Josh-Powlison/showpony/releases" target="_blank">the latest release</a> and putting the files on your website:</p>
+
+<pre class="html">
+<h3>HTML</h3>
+&lt;link rel="stylesheet" href="showpony/styles.css"&gt;
+&lt;script src="showpony/script.js"&gt;&lt;/script&gt;
+&lt;script src="https://heybard.com/apis/accounts/script.js"&gt;&lt;/script&gt;
+</pre>
+
+<h3>1-Line Setup</h3>
+
+<script>new Showpony</script>
+
+<p>Getting a Showpony set up can be as simple as:</p>
+
+<pre class="html">
+&lt;script&gt;new Showpony&lt;/script&gt;
+</pre>
+
+<p>You'll likely want more customizability though, which is easy to add in with tons of customizable settings!</p>
+
+<h3>Custom Setup</h3>
+
+<div class="story" id="custom"></div>
+<script>
+	window.addEventListener(
+		"load"
+		,function(){
+			showponyCustom=new Showpony({
+				window:document.getElementById("custom")
+				,path:"examples/orbit/"
+				,scrubLoad:true
+				,start:0
+				,info:"[Current File PAD2]/[Total Files PAD2]<br>[Title]"
+				,title:"Orbit [Current File PAD2]: [Title]"
+				,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a target='_blank' href='http://www.webtoons.com/en/challenge/orbit/list?title_no=58078'>LineWebtoon.logo</a><br>Orbit by Josh Powlison, © 2018<br>Rights reserved except where otherwise stated"
+				,query:"orbit"
+				,HeyBardID:"orbit-test"
+			});
+		}
+	);
+	
+	//If you want to learn more advanced functionality of Showpony, go to https://github.com/Josh-Powlison/showpony/wiki
+</script>
+
+<p>You can pass a ton of options to the Showpony object to customize it to your liking:</p>
+
+<pre class="js">
+<h3>JavaScript</h3>
+new Showpony({
+	window:document.getElementById("showpony")
+	,path:"examples/orbit/"
+	,scrubLoad:true
+	,start:0
+	,info:"[Current File PAD2]/[Total Files PAD2]&lt;br&gt;[Title]"
+	,title:"Orbit [Current File PAD2]: [Title]"
+	,credits:"&lt;a target='_blank' href='https://twitter.com/joshpowlison'&gt;Twitter.logo&lt;/a&gt;&lt;a target='_blank' href='https://www.linkedin.com/in/joshuapowlison/n'&gt;LinkedIn.logo&lt;/a&gt;&lt;a target='_blank' href='http://www.webtoons.com/en/challenge/orbit/list?title_no=58078'&gt;Webtoon.logo&lt;/a&gt;&lt;br&gt;Orbit by Josh Powlison, © 2018&lt;br&gt;Rights reserved except where otherwise stated"
+	,query:"orbit"
+	,HeyBardID:"orbit-test"
+	,dateFormat:{year:"numeric",month:"long",day:"numeric",hour:"numeric"}
+});
+</pre>
+
+<p><strong>window</strong> is the div or element Showpony will display in.</p>
+
+<p><strong>path</strong> is the path to the story's files.</p>
+
+<p><strong>scrubLoad</strong> lets you load files as you scrub in the menu instead as opposed to only after you release your cursor or finger.</p>
+
+<p><strong>start</strong> determines where users start from- the beginning, the end, or anywhere in-between!</p>
+
+<p><strong>info</strong> sets the display of info in the menu and is very customizable!</p>
+
+<p><strong>title</strong> sets the display of info in the webpage's title. Notice how it changes when you move through the comic!</p>
+
+<p><strong>credits</strong> puts text in the bottom-right of the Showpony window when you click the header. You can also write "brandname.logo" to fetch any of the icons available on <a href="https://simpleicons.org/">simpleicons.org</a>!</p>
+
+<p><strong>query</strong> sets whether to save the user's position in the URL.</em></p>
+
+<p><strong>HeyBardID</strong> allows you to save user's bookmarks. Set a custom id here.</em></p>
+
+<p><strong>dateFormat </strong> sets the format of dates in info. This object is passed directly to an <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DateTimeFormat" target="_blank">Intl.DateTimeFormat</a> object's options. Look under "Syntax", "Parameters", "options" at the link for more info.</em></p>
+
+<h3>This Showpony knows a few tricks!</h3>
+
+<p>Showpony fires events, has a built-in admin panel, and more! Learn more at the <a href="https://github.com/Josh-Powlison/showpony/wiki" target="_blank">Wiki</a>!</p>
+
+<small>Works copyright of their respective creators as stated. Showpony branding copyright of Josh Powlison. "Grand Hotel" font is Copyright (c) 2012 by Brian J. Bonislawsky and Jim Lyles DBA Astigmatic (AOETI) (astigma@astigmatic.com), with Reserved Font Name "Grand Hotel"</small>
+
+</main>
+</body>
+</html>
