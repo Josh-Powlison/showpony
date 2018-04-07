@@ -1,5 +1,7 @@
 <img src="https://showpony.heybard.com/design-files/logo.svg" width="100"><br>[Check out demos on the website!](https://showpony.heybard.com/)<br>[Download the latest version](https://github.com/Josh-Powlison/showpony/releases)
 
+# !!!DEVELOP BRANCH!!!
+
 # What is Showpony?
 
 An easy-to-use multimedia engine for telling stories in almost any medium online, and even cross-medium!
@@ -11,7 +13,7 @@ An easy-to-use multimedia engine for telling stories in almost any medium online
 * Easy use: about 4 lines of JavaScript is all it takes to get a basic Showpony working on your site!
 * [Hey Bard! integration](https://github.com/Josh-Powlison/hey-bard-api): automatically save user bookmarks cross-browser and load them back!
 * Preload the next file: so that users can have a smooth reading experience (text and comics only for now)
-* Admin system: update files from an easy-access admin setup! Can be easily disabled if you'd rather not deal with that.
+* Admin system: can be enabled to allow easy file updates!
 * Mix media: video, comics, songs, books, and more can all be viewed in a streamlined experience!
 
 # What media can I work in with Showpony?
@@ -20,16 +22,13 @@ Showpony is tested and ready for:
 
 * Comics
 * Video
-
-And should also be good for:
-
+* Kinetic Novels
 * Audio
-* Straight HTML files
+* Text
 
 Also in the works are also:
 
 * Visual Novels
-* Kinetic Novels
 * Interactive Fiction
 * Screenplays
 * Stageplays
@@ -39,7 +38,7 @@ Also in the works are also:
 
 This doesn't just depend on the code but on the resources you use and the files you use for your stories. But in my testing, absolutely yes!
 
-Also, if you're concerned about size, uncompressed it's a little over 65 KB. Most engines for just one of the media Showpony supports are much larger.
+Also, if you're concerned about size, uncompressed it's under 90 KB.
 
 ## How's browser support?
 
@@ -57,7 +56,7 @@ Don't be dead! Email me at joshuapowlison@gmail.com
 
 ## What else do I have to install to get Showpony to work?
 
-Nothing!- you don't even need Wordpress or jQuery! For some features you will need PHP but that comes preinstalled on most servers.
+Nothing!- you don't even need Wordpress or jQuery! For some features you will need PHP (specifically PHP 7) but that should come preinstalled wherever you're hosting.
 
 ## How can I support Showpony's development?
 
