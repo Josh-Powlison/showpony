@@ -26,14 +26,14 @@
 
 <p>Showpony is a powerful, easy-to-use, efficient multimedia engine for the web!</p>
 
-<link rel="stylesheet" href="../test/styles.css">
+<link rel="stylesheet" href="../showpony/styles.css">
 
 <!--Remote Hey Bard script-->
 <!--<script src="https://heybard.com/apis/accounts/script.js"></script>-->
 <!--Local Hey Bard script-->
 <script src="../../heybard/apis/accounts/script.js"></script>
 
-<script src="../test/script.js"></script>
+<script src="../showpony/script.js"></script>
 	
 <p><a href="https://github.com/Josh-Powlison/showpony" target="_blank">Download Showpony Here!</a></p>
 
@@ -147,7 +147,7 @@
 &lt;script src="https://heybard.com/apis/accounts/script.js"&gt;&lt;/script&gt;
 </pre>
 
-<h3>1-Line Setup</h3>
+<!--<h3>1-Line Setup</h3>
 
 <script>new Showpony</script>
 
@@ -157,7 +157,7 @@
 &lt;script&gt;new Showpony&lt;/script&gt;
 </pre>
 
-<p>You'll likely want more customizability though, which is easy to add in with tons of customizable settings!</p>
+<p>You'll likely want more customizability though, which is easy to add in with tons of customizable settings!</p>-->
 
 <h3>Custom Setup</h3>
 
@@ -168,7 +168,7 @@
 		,function(){
 			showponyCustom=new Showpony({
 				window:document.getElementById("custom")
-				,path:"examples/orbit/"
+				,get:"examples/orbit/"
 				,scrubLoad:true
 				,start:0
 				,info:"[Current File PAD2]/[Total Files PAD2]<br>[Title]"
@@ -179,8 +179,6 @@
 			});
 		}
 	);
-	
-	//If you want to learn more advanced functionality of Showpony, go to https://github.com/Josh-Powlison/showpony/wiki
 </script>
 
 <p>You can pass a ton of options to the Showpony object to customize it to your liking:</p>
