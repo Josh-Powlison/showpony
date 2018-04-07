@@ -5,10 +5,10 @@
 session_start();
 
 #NULL will disable admin access. Using a string will set that as the password and allow admin access.
-static $password='password';
+static $password=NULL;
 
 #Uncomment the below to show errors
-/*
+//*
 error_reporting(E_ALL);
 ini_set('display_errors',1);
 //*/
@@ -22,7 +22,8 @@ if(!empty($_GET['get'])){
 	if(empty($_SESSION['showpony_admin'])) die("You need to be logged in to access private files.");
 	
 	#The file path
-	$file=dirname(__FILE__,2).'/'.$_GET['get'];
+	$file=dirname("http://localhost/showpony/website/").'/'.$_GET['get'];
+	#$file=dirname(__FILE__,2).'/'.$_GET['get'];
 
 	#These headers are required to scrub media (yes, you read that right)
 	header('Accept-Ranges: bytes');
@@ -36,7 +37,7 @@ if(!empty($_GET['get'])){
 	$response=[];
 	
 	#Go to the story's file directory
-	chdir(dirname(__FILE__,2).'/'.$_POST['path']);
+	chdir(($_POST['rel-path'] ?: '..').'/'.$_POST['path']);
 	
 	#We'll store all errors and code that's echoed, so we can send that info to the user (in a way that won't break the JSON object).
 	ob_start();

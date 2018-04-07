@@ -1,3 +1,39 @@
+//Get location of the Showpony folder
+const ShowponyFolder=document.currentScript.src.replace("/script.js","");
+
+//Find the relative path from ShowponyFolder to ShowponyRunPage
+var splitPath=ShowponyFolder.split("/");
+var splitStart=location.href.replace(/\/[^\/]+$/,"").split("/");
+
+//Get relative path from Showpony folder to current page (for the sake of PHP)
+var ShowponyRunPage="";
+for(var i=0;i<splitStart.length;i++){
+	//If the paths are the same
+	if(splitPath.length>i && splitPath[i]===splitStart[i]){
+		console.log(splitPath[i]+" is the same!");
+		//We ignore them!
+	//If they differ- we've found the first shared folder!
+	}else{
+		//Go up as many levels as need to to get to the shared folder
+		for(var ii=i;ii<splitPath.length;ii++){
+			ShowponyRunPage+="../";
+		}
+		
+		//Now go down to the right folder
+		for(var ii=i;ii<splitStart.length;ii++){
+			ShowponyRunPage+=splitStart[ii];
+			
+			if(ii!==splitStart.length-1) ShowponyRunPage+="/"
+		}
+		
+		//Break out of the main for loop
+		break;
+	}
+	
+}
+
+console.log(ShowponyRunPage);
+
 function Showpony(input){
 
 "use strict";
@@ -228,7 +264,7 @@ S.to=function(input){
 	}
 	
 	//How we get the file depends on whether or not it's private
-	var src=(S.files[S.currentFile][0]=="x" ? "showpony/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile];
+	var src=(S.files[S.currentFile][0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile];
 	
 	//Refresh the file, if requested we do so, by adding a query
 	if(obj.refresh) src+=(S.files[S.currentFile][0]==="x" ? "&" : "?")+"refresh-"+Date.now();
@@ -322,7 +358,7 @@ S.to=function(input){
 					}
 				})
 				.catch((error)=>{
-					alert(error);
+					alert("329: "+error);
 				})
 				//After all that, try preloading the next file
 				.then(()=>{
@@ -330,7 +366,7 @@ S.to=function(input){
 					if(!S.preloadNext || S.currentFile>=S.files.length-1) return;
 					
 					//How we get the file depends on whether or not it's private
-					var src=(S.files[S.currentFile+1][0]=="x" ? "showpony/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile];
+					var src=(S.files[S.currentFile+1][0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile];
 					
 					//Preload next file, if there is a next file
 					//console.log("Preloading next!");
@@ -882,6 +918,7 @@ function POST(obj){
 	var formData=new FormData();
 	formData.append('call',obj.call);
 	formData.append('path',S.path+S.language);
+	formData.append('rel-path',ShowponyRunPage);
 	
 	//Special values, if passed
 	obj.password && formData.append('password',obj.password);
@@ -892,7 +929,7 @@ function POST(obj){
 	return new Promise(function(resolve,reject){
 		
 		//Make the call
-		fetch("showpony/ajax.php",{method:'post',body:formData,credentials:'include'})
+		fetch(ShowponyFolder+"/ajax.php",{method:'post',body:formData,credentials:'include'})
 		.then(response=>{
 			return response.json();
 		})
@@ -906,7 +943,7 @@ function POST(obj){
 			}else reject(json.message);
 		})
 		.catch(response=>{
-			alert(response);
+			alert("913: "+response);
 		});
 	});
 }
@@ -1689,7 +1726,7 @@ types.image.addEventListener("load",function(){
 	
 	//Preload next file, if there is a next file
 	if(S.currentFile!==S.files.length-1){
-		var src=(S.files[S.currentFile+1][0]=="x" ? "showpony/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile+1];
+		var src=(S.files[S.currentFile+1][0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile+1];
 		
 		console.log("Preloading");
 		
@@ -1813,7 +1850,7 @@ new Promise(function(resolve,reject){
 							location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
 						})
 						//If it fails, let the user know
-						.catch((response)=>alert(response))
+						.catch((response)=>alert("1820: "+response))
 						;
 					//Regardless of whether or not we got something back, go there
 					}else{
