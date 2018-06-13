@@ -21,9 +21,11 @@ if(!empty($_GET['get'])){
 	#If we aren't logged in, block the effort
 	if(empty($_SESSION['showpony_admin'])) die("You need to be logged in to access private files.");
 	
-	#The file path
-	$file=dirname("http://localhost/showpony/website/").'/'.$_GET['get'];
-	#$file=dirname(__FILE__,2).'/'.$_GET['get'];
+	#Go to the correct directory
+	chdir(($_POST['rel-path'] ?: '..').'/');
+	
+	#Get the file path
+	$file=dirname(__FILE__,2).'/'.$_GET['get'];
 
 	#These headers are required to scrub media (yes, you read that right)
 	header('Accept-Ranges: bytes');
