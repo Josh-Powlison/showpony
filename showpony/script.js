@@ -1385,7 +1385,7 @@ var multimediaFunction={
 			el.src="resources/audio/"+vals[1];
 			
 			//If an extension isn't specified, assume mp3
-			if(el.src.indexOf(".")===-1) el.src+='.mp3';
+			if(/\/[^.\/]+$/.test(el.src)) el.src+='.mp3';
 			
 			el.preload=true;
 			
