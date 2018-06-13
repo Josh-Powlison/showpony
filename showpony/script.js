@@ -2067,7 +2067,7 @@ if(S.admin){
 			S.to({reload:true,scrollToTop:false,replaceState:true});
 		})
 		.catch(response=>{
-			alert(response);
+			alert("501: "+response);
 		});
 	}
 	
