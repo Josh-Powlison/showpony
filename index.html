@@ -26,14 +26,13 @@
 
 <p>Showpony is a powerful, easy-to-use, efficient multimedia engine for the web!</p>
 
-<link rel="stylesheet" href="../showpony/styles.css">
+<link rel="stylesheet" href="showpony/styles.css">\
+<script src="showpony/script.js"></script>
 
 <!--Remote Hey Bard script-->
-<!--<script src="https://heybard.com/apis/accounts/script.js"></script>-->
+<script src="https://heybard.com/apis/accounts/script.js"></script>
 <!--Local Hey Bard script-->
-<script src="../../heybard/apis/accounts/script.js"></script>
-
-<script src="../showpony/script.js"></script>
+<!--<script src="../../heybard/apis/accounts/script.js"></script>-->
 	
 <p><a href="https://github.com/Josh-Powlison/showpony" target="_blank">Download Showpony Here!</a></p>
 
@@ -114,10 +113,11 @@
 		window:document.getElementById("party")
 		,get:"examples/late-to-the-party/" //The path to the story files. Remember the slash!
 		,info:"Late to the Party<br>[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
-		,query:false
+		,query:"late-to-the-party"
 		,start:0
 		,HeyBardID:null
-		,credits:"Written by Josh Powlison<br>Characters by konett (<a href='http://cosmickonett.tumblr.com' target='_blank'>cosmickonett.tumblr.com</a>) under CC-BY-3.0"
+		,credits:"Josh Powlison"
+		,bookmark:"time"
 	});
 </script>
 

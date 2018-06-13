@@ -1,4 +1,4 @@
->	AU	little-idea	loop	play
+>	AU	little-idea		loop	play
 >	BG	forest	forest.jpg
 >	DS	susan	=	{,0,magenta,bold}Susan{}#
 >	DS	ben		=	{,0,aqua,bold}Ben{}#
