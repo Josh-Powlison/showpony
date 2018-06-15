@@ -52,6 +52,9 @@ nav a{
 
 nav a:hover
 ,nav a:active
+,#example-list button:hover
+,#example-list button:active
+,.show-selected
 ,.current{
 	background-color:#fff;
 	color:#4b59b2;
@@ -170,6 +173,14 @@ pre h3{
 	box-shadow:none;
 	cursor:pointer;
 	font-size:1.25em;
+	transition:background-color .1s,color .1s;
+	border:1px solid #4b59b2;
+	width:20%;
+}
+
+#example-list button.show-selected{
+	background-color:white;
+	color:#161d25;
 }
 
 /*Story setups*/

@@ -28,7 +28,7 @@
 </header>
 <main>
 
-<p>Showpony is a powerful, easy-to-use, efficient multimedia engine for the web! <strong>Version: DEV</strong></p>
+<p>Showpony is a multimedia engine for the web! <strong>Version: DEV</strong></p>
 
 <link rel="stylesheet" href="showpony/styles.css">
 <script src="showpony/script.js"></script>
@@ -62,7 +62,7 @@
 	});
 </script>
 
-<div class="story showpony-paused hidden" id="video"></div>
+<div class="story showpony-paused" id="video"></div>
 <script>
 	showponies.video=new Showpony({
 		window:document.getElementById("video")
@@ -72,13 +72,13 @@
 		,credits:"<a href='https://blender.org/' target='_blank'>Blender.logo</a><br>© copyright Blender Foundation | www.sintel.org"
 		,query:"sintel"
 		,start:0
-		,HeyBardID:null
+		,HeyBardID:"sintel-test"
 		//,HeyBardID:"sintel-test"
 		,bookmark:"time"
 	});
 </script>
 
-<div class="story hidden" id="text"></div>
+<div class="story" id="text"></div>
 <script>
 	showponies.text=new Showpony({
 		window:document.getElementById("text")
@@ -88,11 +88,11 @@
 		,query:false
 		,scrubLoad:true
 		,start:0
-		,HeyBardID:'sintel'
+		,HeyBardID:null
 	});
 </script>
 
-<div class="story showpony-paused hidden" id="kn"></div>
+<div class="story showpony-paused" id="kn"></div>
 <script>
 	showponies.kn=new Showpony({
 		window:document.getElementById("kn")
@@ -102,12 +102,12 @@
 		,start:0
 		,HeyBardID:null
 		,credits:"Josh Powlison"
-		,scrubLoad:true
+		,scrubLoad:false
 		,bookmark:"time"
 	});
 </script>
 
-<div class="story showpony-paused hidden" id="audio"></div>
+<div class="story showpony-paused" id="audio"></div>
 <script>
 	showponies.audio=new Showpony({
 		window:document.getElementById("audio")
