@@ -1,3 +1,10 @@
+/* COLORS
+Purple:		#4b59b2
+Pink:		#ffcaff
+Blackish:	#161d25
+*/
+
+/* Overall */
 @font-face{
 	font-family:"Grand Hotel";
 	src:url(design-files/GrandHotel-Regular.otf);
@@ -8,12 +15,101 @@ body{
 	margin:0;
 	padding:0;
 	font-family:Arial;
+	color:#161d25;
 }
+
+/*Header*/
+header{
+	width:100%;
+	font-size:1.5em;
+	background-color:#4b59b2;
+	color:white;
+	font-weight:bold;
+	position:fixed;
+	z-index:10000;
+	top:0;
+	box-sizing:border-box;
+	height:4rem;
+}
+
+nav{
+	margin:auto;
+	display:flex;
+	overflow:auto;
+}
+
+nav a{
+	background-color:#4b59b2;
+	color:#fff;
+	height:4rem;
+	padding:0 1rem;
+	text-decoration:none;
+	transition:background-color .1s,color .1s;
+	display:flex;
+	align-items:center;
+	text-align:center;
+}
+
+nav a:hover
+,nav a:active
+,.current{
+	background-color:#fff;
+	color:#4b59b2;
+}
+
+#home-button{
+	font-family:"Grand Hotel",serif;
+}
+
+#nav-signature{
+	transition:filter .1s;
+	filter:invert(1);
+}
+
+nav a:hover #nav-signature
+,nav a:active #nav-signature
+,.current #nav-signature{
+	transition:filter .1s;
+	filter:invert(0);
+}
+
+nav p{
+	display:inline-block;
+	margin:0;
+	white-space:nowrap;
+}
+
+/*Center the header*/
+nav a:first-child{
+	margin-left:auto;
+}
+
+nav a:last-child{
+	margin-right:auto;
+}
+
+/*Social media and contact buttons*/
+.connect{
+	padding:0 .2em;
+}
+
+/*Some extra spacing after the last social media icon*/
+/*.connect:last-child{
+	margin-right:1rem;
+}*/
+
+/*Have inline svgs be the height of the area*/
+.svg-inline{
+	height:1em;
+}
+
+/* MAIN */
 
 main{
 	width:50rem;
 	max-width:100%;
 	margin:auto;
+	margin-top:4em;
 	padding:2rem;
 	box-sizing:border-box;
 }
@@ -60,8 +156,24 @@ pre h3{
 
 /*Don't start custom classes with .showpony, because that's how all of the classes are named in showpony.css*/
 
+#example-list{
+	width:100%;
+	align-items:center;
+	justify-content:center;
+	display:flex;
+}
+
+#example-list button{
+	background-color:#4b59b2;
+	color:white;
+	border:none;
+	box-shadow:none;
+	cursor:pointer;
+	font-size:1.25em;
+}
+
 /*Story setups*/
-#bob-and-susie{
+#audio{
 	background-image:url("examples/bob-and-susie/~cover.jpg");
 	background-size:cover;
 	background-position:center;
@@ -72,4 +184,9 @@ pre h3{
 	width:100%;
 	height:500px;
 	margin:auto;
+	display:block;
+}
+
+.hidden{
+	display:none;
 }
