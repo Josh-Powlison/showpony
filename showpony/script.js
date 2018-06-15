@@ -1941,7 +1941,7 @@ new Promise(function(resolve,reject){
 				console.log(HeyBardConnection);
 				
 				//"False" can be read as 0, so if bookmark is returned as false don't pass the value.
-				if(response.bookmark===false) resolve();
+				if(typeof(response.bookmark)==='undefined') resolve();
 				else resolve(response.bookmark);
 			})
 			.catch(response=>{
