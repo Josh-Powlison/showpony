@@ -1048,6 +1048,7 @@ function runMM(inputNum){
 		
 		//Adjust the scrubbar
 		scrub();
+		updateInfo();
 	}
 	
 	//If we've ended manually or reached the end, stop running immediately and end it all
