@@ -1101,7 +1101,10 @@ function runMM(inputNum){
 		//If it's regular text display, use the regular settings
 		multimediaSettings.wait=true; //Assume we're waiting at the end time
 		multimediaSettings.textbox="main";
-		if(S.objects.main) S.objects.main.innerHTML="";
+		if(S.objects.main){
+			S.objects.main.innerHTML="";
+			S.objects.main.scrollTop=0;
+		}
 	}
 	
 	//If the textbox hasn't been created, create it!
@@ -1110,6 +1113,7 @@ function runMM(inputNum){
 	//If no text was passed, empty the textbox and continue
 	if(typeof(text)==='undefined'){
 		S.objects[multimediaSettings.textbox].innerHTML="";
+		S.objects.main.scrollTop=0;
 		runMM();
 		return;
 	}
@@ -1262,9 +1266,14 @@ function runMM(inputNum){
 				
 				var textbox=this.closest(".showpony-textbox");
 				
+				//#1//
 				//Scroll to the newly displayed letter (based on the regular height of the letter)
 				if(this.parentNode.getBoundingClientRect().bottom>textbox.getBoundingClientRect().bottom){
 					textbox.scrollTop+=this.parentNode.getBoundingClientRect().height;
+				}
+				
+				if(this.parentNode.getBoundingClientRect().top<textbox.getBoundingClientRect().top){
+					textbox.scrollTop-=this.parentNode.getBoundingClientRect().height;
 				}
 				
 				//Add post-appearance animations
@@ -1757,10 +1766,6 @@ types.image.addEventListener("load",function(){
 ///VIDEO AND AUDIO///
 types.video.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});
 types.audio.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});
-
-//Preload next file, if there is a next file
-/*types.video.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});
-types.audio.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});*/
 
 //When we finish playing a video or audio file
 types.video.addEventListener("ended",mediaEnd);
