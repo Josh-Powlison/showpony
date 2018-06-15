@@ -21,14 +21,24 @@
 <body>
 <header>
 	<nav>
-		<a href="index.html"><p id="home-button"><img id="nav-signature" class="svg-inline" src="design-files/logo.svg"> Showpony</p></a>
-		<a href="https://github.com/Josh-Powlison/showpony/releases"><p>Github</p></a>
+		<a href="https://github.com/Josh-Powlison/showpony"><p>Github</p></a>
 		<a href="https://github.com/Josh-Powlison/showpony/tree/develop"><p>Dev Branch</p></a>
 	</nav>
 </header>
 <main>
 
-<p>Showpony is a multimedia engine for the web! <strong>Version: DEV</strong></p>
+<h1><img class="svg-inline" src="design-files/logo.svg"> Showpony</h1>
+<p>So, you want to post your <span id="current-medium">comics</span> on your website. That can be intimidating. Would you like to get it up quickly with a powerful open-source engine? Do you want:</p>
+<ul>
+	<li>Fullscreen</li>
+	<li>Automatic bookmarking</li>
+	<li>Easy archives</li>
+	<li>Preloading</li>
+	<li>Multimedia options (switch from images, to text, to video, to audio...)</li>
+	<li>To test it on your site in about 10 minutes!</li>
+</ul>
+<p>Try Showpony out below!</p>
+<p><strong>NOTE: the stable release doesn't support all these features yet.</strong></p>
 
 <link rel="stylesheet" href="showpony/styles.css">
 <script src="showpony/script.js"></script>
@@ -46,11 +56,14 @@
 	<button id="show-audio">Audio</button>
 </nav>
 
-<script>showponies={};</script>
+<script>
+	showponies={};
+	showponyInputs={};
+</script>
 
 <div class="story" id="comic"></div>
 <script>
-	showponies.comic=new Showpony({
+	showponyInputs.comic={
 		window:document.getElementById("comic")
 		,get:"examples/entreprenewb/" //The path to the story files. Remember the slash!
 		,info:"Entreprenewb<br>[Current File] | [File Left]"
@@ -59,12 +72,13 @@
 		,start:0
 		,scrubLoad:true
 		,HeyBardID:null
-	});
+	};
+	showponies.comic=new Showpony(showponyInputs.comic);
 </script>
 
 <div class="story showpony-paused" id="video"></div>
 <script>
-	showponies.video=new Showpony({
+	showponyInputs.video={
 		window:document.getElementById("video")
 		,get:["examples/sintel/(Sintel) 52.mp4"] //The path to the story files. Remember the slash!
 		,info:"Sintel Trailer<br>[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
@@ -75,26 +89,29 @@
 		,HeyBardID:"sintel-test"
 		//,HeyBardID:"sintel-test"
 		,bookmark:"time"
-	});
+	};
+	showponies.video=new Showpony(showponyInputs.video);
 </script>
 
 <div class="story" id="text"></div>
 <script>
-	showponies.text=new Showpony({
+	showponyInputs.text={
 		window:document.getElementById("text")
 		,get:"examples/ecocrystals/" //The path to the story files. Remember the slash!
 		,info:"Ecocrystals<br>[Current File] | [File Left]"
 		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><br>by Josh Powlison"
 		,query:false
 		,scrubLoad:true
+		,preloadNext:3
 		,start:0
 		,HeyBardID:null
-	});
+	};
+	showponies.text=new Showpony(showponyInputs.text);
 </script>
 
 <div class="story showpony-paused" id="kn"></div>
 <script>
-	showponies.kn=new Showpony({
+	showponyInputs.kn={
 		window:document.getElementById("kn")
 		,get:"examples/late-to-the-party/" //The path to the story files. Remember the slash!
 		,info:"Late to the Party<br>[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
@@ -102,14 +119,14 @@
 		,start:0
 		,HeyBardID:null
 		,credits:"Josh Powlison"
-		,scrubLoad:false
 		,bookmark:"time"
-	});
+	};
+	showponies.kn=new Showpony(showponyInputs.kn);
 </script>
 
 <div class="story showpony-paused" id="audio"></div>
 <script>
-	showponies.audio=new Showpony({
+	showponyInputs.audio={
 		window:document.getElementById("audio")
 		,get:"examples/bob-and-susie/" //The path to the story files. Remember the slash!
 		,info:"The Adventures of Bob and Susie<br>[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
@@ -117,12 +134,13 @@
 		,query:false
 		,start:0
 		,HeyBardID:null
-	});
+	};
+	showponies.audio=new Showpony(showponyInputs.audio);
 </script>
 
 <h2>Setup</h2>
 
-<p>Download <a href="https://github.com/Josh-Powlison/showpony/releases" target="_blank">the latest release</a> and put the showpony folder files onto your website! Then use the following code:</p>
+<p>Download <a href="https://github.com/Josh-Powlison/showpony/releases" target="_blank">the latest release</a> and put the Showpony folder files onto your website!</p>
 
 <pre class="html">
 <h3>HTML</h3>
@@ -131,17 +149,17 @@
 &lt;script src="https://heybard.com/apis/accounts/script.js"&gt;&lt;/script&gt;
 </pre>
 
+<p>You can use an empty Showpony object, but you'll likely want to pass a few values. Here the properties used for the Showpony above:</p>
+
 <pre class="js">
 <h3>JavaScript</h3>
-new Showpony;
-</pre>
+new Showpony({
+<span id="code"></span>
+});
 
-<p>You can pass many options to the Showpony object, which are covered in the <a href="https://github.com/Josh-Powlison/showpony/wiki">Wiki</a>.</p>
+<p id="propertyExplanation"></p></pre>
 
-<h2>Object Code</h2>
-<p>What's going on in the Showpony above?</p>
-
-<pre id="code" class="js"></pre>
+<p>You can go to the <a href="https://github.com/Josh-Powlison/showpony/wiki">Showpony Wiki</a> for more info.</p>
 
 <!--
 <h2>Custom Setup</h2>
@@ -167,13 +185,14 @@ new Showpony;
 	);
 </script>!-->
 
-<h2>Showpony's being used in production!</h3>
-<p><a href="http://gameplanmanga.com" target="_blank"><img src="images/gameplan-banner.jpg"></a></p>
-
-<small>Works copyright of their respective creators as stated. Showpony branding copyright of Josh Powlison. "Grand Hotel" font is Copyright (c) 2012 by Brian J. Bonislawsky and Jim Lyles DBA Astigmatic (AOETI) (astigma@astigmatic.com), with Reserved Font Name "Grand Hotel"</small>
+<h2>Websites using Showpony</h3>
+<div id="websites-using"><a href="http://gameplanmanga.com" target="_blank"><img src="images/gameplan-banner.jpg"></a></div>
+<p><small>Email me at <a href="mailto:joshuapowlison@gmail.com" target="_blank">joshuapowlison@gmail.com</a> if you want to be included in the list! I will not include NSFW stories.</small></p>
 
 <script src="script.js"></script>
 
+
 </main>
+<footer><p>Showpony is Open Source under an MIT License. Version in Demo: DEV BRANCH</p></footer>
 </body>
 </html>

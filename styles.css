@@ -5,11 +5,6 @@ Blackish:	#161d25
 */
 
 /* Overall */
-@font-face{
-	font-family:"Grand Hotel";
-	src:url(design-files/GrandHotel-Regular.otf);
-	font-weight:normal;
-}
 
 body{
 	margin:0;
@@ -58,10 +53,6 @@ nav a:hover
 ,.current{
 	background-color:#fff;
 	color:#4b59b2;
-}
-
-#home-button{
-	font-family:"Grand Hotel",serif;
 }
 
 #nav-signature{
@@ -115,10 +106,6 @@ main{
 	margin-top:4em;
 	padding:2rem;
 	box-sizing:border-box;
-}
-
-h1,h2{
-	font-family:"Grand Hotel",serif;
 }
 
 h1{
@@ -183,6 +170,22 @@ pre h3{
 	color:#161d25;
 }
 
+.obj-name{
+	transition:background-color .1s,color .1s;
+	font-weight:bold;
+}
+
+.obj-name.obj-name-study{
+	background-color:black;
+	color:white;
+}
+
+#propertyExplanation{
+	background-color:black;
+	color:white;
+	padding:.25em;
+}
+
 /*Story setups*/
 #audio{
 	background-image:url("examples/bob-and-susie/~cover.jpg");
@@ -200,4 +203,24 @@ pre h3{
 
 .hidden{
 	display:none;
+}
+
+#websites-using{
+	text-align:center;
+}
+
+/*Footer*/
+
+footer{
+	width:100%;
+	margin:0;
+	background-color:#4b59b2;
+	color:white;
+	text-align:center;
+	font-size:.75em;
+}
+
+footer p{
+	margin:0;
+	padding:.5em;
 }
