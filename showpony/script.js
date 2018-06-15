@@ -75,7 +75,7 @@ d('query'			,	'part'												);
 d('shortcuts'		,	'focus'												);
 d('HeyBardID'		,	location.hostname.substring(0,20)					);
 d('bookmark'		,	"file"												);
-d('preloadNext'		,	true												);
+d('preloadNext'		,	1													);
 d('infiniteText'	,	false												);
 d('infiniteImage'	,	false												);
 
@@ -328,6 +328,7 @@ S.to=function(input){
 						}
 						
 						runTo=keyframes[Math.floor(keyframes.length*(obj.time/getLength(S.files[S.currentFile])))];
+						console.log(runTo);
 						
 						runMM(0);
 						
@@ -362,15 +363,19 @@ S.to=function(input){
 				})
 				//After all that, try preloading the next file
 				.then(()=>{
-					//If we can't preload or are on the last file, don't preload!
-					if(!S.preloadNext || S.currentFile>=S.files.length-1) return;
-					
-					//How we get the file depends on whether or not it's private
-					var src=(S.files[S.currentFile+1][0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile];
-					
-					//Preload next file, if there is a next file
-					//console.log("Preloading next!");
-					fetch(src);
+					//Preload next files, if allowed
+					for(let i=S.currentFile+1;i<=S.currentFile+S.preloadNext;i++){
+						if(i>=S.files.length) break;
+						
+						//How we get the file depends on whether or not it's private
+						var src=(S.files[i][0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[i];
+						
+						//Preload next file, if there is a next file
+						//console.log("Preloading next!");
+						fetch(src);
+						
+						console.log(i,S.preloadNext,S.currentFile);
+					}
 				})
 			;
 		//Image/Audio/Video
@@ -608,6 +613,19 @@ showponyLogo.target="_blank";
 if(S.credits) useIcons(S.credits);
 
 frag([progress,overlayText,fullscreenButton,showponyLogo,credits],overlay);
+
+//Run custom event for checking time
+/*S.window.dispatchEvent(
+	new CustomEvent(
+		"timeupdate"
+		,{
+			detail:{
+				file:(S.currentFile+1)
+				,time:thisType.currentTime
+			}
+		}
+	)
+);*/
 
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
@@ -1046,8 +1064,6 @@ function runMM(inputNum){
 		//Set the time of the element
 		types[currentType].currentTime=(keyframes.indexOf(S.currentLine)/keyframes.length)*getLength(S.files[S.currentFile]);
 		
-		//Adjust the scrubbar
-		scrub();
 		updateInfo();
 	}
 	
@@ -1722,17 +1738,19 @@ pageInfinite.addEventListener("scroll",function(){
 //On loading resources, don't show loading
 types.image.addEventListener("load",function(){
 	content.classList.remove("showpony-loading");
-	
-	if(!S.preloadNext) return;
-	
-	//Preload next file, if there is a next file
-	if(S.currentFile!==S.files.length-1){
-		var src=(S.files[S.currentFile+1][0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile+1];
+
+	//Preload next files, if allowed
+	for(let i=S.currentFile+1;i<=S.currentFile+S.preloadNext;i++){
+		if(i>=S.files.length) break;
+		
+		var src=(S.files[i][0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[i];
 		
 		console.log("Preloading");
 		
 		var img=new Image();
 		img.src=src;
+		
+		console.log(i,S.preloadNext,S.currentFile);
 	}
 });
 
