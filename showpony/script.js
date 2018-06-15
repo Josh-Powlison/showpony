@@ -409,10 +409,18 @@ S.to=function(input){
 }
 
 //Toggle the menu
-S.menu=function(event){
+S.menu=function(event,action){
 	//We can cancel moving the bar outside of the overlay, but we can't do anything else.
 	//Exit if we're not targeting the overlay.
 	if(event && event.target!==overlay) return;
+	
+	//Allow playing and pausing, but return if either's already done
+	if(
+		action &&
+		((S.window.classList.contains("showpony-paused") && action=="pause")
+		||
+		(!S.window.classList.contains("showpony-paused") && action=="play"))
+	) return;
 	
 	else //If we aren't moving the bar
 	{
