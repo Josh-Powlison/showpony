@@ -1,29 +1,29 @@
 //Get location of the Showpony folder
-const ShowponyFolder=document.currentScript.src.replace("/script.js","");
+const ShowponyFolder=document.currentScript.src.replace('/script.js','');
 
 //Find the relative path from ShowponyFolder to ShowponyRunPage
-var splitPath=ShowponyFolder.split("/");
-var splitStart=location.href.replace(/\/[^\/]+$/,"").split("/");
+var splitPath=ShowponyFolder.split('/');
+var splitStart=location.href.replace(/\/[^\/]+$/,'').split('/');
 
 //Get relative path from Showpony folder to current page (for the sake of PHP)
-var ShowponyRunPage="";
+var ShowponyRunPage='';
 for(var i=0;i<splitStart.length;i++){
 	//If the paths are the same
 	if(splitPath.length>i && splitPath[i]===splitStart[i]){
-		//console.log(splitPath[i]+" is the same!");
+		//console.log(splitPath[i]+' is the same!');
 		//We ignore them!
 	//If they differ- we've found the first shared folder!
 	}else{
 		//Go up as many levels as need to to get to the shared folder
 		for(var ii=i;ii<splitPath.length;ii++){
-			ShowponyRunPage+="../";
+			ShowponyRunPage+='../';
 		}
 		
 		//Now go down to the right folder
 		for(var ii=i;ii<splitStart.length;ii++){
 			ShowponyRunPage+=splitStart[ii];
 			
-			if(ii!==splitStart.length-1) ShowponyRunPage+="/"
+			if(ii!==splitStart.length-1) ShowponyRunPage+='/'
 		}
 		
 		//Break out of the main for loop
@@ -36,15 +36,15 @@ for(var i=0;i<splitStart.length;i++){
 
 function Showpony(input){
 
-"use strict";
+'use strict';
 
 //If an input object doesn't exist, make one
 if(!input) input={};
 
 //If no window was passed, make one!
 if(!input.window){
-	document.currentScript.insertAdjacentElement('afterend',input.window=document.createElement("div"));
-	input.window.className="showpony-default";
+	document.currentScript.insertAdjacentElement('afterend',input.window=document.createElement('div'));
+	input.window.className='showpony-default';
 }
 
 ///////////////////////////////////////
@@ -69,12 +69,12 @@ d('credits'			,	null												);
 d('data'			,	{}													);
 d('defaultDuration'	,	10													);
 d('title'			,	false												);
-d('dateFormat'		,	{year:"numeric",month:"numeric",day:"numeric"}		);
+d('dateFormat'		,	{year:'numeric',month:'numeric',day:'numeric'}		);
 d('admin'			,	false												);
 d('query'			,	'part'												);
 d('shortcuts'		,	'focus'												);
 d('HeyBardID'		,	location.hostname.substring(0,20)					);
-d('bookmark'		,	"file"												);
+d('bookmark'		,	'file'												);
 d('preloadNext'		,	1													);
 d('infiniteText'	,	false												);
 d('infiniteImage'	,	false												);
@@ -89,7 +89,7 @@ var objectBuffer, keyframes;
 
 //Go to another file
 S.to=function(input){
-	content.classList.add("showpony-loading");
+	content.classList.add('showpony-loading');
 	
 	var obj=input || {};
 	
@@ -157,10 +157,10 @@ S.to=function(input){
 	
 	//Use different options
 	S.currentFile=
-		obj.file==="first" ? 0
-		: obj.file==="prev" ? S.currentFile-1
-		: obj.file==="next" ? S.currentFile+1
-		: obj.file==="last" ? S.files.length-1
+		obj.file==='first' ? 0
+		: obj.file==='prev' ? S.currentFile-1
+		: obj.file==='next' ? S.currentFile+1
+		: obj.file==='last' ? S.files.length-1
 		: parseInt(obj.file || 0) //Get the file, or 0 if it's undefined
 	;
 	
@@ -172,9 +172,9 @@ S.to=function(input){
 		//If we aren't just trying to reload a file, end; otherwise, get to that last file
 		if(!obj || !obj.reload){
 			//Run the event that users can read
-			S.window.dispatchEvent(new CustomEvent("end"));
-			content.classList.remove("showpony-loading");
-			//console.log("Ended!");
+			S.window.dispatchEvent(new CustomEvent('end'));
+			content.classList.remove('showpony-loading');
+			//console.log('Ended!');
 			return;
 		}
 	}
@@ -183,12 +183,12 @@ S.to=function(input){
 	
 	//Update info on file load
 	if(!obj.popstate){
-		////console.log("Update info!",scrubbing);
+		////console.log('Update info!',scrubbing);
 		//Only allow adding to history if we aren't scrubbing
 		
 		//If the same file, and not a medium where time changes it (like images), replace history state instead
-		if(sameFile && currentType!=="video" && currentType!=="audio"){
-			////console.log("Same!");
+		if(sameFile && currentType!=='video' && currentType!=='audio'){
+			////console.log('Same!');
 			obj.replaceState=true;
 		}
 		
@@ -227,11 +227,11 @@ S.to=function(input){
 		//Get rid of local styles
 		for(var key in S.objects){
 			//Except for the window and content, of course!
-			if(key==="window" || key==="content") continue;
-			S.objects[key].removeAttribute("style");
+			if(key==='window' || key==='content') continue;
+			S.objects[key].removeAttribute('style');
 			
 			//Empty out textboxes
-			if(S.objects[key].classList.contains("showpony-textbox")) S.objects[key].innerHTML="";
+			if(S.objects[key].classList.contains('showpony-textbox')) S.objects[key].innerHTML='';
 		};
 		
 		//Save buffer to check later
@@ -239,13 +239,13 @@ S.to=function(input){
 	
 	//If switching types, do some cleanup
 	if(currentType!=newType){
-		content.innerHTML="";
+		content.innerHTML='';
 		//console.log(types);
 		S.objects={window:S.window,content:content};
 		S.lines=[];
 		
 		//Use either infinite text or page turn, whichever is requested
-		if(newType==="text"){
+		if(newType==='text'){
 			content.appendChild(S.infiniteText ? pageInfinite : pageTurn);
 		}else{
 			//General setup
@@ -254,10 +254,10 @@ S.to=function(input){
 	}
 	
 	//How we get the file depends on whether or not it's private
-	var src=(S.files[S.currentFile].path[0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.language+S.files[S.currentFile].path;
+	var src=(S.files[S.currentFile].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.language+S.files[S.currentFile].path;
 	
 	//Refresh the file, if requested we do so, by adding a query
-	if(obj.refresh) src+=(S.files[S.currentFile].path[0]==="x" ? "&" : "?")+"refresh-"+Date.now();
+	if(obj.refresh) src+=(S.files[S.currentFile].path[0]==='x' ? '&' : '?')+'refresh-'+Date.now();
 	
 	currentType=newType;
 	
@@ -272,7 +272,7 @@ S.to=function(input){
 			runMM(0);
 		}else{
 			//If text, scroll to specified spot
-			if(currentType==="text"){
+			if(currentType==='text'){
 				//Infinite scrolling
 				if(S.infiniteText){//Scroll to the right spot
 				}else{ //Page turn
@@ -280,7 +280,7 @@ S.to=function(input){
 				}
 			}
 			
-			content.classList.remove("showpony-loading");
+			content.classList.remove('showpony-loading');
 		}
 	//If it's not the same file, load it!
 	}else{
@@ -314,7 +314,7 @@ S.to=function(input){
 								continue;
 							}
 							
-							if(S.lines[i].indexOf(">")!==0) keyframes.push(i);
+							if(S.lines[i].indexOf('>')!==0) keyframes.push(i);
 						}
 						
 						runTo=keyframes[Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].time))];
@@ -341,7 +341,7 @@ S.to=function(input){
 							pageTurn.scrollTo(0,pageTurn.scrollHeight*(obj.time/S.files[S.currentFile].time));
 							
 							//Stop loading
-							content.classList.remove("showpony-loading");
+							content.classList.remove('showpony-loading');
 						}
 						
 						//Move the scrubbar to the right spot
@@ -349,7 +349,7 @@ S.to=function(input){
 					}
 				})
 				.catch((error)=>{
-					alert("329: "+error);
+					alert('329: '+error);
 				})
 				//After all that, try preloading the next file
 				.then(()=>{
@@ -358,10 +358,10 @@ S.to=function(input){
 						if(i>=S.files.length) break;
 						
 						//How we get the file depends on whether or not it's private
-						var src=(S.files[i].path[0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.language+S.files[i].path;
+						var src=(S.files[i].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.language+S.files[i].path;
 						
 						//Preload next file, if there is a next file
-						////console.log("Preloading next!");
+						////console.log('Preloading next!');
 						fetch(src);
 						
 						//console.log(i,S.preloadNext,S.currentFile);
@@ -372,9 +372,9 @@ S.to=function(input){
 		}else{
 			//Adjust the source
 			thisType.src=src;
-			if((currentType==='video' || currentType==='audio') && !S.window.classList.contains("showpony-paused")){
+			if((currentType==='video' || currentType==='audio') && !S.window.classList.contains('showpony-paused')){
 				thisType.play();
-				//console.log("Play");
+				//console.log('Play');
 			}
 			
 			//Move the scrubbar to the right spot
@@ -387,7 +387,7 @@ S.to=function(input){
 	//Run custom event for checking time
 	S.window.dispatchEvent(
 		new CustomEvent(
-			"time"
+			'time'
 			,{
 				detail:{
 					file:(S.currentFile+1)
@@ -407,25 +407,25 @@ S.menu=function(event,action){
 	//Allow playing and pausing, but return if either's already done
 	if(
 		action &&
-		((S.window.classList.contains("showpony-paused") && action=="pause")
+		((S.window.classList.contains('showpony-paused') && action=='pause')
 		||
-		(!S.window.classList.contains("showpony-paused") && action=="play"))
+		(!S.window.classList.contains('showpony-paused') && action=='play'))
 	) return;
 	
 	else //If we aren't moving the bar
 	{
-		//On toggling classes, returns "true" if just added
-		if(S.window.classList.toggle("showpony-paused")){
+		//On toggling classes, returns 'true' if just added
+		if(S.window.classList.toggle('showpony-paused')){
 			scrub();
 			
 			//Add paused class
-			S.window.classList.add("showpony-paused");
+			S.window.classList.add('showpony-paused');
 			
 			//Pause media
 			types[currentType].play && types[currentType].pause();
 		}else{
 			//Remove paused class
-			S.window.classList.remove("showpony-paused");
+			S.window.classList.remove('showpony-paused');
 			
 			//Play media
 			types[currentType].play && types[currentType].play();
@@ -434,10 +434,10 @@ S.menu=function(event,action){
 	
 	//Send an event when toggling the menu
 	S.window.dispatchEvent(
-		new CustomEvent("menu"
+		new CustomEvent('menu'
 		,{detail:{
 			open:(
-				S.window.classList.contains("showpony-paused") ? true
+				S.window.classList.contains('showpony-paused') ? true
 				: false
 			)
 		}})
@@ -474,21 +474,21 @@ S.fullscreen=function(type){
 	//Get fullscreen type
 	var browser=S.window.requestFullscreen ?
 			{
-				element:"fullscreenElement"
-				,request:"requestFullscreen"
-				,exit:"exitFullscreen"
+				element:'fullscreenElement'
+				,request:'requestFullscreen'
+				,exit:'exitFullscreen'
 			}
 		: S.window.webkitRequestFullscreen ?
 			{
-				element:"webkitFullscreenElement"
-				,request:"webkitRequestFullscreen"
-				,exit:"webkitExitFullscreen"
+				element:'webkitFullscreenElement'
+				,request:'webkitRequestFullscreen'
+				,exit:'webkitExitFullscreen'
 			}
 		: S.window.mozRequestFullScreen ?
 			{
-				element:"mozFullScreenElement"
-				,request:"mozRequestFullScreen"
-				,exit:"mozCancelFullScreen"
+				element:'mozFullScreenElement'
+				,request:'mozRequestFullScreen'
+				,exit:'mozCancelFullScreen'
 			}
 		: null
 	;
@@ -497,14 +497,14 @@ S.fullscreen=function(type){
 	if(!browser) return;
 	
 	//If fullscreen and not requesting, exit
-	if(document[browser.element]) type!=="request" && document[browser.exit]();
+	if(document[browser.element]) type!=='request' && document[browser.exit]();
 	//If not fullscreen and not exiting, request
-	else type!=="exit" && S.window[browser.request]();
+	else type!=='exit' && S.window[browser.request]();
 }
 
 //When the viewer inputs to Showpony (click, space, general action)
 S.input=function(){
-	if(currentType==='image') S.to({file:"+1"});
+	if(currentType==='image') S.to({file:'+1'});
 	else if(currentType==='audio' || currentType==='video') S.menu();
 	else if(currentType==='multimedia'){
 		//If the player is making choices right now
@@ -513,11 +513,11 @@ S.input=function(){
 		//If a wait timer was going, stop it.
 		if(waitTimer.remaining>0){
 			//console.log(waitTimer,waitTimer.remaining);
-			//console.log("Animations");
+			//console.log('Animations');
 			//Run all animations, end all transitions
-			content.classList.add("showpony-loading");
+			content.classList.add('showpony-loading');
 			content.offsetHeight; //Trigger reflow to flush CSS changes
-			content.classList.remove("showpony-loading");
+			content.classList.remove('showpony-loading');
 			
 			waitTimer.end();
 		}
@@ -533,17 +533,17 @@ S.input=function(){
 		{
 			
 			//Run all animations, end all transitions
-			content.classList.add("showpony-loading");
+			content.classList.add('showpony-loading');
 			content.offsetHeight; //Trigger reflow to flush CSS changes
-			content.classList.remove("showpony-loading");
+			content.classList.remove('showpony-loading');
 			
 			//Display all letters
-			content.querySelectorAll(".showpony-char").forEach(function(key){
+			content.querySelectorAll('.showpony-char').forEach(function(key){
 				//Remove the delay so they're displayed immediately
 				key.style.animationDelay=null;
 			});
 			
-			//console.log("Animations 2");
+			//console.log('Animations 2');
 		}
 	}
 }
@@ -551,7 +551,7 @@ S.input=function(){
 //Close ShowPony
 S.close=function(){
 	//Remove the window event listener
-	window.removeEventListener("click",windowClick);
+	window.removeEventListener('click',windowClick);
 	
 	//Reset the window to what it was before
 	S.window.replaceWith(S.originalWindow);
@@ -562,7 +562,7 @@ S.close=function(){
 ///////////////////////////////////////
 
 var multimediaSettings={
-	textbox:"main"
+	textbox:'main'
 	,text: null
 	,go:false
 };
@@ -574,39 +574,39 @@ var waitForInput=false
 	,currentType=null
 	,loggedIn=false //Logged in as admin
 	//Elements
-	,overlayText=m("overlay-text")
-	,progress=m("progress")
-	,content=m("content")
+	,overlayText=m('overlay-text')
+	,progress=m('progress')
+	,content=m('content')
 	//Buttons
-	,fullscreenButton=m("button showpony-fullscreen-button","button")
-	,captionsButton=m("captions-button","button")
-	,showponyLogo=m("logo","a")
-	,credits=m("credits","small")
-	,overlay=m("overlay","div")
+	,fullscreenButton=m('button showpony-fullscreen-button','button')
+	,captionsButton=m('captions-button','button')
+	,showponyLogo=m('logo','a')
+	,credits=m('credits','small')
+	,overlay=m('overlay','div')
 	,types={
-		image:m("block","img")
-		,audio:m("block","audio")
-		,video:m("block","video")
-		,multimedia:m("multimedia")
-		,text:m("text")
+		image:m('block','img')
+		,audio:m('block','audio')
+		,video:m('block','video')
+		,multimedia:m('multimedia')
+		,text:m('text')
 	}
 	//Page turning
-	,pageTurn=m("page-turn")
-	,pagePrev=m("page-prev","button")
-	,pageNext=m("page-next","button")
+	,pageTurn=m('page-turn')
+	,pagePrev=m('page-prev','button')
+	,pageNext=m('page-next','button')
 	//Infinite pages
-	,pageInfinite=m("page-infinite")
+	,pageInfinite=m('page-infinite')
 	//Multimedia
-	,continueNotice=m("continue")
+	,continueNotice=m('continue')
 ;
 
-fullscreenButton.alt="Fullscreen";
-fullscreenButton.title="Fullscreen Toggle";
-captionsButton.alt="Closed Captions/Subtitles";
+fullscreenButton.alt='Fullscreen';
+fullscreenButton.title='Fullscreen Toggle';
+captionsButton.alt='Closed Captions/Subtitles';
 
-showponyLogo.href="https://showpony.heybard.com/";
+showponyLogo.href='https://showpony.heybard.com/';
 showponyLogo.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -197)"><path fill="none" stroke-width="9.5" d="M32.5 245.5v-40.1s-21.9-2.2-21.9 40m56.9.1v-40.1s21.9-2.2 21.9 40"/><circle cx="77.4" cy="275.5" r="9.4" fill="none" stroke-width="7.7"/><circle cx="22.6" cy="275.5" r="9.4" fill="none" stroke-width="7.7"/><path stroke-width=".3" d="M50.1 266.7c-2.4 3-19.1 0-11 8 6.1 5.8 29 2.5 15.2-17-16.4.6-44.4-12.6-15.3-25.7 39.2-17.7 42.5 44.5 23.6 55.6-44.7 26.3-53.5-49-12.5-20.9z"/></g></svg>';
-showponyLogo.target="_blank";
+showponyLogo.target='_blank';
 
 if(S.credits) useIcons(S.credits);
 
@@ -615,7 +615,7 @@ frag([progress,overlayText,fullscreenButton,showponyLogo,credits],overlay);
 //Run custom event for checking time
 /*S.window.dispatchEvent(
 	new CustomEvent(
-		"timeupdate"
+		'timeupdate'
 		,{
 			detail:{
 				file:(S.currentFile+1)
@@ -631,7 +631,7 @@ frag([progress,overlayText,fullscreenButton,showponyLogo,credits],overlay);
 
 //Play and pause multimedia
 types.multimedia.play=function(){
-	//console.log("play");
+	//console.log('play');
 	
 	//Go through objects that were playing- unpause them
 	for(var key in S.objects){
@@ -647,7 +647,7 @@ types.multimedia.play=function(){
 }
 
 types.multimedia.pause=function(){
-	//console.log("pause");
+	//console.log('pause');
 	
 	//Go through objects that can be played- pause them, and track that
 	for(var key in S.objects){
@@ -714,14 +714,14 @@ function scrub(inputPercent){
 	}
 	
 	//Move the progress bar
-	progress.style.left=(inputPercent*100)+"%";
+	progress.style.left=(inputPercent*100)+'%';
 	
 	//Set the overlay text (the current time)
-	overlayText.innerHTML="<p>"+replaceInfoText(
+	overlayText.innerHTML='<p>'+replaceInfoText(
 		S.info
 		,newPart
 		,Math.floor(timeInTotal)
-	)+"</p>";
+	)+'</p>';
 }
 
 //Drag on the menu to go to any part
@@ -742,7 +742,7 @@ function moveOverlay(event){
 			
 			//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
 			if(S.scrubLoad){
-				//console.log("Release!");
+				//console.log('Release!');
 				//Add a new state on releasing
 				updateInfo(null,true);
 			}
@@ -786,10 +786,10 @@ function replaceInfoText(value,fileNum,current){
 			current:S.files[fileNum].name
 		}
 		,date:{
-			current:"Undated"
+			current:'Undated'
 		}
 		,medium:{
-			current:"<img src='"+S.files[fileNum].medium+".svg'>"
+			current:'<img src="'+S.files[fileNum].medium+'.svg">'
 		}
 		,file:{
 			current:	fileNum+1
@@ -818,7 +818,7 @@ function replaceInfoText(value,fileNum,current){
 		}
 	}
 	
-	//Get the name, remove the parentheses (skip over "x")
+	//Get the name, remove the parentheses (skip over 'x')
 	var date=S.files[fileNum].date; // /^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.exec(files[i])
 
 	//If there's a date, return it; otherwise, return blank space
@@ -838,7 +838,7 @@ function replaceInfoText(value,fileNum,current){
 		));
 		
 		values.date.current=new Intl.DateTimeFormat(
-			"default"
+			'default'
 			,S.dateFormat
 		).format(date);
 	}
@@ -848,20 +848,20 @@ function replaceInfoText(value,fileNum,current){
 		//Choose the right type
 		
 		//Defaults (we don't bother searching for these)
-		var type="file", value="current";
+		var type='file', value='current';
 		
 		//Get the type
-		if(/name|title/i.test(input)) type="name";
-		else if(/date|release/i.test(input)) type="date";
-		else if(/%|percent/i.test(input)) type="percent";
-		else if(/hour/i.test(input)) type="hours";
-		else if(/min/i.test(input)) type="minutes";
-		else if(/sec/i.test(input)) type="seconds";
-		else if(/medi/i.test(input)) type="medium";
+		if(/name|title/i.test(input)) type='name';
+		else if(/date|release/i.test(input)) type='date';
+		else if(/%|percent/i.test(input)) type='percent';
+		else if(/hour/i.test(input)) type='hours';
+		else if(/min/i.test(input)) type='minutes';
+		else if(/sec/i.test(input)) type='seconds';
+		else if(/medi/i.test(input)) type='medium';
 		
 		//Get the value type
-		if(/left|remain/i.test(input)) value="left";
-		else if(/total|all/i.test(input)) value="total";
+		if(/left|remain/i.test(input)) value='left';
+		else if(/total|all/i.test(input)) value='total';
 		
 		//Return the value
 		return String(values[type][value]).padStart(
@@ -884,33 +884,33 @@ function useIcons(input){
 		return;
 	}
 	
-	credits.classList.add("showpony-loading");
+	credits.classList.add('showpony-loading');
 	
 	//Create promises for fetching the images
 	var promises=[];
 	
 	for(let i=0;i<images.length;i++){
-		var url="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/"+images[i].toLowerCase().replace(".logo",".svg");
+		var url='https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/'+images[i].toLowerCase().replace('.logo','.svg');
 		
 		promises[i]=fetch(url)
 			.then(response=>{
 				//On success
 				if(response.status>=200 && response.status<300) return response.text();
 				//On failure (404)
-				else throw Error("Couldn't retrieve file! "+response.status);
+				else throw Error('Couldn\'t retrieve file! '+response.status);
 			})
 			.then(svg=>{
 				input=input.replace(images[i],svg);
 			})
 			.catch(response=>{
-				input=input.replace(images[i],images[i].replace(".logo",""));
+				input=input.replace(images[i],images[i].replace('.logo',''));
 			})
 		;
 	}
 	
 	//Once all SVGs are retrieved, continue
 	Promise.all(promises).then(response=>{
-		credits.classList.remove("showpony-loading");
+		credits.classList.remove('showpony-loading');
 		credits.innerHTML=input;
 	});
 }
@@ -937,7 +937,7 @@ function POST(obj){
 	return new Promise(function(resolve,reject){
 		
 		//Make the call
-		fetch(ShowponyFolder+"/ajax.php",{method:'post',body:formData,credentials:'include'})
+		fetch(ShowponyFolder+'/ajax.php',{method:'post',body:formData,credentials:'include'})
 		.then(response=>{
 			return response.json();
 		})
@@ -953,7 +953,7 @@ function POST(obj){
 			}else reject(json.message);
 		})
 		.catch(response=>{
-			alert("913: "+response);
+			alert('913: '+response);
 		});
 	});
 }
@@ -968,31 +968,31 @@ function saveFileInfo(files){
 	for(let i=0;i<files.length;i++){
 		S.files[i]={};
 		S.files[i].path=files[i];
-		S.files[i].name=safeFilename(files[i].replace(/(^[^(]+\()|(\)[^)]+$)/g,''),"from");
+		S.files[i].name=safeFilename(files[i].replace(/(^[^(]+\()|(\)[^)]+$)/g,''),'from');
 		
 		S.files[i].date=/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.exec(files[i]);
 		
-		var medium="text";
+		var medium='text';
 		
 		//Get the extension- fast!
-		switch(files[i].slice((files[i].lastIndexOf(".") - 1 >>> 0) + 2)){
-			case "jpg":
-			case "jpeg":
-			case "png":
-			case "gif":
-			case "svg":
-				medium="image";
+		switch(files[i].slice((files[i].lastIndexOf('.') - 1 >>> 0) + 2)){
+			case 'jpg':
+			case 'jpeg':
+			case 'png':
+			case 'gif':
+			case 'svg':
+				medium='image';
 				break;
-			case "mp4":
-			case "webm":
-				medium="video";
+			case 'mp4':
+			case 'webm':
+				medium='video';
 				break;
-			case "mp3":
-			case "wav":
-				medium="audio";
+			case 'mp3':
+			case 'wav':
+				medium='audio';
 				break;
-			case "mm":
-				medium="multimedia";
+			case 'mm':
+				medium='multimedia';
 				break;
 			//All else defaults to text
 			default:
@@ -1001,6 +1001,7 @@ function saveFileInfo(files){
 		
 		//Return the value in the file or the default duration
 		var get=/[^\s)]+(?=\.[^.]+$)/.exec(files[i]);
+		console.log(get);
 		get=(get ? parseFloat(get[0]) : S.defaultDuration);
 		
 		S.files[i].time=get;
@@ -1018,8 +1019,8 @@ function frag(inputArray,inputParent){
 
 //Create an element with a class
 function m(c,el){
-	var a=document.createElement(el || "div");
-	a.className="showpony-"+c;
+	var a=document.createElement(el || 'div');
+	a.className='showpony-'+c;
 	
 	return a;
 }
@@ -1027,8 +1028,8 @@ function m(c,el){
 //When video or audio ends
 function mediaEnd(){
 	//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
-	if(!S.window.classList.contains("showpony-paused")) S.to({file:"+1"});
-	//console.log("MEDIA END");
+	if(!S.window.classList.contains('showpony-paused')) S.to({file:'+1'});
+	//console.log('MEDIA END');
 }
 
 var runTo=false;
@@ -1043,8 +1044,8 @@ function runMM(inputNum){
 	if(runTo!==false && S.currentLine>=runTo) runTo=false;
 	
 	//We've run through!
-	if(runTo===false && content.classList.contains("showpony-loading")){
-		//console.log("Enable!",S.currentLine,runTo);
+	if(runTo===false && content.classList.contains('showpony-loading')){
+		//console.log('Enable!',S.currentLine,runTo);
 		if(waitTimer.remaining>0){
 			waitTimer.end();
 		}
@@ -1061,7 +1062,7 @@ function runMM(inputNum){
 		};
 		
 		content.offsetHeight; //Trigger reflow to flush CSS changes
-		content.classList.remove("showpony-loading");
+		content.classList.remove('showpony-loading');
 	}
 	
 	//Update the scrubbar if the frame we're on is a keyframe
@@ -1074,8 +1075,8 @@ function runMM(inputNum){
 	
 	//If we've ended manually or reached the end, stop running immediately and end it all
 	if(S.currentLine>=S.lines.length){
-		//console.log("Ending!");
-		S.to({file:"+1"});
+		//console.log('Ending!');
+		S.to({file:'+1'});
 		return;
 	}
 	
@@ -1085,7 +1086,7 @@ function runMM(inputNum){
 	var match;
 	while(match=/[^\[]+(?=\])/g.exec(text)) text=text.replace('['+match[0]+']',S.data[match[0]]);
 	
-	if(text[0]===">"){
+	if(text[0]==='>'){
 		var vals=text.replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/);
 		
 		////console.log(text,vals);
@@ -1105,19 +1106,19 @@ function runMM(inputNum){
 	}else{
 		//If it's regular text display, use the regular settings
 		multimediaSettings.wait=true; //Assume we're waiting at the end time
-		multimediaSettings.textbox="main";
+		multimediaSettings.textbox='main';
 		if(S.objects.main){
-			S.objects.main.innerHTML="";
+			S.objects.main.innerHTML='';
 			S.objects.main.scrollTop=0;
 		}
 	}
 	
 	//If the textbox hasn't been created, create it!
-	if(!S.objects[multimediaSettings.textbox]) content.appendChild(S.objects[multimediaSettings.textbox]=m("textbox"));
+	if(!S.objects[multimediaSettings.textbox]) content.appendChild(S.objects[multimediaSettings.textbox]=m('textbox'));
 	
 	//If no text was passed, empty the textbox and continue
 	if(typeof(text)==='undefined'){
-		S.objects[multimediaSettings.textbox].innerHTML="";
+		S.objects[multimediaSettings.textbox].innerHTML='';
 		S.objects.main.scrollTop=0;
 		runMM();
 		return;
@@ -1135,7 +1136,7 @@ function runMM(inputNum){
 	//STEP 2: Design the text//
 	
 	//Design defaults
-	var charElementDefault=m("char-container","span")
+	var charElementDefault=m('char-container','span')
 		,charElement
 		,baseWaitTime
 	;
@@ -1182,7 +1183,7 @@ function runMM(inputNum){
 					//MSCE (Missy) format (Multiplier, Speed, Color, Effect)
 					
 					//M: Text multiplier
-					if(values[0].length) charElement.style.fontSize=values[0]+"em";
+					if(values[0].length) charElement.style.fontSize=values[0]+'em';
 					
 					//Speed of the text
 					if(values[1].length) baseWaitTime=parseFloat(values[1]);
@@ -1191,7 +1192,7 @@ function runMM(inputNum){
 					if(values[2].length) charElement.style.color=values[2];
 					
 					//Effect
-					if(values[3].length) charElement.classList.add("showpony-char-"+values[3]);
+					if(values[3].length) charElement.classList.add('showpony-char-'+values[3]);
 				}
 				
 				//Adjust the styles of charElement based on what's passed (this will impact all future S.objects)
@@ -1200,7 +1201,7 @@ function runMM(inputNum){
 				continue;
 			//Lines breaks
 			case '#':
-				fragment.appendChild(document.createElement("br"));
+				fragment.appendChild(document.createElement('br'));
 				continue;
 			default:
 				//Handle punctuation
@@ -1218,9 +1219,9 @@ function runMM(inputNum){
 		//Make the char based on charElement
 		var thisChar=charElement.cloneNode(false);
 		
-		let showChar=m("char","span");				//Display char (appear, shout, etc), parent to animChar
-		let animChar=m("char-anim","span");				//Constant animation character (singing, shaking...)
-		let hideChar=m("char-placeholder","span");	//Hidden char for positioning
+		let showChar=m('char','span');				//Display char (appear, shout, etc), parent to animChar
+		let animChar=m('char-anim','span');				//Constant animation character (singing, shaking...)
+		let hideChar=m('char-placeholder','span');	//Hidden char for positioning
 		hideChar.innerHTML=animChar.innerHTML=text[i];
 		
 		frag([animChar],showChar);
@@ -1230,15 +1231,15 @@ function runMM(inputNum){
 		S.charsHidden++;
 		
 		//Set the display time here- but if we're paused, no delay!
-		if(!S.window.classList.contains("showpony-paused")) showChar.style.animationDelay=totalWait+"s";
+		if(!S.window.classList.contains('showpony-paused')) showChar.style.animationDelay=totalWait+'s';
 		
 		//Set animation timing for animChar, based on the type of animation
-		if(thisChar.classList.contains("showpony-char-sing")){
-			animChar.style.animationDelay=-(charNum*.1)+"s";
+		if(thisChar.classList.contains('showpony-char-sing')){
+			animChar.style.animationDelay=-(charNum*.1)+'s';
 		}
 		
-		if(thisChar.classList.contains("showpony-char-shake")){
-			animChar.style.animationDelay=-(Math.random()*3)+"s";
+		if(thisChar.classList.contains('showpony-char-shake')){
+			animChar.style.animationDelay=-(Math.random()*3)+'s';
 		}
 		
 		//Add the char to the document fragment
@@ -1248,14 +1249,14 @@ function runMM(inputNum){
 		
 		//Add event listeners to each
 		//On displaying, do this:
-		showChar.addEventListener("animationstart",function(event){
+		showChar.addEventListener('animationstart',function(event){
 			//If the animation ended on a child, don't continue! (animations are applied to children for text effects)
 			if(this!=event.target) return;
 			
 			//If the element's currently hidden (the animation that ended is for unhiding)
-			if(this.style.visibility!=="visible"){
+			if(this.style.visibility!=='visible'){
 				S.charsHidden--;
-				this.style.visibility="visible";
+				this.style.visibility='visible';
 				
 				//If there are no more S.objects to show
 				if(S.charsHidden<1){
@@ -1269,7 +1270,7 @@ function runMM(inputNum){
 					}
 				}
 				
-				var textbox=this.closest(".showpony-textbox");
+				var textbox=this.closest('.showpony-textbox');
 				
 				//#1//
 				//Scroll to the newly displayed letter (based on the regular height of the letter)
@@ -1324,16 +1325,16 @@ function powerTimer(callback,delay){
 }
 
 var multimediaFunction={
-	'en':()=> S.to({file:"+1"})
+	'en':()=> S.to({file:'+1'})
 	,'go':vals=> runMM(S.lines.indexOf(vals[1])!==-1 ? S.lines.indexOf(vals[1])+1 : null)
 	,'in':vals=>{
-		var thisButton=m("kn-choice","button");
+		var thisButton=m('kn-choice','button');
 		thisButton.innerHTML=vals[2];
 		
-		S.objects["main"].appendChild(thisButton);
+		S.objects['main'].appendChild(thisButton);
 		
 		//On clicking a button, go to the right place
-		thisButton.addEventListener("click",function(event){
+		thisButton.addEventListener('click',function(event){
 			event.stopPropagation();
 			
 			//Progress
@@ -1366,7 +1367,7 @@ var multimediaFunction={
 		//Run an event that the user can track for updated user info
 		S.window.dispatchEvent(
 			new CustomEvent(
-				"data"
+				'data'
 				,{
 					detail:{
 						name:vals[1]
@@ -1405,15 +1406,15 @@ var multimediaFunction={
 		else content.appendChild(continueNotice);
 		
 		//If we're paused, pause the timer
-		if(S.window.classList.contains("showpony-paused")) waitTimer.pause();
+		if(S.window.classList.contains('showpony-paused')) waitTimer.pause();
 	}
 	,'au':vals=>{
 		//If the audio doesn't exist
 		if(!S.objects[vals[1]]){
 			//Add them in!
-			var el=S.objects[vals[1]]=document.createElement("audio");
+			var el=S.objects[vals[1]]=document.createElement('audio');
 			
-			el.src="resources/audio/"+vals[1];
+			el.src='resources/audio/'+vals[1];
 			
 			//If an extension isn't specified, assume mp3
 			if(/\/[^.\/]+$/.test(el.src)) el.src+='.mp3';
@@ -1430,30 +1431,30 @@ var multimediaFunction={
 		let l=vals.length;
 		for(let i=2;i<l;i++){
 			switch(vals[i]){
-				case "loop":
+				case 'loop':
 					el.loop=true;
 					break;
-				case "unloop":
+				case 'unloop':
 					el.loop=false;
 					break;
-				case "play":
-				case "pause":
+				case 'play':
+				case 'pause':
 					el[vals[i]]();
 					
 					//Pause the audio if we're paused; it can start playing later
-					if(vals[i]==="play" && S.window.classList.contains("showpony-paused")){
+					if(vals[i]==='play' && S.window.classList.contains('showpony-paused')){
 						el.wasPlaying=true;
 						el.pause();
 					}
 					break;
-				case "stop":
+				case 'stop':
 					el.currentTime=0;
 					el.wasPlaying=false;
 					el.pause();
 					break;
 				default: //Other features
 					var value=parseFloat(vals[i].substr(1));
-					//console.log("AUDIO",vals[i],value);
+					//console.log('AUDIO',vals[i],value);
 					//Current volume
 					if(vals[i][0]==='v') el.volume=value;
 					//Current time
@@ -1480,7 +1481,7 @@ var multimediaFunction={
 		
 		//If an object with the name doesn't exist, make it!
 		if(!S.objects[vals[1]]){
-			content.appendChild(S.objects[vals[1]]=m("character"));
+			content.appendChild(S.objects[vals[1]]=m('character'));
 		}
 		
 		//If we're buffering, add this character listing to the buffer so it's not deleted later
@@ -1499,7 +1500,7 @@ var multimediaFunction={
 			
 			//If this character is listed on this line
 			if(reg.test(S.lines[i])){
-				//console.log("found!");
+				//console.log('found!');
 				//Add the image names to the images to load
 				lines.push(S.lines[i].replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/)[2]);
 			}
@@ -1509,15 +1510,15 @@ var multimediaFunction={
 		for(let i=0,len=lines.length;i<len;i++){
 			
 			//Get the image names passed (commas separate layers)
-			var imageNames=lines[i].split(",");
+			var imageNames=lines[i].split(',');
 		
 			//Layer level
 			//Go through each passed image and see if it exists
 			for(let ii=0,len=imageNames.length;ii<len;ii++){
-				//If there's no period, add ".png" to the end- assume the extension
-				if(imageNames[ii].indexOf(".")===-1) imageNames[ii]+=".png";
+				//If there's no period, add '.png' to the end- assume the extension
+				if(imageNames[ii].indexOf('.')===-1) imageNames[ii]+='.png';
 				
-				var image="url('resources/characters/"+folder+"/"+imageNames[ii]+"')";
+				var image='url("resources/characters/'+folder+'/'+imageNames[ii]+'")';
 				
 				//If the image already exists
 				var found=false;
@@ -1537,13 +1538,13 @@ var multimediaFunction={
 						if(match==true) found=true;
 					}
 				//If the layer doesn't exist, make it!
-				}else cha.appendChild(document.createElement("div"));
+				}else cha.appendChild(document.createElement('div'));
 				
 				//Image level
 				//If the image doesn't exist in the layer, we add it!
 				if(!found){
 					//Add a backgroundImage
-					var thisImg=m("character-image");
+					var thisImg=m('character-image');
 					thisImg.style.backgroundImage=image;
 					
 					//If this isn't the first image, hide it immediately (it's being preloaded, we don't want to see it yet!)
@@ -1562,14 +1563,14 @@ var multimediaFunction={
 	}
 	,'bg':vals=>{
 		//If the background doesn't exist, make it
-		if(!S.objects[vals[1]]) content.appendChild(S.objects[vals[1]]=m("background"));
+		if(!S.objects[vals[1]]) content.appendChild(S.objects[vals[1]]=m('background'));
 		
 		//If we're buffering, add it to the buffer so it's not deleted later
 		if(runTo) objectBuffer[vals[1]]=S.objects[vals[1]];
 		
 		//If it's a color or gradient, treat it as such
 		if(/(#|gradient\(|rgb\(|rgba\()/.test(vals[2])) S.objects[vals[1]].style.backgroundColor=vals[2];
-		else S.objects[vals[1]].style.backgroundImage="url('resources/backgrounds/"+vals[2]+"')";
+		else S.objects[vals[1]].style.backgroundImage='url("resources/backgrounds/'+vals[2]+'")';
 		
 		//If a 4th value exists, adjust 'zIndex'
 		if(vals[3]) S.objects[vals[1]].style.zIndex=vals[3];
@@ -1606,8 +1607,8 @@ var operators={
 
 //Replace unsafe characters for filenames with safe ones, and vice-versa
 function safeFilename(string,type){
-	var a=["[fs]","[bs]","[gt]","[lt]","[c]","[a]","[q]","[qm]","[b]"];
-	var b=["/","\\",">","<",":","*",'"',"?","|"];
+	var a=['[fs]','[bs]','[gt]','[lt]','[c]','[a]','[q]','[qm]','[b]'];
+	var b=['/','\\','>','<',':','*','\'','?','|'];
 
 	//Swap values if changing TO a filename instead of FROM a filename
 	if(type!=='from') [a,b]=[b,a];
@@ -1622,12 +1623,12 @@ function safeFilename(string,type){
 
 var shortcutKeys={
 	32: 	()=>S.input()				//Spacebar
-	,37:	()=>S.to({time:"-10"})		//Left arrow
-	,39:	()=>S.to({time:"+10"})		//Right arrow
-	,36:	()=>S.to({file:"first"})	//Home
-	,35:	()=>S.to({file:"last"})		//End
-	,177:	()=>S.to({file:"-1"})		//Previous
-	,176:	()=>S.to({file:"+1"})		//Next
+	,37:	()=>S.to({time:'-10'})		//Left arrow
+	,39:	()=>S.to({time:'+10'})		//Right arrow
+	,36:	()=>S.to({file:'first'})	//Home
+	,35:	()=>S.to({file:'last'})		//End
+	,177:	()=>S.to({file:'-1'})		//Previous
+	,176:	()=>S.to({file:'+1'})		//Next
 	,179:	()=>S.menu()				//Play/pause
 };
 
@@ -1635,13 +1636,13 @@ var shortcutKeys={
 if(S.shortcuts){
 	//Keyboard presses
 	window.addEventListener(
-		"keydown"
+		'keydown'
 		,function(event){
 			//If shortcuts aren't always enabled, perform checks
 			if(S.shortcuts!=='always'){
 				//Exit if it isn't fullscreen
 				if(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.fullscreenElement){
-					//console.log("Not full");
+					//console.log('Not full');
 					//If needs to be focused
 					if(S.shortcuts!=='fullscreen' && S.window!==document.activeElement) return;
 				}
@@ -1659,7 +1660,7 @@ if(S.shortcuts){
 //This needs to be click- otherwise, you could click outside of Showpony, release inside, and the menu would toggle. This results in messy scenarios when you're using the UI.
 var windowClick=function(event){
 	//If we just ended scrubbing, don't toggle the menu at all
-	if(scrubbing==="out"){
+	if(scrubbing==='out'){
 		scrubbing=false;
 		return;
 	}
@@ -1669,9 +1670,9 @@ var windowClick=function(event){
 };
 
 //On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
-window.addEventListener("click",windowClick);
+window.addEventListener('click',windowClick);
 
-window.addEventListener("mouseup",function(event){
+window.addEventListener('mouseup',function(event){
 	//If we're not scrubbing, set scrubbing to false and return
 	if(scrubbing!==true){
 		scrubbing=false;
@@ -1681,58 +1682,58 @@ window.addEventListener("mouseup",function(event){
 	//Scrub the bar
 	userScrub(event);
 	
-	scrubbing="out";
+	scrubbing='out';
 });
 
 //On mousedown, we prepare to move the cursor (but not over overlay buttons)
-overlay.addEventListener("mousedown",function(event){if(event.target===this) scrubbing=event.clientX;});
+overlay.addEventListener('mousedown',function(event){if(event.target===this) scrubbing=event.clientX;});
 
 //On touch end, don't keep moving the bar to the user's touch
-overlay.addEventListener("touchend",userScrub);
+overlay.addEventListener('touchend',userScrub);
 
 //On dragging
-window.addEventListener("mousemove",moveOverlay);
-overlay.addEventListener("touchmove",moveOverlay);
+window.addEventListener('mousemove',moveOverlay);
+overlay.addEventListener('touchmove',moveOverlay);
 
 //Menu buttons
 fullscreenButton.addEventListener(
-	"click"
+	'click'
 	,event=>{
 		S.fullscreen();
 	}
 );
 
 captionsButton.addEventListener(
-	"click"
+	'click'
 	,event=> event.stopPropagation()
 );
 
-content.addEventListener("click",()=>{S.input();});
+content.addEventListener('click',()=>{S.input();});
 
 ///TEXT///
 //Navigate text
-pagePrev.addEventListener("click",function(){
+pagePrev.addEventListener('click',function(){
 	event.stopPropagation();
 	
 	var goToFile=S.currentFile-1;
 	
 	//Go to end of previous file, if it's one that uses scrolling. Otherwise, go to the beginning of it.
-	if(S.files[goToFile].medium=="text"){
+	if(S.files[goToFile].medium=='text'){
 		S.to({file:goToFile,time:S.files[goToFile].time});
 	}else{
 	//For most media, go to the beginning.
-		S.to({file:"-1"});
+		S.to({file:'-1'});
 	}
 });
 
-pageNext.addEventListener("click",function(event){
+pageNext.addEventListener('click',function(event){
 	event.stopPropagation();
 	//Go to next file
-	S.to({file:"+1"});
+	S.to({file:'+1'});
 });
 
 //Update the scrub bar when scrolling
-pageTurn.addEventListener("scroll",function(event){
+pageTurn.addEventListener('scroll',function(event){
 	//Set current time to percent scrolled
 	types[currentType].currentTime=S.files[S.currentFile].time*(pageTurn.scrollTop/pageTurn.scrollHeight);
 	
@@ -1742,24 +1743,24 @@ pageTurn.addEventListener("scroll",function(event){
 });
 
 //Infinite scrolling setup
-pageInfinite.addEventListener("scroll",function(){
+pageInfinite.addEventListener('scroll',function(){
 	if(pageInfinite.scrollTop=0){
-		//console.log("Load next!");
+		//console.log('Load next!');
 	}
 });
 
 ///IMAGES///
 //On loading resources, don't show loading
-types.image.addEventListener("load",function(){
-	content.classList.remove("showpony-loading");
+types.image.addEventListener('load',function(){
+	content.classList.remove('showpony-loading');
 
 	//Preload next files, if allowed
 	for(let i=S.currentFile+1;i<=S.currentFile+S.preloadNext;i++){
 		if(i>=S.files.length) break;
 		
-		var src=(S.files[i].path[0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.language+S.files[i].path;
+		var src=(S.files[i].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.language+S.files[i].path;
 		
-		//console.log("Preloading");
+		//console.log('Preloading');
 		
 		var img=new Image();
 		img.src=src;
@@ -1769,16 +1770,16 @@ types.image.addEventListener("load",function(){
 });
 
 ///VIDEO AND AUDIO///
-types.video.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});
-types.audio.addEventListener("canplay",function(){content.classList.remove("showpony-loading");});
+types.video.addEventListener('canplay',function(){content.classList.remove('showpony-loading');});
+types.audio.addEventListener('canplay',function(){content.classList.remove('showpony-loading');});
 
 //When we finish playing a video or audio file
-types.video.addEventListener("ended",mediaEnd);
-types.audio.addEventListener("ended",mediaEnd);
+types.video.addEventListener('ended',mediaEnd);
+types.audio.addEventListener('ended',mediaEnd);
 
 //On moving through time, update info and title
-types.audio.addEventListener("timeupdate",updateInfo);
-types.video.addEventListener("timeupdate",updateInfo);
+types.audio.addEventListener('timeupdate',updateInfo);
+types.video.addEventListener('timeupdate',updateInfo);
 
 function updateInfo(event,pushState){
 	//Update the title, if set up for it
@@ -1790,23 +1791,23 @@ function updateInfo(event,pushState){
 	//If using queries with time, adjust query on time update
 	if(S.query){
 		var newURL=document.location.href
-			,newQuery=""
+			,newQuery=''
 		;
 		
 		//Choose whether to add an ampersand or ?
 		//Choose a ? if one doesn't exist or it exists behind the query
-		newQuery=(newURL.indexOf("?")===-1 || new RegExp("\\?(?="+S.query+"=)").test(newURL)) ? "?" : "&";
+		newQuery=(newURL.indexOf('?')===-1 || new RegExp('\\?(?='+S.query+'=)').test(newURL)) ? '?' : '&';
 		
-		newQuery+=S.query+"="+(
-			S.bookmark==="time"
+		newQuery+=S.query+'='+(
+			S.bookmark==='time'
 			? (Math.floor(getCurrentTime()))	//Time
 			: (S.currentFile+1)					//File
 		);
 		
 		//Replace either the case or the end
-		newURL=newURL.replace(new RegExp("(((\\?|&)"+S.query+")=?[^&#]+)|(?=#)|$"),newQuery);
+		newURL=newURL.replace(new RegExp('(((\\?|&)'+S.query+')=?[^&#]+)|(?=#)|$'),newQuery);
 		
-		history[pushState ? "pushState" : "replaceState"]({},"",newURL);
+		history[pushState ? 'pushState' : 'replaceState']({},'',newURL);
 	}
 }
 
@@ -1815,29 +1816,29 @@ function updateInfo(event,pushState){
 ///////////////////////////////////////
 
 //If the window is statically positioned, set it to relative! (so positions of children work)
-if(window.getComputedStyle(S.window).getPropertyValue('position')=="static") S.window.style.position="relative";
+if(window.getComputedStyle(S.window).getPropertyValue('position')=='static') S.window.style.position='relative';
 
-S.window.classList.add("showpony");
+S.window.classList.add('showpony');
 
 //Set tabIndex so it's selectable (if it's not already set)
 if(S.window.tabIndex<0) S.window.tabIndex=0;
 
 //If the user's getting the files remotely, make the call
 new Promise(function(resolve,reject){
-	content.classList.add("showpony-loading");
+	content.classList.add('showpony-loading');
 	
 	//currentFile is -1 before we load
 	S.currentFile=-1;
 	
 	//Empty the current window
-	S.window.innerHTML="";
+	S.window.innerHTML='';
 
 	//And fill it up again!
 	frag([content,overlay],S.window);
 	
 	//If getting, run a promise to check success
-	if(typeof(S.get)=="string"){
-		POST({call:"getFiles"})
+	if(typeof(S.get)=='string'){
+		POST({call:'getFiles'})
 			.then(response=>resolve(response))
 			.catch(response=>reject(response));
 	}else{
@@ -1851,36 +1852,36 @@ new Promise(function(resolve,reject){
 .then(()=>new Promise(function(resolve,reject){
 	//If Hey Bard is disabled, skip over this!
 	if(S.HeyBardID===null){
-		//console.log("Hey Bard accounts aren't enabled for this Showpony.");
+		//console.log('Hey Bard accounts aren\'t enabled for this Showpony.');
 		resolve();
 		return;
 	}else{
 	//If Hey Bard is enabled
 		//Make a button
-		var accountButton=m("button showpony-account-button","button");
+		var accountButton=m('button showpony-account-button','button');
 		overlay.appendChild(accountButton);
 		
 		accountButton.addEventListener(
-			"click"
+			'click'
 			,event=>{
 				event.stopPropagation();
 				
 				//Try saving a bookmark before you leave
 				if(typeof(S.saveBookmark)==='function'){
-					//console.log("hey!");
+					//console.log('hey!');
 					var sB=S.saveBookmark();
 					
 					//If something was returned (like a promise)
 					if(sB){
 						//console.log(sB);
 						sB.then(()=>{
-							//console.log("Success saving!");
+							//console.log('Success saving!');
 							
 							//Go to Hey Bard's web page to get your account
 							location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
 						})
 						//If it fails, let the user know
-						.catch((response)=>alert("1820: "+response))
+						.catch((response)=>alert('1820: '+response))
 						;
 					//Regardless of whether or not we got something back, go there
 					}else{
@@ -1895,7 +1896,7 @@ new Promise(function(resolve,reject){
 				
 			}
 		);
-		accountButton.alt="Hey Bard! Account";
+		accountButton.alt='Hey Bard! Account';
 		
 		if(typeof HeyBard==='function'){
 			//Make a Hey Bard connection
@@ -1905,57 +1906,57 @@ new Promise(function(resolve,reject){
 			
 			HeyBardConnection.getAccount()
 			.then(response=>{
-				//console.log("Success!",response);
+				//console.log('Success!',response);
 				
 				//If an account exists for the user
 				if(response.account!==null){
 					//Set the text for the Hey Bard button accordingly
-					accountButton.title="Hello, "+response.account+"! We'll save your bookmarks for you!";
+					accountButton.title='Hello, '+response.account+'! We\'ll save your bookmarks for you!';
 					accountButton.innerHTML=response.account;
 					
 					//Set a function to save bookmarks
 					S.saveBookmark=function(){
 						//Pass either the time or the current file, whichever is chosen by the client
-						return HeyBardConnection.saveBookmark(S.bookmark==="time" ? Math.floor(getCurrentTime()) : S.currentFile);
+						return HeyBardConnection.saveBookmark(S.bookmark==='time' ? Math.floor(getCurrentTime()) : S.currentFile);
 					}
 					
 					var saveBookmark=S.saveBookmark;
 					
 					//Save user bookmarks when leaving the page
-					window.addEventListener("blur",saveBookmark);
-					window.addEventListener("beforeunload",saveBookmark);
+					window.addEventListener('blur',saveBookmark);
+					window.addEventListener('beforeunload',saveBookmark);
 					
-					//Showpony deselection (to help with Firefox and Edge's lack of support for "beforeunload")
-					S.window.addEventListener("focusout",saveBookmark);
-					S.window.addEventListener("blur",saveBookmark);
-					//console.log("Update!");
+					//Showpony deselection (to help with Firefox and Edge's lack of support for 'beforeunload')
+					S.window.addEventListener('focusout',saveBookmark);
+					S.window.addEventListener('blur',saveBookmark);
+					//console.log('Update!');
 				}else{
 				//If an account doesn't exist for the user
-					accountButton.innerHTML="Log in for bookmarks!";
+					accountButton.innerHTML='Log in for bookmarks!';
 					//Set the text for the Hey Bard button accordingly
-					accountButton.title="Save a bookmark with a free Hey Bard! Account";
+					accountButton.title='Save a bookmark with a free Hey Bard! Account';
 				}
 				
 				//console.log(HeyBardConnection);
 				
-				//"False" can be read as 0, so if bookmark is returned as false don't pass the value.
+				//'False' can be read as 0, so if bookmark is returned as false don't pass the value.
 				if(typeof(response.bookmark)==='undefined') resolve();
 				else resolve(response.bookmark);
 			})
 			.catch(response=>{
-				accountButton.innerHTML="HEY BARD FAILED";
+				accountButton.innerHTML='HEY BARD FAILED';
 				//Set the text for the Hey Bard button accordingly
-				accountButton.title="Failed to call Hey Bard's servers. Please try again later!";
+				accountButton.title='Failed to call Hey Bard\'s servers. Please try again later!';
 				
 				resolve();
 			})
 			;
 		}else{
-			accountButton.innerHTML="SCRIPT MISSING";
+			accountButton.innerHTML='SCRIPT MISSING';
 			//Set the text for the Hey Bard button accordingly
-			accountButton.title="Failed to load the necessary script to use Hey Bard accounts.";
+			accountButton.title='Failed to load the necessary script to use Hey Bard accounts.';
 			
-			//console.log("Script for enabling HeyBard isn't loaded.");
+			//console.log('Script for enabling HeyBard isn't loaded.');
 			resolve();
 		}
 	}
@@ -1974,21 +1975,21 @@ new Promise(function(resolve,reject){
 	//If querystrings are in use, consider the querystring in the URL
 	if(S.query){
 		window.addEventListener(
-			"popstate"
+			'popstate'
 			,function(){
 				var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i').exec(window.location.href));
 				
 				//If we found a page
 				if(page){
-					if(S.bookmark==="time"){
-						page=parseInt(page[0].split("=")[1]);
+					if(S.bookmark==='time'){
+						page=parseInt(page[0].split('=')[1]);
 						
 						//console.log(S,page,getCurrentTime());
 						if(page===getCurrentTime()) return;
 					
 						S.to({time:page,popstate:true,scrollToTop:false});
 					}else{
-						page=parseInt(page[0].split("=")[1])-1;
+						page=parseInt(page[0].split('=')[1])-1;
 						
 						//console.log(S,page,S.currentFile);
 						if(page===S.currentFile) return;
@@ -2000,7 +2001,7 @@ new Promise(function(resolve,reject){
 		);
 		
 		var page=window.location.href.match(new RegExp('(\\?|&)'+S.query+'[^&#]+','i'));
-		if(page) page=parseInt(page[0].split("=")[1]);
+		if(page) page=parseInt(page[0].split('=')[1]);
 		
 		//General pass object
 		var passObj={
@@ -2009,14 +2010,14 @@ new Promise(function(resolve,reject){
 			,scrollToTop:false
 		};
 		
-		if(S.bookmark==="time") passObj.time=(page!==null) ? page : S.start;
+		if(S.bookmark==='time') passObj.time=(page!==null) ? page : S.start;
 		else passObj.file=(page!==null) ? page-1 : S.start;
 		
 		S.to(passObj);
 	//Start
 	}else{
 		//Use time or file to bookmark, whichever is requested
-		if(S.bookmark==="time") S.to({time:S.start,scrollToTop:false});
+		if(S.bookmark==='time') S.to({time:S.start,scrollToTop:false});
 		else S.to({file:S.start,scrollToTop:false});
 	}
 	
@@ -2029,7 +2030,7 @@ new Promise(function(resolve,reject){
 })
 //On failure (or not getting)
 .catch((response)=>{
-	alert("Failed to sucessfully load the Showpony object! "+response);
+	alert('Failed to successfully load the Showpony object! '+response);
 })
 
 ///////////////////////////////////////
@@ -2037,23 +2038,23 @@ new Promise(function(resolve,reject){
 ///////////////////////////////////////
 
 if(S.admin){
-	var editorUI=m("editor-ui")
-		,uploadFileButton=m("button showpony-upload-file","label")
-		,uploadFile=document.createElement("input")
-		,uploadDate=m("button showpony-editor-date","input")
-		,uploadName=m("button showpony-editor-name","input")
-		,deleteFile=m("button showpony-delete-file","button")
-		,newFile=m("button showpony-new-file","button")
-		,logoutButton=m("button showpony-logout","button")
+	var editorUI=m('editor-ui')
+		,uploadFileButton=m('button showpony-upload-file','label')
+		,uploadFile=document.createElement('input')
+		,uploadDate=m('button showpony-editor-date','input')
+		,uploadName=m('button showpony-editor-name','input')
+		,deleteFile=m('button showpony-delete-file','button')
+		,newFile=m('button showpony-new-file','button')
+		,logoutButton=m('button showpony-logout','button')
 	;
 
-	uploadName.type=uploadDate.type="text";
-	uploadName.placeholder="File Title (optional)";
-	uploadDate.placeholder="YYYY-MM-DD HH:MM:SS";
+	uploadName.type=uploadDate.type='text';
+	uploadName.placeholder='File Title (optional)';
+	uploadDate.placeholder='YYYY-MM-DD HH:MM:SS';
 
-	uploadFile.type="file";
-	uploadFile.style.display="none";
-	uploadFile.accept=".jpg,.jpeg,.png,.gif,.svg,.mp3,.wav,.mp4,.webm,.txt,.mm,.html";
+	uploadFile.type='file';
+	uploadFile.style.display='none';
+	uploadFile.accept='.jpg,.jpeg,.png,.gif,.svg,.mp3,.wav,.mp4,.webm,.txt,.mm,.html';
 	
 	uploadFileButton.appendChild(uploadFile);
 	
@@ -2063,7 +2064,7 @@ if(S.admin){
 	
 	//Edit/adjust file details
 	S.window.addEventListener(
-		"contextmenu"
+		'contextmenu'
 		,event=>{
 			event.preventDefault();
 			editor();
@@ -2072,9 +2073,9 @@ if(S.admin){
 	
 	function editor(){
 		//If logged in, toggle the editor
-		if(loggedIn) S.window.classList.toggle("showpony-editor");
+		if(loggedIn) S.window.classList.toggle('showpony-editor');
 		//Otherwise, try to log in
-		else account("login");
+		else account('login');
 	}
 	
 	function updateEditor(){
@@ -2083,21 +2084,21 @@ if(S.admin){
 		uploadDate.value=S.files[S.currentFile].date;
 	}
 	
-	logoutButton.addEventListener("click",()=>account("logout"));
+	logoutButton.addEventListener('click',()=>account('logout'));
 	
-	//Must be set to a variable to be called outside the enclosing "if" statement
+	//Must be set to a variable to be called outside the enclosing 'if' statement
 	var account=function(type){
 		var pass=null;
-		if(type==="login") if(!(pass=prompt("What's your password?"))) return;
+		if(type==='login') if(!(pass=prompt('What\'s your password?'))) return;
 		
 		POST({call:type,password:pass})
 		.then(response=>{
-			S.window.classList[loggedIn ? "add" : "remove"]("showpony-editor");
+			S.window.classList[loggedIn ? 'add' : 'remove']('showpony-editor');
 				
 			S.to({reload:true,scrollToTop:false,replaceState:true});
 		})
 		.catch(response=>{
-			alert("501: "+response);
+			alert('501: '+response);
 		});
 	}
 	
@@ -2107,17 +2108,17 @@ if(S.admin){
 		
 		//Test that the date is safe (must match setup)
 		if(!(/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.test(date))){
-			alert("Date must be formatted as \"YYYY-MM-DD\" or \"YYYY-MM-DD HH-MM-SS\". You passed \""+date+"\"");
+			alert('Date must be formatted as "YYYY-MM-DD" or "YYYY-MM-DD HH-MM-SS". You passed "'+date+'"');
 			return;
 		}
 		
 		var fileName=(S.files[thisFile].path[0]==='x') ? 'x': ''
 			+date.replace(/:/g,';') //date (replace : with ; so it's Windows safe)
-			+" ("+safeFilename(uploadName.value,"to")+")" //name
+			+' ('+safeFilename(uploadName.value,'to')+')' //name
 			+S.files[thisFile].path.match(/\.\w+$/) //ext
 		;
 		
-		POST({call:"renameFile",name:S.files[thisFile],newName:fileName})
+		POST({call:'renameFile',name:S.files[thisFile],newName:fileName})
 		.then(response=>{
 			/**** NEEDS FIXING WITH UPDATED METHOD OF FILE HANDLING ****/
 			S.files[thisFile]=response.file;
@@ -2132,16 +2133,16 @@ if(S.admin){
 	
 	//EVENT LISTENERS//
 	//On time, update the editor
-	S.window.addEventListener("time",updateEditor);
-	uploadName.addEventListener("change",renameFile);
-	uploadDate.addEventListener("change",renameFile);
+	S.window.addEventListener('time',updateEditor);
+	uploadName.addEventListener('change',renameFile);
+	uploadDate.addEventListener('change',renameFile);
 	
-	uploadFile.addEventListener("change"
+	uploadFile.addEventListener('change'
 		,function(){
 			var thisFile=S.currentFile;
 			
 			POST({
-				call:"uploadFile"
+				call:'uploadFile'
 				,name:S.files[thisFile].name
 				,files:uploadFile.files[0]
 			})
@@ -2155,11 +2156,11 @@ if(S.admin){
 		}
 	);
 	
-	deleteFile.addEventListener("click"
+	deleteFile.addEventListener('click'
 		,()=>{
 			var thisFile=S.currentFile;
 			
-			POST({call:"deleteFile",name:S.files[thisFile].path})
+			POST({call:'deleteFile',name:S.files[thisFile].path})
 			.then(response=>{
 				//Remove the file from the array
 				S.files.splice(thisFile,1);
@@ -2170,13 +2171,13 @@ if(S.admin){
 		}
 	);
 	
-	newFile.addEventListener("click"
+	newFile.addEventListener('click'
 		,function(){
-			POST({call:"newFile"})
+			POST({call:'newFile'})
 			.then(response=>{
 				//Add the file to the array
 				S.files.push(response.file);
-				S.to({file:"last"});
+				S.to({file:'last'});
 			})
 			.catch(
 				
