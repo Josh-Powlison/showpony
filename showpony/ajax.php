@@ -19,7 +19,7 @@ if(!$password) unset($_SESSION['showpony_admin']);
 #Get a private file
 if(!empty($_GET['get'])){
 	#If we aren't logged in, block the effort
-	if(empty($_SESSION['showpony_admin'])) die("You need to be logged in to access private files.");
+	if(empty($_SESSION['showpony_admin'])) die('You need to be logged in to access private files.');
 	
 	#Go to the correct directory
 	chdir(($_POST['rel-path'] ?: '..').'/');
@@ -63,7 +63,7 @@ if(!empty($_GET['get'])){
 			#Run through the files
 			foreach(scandir('.') as &$file){
 				#Ignore folders and hidden files
-				if($file[0]==="." || $file[0]==="~") continue;
+				if($file[0]==='.' || $file[0]==='~') continue;
 
 				#Ignore files that have dates in their filenames set to later
 				$date;
@@ -74,7 +74,7 @@ if(!empty($_GET['get'])){
 						if($file[0]=='x' && !rename($file,$file=substr($file,1))) $response['success']=false;
 					}else{
 						#Shouldn't be live; make sure an x is at the beginning of the filename
-						if($file[0]!="x" && !rename($file,$file='x'.$file)) $response['success']=false;
+						if($file[0]!='x' && !rename($file,$file='x'.$file)) $response['success']=false;
 						
 						#Don't add hidden files if we aren't logged in
 						if(empty($_SESSION['showpony_admin'])) continue;
@@ -89,19 +89,19 @@ if(!empty($_GET['get'])){
 	#Admin functions: must be logged in
 	else{
 		#If not logged in (or admin is disabled), let the user know and don't make a call
-		if(empty($_SESSION['showpony_admin'])) echo "You aren't logged in or don't have admin set up! Try refreshing and logging in again, or check out Showpony's wiki on GitHub for setting up or disabling admin.";
+		if(empty($_SESSION['showpony_admin'])) echo 'You aren\'t logged in or don\'t have admin set up! Try refreshing and logging in again, or check out Showpony\'s wiki on GitHub for setting up or disabling admin.';
 		
 		#Try renaming the file, and pass the new filename to the user
 		elseif($_POST['call']==='renameFile') $response['success']=rename($_POST['name'],$response['file']=$_POST['newName']);
 
 		#Delete the old file, upload the new file with the old name and new extension
-		elseif($_POST['call']==='uploadFile') $response["success"]=unlink($_POST['name']) && move_uploaded_file($_FILES["files"]["tmp_name"],$response["file"]=pathinfo($_POST['name'],PATHINFO_FILENAME).'.'.pathinfo($_FILES['files']['name'],PATHINFO_EXTENSION));
+		elseif($_POST['call']==='uploadFile') $response['success']=unlink($_POST['name']) && move_uploaded_file($_FILES['files']['tmp_name'],$response['file']=pathinfo($_POST['name'],PATHINFO_FILENAME).'.'.pathinfo($_FILES['files']['name'],PATHINFO_EXTENSION));
 		
 		#Create a new file for the user to edit and update. We store that new file name in a variable.
-		elseif($_POST['call']==='newFile') $response["success"]=file_put_contents($response["file"]='x2038-01-01 20;00;00 (Untitled '.time().').html','Replace me with your new, better file!');
+		elseif($_POST['call']==='newFile') $response['success']=file_put_contents($response['file']='x2038-01-01 20;00;00 (Untitled '.time().').html','Replace me with your new, better file!');
 		
 		#Delete a file
-		elseif($_POST['call']==='deleteFile') $response["success"]=unlink($_POST['name']);
+		elseif($_POST['call']==='deleteFile') $response['success']=unlink($_POST['name']);
 	}
 	
 	#Pass any echoed statements or errors to the response object
