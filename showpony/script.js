@@ -393,15 +393,9 @@ S.menu=function(event,action){
 	{
 		//On toggling classes, returns 'true' if just added
 		if(S.window.classList.toggle('showpony-paused')){
-			//Add paused class
-			S.window.classList.add('showpony-paused');
-			
 			//Pause media
 			types[currentType].play && types[currentType].pause();
 		}else{
-			//Remove paused class
-			S.window.classList.remove('showpony-paused');
-			
 			//Play media
 			types[currentType].play && types[currentType].play();
 		}
@@ -419,65 +413,64 @@ S.menu=function(event,action){
 	);
 };
 
-function userScrub(event){
+//Handles starting, running, and ending scrubbing
+function userScrub(event,start){
+	//Mouse and touch work slightly differently		
 	var touch=event.changedTouches ? true : false;
 	var pos=touch ? event.changedTouches[0].clientX : event.clientX;
 	
-	if(scrubbing===true){
-		scrubbing=false;
-	
-		//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
-		if(S.scrubLoad===false){
-			//Load the file our pointer's on
-			scrub(
-				(pos-S.window.getBoundingClientRect().left)
-				/
-				(S.window.getBoundingClientRect().width)
-			);
-			
+	if(start){
+		if(scrubbing===false){
+			if(touch) scrubbing=pos;
+			else return;
 		}
-		
-		return true; //Exit the function
-	}
-	
-	//scrubbing needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
-	scrubbing=false;
-}
-
-//Drag on the menu to go to any part
-function moveOverlay(event){
-	//Mouse and touch work slightly differently
-	var touch=event.changedTouches ? true : false;
-	var pos=touch ? event.changedTouches[0].clientX : event.clientX;
-	
-	if(scrubbing===false){
-		if(touch) scrubbing=pos;
-		else return;
-	}
-		
-	//You have to swipe farther than you move the cursor to adjust the position
-	if(scrubbing!==true){
-		if(Math.abs(scrubbing-pos)>screen.width/(touch ? 20 : 100)){ 
-			scrubbing=true;
 			
-			//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
-			if(S.scrubLoad){
-				//console.log('Release!');
-				//Add a new state on releasing
-				updateInfo(true);
+		//You have to swipe farther than you move the cursor to adjust the position
+		if(scrubbing!==true){
+			if(Math.abs(scrubbing-pos)>screen.width/(touch ? 20 : 100)){ 
+				scrubbing=true;
+				
+				//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
+				if(S.scrubLoad){
+					//console.log('Release!');
+					//Add a new state on releasing
+					updateInfo(true);
+				}
 			}
+			else return;
 		}
-		else return;
+		
+		//Don't want the users to accidentally swipe to another page!
+		if(touch) event.preventDefault();
+		
+		scrub(
+			(pos-S.window.getBoundingClientRect().left)
+			/
+			(S.window.getBoundingClientRect().width)
+		);
+	}else{
+		//Drag on the menu to go to any part
+		
+		if(scrubbing===true){
+			scrubbing=false;
+		
+			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
+			if(S.scrubLoad===false){
+				//Load the file our pointer's on
+				scrub(
+					(pos-S.window.getBoundingClientRect().left)
+					/
+					(S.window.getBoundingClientRect().width)
+				);
+				
+			}
+			
+			return true; //Exit the function
+		}
+		
+		//scrubbing needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
+		scrubbing=false;
 	}
-	
-	//Don't want the users to accidentally swipe to another page!
-	if(touch) event.preventDefault();
-	
-	scrub(
-		(pos-S.window.getBoundingClientRect().left)
-		/
-		(S.window.getBoundingClientRect().width)
-	);
 }
 
 //Toggle fullscreen
@@ -1676,8 +1669,8 @@ overlay.addEventListener('mousedown',function(event){if(event.target===this) scr
 overlay.addEventListener('touchend',userScrub);
 
 //On dragging
-window.addEventListener('mousemove',moveOverlay);
-overlay.addEventListener('touchmove',moveOverlay);
+window.addEventListener('mousemove',function(){userScrub(event,true);});
+overlay.addEventListener('touchmove',function(){userScrub(event,true);});
 
 //Menu buttons
 fullscreenButton.addEventListener(
