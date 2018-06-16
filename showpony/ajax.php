@@ -82,7 +82,7 @@ if(!empty($_GET['get'])){
 				}
 				
 				#Add the file to the array
-				$response['files'][]=$file;
+				$response['files'][]=$_POST['path'].$file;
 			}
 		}
 	}

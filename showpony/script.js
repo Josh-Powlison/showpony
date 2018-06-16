@@ -79,16 +79,6 @@ d('preloadNext'		,	1													);
 d('infiniteText'	,	false												);
 d('infiniteImage'	,	false												);
 
-//If passed a path
-if(typeof(S.get)=="string"){
-	S.files="get";
-	S.path=S.get;
-//If passed an array of files
-}else{
-	S.files=S.get;
-	S.path="";
-}
-
 var HeyBardConnection;
 
 ///////////////////////////////////////
@@ -264,7 +254,7 @@ S.to=function(input){
 	}
 	
 	//How we get the file depends on whether or not it's private
-	var src=(S.files[S.currentFile].path[0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile].path;
+	var src=(S.files[S.currentFile].path[0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.language+S.files[S.currentFile].path;
 	
 	//Refresh the file, if requested we do so, by adding a query
 	if(obj.refresh) src+=(S.files[S.currentFile].path[0]==="x" ? "&" : "?")+"refresh-"+Date.now();
@@ -368,7 +358,7 @@ S.to=function(input){
 						if(i>=S.files.length) break;
 						
 						//How we get the file depends on whether or not it's private
-						var src=(S.files[i].path[0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[i].path;
+						var src=(S.files[i].path[0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.language+S.files[i].path;
 						
 						//Preload next file, if there is a next file
 						////console.log("Preloading next!");
@@ -935,7 +925,7 @@ function POST(obj){
 	//Prepare the form data
 	var formData=new FormData();
 	formData.append('call',obj.call);
-	formData.append('path',S.path+S.language);
+	formData.append('path',S.get+S.language);
 	formData.append('rel-path',ShowponyRunPage);
 	
 	//Special values, if passed
@@ -1767,7 +1757,7 @@ types.image.addEventListener("load",function(){
 	for(let i=S.currentFile+1;i<=S.currentFile+S.preloadNext;i++){
 		if(i>=S.files.length) break;
 		
-		var src=(S.files[i].path[0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[i].path;
+		var src=(S.files[i].path[0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.language+S.files[i].path;
 		
 		//console.log("Preloading");
 		
@@ -1846,11 +1836,12 @@ new Promise(function(resolve,reject){
 	frag([content,overlay],S.window);
 	
 	//If getting, run a promise to check success
-	if(S.files==="get"){
+	if(typeof(S.get)=="string"){
 		POST({call:"getFiles"})
 			.then(response=>resolve(response))
 			.catch(response=>reject(response));
 	}else{
+		S.files=S.get;
 		//Skip to next then if an array was passed instead
 		saveFileInfo(S.files);
 		resolve();
@@ -2088,8 +2079,8 @@ if(S.admin){
 	
 	function updateEditor(){
 		//Remove extra values to get these ones
-		uploadName.value=getName(S.files[S.currentFile]);
-		uploadDate.value=getDate(S.files[S.currentFile]);
+		uploadName.value=S.files[S.currentFile].name;
+		uploadDate.value=S.files[S.currentFile].date;
 	}
 	
 	logoutButton.addEventListener("click",()=>account("logout"));
@@ -2120,17 +2111,18 @@ if(S.admin){
 			return;
 		}
 		
-		var fileName=(S.files[thisFile][0]==='x') ? 'x': ''
+		var fileName=(S.files[thisFile].path[0]==='x') ? 'x': ''
 			+date.replace(/:/g,';') //date (replace : with ; so it's Windows safe)
 			+" ("+safeFilename(uploadName.value,"to")+")" //name
-			+S.files[thisFile].match(/\.\w+$/) //ext
+			+S.files[thisFile].path.match(/\.\w+$/) //ext
 		;
 		
 		POST({call:"renameFile",name:S.files[thisFile],newName:fileName})
 		.then(response=>{
+			/**** NEEDS FIXING WITH UPDATED METHOD OF FILE HANDLING ****/
 			S.files[thisFile]=response.file;
 			
-			//Sort the files by order
+			//Sort the files by order 
 			S.files.sort();
 			
 			S.to({file:S.files.indexOf(response.file),scrollToTop:false,replaceState:true});
@@ -2150,10 +2142,11 @@ if(S.admin){
 			
 			POST({
 				call:"uploadFile"
-				,name:S.files[thisFile]
+				,name:S.files[thisFile].name
 				,files:uploadFile.files[0]
 			})
 			.then(response=>{
+				///NEEDS UPDATING WITH NEW FILE OBJECT SETUP
 				S.files[thisFile]=response.file;
 				
 				//If still on that file, refresh it
@@ -2166,7 +2159,7 @@ if(S.admin){
 		,()=>{
 			var thisFile=S.currentFile;
 			
-			POST({call:"deleteFile",name:S.files[thisFile]})
+			POST({call:"deleteFile",name:S.files[thisFile].path})
 			.then(response=>{
 				//Remove the file from the array
 				S.files.splice(thisFile,1);
