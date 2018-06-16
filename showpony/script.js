@@ -2013,11 +2013,27 @@ Promise.all([getFiles,getHeyBard]).then((start)=>{
 	input=null;
 	
 	//We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
+	
+	//Send an event to let the user know that Showpony has started up!
+	S.window.dispatchEvent(
+		new CustomEvent('setup'
+		,{detail:{
+			state:'success'
+		}})
+	);
 })
 //On failure (or not getting)
 .catch((response)=>{
 	alert('Failed to successfully load the Showpony object! '+response);
-})
+	
+	//Send an event to let the user know that Showpony has started up!
+	S.window.dispatchEvent(
+		new CustomEvent('setup'
+		,{detail:{
+			state:'failed'
+		}})
+	);
+});
 
 ///////////////////////////////////////
 /////////////////ADMIN/////////////////
