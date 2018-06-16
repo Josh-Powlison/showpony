@@ -10,7 +10,7 @@ var ShowponyRunPage="";
 for(var i=0;i<splitStart.length;i++){
 	//If the paths are the same
 	if(splitPath.length>i && splitPath[i]===splitStart[i]){
-		console.log(splitPath[i]+" is the same!");
+		//console.log(splitPath[i]+" is the same!");
 		//We ignore them!
 	//If they differ- we've found the first shared folder!
 	}else{
@@ -32,7 +32,7 @@ for(var i=0;i<splitStart.length;i++){
 	
 }
 
-console.log(ShowponyRunPage);
+//console.log(ShowponyRunPage);
 
 function Showpony(input){
 
@@ -110,7 +110,7 @@ S.to=function(input){
 	if(obj.time && (obj.time[0]==='+' || obj.time[0]==='-')){
 		var getTime=0;
 		//Add the times of previous videos to get the actual time in the piece
-		for(let i=0;i<S.currentFile;i++) getTime+=getLength(S.files[i]);
+		for(let i=0;i<S.currentFile;i++) getTime+=S.files[i].time;
 		
 		getTime+=types[currentType] && types[currentType].currentTime || 0;
 		
@@ -127,7 +127,7 @@ S.to=function(input){
 		//Look through the videos for the right one
 		var l=S.files.length;
 		for(let i=0;i<l;i++){
-			var length=getLength(S.files[i]);
+			var length=S.files[i].time;
 			
 			//If we've reached the file, exit
 			if(obj.time<length) break;
@@ -137,7 +137,7 @@ S.to=function(input){
 			//If the time passed is greater than the total time, the story will end
 		}
 		
-		console.log(obj.time,obj.file);
+		//console.log(obj.time,obj.file);
 	}
 	
 	Object.assign(obj,{
@@ -154,11 +154,11 @@ S.to=function(input){
 		
 		/*
 	//Don't continue if the file is the same and not refreshable
-	if(obj.file===S.currentFile && !types[getMedium(S.files[S.currentFile])].hasOwnProperty('currentTime')){
+	if(obj.file===S.currentFile && !types[S.files[S.currentFile].medium].hasOwnProperty('currentTime')){
 		return;
 	}*/
 	/*
-	console.log(obj.file,S.currentFile,thisType,obj.time);
+	//console.log(obj.file,S.currentFile,thisType,obj.time);
 	
 	//Change the title if requested
 	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
@@ -184,7 +184,7 @@ S.to=function(input){
 			//Run the event that users can read
 			S.window.dispatchEvent(new CustomEvent("end"));
 			content.classList.remove("showpony-loading");
-			console.log("Ended!");
+			//console.log("Ended!");
 			return;
 		}
 	}
@@ -193,12 +193,12 @@ S.to=function(input){
 	
 	//Update info on file load
 	if(!obj.popstate){
-		//console.log("Update info!",scrubbing);
+		////console.log("Update info!",scrubbing);
 		//Only allow adding to history if we aren't scrubbing
 		
 		//If the same file, and not a medium where time changes it (like images), replace history state instead
 		if(sameFile && currentType!=="video" && currentType!=="audio"){
-			//console.log("Same!");
+			////console.log("Same!");
 			obj.replaceState=true;
 		}
 		
@@ -219,7 +219,7 @@ S.to=function(input){
 		}
 	}
 	
-	var newType=getMedium(S.files[S.currentFile])
+	var newType=S.files[S.currentFile].medium
 		,thisType=types[newType];
 	
 	//Multimedia engine resets
@@ -250,7 +250,7 @@ S.to=function(input){
 	//If switching types, do some cleanup
 	if(currentType!=newType){
 		content.innerHTML="";
-		console.log(types);
+		//console.log(types);
 		S.objects={window:S.window,content:content};
 		S.lines=[];
 		
@@ -264,10 +264,10 @@ S.to=function(input){
 	}
 	
 	//How we get the file depends on whether or not it's private
-	var src=(S.files[S.currentFile][0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile];
+	var src=(S.files[S.currentFile].path[0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[S.currentFile].path;
 	
 	//Refresh the file, if requested we do so, by adding a query
-	if(obj.refresh) src+=(S.files[S.currentFile][0]==="x" ? "&" : "?")+"refresh-"+Date.now();
+	if(obj.refresh) src+=(S.files[S.currentFile].path[0]==="x" ? "&" : "?")+"refresh-"+Date.now();
 	
 	currentType=newType;
 	
@@ -275,9 +275,9 @@ S.to=function(input){
 	if(sameFile){
 		//Special multimedia engine prep
 		if(currentType==='multimedia'){
-			console.log(content);
+			//console.log(content);
 			
-			runTo=keyframes[Math.floor(keyframes.length*(obj.time/getLength(S.files[S.currentFile])))];
+			runTo=keyframes[Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].time))];
 			
 			runMM(0);
 		}else{
@@ -286,7 +286,7 @@ S.to=function(input){
 				//Infinite scrolling
 				if(S.infiniteText){//Scroll to the right spot
 				}else{ //Page turn
-					pageTurn.scrollTo(0,pageTurn.scrollHeight*(obj.time/getLength(S.files[S.currentFile])));
+					pageTurn.scrollTo(0,pageTurn.scrollHeight*(obj.time/S.files[S.currentFile].time));
 				}
 			}
 			
@@ -327,8 +327,8 @@ S.to=function(input){
 							if(S.lines[i].indexOf(">")!==0) keyframes.push(i);
 						}
 						
-						runTo=keyframes[Math.floor(keyframes.length*(obj.time/getLength(S.files[S.currentFile])))];
-						console.log(runTo);
+						runTo=keyframes[Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].time))];
+						//console.log(runTo);
 						
 						runMM(0);
 						
@@ -348,7 +348,7 @@ S.to=function(input){
 							if(S.currentFile<S.files.length-1) pageTurn.insertAdjacentElement('beforeend',pageNext);
 							
 							//Scroll to spot
-							pageTurn.scrollTo(0,pageTurn.scrollHeight*(obj.time/getLength(S.files[S.currentFile])));
+							pageTurn.scrollTo(0,pageTurn.scrollHeight*(obj.time/S.files[S.currentFile].time));
 							
 							//Stop loading
 							content.classList.remove("showpony-loading");
@@ -368,13 +368,13 @@ S.to=function(input){
 						if(i>=S.files.length) break;
 						
 						//How we get the file depends on whether or not it's private
-						var src=(S.files[i][0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[i];
+						var src=(S.files[i].path[0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[i].path;
 						
 						//Preload next file, if there is a next file
-						//console.log("Preloading next!");
+						////console.log("Preloading next!");
 						fetch(src);
 						
-						console.log(i,S.preloadNext,S.currentFile);
+						//console.log(i,S.preloadNext,S.currentFile);
 					}
 				})
 			;
@@ -384,7 +384,7 @@ S.to=function(input){
 			thisType.src=src;
 			if((currentType==='video' || currentType==='audio') && !S.window.classList.contains("showpony-paused")){
 				thisType.play();
-				console.log("Play");
+				//console.log("Play");
 			}
 			
 			//Move the scrubbar to the right spot
@@ -522,8 +522,8 @@ S.input=function(){
 	
 		//If a wait timer was going, stop it.
 		if(waitTimer.remaining>0){
-			console.log(waitTimer,waitTimer.remaining);
-			console.log("Animations");
+			//console.log(waitTimer,waitTimer.remaining);
+			//console.log("Animations");
 			//Run all animations, end all transitions
 			content.classList.add("showpony-loading");
 			content.offsetHeight; //Trigger reflow to flush CSS changes
@@ -532,7 +532,7 @@ S.input=function(){
 			waitTimer.end();
 		}
 	
-		console.log(S.charsHidden);
+		//console.log(S.charsHidden);
 	
 		//Remove the continue notice
 		continueNotice.remove();
@@ -553,7 +553,7 @@ S.input=function(){
 				key.style.animationDelay=null;
 			});
 			
-			console.log("Animations 2");
+			//console.log("Animations 2");
 		}
 	}
 }
@@ -641,7 +641,7 @@ frag([progress,overlayText,fullscreenButton,showponyLogo,credits],overlay);
 
 //Play and pause multimedia
 types.multimedia.play=function(){
-	console.log("play");
+	//console.log("play");
 	
 	//Go through objects that were playing- unpause them
 	for(var key in S.objects){
@@ -657,7 +657,7 @@ types.multimedia.play=function(){
 }
 
 types.multimedia.pause=function(){
-	console.log("pause");
+	//console.log("pause");
 	
 	//Go through objects that can be played- pause them, and track that
 	for(var key in S.objects){
@@ -679,14 +679,14 @@ function getCurrentTime(){
 	var newTime=types[currentType] && types[currentType].currentTime || 0;
 	
 	//Add the times of previous videos to get the actual time in the piece
-	for(let i=0;i<S.currentFile;i++) newTime+=getLength(S.files[i]);
+	for(let i=0;i<S.currentFile;i++) newTime+=S.files[i].time;
 	
 	return newTime;
 }
 
 //Update the scrubber's position
 function scrub(inputPercent){
-	var duration=S.files.map(function(e){return getLength(e);}).reduce((a,b) => a+b,0);
+	var duration=S.files.map(function(e){return e.time;}).reduce((a,b) => a+b,0);
 	
 	//If no inputPercent was passed, estimate it
 	if(typeof(inputPercent)==='undefined'){
@@ -710,7 +710,7 @@ function scrub(inputPercent){
 		var l=S.files.length;
 		for(let i=0;i<l;i++){
 			//If the duration's within this one, stop at this one
-			if(i==l-1 || newTime<getLength(S.files[i])){
+			if(i==l-1 || newTime<S.files[i].time){
 			//If this is the media!
 				//If we allow scrubbing or we're not moving the bar, we can load the file
 				if(S.scrubLoad!==false || scrubbing===false) S.to({file:i,time:newTime,scrollToTop:false});
@@ -719,7 +719,7 @@ function scrub(inputPercent){
 				
 				break;
 			//Otherwise, go to the next one (and subtract the duration from the total duration)
-			}else newTime-=getLength(S.files[i]);
+			}else newTime-=S.files[i].time;
 		}
 	}
 	
@@ -752,7 +752,7 @@ function moveOverlay(event){
 			
 			//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
 			if(S.scrubLoad){
-				console.log("Release!");
+				//console.log("Release!");
 				//Add a new state on releasing
 				updateInfo(null,true);
 			}
@@ -771,16 +771,16 @@ function moveOverlay(event){
 }
 
 function replaceInfoText(value,fileNum,current){
-	var duration=S.files.map(function(e){return getLength(e);}).reduce((a,b) => a+b,0);
+	var duration=S.files.map(function(e){return e.time;}).reduce((a,b) => a+b,0);
 	
 	if(current===undefined){
-		//var currentType=getMedium(S.files[S.currentFile]);
+		//var currentType=S.files[S.currentFile].medium;
 		
 		//Use the currentTime of the object, if it has one
 		var currentTime=types[currentType] && types[currentType].currentTime || 0;
 		
 		//Add the times of previous videos to get the actual time in the piece
-		for(let i=0;i<S.currentFile;i++) currentTime+=getLength(S.files[i]);
+		for(let i=0;i<S.currentFile;i++) currentTime+=S.files[i].time;
 		
 		var inputPercent=currentTime / duration
 			,newPart=S.currentFile;
@@ -793,13 +793,13 @@ function replaceInfoText(value,fileNum,current){
 	//Save all the values to instantly pass them through
 	var values={
 		name:{
-			current:getName(S.files[fileNum])
+			current:S.files[fileNum].name
 		}
 		,date:{
 			current:"Undated"
 		}
 		,medium:{
-			current:"<img src='"+getMedium(S.files[fileNum])+".svg'>"
+			current:"<img src='"+S.files[fileNum].medium+".svg'>"
 		}
 		,file:{
 			current:	fileNum+1
@@ -829,13 +829,13 @@ function replaceInfoText(value,fileNum,current){
 	}
 	
 	//Get the name, remove the parentheses (skip over "x")
-	var date=/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.exec(S.files[fileNum]);
+	var date=S.files[fileNum].date; // /^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.exec(files[i])
 
 	//If there's a date, return it; otherwise, return blank space
 	if(date){
 		date=date[0].split(/[\s-:;]+/);
 		
-		console.log(date);
+		//console.log(date);
 		
 		date=new Date(Date.UTC(
 			date[0]			//Year
@@ -925,14 +925,6 @@ function useIcons(input){
 	});
 }
 
-//Get a file's name
-function getName(input){
-	return safeFilename(
-		input.replace(/(^[^(]+\()|(\)[^)]+$)/g,'')
-		,"from"
-	)
-};
-
 //Get a file's date
 function getDate(input){
 	return input.replace(/x|\s?(\(|\.).+/g,'').replace(/;/g,':');
@@ -963,7 +955,9 @@ function POST(obj){
 		.then(json=>{
 			if(json.success){
 				loggedIn=json.admin;
-				if(json.files) S.files=json.files;
+				if(json.files){
+					saveFileInfo(json.files);
+				}
 				
 				resolve(json);
 			}else reject(json.message);
@@ -974,40 +968,53 @@ function POST(obj){
 	});
 }
 
-//Get the medium of a file
-function getMedium(name){
-	//Get the extension- fast!
-	switch(name.slice((name.lastIndexOf(".") - 1 >>> 0) + 2)){
-		case "jpg":
-		case "jpeg":
-		case "png":
-		case "gif":
-		case "svg":
-			return "image";
-			break;
-		case "mp4":
-		case "webm":
-			return "video";
-			break;
-		case "mp3":
-		case "wav":
-			return "audio";
-			break;
-		case "mm":
-			return "multimedia";
-			break;
-		//All else defaults to text
-		default:
-			return "text";
-			break;
+//Get all the file info from an array of files
+function saveFileInfo(files){
+	S.files=[];
+	
+	////////PUT THIS INTO PLACE WHERE IT CATCHES ARRAYS TOO////////////
+	
+	//Get all the files' info and put it in
+	for(let i=0;i<files.length;i++){
+		S.files[i]={};
+		S.files[i].path=files[i];
+		S.files[i].name=safeFilename(files[i].replace(/(^[^(]+\()|(\)[^)]+$)/g,''),"from");
+		
+		S.files[i].date=/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.exec(files[i]);
+		
+		var medium="text";
+		
+		//Get the extension- fast!
+		switch(files[i].slice((files[i].lastIndexOf(".") - 1 >>> 0) + 2)){
+			case "jpg":
+			case "jpeg":
+			case "png":
+			case "gif":
+			case "svg":
+				medium="image";
+				break;
+			case "mp4":
+			case "webm":
+				medium="video";
+				break;
+			case "mp3":
+			case "wav":
+				medium="audio";
+				break;
+			case "mm":
+				medium="multimedia";
+				break;
+			//All else defaults to text
+			default:
+		}
+		S.files[i].medium=medium;
+		
+		//Return the value in the file or the default duration
+		var get=/[^\s)]+(?=\.[^.]+$)/.exec(files[i]);
+		get=(get ? parseFloat(get[0]) : S.defaultDuration);
+		
+		S.files[i].time=get;
 	}
-}
-
-function getLength(file){
-	var get=/[^\s)]+(?=\.)/.exec(file);
-
-	//Return the value in the file or the default duration
-	return (get ? parseFloat(get[0]) : S.defaultDuration);
 }
 
 //Use documentFragment to append elements faster
@@ -1031,7 +1038,7 @@ function m(c,el){
 function mediaEnd(){
 	//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
 	if(!S.window.classList.contains("showpony-paused")) S.to({file:"+1"});
-	console.log("MEDIA END");
+	//console.log("MEDIA END");
 }
 
 var runTo=false;
@@ -1047,12 +1054,12 @@ function runMM(inputNum){
 	
 	//We've run through!
 	if(runTo===false && content.classList.contains("showpony-loading")){
-		console.log("Enable!",S.currentLine,runTo);
+		//console.log("Enable!",S.currentLine,runTo);
 		if(waitTimer.remaining>0){
 			waitTimer.end();
 		}
 		
-		console.log(S.objects,objectBuffer);
+		//console.log(S.objects,objectBuffer);
 		
 		//Get rid of unused, uncreated objects
 		for(var key in S.objects){
@@ -1070,14 +1077,14 @@ function runMM(inputNum){
 	//Update the scrubbar if the frame we're on is a keyframe
 	if(keyframes.includes(S.currentLine)){
 		//Set the time of the element
-		types[currentType].currentTime=(keyframes.indexOf(S.currentLine)/keyframes.length)*getLength(S.files[S.currentFile]);
+		types[currentType].currentTime=(keyframes.indexOf(S.currentLine)/keyframes.length)*S.files[S.currentFile].time;
 		
 		updateInfo();
 	}
 	
 	//If we've ended manually or reached the end, stop running immediately and end it all
 	if(S.currentLine>=S.lines.length){
-		console.log("Ending!");
+		//console.log("Ending!");
 		S.to({file:"+1"});
 		return;
 	}
@@ -1091,19 +1098,19 @@ function runMM(inputNum){
 	if(text[0]===">"){
 		var vals=text.replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/);
 		
-		//console.log(text,vals);
+		////console.log(text,vals);
 		
 		//We run a function based on the value passed.
 		//If it returns multimediaSettings, we use those new ones over the old ones.
 		multimediaSettings=multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals,multimediaSettings) || multimediaSettings;
-		//console.log(multimediaSettings,S.currentLine);
+		////console.log(multimediaSettings,S.currentLine);
 		
 		//If it's a textbox
 		if(vals[0].toLowerCase()==='tb'){
 			//multimediaSettings.go=false;
 			//If there's text passed, use it; if not, empty the textbox
 			text=vals[2];
-			console.log(vals,text);
+			//console.log(vals,text);
 		}else return; //Return if it's not a textbox
 	}else{
 		//If it's regular text display, use the regular settings
@@ -1130,7 +1137,7 @@ function runMM(inputNum){
 	
 	//If we're running through, skip displaying text until we get to the right point
 	if(runTo){
-		console.log(S.currentLine,runTo);
+		//console.log(S.currentLine,runTo);
 		runMM(undefined);
 		return;
 	}
@@ -1456,7 +1463,7 @@ var multimediaFunction={
 					break;
 				default: //Other features
 					var value=parseFloat(vals[i].substr(1));
-					console.log("AUDIO",vals[i],value);
+					//console.log("AUDIO",vals[i],value);
 					//Current volume
 					if(vals[i][0]==='v') el.volume=value;
 					//Current time
@@ -1495,14 +1502,14 @@ var multimediaFunction={
 		var lines=[vals[2]];
 		
 		var reg=new RegExp('^>\\s+CH\\s+'+vals[1]+'\\s','i');
-			console.log(reg);
+			//console.log(reg);
 		
 		//Go through the rest of the lines, looking for images to preload
 		for(let i=S.currentLine;i<S.lines.length;i++){
 			
 			//If this character is listed on this line
 			if(reg.test(S.lines[i])){
-				console.log("found!");
+				//console.log("found!");
 				//Add the image names to the images to load
 				lines.push(S.lines[i].replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/)[2]);
 			}
@@ -1644,7 +1651,7 @@ if(S.shortcuts){
 			if(S.shortcuts!=='always'){
 				//Exit if it isn't fullscreen
 				if(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.fullscreenElement){
-					console.log("Not full");
+					//console.log("Not full");
 					//If needs to be focused
 					if(S.shortcuts!=='fullscreen' && S.window!==document.activeElement) return;
 				}
@@ -1720,8 +1727,8 @@ pagePrev.addEventListener("click",function(){
 	var goToFile=S.currentFile-1;
 	
 	//Go to end of previous file, if it's one that uses scrolling. Otherwise, go to the beginning of it.
-	if(getMedium(S.files[goToFile])=="text"){
-		S.to({file:goToFile,time:getLength(S.files[goToFile])});
+	if(S.files[goToFile].medium=="text"){
+		S.to({file:goToFile,time:S.files[goToFile].time});
 	}else{
 	//For most media, go to the beginning.
 		S.to({file:"-1"});
@@ -1737,7 +1744,7 @@ pageNext.addEventListener("click",function(event){
 //Update the scrub bar when scrolling
 pageTurn.addEventListener("scroll",function(event){
 	//Set current time to percent scrolled
-	types[currentType].currentTime=getLength(S.files[S.currentFile])*(pageTurn.scrollTop/pageTurn.scrollHeight);
+	types[currentType].currentTime=S.files[S.currentFile].time*(pageTurn.scrollTop/pageTurn.scrollHeight);
 	
 	updateInfo();
 	
@@ -1747,7 +1754,7 @@ pageTurn.addEventListener("scroll",function(event){
 //Infinite scrolling setup
 pageInfinite.addEventListener("scroll",function(){
 	if(pageInfinite.scrollTop=0){
-		console.log("Load next!");
+		//console.log("Load next!");
 	}
 });
 
@@ -1760,14 +1767,14 @@ types.image.addEventListener("load",function(){
 	for(let i=S.currentFile+1;i<=S.currentFile+S.preloadNext;i++){
 		if(i>=S.files.length) break;
 		
-		var src=(S.files[i][0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[i];
+		var src=(S.files[i].path[0]=="x" ? ShowponyFolder+"/ajax.php?get=" : "")+S.path+S.language+S.files[i].path;
 		
-		console.log("Preloading");
+		//console.log("Preloading");
 		
 		var img=new Image();
 		img.src=src;
 		
-		console.log(i,S.preloadNext,S.currentFile);
+		//console.log(i,S.preloadNext,S.currentFile);
 	}
 });
 
@@ -1832,28 +1839,28 @@ new Promise(function(resolve,reject){
 	//currentFile is -1 before we load
 	S.currentFile=-1;
 	
-	//If getting, run a promise to check success
-	if(S.files==="get"){
-		console.log("Return stuff!");
-		POST({call:"getFiles"})
-			.then(response=>resolve(response))
-			.catch(response=>reject(response));
-	}else{
-		//Skip to catch if not true
-		resolve();
-	}
-	
 	//Empty the current window
 	S.window.innerHTML="";
 
 	//And fill it up again!
 	frag([content,overlay],S.window);
+	
+	//If getting, run a promise to check success
+	if(S.files==="get"){
+		POST({call:"getFiles"})
+			.then(response=>resolve(response))
+			.catch(response=>reject(response));
+	}else{
+		//Skip to next then if an array was passed instead
+		saveFileInfo(S.files);
+		resolve();
+	}
 })
 //Get Hey Bard account
 .then(()=>new Promise(function(resolve,reject){
 	//If Hey Bard is disabled, skip over this!
 	if(S.HeyBardID===null){
-		console.log("Hey Bard accounts aren't enabled for this Showpony.");
+		//console.log("Hey Bard accounts aren't enabled for this Showpony.");
 		resolve();
 		return;
 	}else{
@@ -1869,14 +1876,14 @@ new Promise(function(resolve,reject){
 				
 				//Try saving a bookmark before you leave
 				if(typeof(S.saveBookmark)==='function'){
-					console.log("hey!");
+					//console.log("hey!");
 					var sB=S.saveBookmark();
 					
 					//If something was returned (like a promise)
 					if(sB){
-						console.log(sB);
+						//console.log(sB);
 						sB.then(()=>{
-							console.log("Success saving!");
+							//console.log("Success saving!");
 							
 							//Go to Hey Bard's web page to get your account
 							location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
@@ -1903,11 +1910,11 @@ new Promise(function(resolve,reject){
 			//Make a Hey Bard connection
 			HeyBardConnection=new HeyBard(S.HeyBardID);
 			
-			console.log(HeyBardConnection);
+			//console.log(HeyBardConnection);
 			
 			HeyBardConnection.getAccount()
 			.then(response=>{
-				console.log("Success!",response);
+				//console.log("Success!",response);
 				
 				//If an account exists for the user
 				if(response.account!==null){
@@ -1930,7 +1937,7 @@ new Promise(function(resolve,reject){
 					//Showpony deselection (to help with Firefox and Edge's lack of support for "beforeunload")
 					S.window.addEventListener("focusout",saveBookmark);
 					S.window.addEventListener("blur",saveBookmark);
-					console.log("Update!");
+					//console.log("Update!");
 				}else{
 				//If an account doesn't exist for the user
 					accountButton.innerHTML="Log in for bookmarks!";
@@ -1938,7 +1945,7 @@ new Promise(function(resolve,reject){
 					accountButton.title="Save a bookmark with a free Hey Bard! Account";
 				}
 				
-				console.log(HeyBardConnection);
+				//console.log(HeyBardConnection);
 				
 				//"False" can be read as 0, so if bookmark is returned as false don't pass the value.
 				if(typeof(response.bookmark)==='undefined') resolve();
@@ -1957,7 +1964,7 @@ new Promise(function(resolve,reject){
 			//Set the text for the Hey Bard button accordingly
 			accountButton.title="Failed to load the necessary script to use Hey Bard accounts.";
 			
-			console.log("Script for enabling HeyBard isn't loaded.");
+			//console.log("Script for enabling HeyBard isn't loaded.");
 			resolve();
 		}
 	}
@@ -1978,21 +1985,21 @@ new Promise(function(resolve,reject){
 		window.addEventListener(
 			"popstate"
 			,function(){
-				var page=(new RegExp(S.query+'[^&]+','i').exec(window.location.href));
+				var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i').exec(window.location.href));
 				
 				//If we found a page
 				if(page){
 					if(S.bookmark==="time"){
 						page=parseInt(page[0].split("=")[1]);
 						
-						console.log(S,page,getCurrentTime());
+						//console.log(S,page,getCurrentTime());
 						if(page===getCurrentTime()) return;
 					
 						S.to({time:page,popstate:true,scrollToTop:false});
 					}else{
 						page=parseInt(page[0].split("=")[1])-1;
 						
-						console.log(S,page,S.currentFile);
+						//console.log(S,page,S.currentFile);
 						if(page===S.currentFile) return;
 					
 						S.to({file:page,popstate:true,scrollToTop:false});
@@ -2001,7 +2008,7 @@ new Promise(function(resolve,reject){
 			}
 		);
 		
-		var page=window.location.href.match(new RegExp(S.query+'[^&]+','i'));
+		var page=window.location.href.match(new RegExp('(\\?|&)'+S.query+'[^&#]+','i'));
 		if(page) page=parseInt(page[0].split("=")[1]);
 		
 		//General pass object
