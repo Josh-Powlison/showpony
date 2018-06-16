@@ -150,9 +150,6 @@ S.to=function(input){
 	/*
 	//console.log(obj.file,S.currentFile,thisType,obj.time);
 	
-	//Change the title if requested
-	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
-	
 	if(obj.file==S.currentFile && !obj.refresh) return;*/
 	
 	//Use different options
@@ -198,7 +195,7 @@ S.to=function(input){
 		var popstate=!obj.replaceState;
 		if(scrubbing===true) popstate=false; //Only replace history if we're scrubbing right now
 		
-		updateInfo(null,popstate);
+		updateInfo(popstate);
 	}
 	
 	//If we aren't moving the bar, update the overlay
@@ -386,18 +383,7 @@ S.to=function(input){
 	
 	thisType.currentTime=obj.time; //Update the time
 	
-	//Run custom event for checking time
-	S.window.dispatchEvent(
-		new CustomEvent(
-			'time'
-			,{
-				detail:{
-					file:(S.currentFile+1)
-					,time:thisType.currentTime
-				}
-			}
-		)
-	);
+	timeUpdate();
 }
 
 //Toggle the menu
@@ -614,22 +600,28 @@ if(S.credits) useIcons(S.credits);
 
 frag([progress,overlayText,fullscreenButton,showponyLogo,credits],overlay);
 
-//Run custom event for checking time
-/*S.window.dispatchEvent(
-	new CustomEvent(
-		'timeupdate'
-		,{
-			detail:{
-				file:(S.currentFile+1)
-				,time:thisType.currentTime
-			}
-		}
-	)
-);*/
-
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
 ///////////////////////////////////////
+
+function timeUpdate(time){
+	if(!isNaN(time)) types[currentType].currentTime=time;
+	
+	updateInfo();
+	
+	//Run custom event for checking time
+	S.window.dispatchEvent(
+		new CustomEvent(
+			'timeupdate'
+			,{
+				detail:{
+					file:(S.currentFile+1)
+					,time:getCurrentTime()
+				}
+			}
+		)
+	);
+}
 
 //Play and pause multimedia
 types.multimedia.play=function(){
@@ -721,6 +713,9 @@ function scrub(inputPercent){
 		,newPart
 		,Math.floor(timeInTotal)
 	)+'</p>';
+	
+	//Update the title, if set up for it
+	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
 }
 
 //Drag on the menu to go to any part
@@ -743,7 +738,7 @@ function moveOverlay(event){
 			if(S.scrubLoad){
 				//console.log('Release!');
 				//Add a new state on releasing
-				updateInfo(null,true);
+				updateInfo(true);
 			}
 		}
 		else return;
@@ -907,8 +902,8 @@ function useIcons(input){
 	
 	//Once all SVGs are retrieved, continue
 	Promise.all(promises).then(response=>{
-		credits.classList.remove('showpony-loading');
 		credits.innerHTML=input;
+		credits.classList.remove('showpony-loading');
 	});
 }
 
@@ -1070,11 +1065,9 @@ function runMM(inputNum){
 	}
 	
 	//Update the scrubbar if the frame we're on is a keyframe
-	if(keyframes.includes(S.currentLine)){
+	if(runTo===false && keyframes.includes(S.currentLine)){
 		//Set the time of the element
-		types[currentType].currentTime=(keyframes.indexOf(S.currentLine)/keyframes.length)*S.files[S.currentFile].time;
-		
-		updateInfo();
+		timeUpdate((keyframes.indexOf(S.currentLine)/keyframes.length)*S.files[S.currentFile].time);
 	}
 	
 	//If we've ended manually or reached the end, stop running immediately and end it all
@@ -1739,9 +1732,7 @@ pageNext.addEventListener('click',function(event){
 //Update the scrub bar when scrolling
 pageTurn.addEventListener('scroll',function(event){
 	//Set current time to percent scrolled
-	types[currentType].currentTime=S.files[S.currentFile].time*(pageTurn.scrollTop/pageTurn.scrollHeight);
-	
-	updateInfo();
+	timeUpdate(S.files[S.currentFile].time*(pageTurn.scrollTop/pageTurn.scrollHeight));
 	
 	event.stopPropagation();
 });
@@ -1764,8 +1755,6 @@ types.image.addEventListener('load',function(){
 		
 		var src=(S.files[i].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.files[i].path;
 		
-		//console.log('Preloading');
-		
 		var img=new Image();
 		img.src=src;
 		
@@ -1782,13 +1771,10 @@ types.video.addEventListener('ended',mediaEnd);
 types.audio.addEventListener('ended',mediaEnd);
 
 //On moving through time, update info and title
-types.audio.addEventListener('timeupdate',updateInfo);
-types.video.addEventListener('timeupdate',updateInfo);
+types.audio.addEventListener('timeupdate',timeUpdate);
+types.video.addEventListener('timeupdate',timeUpdate);
 
-function updateInfo(event,pushState){
-	//Update the title, if set up for it
-	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
-	
+function updateInfo(pushState){
 	//Update the scrub bar
 	if(scrubbing!==true) scrub();
 	
@@ -2030,8 +2016,6 @@ new Promise(function(resolve,reject){
 	input=null;
 	
 	//We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
-	
-	//if(scrubbing===false) updateInfo();
 })
 //On failure (or not getting)
 .catch((response)=>{
