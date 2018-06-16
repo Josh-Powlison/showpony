@@ -128,7 +128,9 @@ var propertyInfo={
 	,admin:"Whether or not to allow use of the admin panel, set up in the PHP file. Defaults to <em>false</em>"
 	,query:"The text in the search bar that tracks where you're at in the story. If <em>false</em>, no query is used. Defaults to <em>'part'</em>"
 	,shortcuts:"Allows keyboard shortcuts for Showpony. <em>'always'</em> means always use shortcut keys. <em>'focus'</em> means only when the element is focused on. <em>'fullscreen'</em> means only when Showpony is fullscreened. <em>false</em> means don't allow shortcut keys. Defaults to <em>'focus'</em>"
-	,HeyBardID:"The id to pass to Hey Bard for automatically saving bookmarks to users with accounts. If null, don't use Hey Bard. Defaults to <em>location.hostname.substring(0,20)</em>"
+	,saveId:"The id to use for saving bookmarks, both locally and remotely. Defaults to <em>location.hostname.substring(0,20)</em>"
+	,remoteSave:"Save user bookmarks remotely to a user's Hey Bard account, so they can be accessed from any machine. If the user loads the webpage without a query, the bookmark will automatically be loaded. Defaults to <em>true</em>"
+	,localSave:"Save user bookmarks locally. If the user loads the webpage without a query, the bookmark will automatically be loaded. Defaults to <em>false</em>"
 	,bookmark:"<em>'file'</em> means queries and bookmarks are saved based on the current file. <em>'time'</em> means it's based on the total time we are into the story. Defaults to <em>'file'</em>"
 	,preloadNext:"Preload upcoming files. Can set to any positive integer you like, or to 0 to not preload. Defaults to <em>1</em>"
 };

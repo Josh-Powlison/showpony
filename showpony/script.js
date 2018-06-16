@@ -71,7 +71,9 @@ d('dateFormat'		,	{year:'numeric',month:'numeric',day:'numeric'}		);
 d('admin'			,	false												);
 d('query'			,	'part'												);
 d('shortcuts'		,	'focus'												);
-d('HeyBardID'		,	location.hostname.substring(0,20)					);
+d('saveId'			,	location.hostname.substring(0,20)					);
+d('localSave'		,	false												);
+d('remoteSave'		,	true												);
 d('bookmark'		,	'file'												);
 d('preloadNext'		,	1													);
 d('infiniteText'	,	false												);
@@ -351,7 +353,6 @@ S.to=function(input){
 						var src=(S.files[i].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.files[i].path;
 						
 						//Preload next file, if there is a next file
-						////console.log('Preloading next!');
 						fetch(src);
 						
 						//console.log(i,S.preloadNext,S.currentFile);
@@ -1823,13 +1824,10 @@ var getFiles=new Promise(function(resolve,reject){
 
 //Get Hey Bard account
 var getHeyBard=new Promise(function(resolve,reject){
-	//If Hey Bard is disabled, skip over this!
-	if(S.HeyBardID===null){
-		//console.log('Hey Bard accounts aren\'t enabled for this Showpony.');
-		resolve();
-		return;
-	}else{
-	//If Hey Bard is enabled
+	var bookmark=null;
+	
+	//If Hey Bard is enabled, try it first!
+	if(S.remoteSave){
 		//Make a button
 		var accountButton=m('button showpony-account-button','button');
 		overlay.appendChild(accountButton);
@@ -1870,7 +1868,7 @@ var getHeyBard=new Promise(function(resolve,reject){
 		
 		if(typeof HeyBard==='function'){
 			//Make a Hey Bard connection
-			HeyBardConnection=new HeyBard(S.HeyBardID);
+			HeyBardConnection=new HeyBard(S.saveId);
 			
 			HeyBardConnection.getAccount()
 			.then(response=>{
@@ -1887,17 +1885,6 @@ var getHeyBard=new Promise(function(resolve,reject){
 						//Pass either the time or the current file, whichever is chosen by the client
 						return HeyBardConnection.saveBookmark(S.bookmark==='time' ? Math.floor(getCurrentTime()) : S.currentFile);
 					}
-					
-					var saveBookmark=S.saveBookmark;
-					
-					//Save user bookmarks when leaving the page
-					window.addEventListener('blur',saveBookmark);
-					window.addEventListener('beforeunload',saveBookmark);
-					
-					//Showpony deselection (to help with Firefox and Edge's lack of support for 'beforeunload')
-					S.window.addEventListener('focusout',saveBookmark);
-					S.window.addEventListener('blur',saveBookmark);
-					//console.log('Update!');
 				}else{
 				//If an account doesn't exist for the user
 					accountButton.innerHTML='Log in for bookmarks!';
@@ -1926,6 +1913,32 @@ var getHeyBard=new Promise(function(resolve,reject){
 			resolve();
 		}
 	}
+
+	//Try local storage
+	if(bookmark===null && S.localSave){
+		//Set a function to save bookmarks
+		S.saveBookmark=function(){
+			localStorage.setItem(S.saveId,S.bookmark==='time' ? Math.floor(getCurrentTime()) : S.currentFile);
+		}
+		
+		resolve(localStorage.getItem(S.saveId));
+	}
+	
+	if(typeof(S.saveBookmark)!=='undefined'){
+		var saveBookmark=S.saveBookmark;
+		
+		//Save user bookmarks when leaving the page
+		window.addEventListener('blur',saveBookmark);
+		window.addEventListener('beforeunload',saveBookmark);
+		
+		//Showpony deselection (to help with Firefox and Edge's lack of support for 'beforeunload')
+		S.window.addEventListener('focusout',saveBookmark);
+		S.window.addEventListener('blur',saveBookmark);
+		//console.log('Update!');
+	}
+	
+	//Pass whatever value we've gotten
+	resolve(bookmark);
 });
 
 //Get bookmarks going
