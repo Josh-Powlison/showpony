@@ -61,8 +61,8 @@ S.window=input.window;
 S.originalWindow=S.window.cloneNode(true);
 
 /*VARIABLE				DEFAULT VALUE										*/
-d('get'				,	'files/'											);
-d('language'		,	''													);
+d('get'				,	'files/[lang]/'										);
+d('language'		,	'en'												);
 d('scrubLoad'		,	false												);
 d('info'			,	'[Current File] | [Files Left]'						);
 d('credits'			,	null												);
@@ -254,7 +254,7 @@ S.to=function(input){
 	}
 	
 	//How we get the file depends on whether or not it's private
-	var src=(S.files[S.currentFile].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.language+S.files[S.currentFile].path;
+	var src=(S.files[S.currentFile].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.files[S.currentFile].path;
 	
 	//Refresh the file, if requested we do so, by adding a query
 	if(obj.refresh) src+=(S.files[S.currentFile].path[0]==='x' ? '&' : '?')+'refresh-'+Date.now();
@@ -358,7 +358,7 @@ S.to=function(input){
 						if(i>=S.files.length) break;
 						
 						//How we get the file depends on whether or not it's private
-						var src=(S.files[i].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.language+S.files[i].path;
+						var src=(S.files[i].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.files[i].path;
 						
 						//Preload next file, if there is a next file
 						////console.log('Preloading next!');
@@ -925,7 +925,8 @@ function POST(obj){
 	//Prepare the form data
 	var formData=new FormData();
 	formData.append('call',obj.call);
-	formData.append('path',S.get+S.language);
+	formData.append('path',S.get.replace(/\[lang[^\]]*\]/gi,S.language));
+	console.log(S.get.replace(/\[lang[^]]*\]/gi,S.language));
 	formData.append('rel-path',ShowponyRunPage);
 	
 	//Special values, if passed
@@ -966,6 +967,9 @@ function saveFileInfo(files){
 	
 	//Get all the files' info and put it in
 	for(let i=0;i<files.length;i++){
+		//Replace language tags for use
+		files[i]=files[i].replace(/\[lang[^\]]*\]/gi,S.language);
+		
 		S.files[i]={};
 		S.files[i].path=files[i];
 		S.files[i].name=safeFilename(files[i].replace(/(^[^(]+\()|(\)[^)]+$)/g,''),'from');
@@ -1758,7 +1762,7 @@ types.image.addEventListener('load',function(){
 	for(let i=S.currentFile+1;i<=S.currentFile+S.preloadNext;i++){
 		if(i>=S.files.length) break;
 		
-		var src=(S.files[i].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.language+S.files[i].path;
+		var src=(S.files[i].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.files[i].path;
 		
 		//console.log('Preloading');
 		
