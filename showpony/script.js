@@ -198,7 +198,6 @@ S.to=function(input){
 	
 	//If we aren't moving the bar, update the overlay
 	if(scrubbing===false){
-		scrub();
 		//Go to the top of the page (if we didn't come here by autoloading)
 		if(obj.scrollToTop){
 			//Check that it's not below the viewport top already
@@ -318,9 +317,6 @@ S.to=function(input){
 						//console.log(runTo);
 						
 						runMM(0);
-						
-						//Move the scrubbar to the right spot
-						scrub();
 					//Regular text
 					}else{
 						//Use either page infinite or page turn, whichever is requested
@@ -340,9 +336,6 @@ S.to=function(input){
 							//Stop loading
 							content.classList.remove('showpony-loading');
 						}
-						
-						//Move the scrubbar to the right spot
-						scrub();
 					}
 				})
 				.catch((error)=>{
@@ -373,12 +366,10 @@ S.to=function(input){
 				thisType.play();
 				//console.log('Play');
 			}
-			
-			//Move the scrubbar to the right spot
-			scrub();
 		}
 	}
 	
+	////MAY NEED TO PUT THIS ALL IN A "THEN" AFTER A PROMISE SETUP FOR THE DIFFERENT MEDIA (so timing is perfect)
 	thisType.currentTime=obj.time; //Update the time
 	
 	timeUpdate();
@@ -402,8 +393,6 @@ S.menu=function(event,action){
 	{
 		//On toggling classes, returns 'true' if just added
 		if(S.window.classList.toggle('showpony-paused')){
-			scrub();
-			
 			//Add paused class
 			S.window.classList.add('showpony-paused');
 			
@@ -453,6 +442,42 @@ function userScrub(event){
 	
 	//scrubbing needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
 	scrubbing=false;
+}
+
+//Drag on the menu to go to any part
+function moveOverlay(event){
+	//Mouse and touch work slightly differently
+	var touch=event.changedTouches ? true : false;
+	var pos=touch ? event.changedTouches[0].clientX : event.clientX;
+	
+	if(scrubbing===false){
+		if(touch) scrubbing=pos;
+		else return;
+	}
+		
+	//You have to swipe farther than you move the cursor to adjust the position
+	if(scrubbing!==true){
+		if(Math.abs(scrubbing-pos)>screen.width/(touch ? 20 : 100)){ 
+			scrubbing=true;
+			
+			//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
+			if(S.scrubLoad){
+				//console.log('Release!');
+				//Add a new state on releasing
+				updateInfo(true);
+			}
+		}
+		else return;
+	}
+	
+	//Don't want the users to accidentally swipe to another page!
+	if(touch) event.preventDefault();
+	
+	scrub(
+		(pos-S.window.getBoundingClientRect().left)
+		/
+		(S.window.getBoundingClientRect().width)
+	);
 }
 
 //Toggle fullscreen
@@ -714,42 +739,6 @@ function scrub(inputPercent){
 	
 	//Update the title, if set up for it
 	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
-}
-
-//Drag on the menu to go to any part
-function moveOverlay(event){
-	//Mouse and touch work slightly differently
-	var touch=event.changedTouches ? true : false;
-	var pos=touch ? event.changedTouches[0].clientX : event.clientX;
-	
-	if(scrubbing===false){
-		if(touch) scrubbing=pos;
-		else return;
-	}
-		
-	//You have to swipe farther than you move the cursor to adjust the position
-	if(scrubbing!==true){
-		if(Math.abs(scrubbing-pos)>screen.width/(touch ? 20 : 100)){ 
-			scrubbing=true;
-			
-			//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
-			if(S.scrubLoad){
-				//console.log('Release!');
-				//Add a new state on releasing
-				updateInfo(true);
-			}
-		}
-		else return;
-	}
-	
-	//Don't want the users to accidentally swipe to another page!
-	if(touch) event.preventDefault();
-	
-	scrub(
-		(pos-S.window.getBoundingClientRect().left)
-		/
-		(S.window.getBoundingClientRect().width)
-	);
 }
 
 function replaceInfoText(value,fileNum,current){
