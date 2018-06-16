@@ -166,8 +166,13 @@ S.to=function(input){
 	
 	//If we're at the end, run the readable event
 	if(S.currentFile>=S.files.length){
-		//Go to the final file
+		//Go to the beginning of the final file or 10 seconds before the end of the steam, whichever is later.
 		S.currentFile=S.files.length-1;
+		obj.time=S.files[S.files.length-1].time-10;
+		if(obj.time<0) obj.time=0;
+		//console.log(S.currentFile);
+		
+		console.log(S.currentFile,S.files.length,S.currentFile,S);
 		
 		//If we aren't just trying to reload a file, end; otherwise, get to that last file
 		if(!obj || !obj.reload){
@@ -183,12 +188,10 @@ S.to=function(input){
 	
 	//Update info on file load
 	if(!obj.popstate){
-		////console.log('Update info!',scrubbing);
 		//Only allow adding to history if we aren't scrubbing
 		
 		//If the same file, and not a medium where time changes it (like images), replace history state instead
 		if(sameFile && currentType!=='video' && currentType!=='audio'){
-			////console.log('Same!');
 			obj.replaceState=true;
 		}
 		
@@ -197,7 +200,6 @@ S.to=function(input){
 		
 		updateInfo(null,popstate);
 	}
-	
 	
 	//If we aren't moving the bar, update the overlay
 	if(scrubbing===false){
@@ -676,14 +678,11 @@ function getCurrentTime(){
 
 //Update the scrubber's position
 function scrub(inputPercent){
-	var duration=S.files.map(function(e){return e.time;}).reduce((a,b) => a+b,0);
-	
 	//If no inputPercent was passed, estimate it
 	if(typeof(inputPercent)==='undefined'){
-		//Use the currentTime of the object, if it has one
 		var timeInTotal=getCurrentTime();
 		
-		var inputPercent=timeInTotal / duration
+		var inputPercent=timeInTotal / S.duration
 			,newPart=S.currentFile;
 	}else{ //if inputPercent WAS passed
 	
@@ -691,8 +690,8 @@ function scrub(inputPercent){
 		inputPercent= inputPercent <= 0 ? 0 : inputPercent >= 1 ? 1 : inputPercent;
 		
 		//Go to the time
-		var timeInTotal=duration*inputPercent
-			,newTime=duration*inputPercent
+		var timeInTotal=S.duration*inputPercent
+			,newTime=S.duration*inputPercent
 			,newPart=0
 		;
 		
@@ -761,8 +760,6 @@ function moveOverlay(event){
 }
 
 function replaceInfoText(value,fileNum,current){
-	var duration=S.files.map(function(e){return e.time;}).reduce((a,b) => a+b,0);
-	
 	if(current===undefined){
 		//var currentType=S.files[S.currentFile].medium;
 		
@@ -772,13 +769,13 @@ function replaceInfoText(value,fileNum,current){
 		//Add the times of previous videos to get the actual time in the piece
 		for(let i=0;i<S.currentFile;i++) currentTime+=S.files[i].time;
 		
-		var inputPercent=currentTime / duration
+		var inputPercent=currentTime / S.duration
 			,newPart=S.currentFile;
 			
-		var current=Math.floor(inputPercent*duration)
-			,left=duration-Math.floor(inputPercent*duration)
+		var current=Math.floor(inputPercent*S.duration)
+			,left=S.duration-Math.floor(inputPercent*S.duration)
 		;
-	}else var left=duration-current;
+	}else var left=S.duration-current;
 	
 	//Save all the values to instantly pass them through
 	var values={
@@ -804,17 +801,17 @@ function replaceInfoText(value,fileNum,current){
 		,hours:{
 			current:	(current / 3600)|0
 			,left:		(left / 3600)|0
-			,total:		(duration / 3600)|0
+			,total:		(S.duration / 3600)|0
 		}
 		,minutes:{
 			current:	((current % 3600) / 60)|0
 			,left:		((left % 3600) / 60)|0
-			,total:		((duration % 3600) / 60)|0
+			,total:		((S.duration % 3600) / 60)|0
 		}
 		,seconds:{
 			current:	(current % 60)|0
 			,left:		(left % 60)|0
-			,total:		(duration % 60)|0
+			,total:		(S.duration % 60)|0
 		}
 	}
 	
@@ -1010,6 +1007,9 @@ function saveFileInfo(files){
 		
 		S.files[i].time=get;
 	}
+	
+	//Combine total length of all parts
+	S.duration=S.files.map(function(e){return e.time;}).reduce((a,b) => a+b,0);
 }
 
 //Use documentFragment to append elements faster
@@ -2012,6 +2012,7 @@ new Promise(function(resolve,reject){
 			popstate:page ? true : false
 			,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
 			,scrollToTop:false
+			,reload:true
 		};
 		
 		if(S.bookmark==='time') passObj.time=(page!==null) ? page : S.start;
