@@ -32,8 +32,6 @@ for(var i=0;i<splitStart.length;i++){
 	
 }
 
-//console.log(ShowponyRunPage);
-
 function Showpony(input){
 
 'use strict';
@@ -1813,8 +1811,10 @@ S.window.classList.add('showpony');
 //Set tabIndex so it's selectable (if it's not already set)
 if(S.window.tabIndex<0) S.window.tabIndex=0;
 
+//Make sure setup is made of multiple Promises that can run asyncronously- and that they do!
+
 //If the user's getting the files remotely, make the call
-new Promise(function(resolve,reject){
+var getFiles=new Promise(function(resolve,reject){
 	content.classList.add('showpony-loading');
 	
 	//currentFile is -1 before we load
@@ -1829,7 +1829,7 @@ new Promise(function(resolve,reject){
 	//If getting, run a promise to check success
 	if(typeof(S.get)=='string'){
 		POST({call:'getFiles'})
-			.then(response=>resolve(response))
+			.then(response=>resolve())
 			.catch(response=>reject(response));
 	}else{
 		S.files=S.get;
@@ -1837,9 +1837,10 @@ new Promise(function(resolve,reject){
 		saveFileInfo(S.files);
 		resolve();
 	}
-})
+});
+
 //Get Hey Bard account
-.then(()=>new Promise(function(resolve,reject){
+var getHeyBard=new Promise(function(resolve,reject){
 	//If Hey Bard is disabled, skip over this!
 	if(S.HeyBardID===null){
 		//console.log('Hey Bard accounts aren\'t enabled for this Showpony.');
@@ -1863,10 +1864,7 @@ new Promise(function(resolve,reject){
 					
 					//If something was returned (like a promise)
 					if(sB){
-						//console.log(sB);
 						sB.then(()=>{
-							//console.log('Success saving!');
-							
 							//Go to Hey Bard's web page to get your account
 							location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
 						})
@@ -1891,8 +1889,6 @@ new Promise(function(resolve,reject){
 		if(typeof HeyBard==='function'){
 			//Make a Hey Bard connection
 			HeyBardConnection=new HeyBard(S.HeyBardID);
-			
-			//console.log(HeyBardConnection);
 			
 			HeyBardConnection.getAccount()
 			.then(response=>{
@@ -1927,8 +1923,6 @@ new Promise(function(resolve,reject){
 					accountButton.title='Save a bookmark with a free Hey Bard! Account';
 				}
 				
-				//console.log(HeyBardConnection);
-				
 				//'False' can be read as 0, so if bookmark is returned as false don't pass the value.
 				if(typeof(response.bookmark)==='undefined') resolve();
 				else resolve(response.bookmark);
@@ -1950,10 +1944,13 @@ new Promise(function(resolve,reject){
 			resolve();
 		}
 	}
-}))
+});
+
 //Get bookmarks going
-.then((start)=>{
+Promise.all([getFiles,getHeyBard]).then((start)=>{
 	//Start at the first legit number: start, input.start, or the last file
+	start=start[1];
+	
 	S.start=(
 		!isNaN(start)
 		? start
