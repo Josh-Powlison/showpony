@@ -788,15 +788,19 @@ function scrub(inputPercent){
 	//Move the progress bar
 	progress.style.left=(inputPercent*100)+'%';
 	
-	//Set the overlay text (the current time)
-	overlayText.innerHTML='<p>'+replaceInfoText(
+	//Set the overlay text
+	var newHTML='<p>'+replaceInfoText(
 		S.info
 		,newPart
 		,Math.floor(timeInTotal)
 	)+'</p>';
+	if(newHTML!==overlayText.innerHTML) overlayText.innerHTML=newHTML;
 	
 	//Update the title, if set up for it
-	if(S.title) document.title=replaceInfoText(S.title,S.currentFile);
+	if(S.title){
+		var newTitle=replaceInfoText(S.title,S.currentFile);
+		if(newTitle!==document.title) document.title=newTitle;
+	}
 }
 
 function replaceInfoText(value,fileNum,current){
