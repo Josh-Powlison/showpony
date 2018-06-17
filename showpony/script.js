@@ -1865,7 +1865,7 @@ function updateInfo(pushState){
 		//Replace either the case or the end
 		newURL=newURL.replace(new RegExp('(((\\?|&)'+S.query+')=?[^&#]+)|(?=#)|$'),newQuery);
 		
-		history[pushState ? 'pushState' : 'replaceState']({},'',newURL);
+		if(location.href!==newURL) history[pushState ? 'pushState' : 'replaceState']({},'',newURL);
 	}
 }
 
