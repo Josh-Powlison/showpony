@@ -129,6 +129,16 @@
 	transition:opacity .1s;
 }
 
+.showpony-overlay-buffer{
+	width:100%;
+	top:4.5rem;
+	height:1rem;
+	position:absolute;
+	pointer-events:none;
+	opacity:.5;
+	background-color:black;
+}
+
 .showpony-fullscreen-button{
 	background-position:0% 10%;
 	float:right;

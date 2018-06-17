@@ -65,6 +65,7 @@ function d(v,val){S[v]=(input[v]!==undefined ? input[v] : val);}
 
 S.window=input.window;
 S.originalWindow=S.window.cloneNode(true);
+S.buffered=false;
 
 /*VARIABLE				DEFAULT VALUE										*/
 d('get'				,	'files/[lang]/'										);
@@ -365,11 +366,8 @@ S.to=function(input){
 			thisType.src=src;
 			if((currentType==='video' || currentType==='audio') && !S.window.classList.contains('showpony-paused')){
 				thisType.play();
-				//console.log('Play');
 			}
 			
-			//Consider how much has already been loaded; this isn't run on first chunk loaded
-			thisType.dispatchEvent(new CustomEvent('progress'));
 		}
 	}
 	
@@ -602,6 +600,7 @@ var waitForInput=false
 	,loggedIn=false //Logged in as admin
 	//Elements
 	,overlayText=m('overlay-text')
+	,overlayBuffer=m('overlay-buffer','canvas')
 	,progress=m('progress')
 	,content=m('content')
 	//Buttons
@@ -637,7 +636,7 @@ showponyLogo.target='_blank';
 
 if(S.credits) useIcons(S.credits);
 
-frag([progress,overlayText,fullscreenButton,showponyLogo,credits],overlay);
+frag([overlayBuffer,progress,overlayText,fullscreenButton,showponyLogo,credits],overlay);
 
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
@@ -675,7 +674,7 @@ function getTotalBuffered(){
 			
 			if(buffer){
 				//Combine buffered arrays, if we're moving forward
-				if(buffered.length>0 && buffer[0]>=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=buffer[1];
+				if(buffered.length>0 && buffer[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=buffer[1];
 				else buffered.push(buffer);
 			}
 		}
@@ -688,7 +687,7 @@ function getTotalBuffered(){
 				];
 				
 				//Combine buffered arrays, if we're moving forward
-				if(buffered.length>0 && buffer[0]>=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=buffer[1];
+				if(buffered.length>0 && buffer[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=buffer[1];
 				else buffered.push(buffer);
 			}
 		}
@@ -701,7 +700,26 @@ function getTotalBuffered(){
 	
 	S.buffered=buffered;
 	
-	console.log(S.buffered);
+	var rectRes=1000;
+	overlayBuffer.width=rectRes;
+	overlayBuffer.height=1;
+	var ctx=overlayBuffer.getContext('2d');
+	ctx.clearRect(0,0,rectRes,1);
+	ctx.fillStyle='#95f442';
+	
+	//Update info on dropdown
+	if(S.buffered===true){
+		ctx.fillRect(0,0,rectRes,1);
+	}else if(Array.isArray(S.buffered)){
+		for(let i=0;i<S.buffered.length;i++){
+			ctx.fillRect(
+				Math.floor(S.buffered[i][0]/S.duration*rectRes)
+				,0
+				,Math.floor((S.buffered[i][1]-S.buffered[i][0])/S.duration*rectRes)
+				,1
+			);
+		}
+	}
 }
 
 //Play and pause multimedia
@@ -1003,8 +1021,6 @@ function POST(obj){
 //Get all the file info from an array of files
 function saveFileInfo(files){
 	S.files=[];
-	
-	////////PUT THIS INTO PLACE WHERE IT CATCHES ARRAYS TOO////////////
 	
 	//Get all the files' info and put it in
 	for(let i=0;i<files.length;i++){
@@ -1795,9 +1811,30 @@ pageInfinite.addEventListener('scroll',function(){
 });
 
 ///FINISHED LOADING///
-types.image.addEventListener('load',function(){content.classList.remove('showpony-loading');S.files[S.currentFile].buffered=true;});
-types.video.addEventListener('canplay',function(){content.classList.remove('showpony-loading');});
-types.audio.addEventListener('canplay',function(){content.classList.remove('showpony-loading');});
+types.image.addEventListener('load',function(){
+	content.classList.remove('showpony-loading');
+	S.files[S.currentFile].buffered=true;
+	getTotalBuffered();
+});
+types.video.addEventListener('canplay',function(){
+	content.classList.remove('showpony-loading');
+	//Consider how much has already been loaded; this isn't run on first chunk loaded
+	this.dispatchEvent(new CustomEvent('progress'));
+});
+types.audio.addEventListener('canplay',function(){
+	content.classList.remove('showpony-loading');
+	//Consider how much has already been loaded; this isn't run on first chunk loaded
+	this.dispatchEvent(new CustomEvent('progress'));
+});
+
+types.video.addEventListener('canplaythrough',function(){
+	//Consider how much has already been loaded; this isn't run on first chunk loaded
+	this.dispatchEvent(new CustomEvent('progress'));
+});
+types.audio.addEventListener('canplaythrough',function(){
+	//Consider how much has already been loaded; this isn't run on first chunk loaded
+	this.dispatchEvent(new CustomEvent('progress'));
+});
 
 //Buffering
 types.video.addEventListener('progress',function(){
@@ -1812,6 +1849,8 @@ types.video.addEventListener('progress',function(){
 		}
 		
 		bufferedValue.push([timeRanges.start(i),timeRanges.end(i)]);
+		console.log(timeRanges.start(i),timeRanges.end(i));
+		console.log(bufferedValue);
 	}
 	
 	S.files[S.currentFile].buffered=bufferedValue;
@@ -1820,6 +1859,7 @@ types.video.addEventListener('progress',function(){
 });
 
 types.audio.addEventListener('progress',function(){
+	console.log("Run!");
 	var bufferedValue=[];
 	var timeRanges=types.audio.buffered;
 	
@@ -1831,6 +1871,8 @@ types.audio.addEventListener('progress',function(){
 		}
 		
 		bufferedValue.push([timeRanges.start(i),timeRanges.end(i)]);
+		console.log(timeRanges.start(i),timeRanges.end(i));
+		console.log(bufferedValue);
 	}
 	
 	S.files[S.currentFile].buffered=bufferedValue;
@@ -1843,8 +1885,16 @@ types.video.addEventListener('ended',mediaEnd);
 types.audio.addEventListener('ended',mediaEnd);
 
 //On moving through time, update info and title
-types.video.addEventListener('timeupdate',timeUpdate);
-types.audio.addEventListener('timeupdate',timeUpdate);
+types.video.addEventListener('timeupdate',function(){
+	//Consider how much has already been loaded; this isn't run on first chunk loaded
+	this.dispatchEvent(new CustomEvent('progress'));
+	timeUpdate();
+});
+types.audio.addEventListener('timeupdate',function(){
+	//Consider how much has already been loaded; this isn't run on first chunk loaded
+	this.dispatchEvent(new CustomEvent('progress'));
+	timeUpdate();
+});
 
 function updateInfo(pushState){
 	//Update the scrub bar
