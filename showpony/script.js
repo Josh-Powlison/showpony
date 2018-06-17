@@ -32,6 +32,14 @@ for(var i=0;i<splitStart.length;i++){
 	
 }
 
+//Load CSS if not loaded already
+if(!document.querySelector('[href$="showpony/styles.css"')){
+	var styles=document.createElement('link');
+	styles.rel='stylesheet';
+	styles.href=ShowponyFolder+'/styles.css';
+	document.head.appendChild(styles);
+}
+
 function Showpony(input){
 
 'use strict';
@@ -1823,7 +1831,25 @@ var getFiles=new Promise(function(resolve,reject){
 });
 
 //Get Hey Bard account
-var getHeyBard=new Promise(function(resolve,reject){
+var getHeyBard=new Promise((resolve,reject)=>{
+	//If it's finished loading, we're good!
+	if(!S.remoteSave || typeof HeyBard==='function'){
+		resolve(resolve,reject);
+		return;
+	}
+	
+	//Otherwise, if it doesn't exist add the element
+	if(!document.querySelector('[src="https://heybard.com/apis/accounts/script.js"')){
+		var script=document.createElement('script');
+		script.src='https://heybard.com/apis/accounts/script.js';
+		document.head.appendChild(script);
+	}
+	
+	document.querySelector('[src="https://heybard.com/apis/accounts/script.js"').addEventListener('load',function(){
+		resolve(resolve,reject);
+		console.log("LOADED");
+	});
+}).then((resolve,reject)=>{
 	var bookmark=null;
 	
 	//If Hey Bard is enabled, try it first!
