@@ -108,7 +108,7 @@ S.to=function(input){
 	if(obj.time && (obj.time[0]==='+' || obj.time[0]==='-')){
 		var getTime=0;
 		//Add the times of previous videos to get the actual time in the piece
-		for(let i=0;i<S.currentFile;i++) getTime+=S.files[i].time;
+		for(let i=0;i<S.currentFile;i++) getTime+=S.files[i].duration;
 		
 		getTime+=types[currentType] && types[currentType].currentTime || 0;
 		
@@ -125,7 +125,7 @@ S.to=function(input){
 		//Look through the videos for the right one
 		var l=S.files.length;
 		for(let i=0;i<l;i++){
-			var length=S.files[i].time;
+			var length=S.files[i].duration;
 			
 			//If we've reached the file, exit
 			if(obj.time<length) break;
@@ -173,7 +173,7 @@ S.to=function(input){
 	if(S.currentFile>=S.files.length){
 		//Go to the beginning of the final file or 10 seconds before the end of the steam, whichever is later.
 		S.currentFile=S.files.length-1;
-		obj.time=S.files[S.files.length-1].time-10;
+		obj.time=S.files[S.files.length-1].duration-10;
 		if(obj.time<0) obj.time=0;
 		//console.log(S.currentFile);
 		
@@ -273,7 +273,7 @@ S.to=function(input){
 		if(currentType==='multimedia'){
 			//console.log(content);
 			
-			runTo=keyframes[Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].time))];
+			runTo=keyframes[Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].duration))];
 			
 			runMM(0);
 		}else{
@@ -282,7 +282,7 @@ S.to=function(input){
 				//Infinite scrolling
 				if(S.infiniteText){//Scroll to the right spot
 				}else{ //Page turn
-					pageTurn.scrollTo(0,pageTurn.scrollHeight*(obj.time/S.files[S.currentFile].time));
+					pageTurn.scrollTo(0,pageTurn.scrollHeight*(obj.time/S.files[S.currentFile].duration));
 				}
 			}
 			
@@ -290,6 +290,8 @@ S.to=function(input){
 		}
 	//If it's not the same file, load it!
 	}else{
+		if(S.files[S.currentFile].buffered===false) S.files[S.currentFile].buffered='buffering';
+		
 		//Display the medium based on the file extension
 		//Multmedia Engine/Text/Copy
 		if(currentType==='multimedia' || currentType==='text'){
@@ -323,7 +325,7 @@ S.to=function(input){
 							if(S.lines[i].indexOf('>')!==0) keyframes.push(i);
 						}
 						
-						runTo=keyframes[Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].time))];
+						runTo=keyframes[Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].duration))];
 						//console.log(runTo);
 						
 						runMM(0);
@@ -341,30 +343,20 @@ S.to=function(input){
 							if(S.currentFile<S.files.length-1) pageTurn.insertAdjacentElement('beforeend',pageNext);
 							
 							//Scroll to spot
-							pageTurn.scrollTo(0,pageTurn.scrollHeight*(obj.time/S.files[S.currentFile].time));
+							pageTurn.scrollTo(0,pageTurn.scrollHeight*(obj.time/S.files[S.currentFile].duration));
 							
 							//Stop loading
 							content.classList.remove('showpony-loading');
 						}
 					}
+					
+					if(S.files[S.currentFile].buffered!==true){
+						S.files[S.currentFile].buffered=true;
+						getTotalBuffered();
+					}
 				})
 				.catch((error)=>{
 					alert('329: '+error);
-				})
-				//After all that, try preloading the next file
-				.then(()=>{
-					//Preload next files, if allowed
-					for(let i=S.currentFile+1;i<=S.currentFile+S.preloadNext;i++){
-						if(i>=S.files.length) break;
-						
-						//How we get the file depends on whether or not it's private
-						var src=(S.files[i].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.files[i].path;
-						
-						//Preload next file, if there is a next file
-						fetch(src);
-						
-						//console.log(i,S.preloadNext,S.currentFile);
-					}
 				})
 			;
 		//Image/Audio/Video
@@ -375,12 +367,34 @@ S.to=function(input){
 				thisType.play();
 				//console.log('Play');
 			}
+			
+			//Consider how much has already been loaded; this isn't run on first chunk loaded
+			thisType.dispatchEvent(new CustomEvent('progress'));
 		}
+	}
+	
+	//Preload next files, if allowed and/or needed
+	for(let i=S.currentFile+1;i<=S.currentFile+S.preloadNext;i++){
+		if(i>=S.files.length) break;
+		if(S.files[i].buffered!==false) continue;
+		
+		//Don't do this for video or audio (currently)
+		if(S.files[i].medium==='video' || S.files[i].medium==='audio') continue;
+		
+		//How we get the file depends on whether or not it's private
+		var src=(S.files[i].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.files[i].path;
+		
+		S.files[i].buffered='buffering';
+		
+		//Preload next file, if there is a next file
+		fetch(src).then(()=>{
+			S.files[i].buffered=true;
+			getTotalBuffered();
+		});
 	}
 	
 	////MAY NEED TO PUT THIS ALL IN A "THEN" AFTER A PROMISE SETUP FOR THE DIFFERENT MEDIA (so timing is perfect)
 	thisType.currentTime=obj.time; //Update the time
-	
 	timeUpdate();
 }
 
@@ -648,6 +662,48 @@ function timeUpdate(time){
 	);
 }
 
+function getTotalBuffered(){
+	var time=0;
+	var buffered=[];
+	
+	//Update amount buffered total
+	for(let i=0;i<S.files.length;i++){
+		var buffer=false;
+		
+		if(S.files[i].buffered===true){
+			buffer=[time,time+S.files[i].duration];
+			
+			if(buffer){
+				//Combine buffered arrays, if we're moving forward
+				if(buffered.length>0 && buffer[0]>=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=buffer[1];
+				else buffered.push(buffer);
+			}
+		}
+		else if(Array.isArray(S.files[i].buffered)){
+			//Get working for multiple contained buffers
+			for(let ii=0;ii<S.files[i].buffered.length;ii++){
+				buffer=[
+					time+S.files[i].buffered[ii][0]
+					,time+S.files[i].buffered[ii][1]
+				];
+				
+				//Combine buffered arrays, if we're moving forward
+				if(buffered.length>0 && buffer[0]>=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=buffer[1];
+				else buffered.push(buffer);
+			}
+		}
+		
+		time+=S.files[i].duration;
+	}
+	
+	if(buffered.length===1 && buffered[0][0]===0 && buffered[0][1]>=S.duration) buffered=true;
+	if(buffered.length===0) buffered=false;
+	
+	S.buffered=buffered;
+	
+	console.log(S.buffered);
+}
+
 //Play and pause multimedia
 types.multimedia.play=function(){
 	//console.log('play');
@@ -688,7 +744,7 @@ function getCurrentTime(){
 	var newTime=types[currentType] && types[currentType].currentTime || 0;
 	
 	//Add the times of previous videos to get the actual time in the piece
-	for(let i=0;i<S.currentFile;i++) newTime+=S.files[i].time;
+	for(let i=0;i<S.currentFile;i++) newTime+=S.files[i].duration;
 	
 	return newTime;
 }
@@ -716,7 +772,7 @@ function scrub(inputPercent){
 		var l=S.files.length;
 		for(let i=0;i<l;i++){
 			//If the duration's within this one, stop at this one
-			if(i==l-1 || newTime<S.files[i].time){
+			if(i==l-1 || newTime<S.files[i].duration){
 			//If this is the media!
 				//If we allow scrubbing or we're not moving the bar, we can load the file
 				if(S.scrubLoad!==false || scrubbing===false) S.to({file:i,time:newTime,scrollToTop:false});
@@ -725,7 +781,7 @@ function scrub(inputPercent){
 				
 				break;
 			//Otherwise, go to the next one (and subtract the duration from the total duration)
-			}else newTime-=S.files[i].time;
+			}else newTime-=S.files[i].duration;
 		}
 	}
 	
@@ -751,7 +807,7 @@ function replaceInfoText(value,fileNum,current){
 		var currentTime=types[currentType] && types[currentType].currentTime || 0;
 		
 		//Add the times of previous videos to get the actual time in the piece
-		for(let i=0;i<S.currentFile;i++) currentTime+=S.files[i].time;
+		for(let i=0;i<S.currentFile;i++) currentTime+=S.files[i].duration;
 		
 		var inputPercent=currentTime / S.duration
 			,newPart=S.currentFile;
@@ -954,6 +1010,7 @@ function saveFileInfo(files){
 		S.files[i]={};
 		S.files[i].path=files[i];
 		S.files[i].name=safeFilename(files[i].replace(/(^[^(]+\()|(\)[^)]+$)/g,''),'from');
+		S.files[i].buffered=false;
 		
 		S.files[i].date=/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.exec(files[i]);
 		
@@ -989,11 +1046,11 @@ function saveFileInfo(files){
 		console.log(get);
 		get=(get ? parseFloat(get[0]) : S.defaultDuration);
 		
-		S.files[i].time=get;
+		S.files[i].duration=get;
 	}
 	
 	//Combine total length of all parts
-	S.duration=S.files.map(function(e){return e.time;}).reduce((a,b) => a+b,0);
+	S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 }
 
 //Use documentFragment to append elements faster
@@ -1056,7 +1113,7 @@ function runMM(inputNum){
 	//Update the scrubbar if the frame we're on is a keyframe
 	if(runTo===false && keyframes.includes(S.currentLine)){
 		//Set the time of the element
-		timeUpdate((keyframes.indexOf(S.currentLine)/keyframes.length)*S.files[S.currentFile].time);
+		timeUpdate((keyframes.indexOf(S.currentLine)/keyframes.length)*S.files[S.currentFile].duration);
 	}
 	
 	//If we've ended manually or reached the end, stop running immediately and end it all
@@ -1705,7 +1762,7 @@ pagePrev.addEventListener('click',function(){
 	
 	//Go to end of previous file, if it's one that uses scrolling. Otherwise, go to the beginning of it.
 	if(S.files[goToFile].medium=='text'){
-		S.to({file:goToFile,time:S.files[goToFile].time});
+		S.to({file:goToFile,time:S.files[goToFile].duration});
 	}else{
 	//For most media, go to the beginning.
 		S.to({file:'-1'});
@@ -1721,7 +1778,7 @@ pageNext.addEventListener('click',function(event){
 //Update the scrub bar when scrolling
 pageTurn.addEventListener('scroll',function(event){
 	//Set current time to percent scrolled
-	timeUpdate(S.files[S.currentFile].time*(pageTurn.scrollTop/pageTurn.scrollHeight));
+	timeUpdate(S.files[S.currentFile].duration*(pageTurn.scrollTop/pageTurn.scrollHeight));
 	
 	event.stopPropagation();
 });
@@ -1733,35 +1790,57 @@ pageInfinite.addEventListener('scroll',function(){
 	}
 });
 
-///IMAGES///
-//On loading resources, don't show loading
-types.image.addEventListener('load',function(){
-	content.classList.remove('showpony-loading');
-
-	//Preload next files, if allowed
-	for(let i=S.currentFile+1;i<=S.currentFile+S.preloadNext;i++){
-		if(i>=S.files.length) break;
-		
-		var src=(S.files[i].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.files[i].path;
-		
-		var img=new Image();
-		img.src=src;
-		
-		//console.log(i,S.preloadNext,S.currentFile);
-	}
-});
-
-///VIDEO AND AUDIO///
+///FINISHED LOADING///
+types.image.addEventListener('load',function(){content.classList.remove('showpony-loading');S.files[S.currentFile].buffered=true;});
 types.video.addEventListener('canplay',function(){content.classList.remove('showpony-loading');});
 types.audio.addEventListener('canplay',function(){content.classList.remove('showpony-loading');});
+
+//Buffering
+types.video.addEventListener('progress',function(){
+	var bufferedValue=[];
+	var timeRanges=types.video.buffered;
+	
+	for(var i=0;i<timeRanges.length;i++){
+		//If it's the first value, and it's everything
+		if(i===0 && timeRanges.start(0)==0 && timeRanges.end(0)==types.video.duration){
+			bufferedValue=true;
+			break;
+		}
+		
+		bufferedValue.push([timeRanges.start(i),timeRanges.end(i)]);
+	}
+	
+	S.files[S.currentFile].buffered=bufferedValue;
+	
+	getTotalBuffered();
+});
+
+types.audio.addEventListener('progress',function(){
+	var bufferedValue=[];
+	var timeRanges=types.audio.buffered;
+	
+	for(var i=0;i<timeRanges.length;i++){
+		//If it's the first value, and it's everything
+		if(i===0 && timeRanges.start(0)==0 && timeRanges.end(0)==types.audio.duration){
+			bufferedValue=true;
+			break;
+		}
+		
+		bufferedValue.push([timeRanges.start(i),timeRanges.end(i)]);
+	}
+	
+	S.files[S.currentFile].buffered=bufferedValue;
+	
+	getTotalBuffered();
+});
 
 //When we finish playing a video or audio file
 types.video.addEventListener('ended',mediaEnd);
 types.audio.addEventListener('ended',mediaEnd);
 
 //On moving through time, update info and title
-types.audio.addEventListener('timeupdate',timeUpdate);
 types.video.addEventListener('timeupdate',timeUpdate);
+types.audio.addEventListener('timeupdate',timeUpdate);
 
 function updateInfo(pushState){
 	//Update the scrub bar
