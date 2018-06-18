@@ -1587,13 +1587,14 @@ var multimediaFunction={
 					break;
 				case 'play':
 				case 'pause':
-					el[vals[i]]();
-					
 					//Pause the audio if we're paused; it can start playing later
-					if(vals[i]==='play' && S.window.classList.contains('showpony-paused')){
-						el.wasPlaying=true;
-						el.pause();
-					}
+					if(S.window.classList.contains('showpony-paused')){
+						if(vals[i]=='play') el.wasPlaying=true;
+						else{
+							el.wasPlaying=false;
+							el.pause();
+						}
+					}else el[vals[i]]();
 					break;
 				case 'stop':
 					el.currentTime=0;
