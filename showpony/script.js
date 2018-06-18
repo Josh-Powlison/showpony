@@ -639,6 +639,7 @@ function timeUpdate(time){
 	if(!isNaN(time)) types[currentType].currentTime=time;
 	
 	updateInfo();
+	displaySubtitles();
 	
 	//Run custom event for checking time
 	S.window.dispatchEvent(
@@ -660,11 +661,11 @@ function displaySubtitles(){
 		return;
 	}
 	
-	//Image-specific subtitles
-	fetch(S.subtitles[S.currentSubtitles]+S.files[S.currentFile].name+'.vtt')
-	.then(response=>{return response.text();})
-	.then(text=>{
-		if(currentType==='image'){
+	if(S.files[S.currentFile].subtitles){
+		if(currentType==='text'){
+			return;
+		}
+		else if(currentType==='image'){
 			subtitles.innerHTML='';
 			
 			subtitles.width=types.image.naturalWidth;
@@ -682,8 +683,7 @@ function displaySubtitles(){
 			
 			subtitles.style.left=(width-newWidth)/2+'px';
 			
-			var lines=text.split(/\s{3,}/g);
-			console.log(lines);
+			var lines=S.files[S.currentFile].subtitles.split(/\s{3,}/g);
 			for(let i=0;i<lines.length;i++){
 				var block=m('sub','p');
 				
@@ -697,15 +697,13 @@ function displaySubtitles(){
 				block.style.top=input[1]+'%';
 				block.style.height=input[3]-input[1]+'%';
 				
-				console.log(block);
-				
 				subtitles.appendChild(block);
 			}
 		}else if(currentType==='video' || currentType==='audio'){
 			subtitles.style.cssText=null;
 			var currentTime=types[currentType].currentTime;
 			
-			var lines=text.match(/\b.+/ig);
+			var lines=S.files[S.currentFile].subtitles.match(/\b.+/ig);
 			
 			for(let i=0;i<lines.length;i++){
 				if(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[i])){
@@ -715,8 +713,6 @@ function displaySubtitles(){
 						currentTime>=times[0].split(/:/)[1]
 						&& currentTime<=times[1].split(/:/)[1]
 					){
-						console.log("BETWEEN");
-						
 						var newSubtitle='';
 						
 						var ii=i+1;
@@ -725,10 +721,7 @@ function displaySubtitles(){
 							newSubtitle+=lines[ii];
 							
 							ii++;
-							console.log('its true');
 						}
-						
-						console.log('Hey!',newSubtitle);
 						
 						if(subtitles.children.length===0 || subtitles.children[0].innerHTML!==newSubtitle){
 							subtitles.innerHTML='';
@@ -737,7 +730,6 @@ function displaySubtitles(){
 							block.innerHTML=newSubtitle;
 							
 							subtitles.appendChild(block);
-							console.log(block);
 						}
 						
 						break;
@@ -754,8 +746,17 @@ function displaySubtitles(){
 		}else if(currentType==='multimedia'){
 			//We only add subtitles for unexplained audio
 			//Add support later
+			return;
 		}
-	});
+	}else{
+		//If don't have the file
+		fetch(S.subtitles[S.currentSubtitles]+S.files[S.currentFile].name+'.vtt')
+		.then(response=>{return response.text();})
+		.then(text=>{
+			S.files[S.currentFile].subtitles=text;
+			displaySubtitles();
+		});
+	}
 }
 
 function getTotalBuffered(){
@@ -1125,6 +1126,7 @@ function saveFileInfo(files){
 		S.files[i].path=files[i];
 		S.files[i].name=safeFilename(files[i].replace(/(^[^(]+\()|(\)[^)]+$)/g,''),'from');
 		S.files[i].buffered=false;
+		S.files[i].subtitles=false;
 		
 		S.files[i].date=/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.exec(files[i]);
 		
@@ -1904,8 +1906,6 @@ types.image.addEventListener('load',function(){
 	content.classList.remove('showpony-loading');
 	S.files[S.currentFile].buffered=true;
 	getTotalBuffered();
-	
-	displaySubtitles();
 });
 types.video.addEventListener('canplay',function(){
 	content.classList.remove('showpony-loading');
@@ -1975,13 +1975,11 @@ types.video.addEventListener('timeupdate',function(){
 	//Consider how much has already been loaded; this isn't run on first chunk loaded
 	this.dispatchEvent(new CustomEvent('progress'));
 	timeUpdate();
-	displaySubtitles();
 });
 types.audio.addEventListener('timeupdate',function(){
 	//Consider how much has already been loaded; this isn't run on first chunk loaded
 	this.dispatchEvent(new CustomEvent('progress'));
 	timeUpdate();
-	displaySubtitles();
 });
 
 function updateInfo(pushState){
@@ -2293,7 +2291,6 @@ Promise.all([getFiles,getHeyBard]).then(function(start){
 		option.selected=true;
 		option.addEventListener('click',function(){
 			S.currentSubtitles=null;
-			displaySubtitles();
 		});
 		captionsButton.appendChild(option);
 		
@@ -2303,7 +2300,6 @@ Promise.all([getFiles,getHeyBard]).then(function(start){
 			option.value=obj[i];
 			option.addEventListener('click',function(){
 				S.currentSubtitles=this.dataset.value;
-				displaySubtitles();
 			});
 			captionsButton.appendChild(option);
 		}
