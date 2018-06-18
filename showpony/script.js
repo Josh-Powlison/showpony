@@ -1659,14 +1659,15 @@ function safeFilename(string,type){
 ///////////////////////////////////////
 
 var shortcutKeys={
-	32: 	()=>S.input()				//Spacebar
-	,37:	()=>S.to({time:'-10'})		//Left arrow
-	,39:	()=>S.to({time:'+10'})		//Right arrow
-	,36:	()=>S.to({file:'first'})	//Home
-	,35:	()=>S.to({file:'last'})		//End
-	,177:	()=>S.to({file:'-1'})		//Previous
-	,176:	()=>S.to({file:'+1'})		//Next
-	,179:	()=>S.menu()				//Play/pause
+	'Space': 			()=>S.input()
+	,'ArrowLeft':		()=>S.to({time:'-10'})
+	,'ArrowRight':		()=>S.to({time:'+10'})
+	,'Home':			()=>S.to({file:'first'})
+	,'End':				()=>S.to({file:'last'})
+	,'MediaPrevious':	()=>S.to({file:'-1'})
+	,'MediaNext':		()=>S.to({file:'+1'})
+	,'MediaPlayPause':	()=>S.menu()
+	,'f':				()=>S.fullscreen()
 };
 
 //If shortcut keys are enabled
@@ -1684,9 +1685,14 @@ if(S.shortcuts){
 				}
 			}
 			
-			if(shortcutKeys[event.keyCode]){
+			if(shortcutKeys[event.key]
+				&& !event.ctrlKey
+				&& !event.altKey
+				&& !event.shiftKey
+				&& !event.metaKey
+			){
 				event.preventDefault();
-				shortcutKeys[event.keyCode]();
+				shortcutKeys[event.key]();
 			}
 		}
 	);
