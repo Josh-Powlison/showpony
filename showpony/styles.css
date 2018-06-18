@@ -133,6 +133,10 @@
 	user-select:none;
 }
 
+.showpony-info-media{
+	height:1em;
+}
+
 .showpony-overlay:hover
 ,.showpony-overlay:active
 ,.showpony-paused .showpony-overlay{

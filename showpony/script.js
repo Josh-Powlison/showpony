@@ -946,7 +946,7 @@ function replaceInfoText(value,fileNum,current){
 			current:'Undated'
 		}
 		,medium:{
-			current:'<img src="'+S.files[fileNum].medium+'.svg">'
+			current:'<img class="showpony-info-media" src="'+ShowponyFolder+'/'+S.files[fileNum].medium+'.svg">'
 		}
 		,file:{
 			current:	fileNum+1
