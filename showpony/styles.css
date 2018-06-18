@@ -158,7 +158,8 @@ button.showpony-account-button{
 }
 
 .showpony-captions-button{
-
+	background-position:0% 20%;
+	float:right;
 }
 
 .showpony-overlay button:hover{
@@ -242,6 +243,24 @@ button.showpony-account-button{
 
 :-webkit-full-screen:focus{
 	outline:0;
+}
+
+/*Subtitles*/
+.showpony-subtitles{
+	position:absolute;
+}
+
+.showpony-sub{
+	position:absolute;
+	background-color:gray;
+	color:white;
+	overflow:auto;
+	box-sizing:border-box;
+	margin:0;
+	padding:.5em;
+	border:1px solid black;
+	font-size:1.5em;
+	pointer-events:auto;
 }
 
 /***TEXT***/

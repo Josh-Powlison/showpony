@@ -85,6 +85,8 @@ d('remoteSave'		,	true												);
 d('bookmark'		,	'file'												);
 d('preloadNext'		,	1													);
 d('showBuffer'		,	true												);
+d('subtitles'		,	{en:'files/subtitles/en'}							);
+d('currentSubtitles',	null												);
 d('infiniteText'	,	false												);
 d('infiniteImage'	,	false												);
 
@@ -354,15 +356,13 @@ S.to=function(input){
 			;
 		//Image/Audio/Video
 		}else{
-			//Adjust the source
 			thisType.src=src;
 			if((currentType==='video' || currentType==='audio') && !S.window.classList.contains('showpony-paused')){
 				thisType.play();
 			}
-			
 		}
 	}
-	
+
 	//Preload next files, if allowed and/or needed
 	for(let i=S.currentFile+1;i<=S.currentFile+S.preloadNext;i++){
 		if(i>=S.files.length) break;
@@ -592,9 +592,10 @@ var waitForInput=false
 	,overlayBuffer=m('overlay-buffer','canvas')
 	,progress=m('progress')
 	,content=m('content')
+	,subtitles=m('subtitles','div')
 	//Buttons
 	,fullscreenButton=m('button showpony-fullscreen-button','button')
-	,captionsButton=m('captions-button','button')
+	,captionsButton=m('button showpony-captions-button','button')
 	,showponyLogo=m('logo','a')
 	,credits=m('credits','small')
 	,overlay=m('overlay','div')
@@ -618,6 +619,7 @@ var waitForInput=false
 fullscreenButton.alt='Fullscreen';
 fullscreenButton.title='Fullscreen Toggle';
 captionsButton.alt='Closed Captions/Subtitles';
+captionsButton.title='Closed Captions/Subtitles';
 
 showponyLogo.href='https://showpony.heybard.com/';
 showponyLogo.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -197)"><path fill="none" stroke-width="9.5" d="M32.5 245.5v-40.1s-21.9-2.2-21.9 40m56.9.1v-40.1s21.9-2.2 21.9 40"/><circle cx="77.4" cy="275.5" r="9.4" fill="none" stroke-width="7.7"/><circle cx="22.6" cy="275.5" r="9.4" fill="none" stroke-width="7.7"/><path stroke-width=".3" d="M50.1 266.7c-2.4 3-19.1 0-11 8 6.1 5.8 29 2.5 15.2-17-16.4.6-44.4-12.6-15.3-25.7 39.2-17.7 42.5 44.5 23.6 55.6-44.7 26.3-53.5-49-12.5-20.9z"/></g></svg>';
@@ -625,7 +627,7 @@ showponyLogo.target='_blank';
 
 if(S.credits) useIcons(S.credits);
 
-frag([overlayBuffer,progress,overlayText,fullscreenButton,showponyLogo,credits],overlay);
+frag([overlayBuffer,progress,overlayText,fullscreenButton,captionsButton,showponyLogo,credits],overlay);
 
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
@@ -648,6 +650,56 @@ function timeUpdate(time){
 			}
 		)
 	);
+}
+
+function displaySubtitles(subs){
+	subtitles.innerHTML='';
+	
+	if(S.currentSubtitles===null){
+		return;
+	}
+	
+	//Image-specific subtitles
+	fetch(S.subtitles[S.currentSubtitles]+S.files[S.currentFile].name+'.vtt')
+	.then(response=>{return response.text();})
+	.then(text=>{
+		if(currentType==='image'){
+			subtitles.width=types.image.naturalWidth;
+			subtitles.height=types.image.naturalHeight;
+			
+			var height=content.getBoundingClientRect().height;
+			var width=content.getBoundingClientRect().width;
+			var shrinkPercent=height/types.image.naturalHeight;
+			
+			var newHeight=types.image.naturalHeight*shrinkPercent;
+			var newWidth=types.image.naturalHeight*shrinkPercent;
+
+			subtitles.style.height=newHeight+'px';
+			subtitles.style.width=newWidth+'px';
+			
+			subtitles.style.left=(width-newWidth)/2+'px';
+			
+			var lines=text.split(/\s{3,}/g);
+			console.log(lines);
+			for(let i=0;i<lines.length;i++){
+				var block=m('sub','p');
+				
+				var input=lines[i].split(/\n/);
+				block.innerHTML=input[1];
+				
+				input=input[0].match(/(\d|\.)+/g);
+				
+				block.style.left=input[0]+'%';
+				block.style.width=input[2]-input[0]+'%';
+				block.style.top=input[1]+'%';
+				block.style.height=input[3]-input[1]+'%';
+				
+				console.log(block);
+				
+				subtitles.appendChild(block);
+			}
+		}
+	});
 }
 
 function getTotalBuffered(){
@@ -972,7 +1024,6 @@ function POST(obj){
 	var formData=new FormData();
 	formData.append('call',obj.call);
 	formData.append('path',S.get.replace(/\[lang[^\]]*\]/gi,S.language));
-	console.log(S.get.replace(/\[lang[^]]*\]/gi,S.language));
 	formData.append('rel-path',ShowponyRunPage);
 	
 	//Special values, if passed
@@ -1050,7 +1101,6 @@ function saveFileInfo(files){
 		
 		//Return the value in the file or the default duration
 		var get=/[^\s)]+(?=\.[^.]+$)/.exec(files[i]);
-		console.log(get);
 		get=(get ? parseFloat(get[0]) : S.defaultDuration);
 		
 		S.files[i].duration=get;
@@ -1747,7 +1797,16 @@ fullscreenButton.addEventListener(
 
 captionsButton.addEventListener(
 	'click'
-	,event=> event.stopPropagation()
+	,event=>{
+		if(S.currentSubtitles===null){
+			S.currentSubtitles='English';
+		}
+		else{
+			S.currentSubtitles=null;
+		}
+		
+		displaySubtitles();
+	}
 );
 
 content.addEventListener('click',()=>{S.input();});
@@ -1793,6 +1852,8 @@ types.image.addEventListener('load',function(){
 	content.classList.remove('showpony-loading');
 	S.files[S.currentFile].buffered=true;
 	getTotalBuffered();
+	
+	displaySubtitles(text);
 });
 types.video.addEventListener('canplay',function(){
 	content.classList.remove('showpony-loading');
@@ -1827,8 +1888,6 @@ types.video.addEventListener('progress',function(){
 		}
 		
 		bufferedValue.push([timeRanges.start(i),timeRanges.end(i)]);
-		console.log(timeRanges.start(i),timeRanges.end(i));
-		console.log(bufferedValue);
 	}
 	
 	S.files[S.currentFile].buffered=bufferedValue;
@@ -1837,7 +1896,6 @@ types.video.addEventListener('progress',function(){
 });
 
 types.audio.addEventListener('progress',function(){
-	console.log("Run!");
 	var bufferedValue=[];
 	var timeRanges=types.audio.buffered;
 	
@@ -1849,8 +1907,6 @@ types.audio.addEventListener('progress',function(){
 		}
 		
 		bufferedValue.push([timeRanges.start(i),timeRanges.end(i)]);
-		console.log(timeRanges.start(i),timeRanges.end(i));
-		console.log(bufferedValue);
 	}
 	
 	S.files[S.currentFile].buffered=bufferedValue;
@@ -1926,7 +1982,7 @@ var getFiles=new Promise(function(resolve,reject){
 	S.window.innerHTML='';
 
 	//And fill it up again!
-	frag([content,overlay],S.window);
+	frag([content,subtitles,overlay],S.window);
 	
 	//If getting, run a promise to check success
 	if(typeof(S.get)=='string'){
@@ -2045,12 +2101,10 @@ var getHeyBard=new Promise((resolve,reject)=>{
 				var saveValue=(S.bookmark==='time' ? Math.floor(getCurrentTime()) : S.currentFile);
 				localStorage.setItem(S.saveId,saveValue);
 				
-				console.log('Saved ',saveValue,' locally!');
 				return saveValue;
 			}
 			
 			bookmark=parseInt(localStorage.getItem(S.saveId));
-			console.log(localStorage.getItem(S.saveId),bookmark,'SAVE LOCAL BABY',S.saveId);
 		}
 		
 		if(typeof(S.saveBookmark)!=='undefined'){
@@ -2084,17 +2138,13 @@ var getHeyBard=new Promise((resolve,reject)=>{
 	
 	document.querySelector('[src="https://heybard.com/apis/accounts/script.js"').addEventListener('load',function(){
 		resolve(getBookmark());
-		console.log("LOADED");
 	});
 });
 
 //Get bookmarks going
 Promise.all([getFiles,getHeyBard]).then(function(start){
 	//Start at the first legit number: start, input.start, or the last file
-	console.log("STARTING LOCALLY BABY",start,S.window);
 	start=start[1];
-	
-
 	
 	S.start=(
 		!isNaN(start)
