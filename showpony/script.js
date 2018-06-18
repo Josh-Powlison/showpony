@@ -82,7 +82,6 @@ d('shortcuts'		,	'focus'												);
 d('saveId'			,	location.hostname.substring(0,20)					);
 d('localSave'		,	false												);
 d('remoteSave'		,	true												);
-d('bookmark'		,	'file'												);
 d('preloadNext'		,	1													);
 d('showBuffer'		,	true												);
 d('subtitles'		,	null												);
@@ -369,15 +368,11 @@ S.to=function(input){
 		if(i>=S.files.length) break;
 		if(S.files[i].buffered!==false) continue;
 		
-		//Don't do this for video or audio (currently)
-		if(S.files[i].medium==='video' || S.files[i].medium==='audio') continue;
-		
 		//How we get the file depends on whether or not it's private
 		var src=(S.files[i].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.files[i].path;
 		
 		S.files[i].buffered='buffering';
 		
-		//Preload next file, if there is a next file
 		fetch(src).then(()=>{
 			S.files[i].buffered=true;
 			getTotalBuffered();
@@ -558,7 +553,9 @@ S.input=function(){
 			//Display all letters
 			content.querySelectorAll('.showpony-char').forEach(function(key){
 				//Remove the delay so they're displayed immediately
+				//console.log('try to delay!',key.outerHTML.replace(/animation-delay:[^;]+;/,''));
 				key.style.animationDelay=null;
+				//key.outerHTML=key.outerHTML.replace(/animation-delay:[^;]+;/,'');
 			});
 			
 			//console.log('Animations 2');
@@ -2107,11 +2104,7 @@ function updateInfo(pushState){
 		//Choose a ? if one doesn't exist or it exists behind the query
 		newQuery=(newURL.indexOf('?')===-1 || new RegExp('\\?(?='+S.query+'=)').test(newURL)) ? '?' : '&';
 		
-		newQuery+=S.query+'='+(
-			S.bookmark==='time'
-			? (Math.floor(getCurrentTime()))	//Time
-			: (S.currentFile+1)					//File
-		);
+		newQuery+=S.query+'='+(Math.floor(getCurrentTime()));
 		
 		//Replace either the case or the end
 		newURL=newURL.replace(new RegExp('(((\\?|&)'+S.query+')=?[^&#]+)|(?=#)|$'),newQuery);
@@ -2242,7 +2235,7 @@ var getHeyBard=new Promise((resolve,reject)=>{
 						//Set a function to save bookmarks
 						S.saveBookmark=function(){
 							//Pass either the time or the current file, whichever is chosen by the client
-							return HeyBardConnection.saveBookmark(S.bookmark==='time' ? Math.floor(getCurrentTime()) : S.currentFile);
+							return HeyBardConnection.saveBookmark(Math.floor(getCurrentTime()));
 						}
 					}else{
 					//If an account doesn't exist for the user
@@ -2276,7 +2269,7 @@ var getHeyBard=new Promise((resolve,reject)=>{
 		if(bookmark===null && S.localSave){
 			//Set a function to save bookmarks
 			S.saveBookmark=function(){
-				var saveValue=(S.bookmark==='time' ? Math.floor(getCurrentTime()) : S.currentFile);
+				var saveValue=Math.floor(getCurrentTime());
 				localStorage.setItem(S.saveId,saveValue);
 				
 				return saveValue;
@@ -2347,19 +2340,11 @@ Promise.all([getFiles,getHeyBard]).then(function(start){
 				
 				//If we found a page
 				if(page){
-					if(S.bookmark==='time'){
-						page=parseInt(page[0].split('=')[1]);
-						
-						if(page===getCurrentTime()) return;
+					page=parseInt(page[0].split('=')[1]);
 					
-						S.to({time:page,popstate:true,scrollToTop:false});
-					}else{
-						page=parseInt(page[0].split('=')[1])-1;
-						
-						if(page===S.currentFile) return;
-					
-						S.to({file:page,popstate:true,scrollToTop:false});
-					}
+					if(page===getCurrentTime()) return;
+				
+					S.to({time:page,popstate:true,scrollToTop:false});
 				}
 			}
 		);
@@ -2375,15 +2360,13 @@ Promise.all([getFiles,getHeyBard]).then(function(start){
 			,reload:true
 		};
 		
-		if(S.bookmark==='time') passObj.time=(page!==null) ? page : S.start;
-		else passObj.file=(page!==null) ? page-1 : S.start;
+		passObj.time=(page!==null) ? page : S.start;
 		
 		S.to(passObj);
 	//Start
 	}else{
 		//Use time or file to bookmark, whichever is requested
-		if(S.bookmark==='time') S.to({time:S.start,scrollToTop:false});
-		else S.to({file:S.start,scrollToTop:false});
+		S.to({time:S.start,scrollToTop:false});
 	}
 	
 	//Set input to null in hopes that garbage collection will come pick it up

@@ -70,6 +70,7 @@
 		,subtitles:{
 			English:'examples/entreprenewb/subtitles/'
 		}
+		,defaultDuration:1
 	};
 	showponies.comic=new Showpony(showponyInputs.comic);
 </script>
@@ -89,7 +90,6 @@
 			English:'examples/sintel/'
 		}
 		,saveId:"showpony-site-sintel"
-		,bookmark:"time"
 		,cover:{
 			image:'examples/sintel/cover.jpg'
 			,content:'Sintel'
@@ -128,7 +128,6 @@
 		,start:0
 		,saveId:"showpony-site-lttp"
 		,credits:"Josh Powlison"
-		,bookmark:"time"
 		,showBuffer:false
 		,cover:{
 			image:'resources/backgrounds/forest.jpg'
@@ -148,12 +147,12 @@
 		,query:false
 		,start:0
 		,saveId:'showpony-site-aobas'
-		,bookmark:'time'
 		,remoteSave:false
 		,localSave:false
 		,subtitles:{
 			'English':'examples/bob-and-susie/subtitles/'
 		}
+		,preloadNext:0
 		,cover:{
 			content:'<span style="font-size:.75em;">The Adventures of</span><br>Bob and Susie'
 		}
