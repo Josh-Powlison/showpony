@@ -248,6 +248,8 @@ button.showpony-account-button{
 /*Subtitles*/
 .showpony-subtitles{
 	position:absolute;
+	width:100%;
+	height:100%;
 }
 
 .showpony-sub{
@@ -261,6 +263,11 @@ button.showpony-account-button{
 	border:1px solid black;
 	font-size:1.5em;
 	pointer-events:auto;
+	
+	left:10%;
+	width:80%;
+	top:70%;
+	height:20%;
 }
 
 /***TEXT***/

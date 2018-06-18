@@ -652,9 +652,7 @@ function timeUpdate(time){
 	);
 }
 
-function displaySubtitles(subs){
-	subtitles.innerHTML='';
-	
+function displaySubtitles(){
 	if(S.currentSubtitles===null){
 		return;
 	}
@@ -664,6 +662,8 @@ function displaySubtitles(subs){
 	.then(response=>{return response.text();})
 	.then(text=>{
 		if(currentType==='image'){
+			subtitles.innerHTML='';
+			
 			subtitles.width=types.image.naturalWidth;
 			subtitles.height=types.image.naturalHeight;
 			
@@ -697,6 +697,56 @@ function displaySubtitles(subs){
 				console.log(block);
 				
 				subtitles.appendChild(block);
+			}
+		}else if(currentType==='video' || currentType==='audio'){
+			subtitles.style.cssText=null;
+			var currentTime=types[currentType].currentTime;
+			
+			var lines=text.match(/\b.+/ig);
+			
+			for(let i=0;i<lines.length;i++){
+				if(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[i])){
+					var times=lines[i].split(/\s*-->\s*/);
+					//If between both times
+					if(
+						currentTime>=times[0].split(/:/)[1]
+						&& currentTime<=times[1].split(/:/)[1]
+					){
+						console.log("BETWEEN");
+						
+						var newSubtitle='';
+						
+						var ii=i+1;
+						while(!(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[ii])) && ii<lines.length){
+							if(newSubtitle.length) newSubtitle+='<br>';
+							newSubtitle+=lines[ii];
+							
+							ii++;
+							console.log('its true');
+						}
+						
+						console.log('Hey!',newSubtitle);
+						
+						if(subtitles.children.length===0 || subtitles.children[0].innerHTML!==newSubtitle){
+							subtitles.innerHTML='';
+						
+							var block=m('sub','p');
+							block.innerHTML=newSubtitle;
+							
+							subtitles.appendChild(block);
+							console.log(block);
+						}
+						
+						break;
+					}
+					
+					if(currentTime<times[0].split(/:/)[0] || i==lines.length-1){
+						subtitles.innerHTML='';
+						break;
+					}
+				}
+				
+				if(i==lines.length-1) subtitles.innerHTML='';
 			}
 		}
 	});
@@ -1853,7 +1903,7 @@ types.image.addEventListener('load',function(){
 	S.files[S.currentFile].buffered=true;
 	getTotalBuffered();
 	
-	displaySubtitles(text);
+	displaySubtitles();
 });
 types.video.addEventListener('canplay',function(){
 	content.classList.remove('showpony-loading');
@@ -1923,11 +1973,13 @@ types.video.addEventListener('timeupdate',function(){
 	//Consider how much has already been loaded; this isn't run on first chunk loaded
 	this.dispatchEvent(new CustomEvent('progress'));
 	timeUpdate();
+	displaySubtitles();
 });
 types.audio.addEventListener('timeupdate',function(){
 	//Consider how much has already been loaded; this isn't run on first chunk loaded
 	this.dispatchEvent(new CustomEvent('progress'));
 	timeUpdate();
+	displaySubtitles();
 });
 
 function updateInfo(pushState){
