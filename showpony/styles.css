@@ -33,7 +33,7 @@
 ,.showpony-paused .showpony-content, .showpony-paused  .showpony-content *{
 	transition:none !important; /*Disables/automatically runs to the end point of transitions while loading*/
 	animation-play-state:paused !important; /*Disables general animations and text animations, so we freeze while loading*/
-	animation-duration:0s !important; /*The goal here is that animations will go to the end; long animations won't play through and mess up */
+	/*animation-duration:0s !important; *//*The goal here is that animations will go to the end; long transitions won't play through and mess up */
 }
 
 @keyframes spin{
@@ -63,7 +63,7 @@
 }
 
 .showpony-cover>p{
-	background-color:#0000008f;
+	background-color:rgba(0,0,0,0.5);
 	box-sizing:border-box;
 	padding:1em;
 	transition:transform .25s;
@@ -182,7 +182,7 @@
 	pointer-events:auto;
 	cursor:pointer;
 	background-size:cover;
-	background-color:#00000000;
+	background-color:rgba(0,0,0,0);
 	transition:opacity .1s;
 }
 
@@ -216,6 +216,7 @@ button.showpony-account-button{
 
 .showpony-captions-button{
 	background-position:0% 20%;
+	background-color:black;
 	float:right;
 	border:none;
 	width:5rem;
@@ -223,13 +224,13 @@ button.showpony-account-button{
 	pointer-events:auto;
 	cursor:pointer;
 	background-size:cover;
-	background-color:#00000000;
+	background-color:none;
 	transition:opacity .1s;
 	color:white;
 }
 
 .showpony-captions-button option{
-	color:black;
+	color:white;
 }
 
 .showpony-overlay button:hover{
@@ -240,7 +241,6 @@ button.showpony-account-button{
 	width:100%;
 	height:100%;
 	position:absolute;
-	transition:all 1s;
 	
 	-ms-user-select:none;
 	-moz-user-select:none;
@@ -335,7 +335,7 @@ button.showpony-account-button{
 
 .showpony-sub{
 	position:absolute;
-	background-color:#000000a3;
+	background-color:rgba(0,0,0,0.64);
 	color:white;
 	overflow:auto;
 	box-sizing:border-box;
@@ -417,7 +417,6 @@ button.showpony-account-button{
 	max-height:100%;
 	overflow:auto;
 	opacity:1;
-	transition:all 1s;
 	
 	user-select:none;
 	-webkit-user-select:none;
@@ -440,7 +439,6 @@ button.showpony-account-button{
 	background-position:50% 50%;
 	background-repeat:no-repeat;
 	background-size:cover;
-	transition:all 1s;
 }
 
 .showpony-character{

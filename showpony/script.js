@@ -220,6 +220,7 @@ S.to=function(input){
 	//Multimedia engine resets
 		content.style.cssText=null; //Remove any styles applied to the content
 		waitForInput=false;
+		styles.innerHTML='';
 		if(waitTimer.remaining>0){
 			waitTimer.end();
 		}
@@ -271,7 +272,6 @@ S.to=function(input){
 		if(currentType==='multimedia'){
 			
 			runTo=keyframes[Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].duration))];
-			
 			runMM(0);
 		}else{
 			//If text, scroll to specified spot
@@ -539,6 +539,9 @@ S.input=function(){
 			waitTimer.end();
 		}
 		
+		//End animations on going to the next frame
+		for(var key in S.objects) S.objects[key].dispatchEvent(new Event('animationend'));
+		
 		//Remove the continue notice
 		continueNotice.remove();
 		
@@ -594,6 +597,7 @@ var waitForInput=false
 	,progress=m('progress')
 	,content=m('content')
 	,subtitles=m('subtitles','div')
+	,styles=document.createElement('style')
 	//Buttons
 	,fullscreenButton=m('button showpony-fullscreen-button','button')
 	,captionsButton=m('captions-button','select')
@@ -623,9 +627,27 @@ fullscreenButton.title='Fullscreen Toggle';
 captionsButton.alt='Closed Captions/Subtitles';
 captionsButton.title='Closed Captions/Subtitles';
 
+styles.type='text/css';
+
 showponyLogo.href='https://showpony.heybard.com/';
 showponyLogo.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -197)"><path fill="none" stroke-width="9.5" d="M32.5 245.5v-40.1s-21.9-2.2-21.9 40m56.9.1v-40.1s21.9-2.2 21.9 40"/><circle cx="77.4" cy="275.5" r="9.4" fill="none" stroke-width="7.7"/><circle cx="22.6" cy="275.5" r="9.4" fill="none" stroke-width="7.7"/><path stroke-width=".3" d="M50.1 266.7c-2.4 3-19.1 0-11 8 6.1 5.8 29 2.5 15.2-17-16.4.6-44.4-12.6-15.3-25.7 39.2-17.7 42.5 44.5 23.6 55.6-44.7 26.3-53.5-49-12.5-20.9z"/></g></svg>';
 showponyLogo.target='_blank';
+
+S.window.addEventListener('animationend',function(){
+	var updateStyle=new RegExp('@keyframes window{100%{[^}]*}}','i').exec(styles.innerHTML);
+	
+	var styleAdd=/[^{]+;/.exec(updateStyle);
+	
+	if(styleAdd) this.style.cssText+=styleAdd[0];
+})
+
+content.addEventListener('animationend',function(){
+	var updateStyle=new RegExp('@keyframes content{100%{[^}]*}}','i').exec(styles.innerHTML);
+	
+	var styleAdd=/[^{]+;/.exec(updateStyle);
+	
+	if(styleAdd) this.style.cssText+=styleAdd[0];
+})
 
 if(S.credits) useIcons(S.credits);
 
@@ -1298,7 +1320,17 @@ function runMM(inputNum){
 	}
 	
 	//If the textbox hasn't been created, create it!
-	if(!S.objects[multimediaSettings.textbox]) content.appendChild(S.objects[multimediaSettings.textbox]=m('textbox'));
+	if(!S.objects[multimediaSettings.textbox]){
+		content.appendChild(S.objects[multimediaSettings.textbox]=m('textbox'));
+		
+		S.objects[multimediaSettings.textbox].addEventListener('animationend',function(){
+			var updateStyle=new RegExp('@keyframes '+multimediaSettings.textbox+'{100%{[^}]*}}','i').exec(styles.innerHTML);
+			
+			var styleAdd=/[^{]+;/.exec(updateStyle);
+			
+			if(styleAdd) this.style.cssText+=styleAdd[0];
+		})
+	}
 	
 	//If no text was passed, empty the textbox and continue
 	if(typeof(text)==='undefined'){
@@ -1658,6 +1690,21 @@ var multimediaFunction={
 		//Go to the next line
 		runMM();
 	}
+	,'an':vals=>{
+		//If running to, add styles without implementing animation
+		if(S.currentLine<runTo){
+			S.objects[vals[1]].style.cssText+=vals[3];
+		}else{
+			var keyframes='@keyframes '+[vals[1]]+'{100%{'+vals[3]+'}}';
+		
+			//Either replace existing keyframes or append to the end
+			styles.innerHTML=styles.innerHTML.replace(new RegExp('(@keyframes '+vals[1]+'{100%{[^}]*}})|$'),keyframes);
+			S.objects[vals[1]].style.animation=[vals[1]]+' '+[vals[2]]+' forwards';
+		}
+		
+		//Go to the next line
+		runMM();
+	}
 	,'ch':vals=>{
 		//Get the folder, which is the character name. Anything after a hash is an id; it's not a part of the folder name.
 		var folder=vals[1].split('#')[0];
@@ -1665,6 +1712,14 @@ var multimediaFunction={
 		//If an object with the name doesn't exist, make it!
 		if(!S.objects[vals[1]]){
 			content.appendChild(S.objects[vals[1]]=m('character'));
+			
+			S.objects[vals[1]].addEventListener('animationend',function(){
+				var updateStyle=new RegExp('@keyframes '+vals[1]+'{100%{[^}]*}}','i').exec(styles.innerHTML);
+				
+				var styleAdd=/[^{]+;/.exec(updateStyle);
+				
+				if(styleAdd) this.style.cssText+=styleAdd[0];
+			})
 		}
 		
 		//If we're buffering, add this character listing to the buffer so it's not deleted later
@@ -1736,15 +1791,35 @@ var multimediaFunction={
 			}
 		}
 		
-		//If a 4th value exists, adjust 'left'
-		if(vals[3]) S.objects[vals[1]].style.left=vals[3];
+		//If a 4th value exists, adjust 'left' with animation
+		if(vals[3]){
+			if(S.currentLine<runTo){
+				S.objects[vals[1]].style.left=vals[3];
+			}else{
+				var keyframes='@keyframes '+[vals[1]]+'{100%{left:'+vals[3]+';}}';
+			
+				//Either replace existing keyframes or append to the end
+				styles.innerHTML=styles.innerHTML.replace(new RegExp('(@keyframes '+vals[1]+'{100%{[^}]*}})|$'),keyframes);
+				S.objects[vals[1]].style.animation=[vals[1]]+' 1s forwards';
+			}
+		}
 		
 		//Go to the next line
 		runMM();
 	}
 	,'bg':vals=>{
 		//If the background doesn't exist, make it
-		if(!S.objects[vals[1]]) content.appendChild(S.objects[vals[1]]=m('background'));
+		if(!S.objects[vals[1]]){
+			content.appendChild(S.objects[vals[1]]=m('background'));
+			
+			S.objects[vals[1]].addEventListener('animationend',function(){
+				var updateStyle=new RegExp('@keyframes '+vals[1]+'{100%{[^}]*}}','i').exec(styles.innerHTML);
+				
+				var styleAdd=/[^{]+;/.exec(updateStyle);
+				
+				if(styleAdd) this.style.cssText+=styleAdd[0];
+			})
+		}
 		
 		//If we're buffering, add it to the buffer so it's not deleted later
 		if(runTo) objectBuffer[vals[1]]=S.objects[vals[1]];
@@ -1878,8 +1953,8 @@ overlay.addEventListener('mousedown',function(event){if(event.target===this) scr
 overlay.addEventListener('touchend',userScrub);
 
 //On dragging
-window.addEventListener('mousemove',function(){userScrub(event,true);});
-overlay.addEventListener('touchmove',function(){userScrub(event,true);});
+window.addEventListener('mousemove',function(event){userScrub(event,true);});
+overlay.addEventListener('touchmove',function(event){userScrub(event,true);});
 
 //Menu buttons
 fullscreenButton.addEventListener(
@@ -2085,7 +2160,7 @@ var getFiles=new Promise(function(resolve,reject){
 	}
 
 	//And fill it up again!
-	frag([content,subtitles,overlay],S.window);
+	frag([styles,content,subtitles,overlay],S.window);
 	
 	//If getting, run a promise to check success
 	if(typeof(S.get)=='string'){
@@ -2335,7 +2410,7 @@ Promise.all([getFiles,getHeyBard]).then(function(start){
 			option.innerHTML=obj[i];
 			option.value=obj[i];
 			option.addEventListener('click',function(){
-				S.currentSubtitles=this.dataset.value;
+				S.currentSubtitles=this.value;
 			});
 			captionsButton.appendChild(option);
 		}

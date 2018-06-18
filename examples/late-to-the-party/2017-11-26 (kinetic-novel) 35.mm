@@ -33,8 +33,12 @@
 [susan]{1.5,,,shout}DANG IT BEN!
 >	TB	main
 >	CH	susan	angry	100%
->	CH	ben	 	scared	100%
+>	CH	ben		scared	100%
+>	AN	main	.2s	bottom:-5em;opacity:0;
+>	WT	.2
+>	ST	main	bottom:initial;top:0;height:100%;text-align:center;opacity:0;
+>	AN	main	3s	opacity:1;
 
->	WT	1
->	ST	main	top:0;height:100%;text-align:center;
-{,0,,fade}Writer#Josh Powlison##Characters#konett (cosmickonett.tumblr.com) (under CC-BY-3.0)##{.5,,,}Go to the menu at the top of the screen and drag to go to any place in the kinetic novel!
+>	WT	3
+
+>	TB	main	{,,,fade}Writer#Josh Powlison##Characters#konett (cosmickonett.tumblr.com) (under CC-BY-3.0)##{.5,,,}Go to the menu at the top of the screen and drag to go to any place in the kinetic novel!

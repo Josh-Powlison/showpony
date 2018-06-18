@@ -18,10 +18,6 @@ document.getElementById("show-audio").addEventListener("click",function(){
 	chooseStory('audio');
 });
 
-document.getElementById("show-multimedia").addEventListener("click",function(){
-	chooseStory('multimedia');
-});
-
 console.log("HEEEEEEEEEEEEY");
 
 function chooseStory(id){
@@ -58,7 +54,6 @@ function chooseStory(id){
 		,"kn":"kinetic novel"
 		,"audio":"dramatized audiobook"
 		,"video":"video series"
-		,"multimedia":"multimedia story"
 	}[id];
 	
 	var container=document.createElement("span");

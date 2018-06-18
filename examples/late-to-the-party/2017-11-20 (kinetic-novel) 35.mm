@@ -6,12 +6,13 @@
 >	CH	ben		habit	25%
 >	CH	susan	angry	-100%
 
->	ST	content	transition:filter 0s;filter:brightness(0);
+>	ST	content	filter:brightness(0);
 
 >	WT	.1
->	ST	content	transition:filter 1s;filter:brightness(1);
+>	AN	content	2s	filter:brightness(1);
 
->	WT	1
+>	WT	2
+>	ST	content	filter:brightness(1);
 
 >	CH	susan	angry	-25%
 [susan]{,,,shout}What are you doing out here?! Everyone's looking for you, it's time to sing you Happy Birthday!
