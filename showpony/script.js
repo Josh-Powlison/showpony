@@ -595,7 +595,7 @@ var waitForInput=false
 	,subtitles=m('subtitles','div')
 	//Buttons
 	,fullscreenButton=m('button showpony-fullscreen-button','button')
-	,captionsButton=m('button showpony-captions-button','button')
+	,captionsButton=m('captions-button','select')
 	,showponyLogo=m('logo','a')
 	,credits=m('credits','small')
 	,overlay=m('overlay','div')
@@ -1849,19 +1849,15 @@ fullscreenButton.addEventListener(
 	}
 );
 
-captionsButton.addEventListener(
-	'click'
-	,event=>{
-		if(S.currentSubtitles===null){
-			S.currentSubtitles='English';
+if(S.subtitles){
+	captionsButton.addEventListener(
+		'change'
+		,function(){
+			S.currentSubtitles=this.options[this.selectedIndex].value==='None' ? null : this.value;
+			displaySubtitles();
 		}
-		else{
-			S.currentSubtitles=null;
-		}
-		
-		displaySubtitles();
-	}
-);
+	);
+}else captionsButton.remove();
 
 content.addEventListener('click',()=>{S.input();});
 
@@ -2262,6 +2258,33 @@ Promise.all([getFiles,getHeyBard]).then(function(start){
 	input=null;
 	
 	//We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
+	
+	if(S.subtitles){
+		var obj=Object.keys(S.subtitles);
+		
+		//Add captions to options
+		
+		var option=m('captions-option','option');
+		option.innerHTML='None';
+		option.value='None';
+		option.selected=true;
+		option.addEventListener('click',function(){
+			S.currentSubtitles=null;
+			displaySubtitles();
+		});
+		captionsButton.appendChild(option);
+		
+		for(let i=0;i<obj.length;i++){
+			let option=m('captions-option','option');
+			option.innerHTML=obj[i];
+			option.value=obj[i];
+			option.addEventListener('click',function(){
+				S.currentSubtitles=this.dataset.value;
+				displaySubtitles();
+			});
+			captionsButton.appendChild(option);
+		}
+	}
 	
 	//Send an event to let the user know that Showpony has started up!
 	S.window.dispatchEvent(

@@ -160,6 +160,19 @@ button.showpony-account-button{
 .showpony-captions-button{
 	background-position:0% 20%;
 	float:right;
+	border:none;
+	width:5rem;
+	height:3rem;
+	pointer-events:auto;
+	cursor:pointer;
+	background-size:cover;
+	background-color:#00000000;
+	transition:opacity .1s;
+	color:white;
+}
+
+.showpony-captions-button option{
+	color:black;
 }
 
 .showpony-overlay button:hover{
@@ -246,6 +259,16 @@ button.showpony-account-button{
 }
 
 /*Subtitles*/
+.showpony-captions-options{
+	color:white;
+	display:flex;
+	flex-direction:column;
+}
+
+.showpony-captions-option{
+	color:white;
+}
+
 .showpony-subtitles{
 	position:absolute;
 	width:100%;
