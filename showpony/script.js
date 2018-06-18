@@ -87,6 +87,7 @@ d('preloadNext'		,	1													);
 d('showBuffer'		,	true												);
 d('subtitles'		,	null												);
 d('currentSubtitles',	null												);
+d('cover'			,	null												);
 d('infiniteText'	,	false												);
 d('infiniteImage'	,	false												);
 
@@ -599,6 +600,7 @@ var waitForInput=false
 	,showponyLogo=m('logo','a')
 	,credits=m('credits','small')
 	,overlay=m('overlay','div')
+	,cover=m('cover','div')
 	,types={
 		image:m('block','img')
 		,audio:m('block','audio')
@@ -2032,6 +2034,21 @@ var getFiles=new Promise(function(resolve,reject){
 	
 	//Empty the current window
 	S.window.innerHTML='';
+	
+	if(S.cover){
+		if(S.cover.image) cover.style.backgroundImage='url("'+S.cover.image+'")';
+		if(S.cover.content){
+			//Assume surrounding <p> tags if it doesn't include surrounding HTML tags
+			if(/^<[^>]+>.+<\/[^>]+>$/.test(S.cover.content)) cover.innerHTML=S.cover.content;
+			else cover.innerHTML='<p>'+S.cover.content+'</p>';
+		}
+		S.window.appendChild(cover);
+		
+		cover.addEventListener('click',function(){
+			S.menu(null,'play');
+			this.remove();
+		});
+	}
 
 	//And fill it up again!
 	frag([content,subtitles,overlay],S.window);
@@ -2175,9 +2192,15 @@ var getHeyBard=new Promise((resolve,reject)=>{
 		return bookmark;
 	}
 	
+	var bookmark=getBookmark();
+	
+	if(bookmark!==null){
+		cover.remove();
+	}
+	
 	//If it's finished loading, we're good!
 	if(!S.remoteSave || typeof HeyBard==='function'){
-		resolve(getBookmark());
+		resolve(bookmark);
 		return;
 	}
 	
@@ -2189,7 +2212,7 @@ var getHeyBard=new Promise((resolve,reject)=>{
 	}
 	
 	document.querySelector('[src="https://heybard.com/apis/accounts/script.js"').addEventListener('load',function(){
-		resolve(getBookmark());
+		resolve(bookmark);
 	});
 });
 

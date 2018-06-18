@@ -90,6 +90,10 @@
 		}
 		,saveId:"showpony-site-sintel"
 		,bookmark:"time"
+		,cover:{
+			image:'examples/sintel/cover.jpg'
+			,content:'Sintel'
+		}
 	};
 	showponies.video=new Showpony(showponyInputs.video);
 </script>
@@ -126,6 +130,10 @@
 		,credits:"Josh Powlison"
 		,bookmark:"time"
 		,showBuffer:false
+		,cover:{
+			image:'resources/backgrounds/forest.jpg'
+			,content:'Late to the Party'
+		}
 	};
 	showponies.kn=new Showpony(showponyInputs.kn);
 </script>
@@ -142,9 +150,12 @@
 		,saveId:'showpony-site-aobas'
 		,bookmark:'time'
 		,remoteSave:false
-		,localSave:true
+		,localSave:false
 		,subtitles:{
 			'English':'examples/bob-and-susie/subtitles/'
+		}
+		,cover:{
+			content:'<span style="font-size:.75em;">The Adventures of</span><br>Bob and Susie'
 		}
 	};
 	showponies.audio=new Showpony(showponyInputs.audio);
