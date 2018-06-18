@@ -929,49 +929,80 @@ function replaceInfoText(value,fileNum,current){
 		//Add the times of previous videos to get the actual time in the piece
 		for(let i=0;i<S.currentFile;i++) currentTime+=S.files[i].duration;
 		
-		var inputPercent=currentTime / S.duration
-			,newPart=S.currentFile;
+		var inputPercent=currentTime / S.duration;
 			
 		var current=Math.floor(inputPercent*S.duration)
 			,left=S.duration-Math.floor(inputPercent*S.duration)
 		;
-	}else var left=S.duration-current;
+		
+		fileNum=S.currentFile;
+	}else{
+		var left=S.duration-current;
+		var inputPercent=current/S.duration;
+	}
+	
+	var fileMedium=S.files[fileNum].medium;
+	
+	var time=0;
+	for(var i=0;i<S.files.length;i++){
+		if(current<time+S.files[i].duration){
+			
+			var currentThis=current-time;
+			var leftThis=S.files[i].duration-currentThis;
+			var inputPercentThis=currentThis/S.files[i].duration;
+			break;
+		}
+		
+		time+=S.files[i].duration;
+	}
 	
 	//Save all the values to instantly pass them through
 	var values={
 		name:{
-			current:S.files[fileNum].name
+			currentAll:		S.files[fileNum].name
 		}
 		,date:{
-			current:'Undated'
+			currentAll:		'Undated'
 		}
 		,medium:{
-			current:'<span class="showpony-info-media showpony-info-'+S.files[fileNum].medium+'"></span>'
+			currentAll:		'<span class="showpony-info-media showpony-info-'+fileMedium+'"></span>'
 		}
 		,file:{
-			current:	fileNum+1
-			,left:		S.files.length-(fileNum+1)
-			,total:		S.files.length
+			currentAll:		fileNum+1
+			,leftAll:		S.files.length-(fileNum+1)
+			,totalAll:		S.files.length
 		}
 		,percent:{
-			current:	(inputPercent*100)|0
-			,left:		((1-inputPercent)*100)|0
-			,total:		100
+			currentAll:		(inputPercent*100)|0
+			,leftAll:		((1-inputPercent)*100)|0
+			,totalAll:		100
+			,currentThis:	(inputPercentThis*100)|0
+			,leftThis:		((1-inputPercentThis)*100)|0
+			,totalThis:		100
 		}
 		,hours:{
-			current:	(current / 3600)|0
-			,left:		(left / 3600)|0
-			,total:		(S.duration / 3600)|0
+			currentAll:		(current / 3600)|0
+			,leftAll:		(left / 3600)|0
+			,totalAll:		(S.duration / 3600)|0
+			,currentThis:	(currentThis / 3600)|0
+			,leftThis:		(leftThis / 3600)|0
+			,totalThis:		(S.files[fileNum].duration / 3600)|0
 		}
 		,minutes:{
-			current:	((current % 3600) / 60)|0
-			,left:		((left % 3600) / 60)|0
-			,total:		((S.duration % 3600) / 60)|0
+			currentAll:		((current % 3600) / 60)|0
+			,leftAll:		((left % 3600) / 60)|0
+			,totalAll:		((S.duration % 3600) / 60)|0
+			,currentThis:	((currentThis % 3600) / 60)|0
+			,leftThis:		((leftThis % 3600) / 60)|0
+			,totalThis:		((S.files[fileNum].duration % 3600) / 60)|0
 		}
 		,seconds:{
-			current:	(current % 60)|0
-			,left:		(left % 60)|0
-			,total:		(S.duration % 60)|0
+			currentAll:		(current % 60)|0
+			,leftAll:		(left % 60)|0
+			,totalAll:		(S.duration % 60)|0
+			,currentThis:	(currentThis % 60)|0
+			,leftThis:		(leftThis % 60)|0
+			,totalThis:		(S.files[fileNum].duration % 60)|0
 		}
 	}
 	
@@ -1016,7 +1047,11 @@ function replaceInfoText(value,fileNum,current){
 		
 		//Get the value type
 		if(/left|remain/i.test(input)) value='left';
-		else if(/total|all/i.test(input)) value='total';
+		else if(/total/i.test(input)) value='total';
+		
+		//Get the modifier
+		if(/this/i.test(input)) value+='This';
+		else value+='All';
 		
 		//Return the value
 		return String(values[type][value]).padStart(
