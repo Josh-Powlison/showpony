@@ -133,6 +133,7 @@ var propertyInfo={
 	,localSave:"Save user bookmarks locally. If the user loads the webpage without a query, the bookmark will automatically be loaded. Defaults to <em>false</em>"
 	,bookmark:"<em>'file'</em> means queries and bookmarks are saved based on the current file. <em>'time'</em> means it's based on the total time we are into the story. Defaults to <em>'file'</em>"
 	,preloadNext:"Preload upcoming files. Can set to any positive integer you like, or to 0 to not preload. Defaults to <em>1</em>"
+	,showBuffer:"Show the file buffer at the top. For media where loading is incredibly fast, displaying this might just be weird. Defaults to <em>true</em>"
 };
 
 var type=/#[^$?]+/.exec(location.href);

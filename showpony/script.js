@@ -10,7 +10,6 @@ var ShowponyRunPage='';
 for(var i=0;i<splitStart.length;i++){
 	//If the paths are the same
 	if(splitPath.length>i && splitPath[i]===splitStart[i]){
-		//console.log(splitPath[i]+' is the same!');
 		//We ignore them!
 	//If they differ- we've found the first shared folder!
 	}else{
@@ -85,6 +84,7 @@ d('localSave'		,	false												);
 d('remoteSave'		,	true												);
 d('bookmark'		,	'file'												);
 d('preloadNext'		,	1													);
+d('showBuffer'		,	true												);
 d('infiniteText'	,	false												);
 d('infiniteImage'	,	false												);
 
@@ -135,8 +135,6 @@ S.to=function(input){
 			
 			//If the time passed is greater than the total time, the story will end
 		}
-		
-		//console.log(obj.time,obj.file);
 	}
 	
 	Object.assign(obj,{
@@ -157,7 +155,6 @@ S.to=function(input){
 		return;
 	}*/
 	/*
-	//console.log(obj.file,S.currentFile,thisType,obj.time);
 	
 	if(obj.file==S.currentFile && !obj.refresh) return;*/
 	
@@ -176,7 +173,6 @@ S.to=function(input){
 		S.currentFile=S.files.length-1;
 		obj.time=S.files[S.files.length-1].duration-10;
 		if(obj.time<0) obj.time=0;
-		//console.log(S.currentFile);
 		
 		console.log(S.currentFile,S.files.length,S.currentFile,S);
 		
@@ -185,7 +181,6 @@ S.to=function(input){
 			//Run the event that users can read
 			S.window.dispatchEvent(new CustomEvent('end'));
 			content.classList.remove('showpony-loading');
-			//console.log('Ended!');
 			return;
 		}
 	}
@@ -247,7 +242,6 @@ S.to=function(input){
 	//If switching types, do some cleanup
 	if(currentType!=newType){
 		content.innerHTML='';
-		//console.log(types);
 		S.objects={window:S.window,content:content};
 		S.lines=[];
 		
@@ -272,7 +266,6 @@ S.to=function(input){
 	if(sameFile){
 		//Special multimedia engine prep
 		if(currentType==='multimedia'){
-			//console.log(content);
 			
 			runTo=keyframes[Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].duration))];
 			
@@ -327,7 +320,6 @@ S.to=function(input){
 						}
 						
 						runTo=keyframes[Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].duration))];
-						//console.log(runTo);
 						
 						runMM(0);
 					//Regular text
@@ -453,7 +445,6 @@ function userScrub(event,start){
 				
 				//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
 				if(S.scrubLoad){
-					//console.log('Release!');
 					//Add a new state on releasing
 					updateInfo(true);
 				}
@@ -546,9 +537,7 @@ S.input=function(){
 			
 			waitTimer.end();
 		}
-	
-		//console.log(S.charsHidden);
-	
+		
 		//Remove the continue notice
 		continueNotice.remove();
 		
@@ -700,6 +689,8 @@ function getTotalBuffered(){
 	
 	S.buffered=buffered;
 	
+	if(S.showBuffer===false) return;
+	
 	var rectRes=1000;
 	overlayBuffer.width=rectRes;
 	overlayBuffer.height=1;
@@ -724,7 +715,6 @@ function getTotalBuffered(){
 
 //Play and pause multimedia
 types.multimedia.play=function(){
-	//console.log('play');
 	
 	//Go through objects that were playing- unpause them
 	for(var key in S.objects){
@@ -740,7 +730,6 @@ types.multimedia.play=function(){
 }
 
 types.multimedia.pause=function(){
-	//console.log('pause');
 	
 	//Go through objects that can be played- pause them, and track that
 	for(var key in S.objects){
@@ -883,8 +872,6 @@ function replaceInfoText(value,fileNum,current){
 	//If there's a date, return it; otherwise, return blank space
 	if(date){
 		date=date[0].split(/[\s-:;]+/);
-		
-		//console.log(date);
 		
 		date=new Date(Date.UTC(
 			date[0]			//Year
@@ -1094,7 +1081,6 @@ function m(c,el){
 function mediaEnd(){
 	//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
 	if(!S.window.classList.contains('showpony-paused')) S.to({file:'+1'});
-	//console.log('MEDIA END');
 }
 
 var runTo=false;
@@ -1110,12 +1096,9 @@ function runMM(inputNum){
 	
 	//We've run through!
 	if(runTo===false && content.classList.contains('showpony-loading')){
-		//console.log('Enable!',S.currentLine,runTo);
 		if(waitTimer.remaining>0){
 			waitTimer.end();
 		}
-		
-		//console.log(S.objects,objectBuffer);
 		
 		//Get rid of unused, uncreated objects
 		for(var key in S.objects){
@@ -1138,7 +1121,6 @@ function runMM(inputNum){
 	
 	//If we've ended manually or reached the end, stop running immediately and end it all
 	if(S.currentLine>=S.lines.length){
-		//console.log('Ending!');
 		S.to({file:'+1'});
 		return;
 	}
@@ -1152,19 +1134,15 @@ function runMM(inputNum){
 	if(text[0]==='>'){
 		var vals=text.replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/);
 		
-		////console.log(text,vals);
-		
 		//We run a function based on the value passed.
 		//If it returns multimediaSettings, we use those new ones over the old ones.
 		multimediaSettings=multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals,multimediaSettings) || multimediaSettings;
-		////console.log(multimediaSettings,S.currentLine);
 		
 		//If it's a textbox
 		if(vals[0].toLowerCase()==='tb'){
 			//multimediaSettings.go=false;
 			//If there's text passed, use it; if not, empty the textbox
 			text=vals[2];
-			//console.log(vals,text);
 		}else return; //Return if it's not a textbox
 	}else{
 		//If it's regular text display, use the regular settings
@@ -1191,7 +1169,6 @@ function runMM(inputNum){
 	
 	//If we're running through, skip displaying text until we get to the right point
 	if(runTo){
-		//console.log(S.currentLine,runTo);
 		runMM(undefined);
 		return;
 	}
@@ -1517,7 +1494,6 @@ var multimediaFunction={
 					break;
 				default: //Other features
 					var value=parseFloat(vals[i].substr(1));
-					//console.log('AUDIO',vals[i],value);
 					//Current volume
 					if(vals[i][0]==='v') el.volume=value;
 					//Current time
@@ -1556,14 +1532,12 @@ var multimediaFunction={
 		var lines=[vals[2]];
 		
 		var reg=new RegExp('^>\\s+CH\\s+'+vals[1]+'\\s','i');
-			//console.log(reg);
 		
 		//Go through the rest of the lines, looking for images to preload
 		for(let i=S.currentLine;i<S.lines.length;i++){
 			
 			//If this character is listed on this line
 			if(reg.test(S.lines[i])){
-				//console.log('found!');
 				//Add the image names to the images to load
 				lines.push(S.lines[i].replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/)[2]);
 			}
@@ -1705,7 +1679,6 @@ if(S.shortcuts){
 			if(S.shortcuts!=='always'){
 				//Exit if it isn't fullscreen
 				if(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.fullscreenElement){
-					//console.log('Not full');
 					//If needs to be focused
 					if(S.shortcuts!=='fullscreen' && S.window!==document.activeElement) return;
 				}
@@ -1806,7 +1779,6 @@ pageTurn.addEventListener('scroll',function(event){
 //Infinite scrolling setup
 pageInfinite.addEventListener('scroll',function(){
 	if(pageInfinite.scrollTop=0){
-		//console.log('Load next!');
 	}
 });
 
@@ -1965,9 +1937,135 @@ var getFiles=new Promise(function(resolve,reject){
 
 //Get Hey Bard account
 var getHeyBard=new Promise((resolve,reject)=>{
+	function getBookmark(){
+		var bookmark=null;
+		
+		if(S.saveId===null){
+			if(S.remoteSave) alert('Cannot use remoteSave with saveId set to null! Set saveId or set remoteSave to false!');
+			
+			if(S.localSave) alert('Cannot use localSave with saveId set to null! Set saveId or set localSave to false!');
+			
+			return null;
+		}
+		
+		//If Hey Bard is enabled, try it first!
+		if(S.remoteSave){
+			//Make a button
+			var accountButton=m('button showpony-account-button','button');
+			overlay.appendChild(accountButton);
+			
+			accountButton.addEventListener(
+				'click'
+				,event=>{
+					event.stopPropagation();
+					
+					//Try saving a bookmark before you leave
+					if(typeof(S.saveBookmark)==='function'){
+						var sB=S.saveBookmark();
+						
+						//If something was returned (like a promise)
+						if(sB){
+							sB.then(()=>{
+								//Go to Hey Bard's web page to get your account
+								location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
+							})
+							//If it fails, let the user know
+							.catch((response)=>alert('1820: '+response))
+							;
+						//Regardless of whether or not we got something back, go there
+						}else{
+							location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
+						}
+					//If we can't save a bookmark (the user's probably not logged in)
+					}else{
+						//Just use the link
+						location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
+					}
+					
+					
+				}
+			);
+			accountButton.alt='Hey Bard! Account';
+			
+			if(typeof HeyBard==='function'){
+				//Make a Hey Bard connection
+				HeyBardConnection=new HeyBard(S.saveId);
+				
+				HeyBardConnection.getAccount()
+				.then(response=>{
+					//If an account exists for the user
+					if(response.account!==null){
+						//Set the text for the Hey Bard button accordingly
+						accountButton.title='Hello, '+response.account+'! We\'ll save your bookmarks for you!';
+						accountButton.innerHTML=response.account;
+						
+						//Set a function to save bookmarks
+						S.saveBookmark=function(){
+							//Pass either the time or the current file, whichever is chosen by the client
+							return HeyBardConnection.saveBookmark(S.bookmark==='time' ? Math.floor(getCurrentTime()) : S.currentFile);
+						}
+					}else{
+					//If an account doesn't exist for the user
+						accountButton.innerHTML='Log in for bookmarks!';
+						//Set the text for the Hey Bard button accordingly
+						accountButton.title='Save a bookmark with a free Hey Bard! Account';
+					}
+					
+					//'False' can be read as 0, so if bookmark is returned as false don't pass the value.
+					if(typeof(response.bookmark)==='undefined') return null;
+					else return response.bookmark;
+				})
+				.catch(response=>{
+					accountButton.innerHTML='HEY BARD FAILED';
+					//Set the text for the Hey Bard button accordingly
+					accountButton.title='Failed to call Hey Bard\'s servers. Please try again later!';
+					
+					return null;
+				})
+				;
+			}else{
+				accountButton.innerHTML='SCRIPT MISSING';
+				//Set the text for the Hey Bard button accordingly
+				accountButton.title='Failed to load the necessary script to use Hey Bard accounts.';
+				
+				return null;
+			}
+		}
+
+		//Try local storage
+		if(bookmark===null && S.localSave){
+			//Set a function to save bookmarks
+			S.saveBookmark=function(){
+				var saveValue=(S.bookmark==='time' ? Math.floor(getCurrentTime()) : S.currentFile);
+				localStorage.setItem(S.saveId,saveValue);
+				
+				console.log('Saved ',saveValue,' locally!');
+				return saveValue;
+			}
+			
+			bookmark=parseInt(localStorage.getItem(S.saveId));
+			console.log(localStorage.getItem(S.saveId),bookmark,'SAVE LOCAL BABY',S.saveId);
+		}
+		
+		if(typeof(S.saveBookmark)!=='undefined'){
+			var saveBookmark=S.saveBookmark;
+			
+			//Save user bookmarks when leaving the page
+			window.addEventListener('blur',saveBookmark);
+			window.addEventListener('beforeunload',saveBookmark);
+			
+			//Showpony deselection (to help with Firefox and Edge's lack of support for 'beforeunload')
+			S.window.addEventListener('focusout',saveBookmark);
+			S.window.addEventListener('blur',saveBookmark);
+		}
+		
+		//Pass whatever value we've gotten
+		return bookmark;
+	}
+	
 	//If it's finished loading, we're good!
 	if(!S.remoteSave || typeof HeyBard==='function'){
-		resolve(resolve,reject);
+		resolve(getBookmark());
 		return;
 	}
 	
@@ -1979,131 +2077,18 @@ var getHeyBard=new Promise((resolve,reject)=>{
 	}
 	
 	document.querySelector('[src="https://heybard.com/apis/accounts/script.js"').addEventListener('load',function(){
-		resolve(resolve,reject);
+		resolve(getBookmark());
 		console.log("LOADED");
 	});
-}).then((resolve,reject)=>{
-	var bookmark=null;
-	
-	//If Hey Bard is enabled, try it first!
-	if(S.remoteSave){
-		//Make a button
-		var accountButton=m('button showpony-account-button','button');
-		overlay.appendChild(accountButton);
-		
-		accountButton.addEventListener(
-			'click'
-			,event=>{
-				event.stopPropagation();
-				
-				//Try saving a bookmark before you leave
-				if(typeof(S.saveBookmark)==='function'){
-					//console.log('hey!');
-					var sB=S.saveBookmark();
-					
-					//If something was returned (like a promise)
-					if(sB){
-						sB.then(()=>{
-							//Go to Hey Bard's web page to get your account
-							location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
-						})
-						//If it fails, let the user know
-						.catch((response)=>alert('1820: '+response))
-						;
-					//Regardless of whether or not we got something back, go there
-					}else{
-						location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
-					}
-				//If we can't save a bookmark (the user's probably not logged in)
-				}else{
-					//Just use the link
-					location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
-				}
-				
-				
-			}
-		);
-		accountButton.alt='Hey Bard! Account';
-		
-		if(typeof HeyBard==='function'){
-			//Make a Hey Bard connection
-			HeyBardConnection=new HeyBard(S.saveId);
-			
-			HeyBardConnection.getAccount()
-			.then(response=>{
-				//console.log('Success!',response);
-				
-				//If an account exists for the user
-				if(response.account!==null){
-					//Set the text for the Hey Bard button accordingly
-					accountButton.title='Hello, '+response.account+'! We\'ll save your bookmarks for you!';
-					accountButton.innerHTML=response.account;
-					
-					//Set a function to save bookmarks
-					S.saveBookmark=function(){
-						//Pass either the time or the current file, whichever is chosen by the client
-						return HeyBardConnection.saveBookmark(S.bookmark==='time' ? Math.floor(getCurrentTime()) : S.currentFile);
-					}
-				}else{
-				//If an account doesn't exist for the user
-					accountButton.innerHTML='Log in for bookmarks!';
-					//Set the text for the Hey Bard button accordingly
-					accountButton.title='Save a bookmark with a free Hey Bard! Account';
-				}
-				
-				//'False' can be read as 0, so if bookmark is returned as false don't pass the value.
-				if(typeof(response.bookmark)==='undefined') resolve();
-				else resolve(response.bookmark);
-			})
-			.catch(response=>{
-				accountButton.innerHTML='HEY BARD FAILED';
-				//Set the text for the Hey Bard button accordingly
-				accountButton.title='Failed to call Hey Bard\'s servers. Please try again later!';
-				
-				resolve();
-			})
-			;
-		}else{
-			accountButton.innerHTML='SCRIPT MISSING';
-			//Set the text for the Hey Bard button accordingly
-			accountButton.title='Failed to load the necessary script to use Hey Bard accounts.';
-			
-			//console.log('Script for enabling HeyBard isn't loaded.');
-			resolve();
-		}
-	}
-
-	//Try local storage
-	if(bookmark===null && S.localSave){
-		//Set a function to save bookmarks
-		S.saveBookmark=function(){
-			localStorage.setItem(S.saveId,S.bookmark==='time' ? Math.floor(getCurrentTime()) : S.currentFile);
-		}
-		
-		resolve(localStorage.getItem(S.saveId));
-	}
-	
-	if(typeof(S.saveBookmark)!=='undefined'){
-		var saveBookmark=S.saveBookmark;
-		
-		//Save user bookmarks when leaving the page
-		window.addEventListener('blur',saveBookmark);
-		window.addEventListener('beforeunload',saveBookmark);
-		
-		//Showpony deselection (to help with Firefox and Edge's lack of support for 'beforeunload')
-		S.window.addEventListener('focusout',saveBookmark);
-		S.window.addEventListener('blur',saveBookmark);
-		//console.log('Update!');
-	}
-	
-	//Pass whatever value we've gotten
-	resolve(bookmark);
 });
 
 //Get bookmarks going
-Promise.all([getFiles,getHeyBard]).then((start)=>{
+Promise.all([getFiles,getHeyBard]).then(function(start){
 	//Start at the first legit number: start, input.start, or the last file
+	console.log("STARTING LOCALLY BABY",start,S.window);
 	start=start[1];
+	
+
 	
 	S.start=(
 		!isNaN(start)
@@ -2125,14 +2110,12 @@ Promise.all([getFiles,getHeyBard]).then((start)=>{
 					if(S.bookmark==='time'){
 						page=parseInt(page[0].split('=')[1]);
 						
-						//console.log(S,page,getCurrentTime());
 						if(page===getCurrentTime()) return;
 					
 						S.to({time:page,popstate:true,scrollToTop:false});
 					}else{
 						page=parseInt(page[0].split('=')[1])-1;
 						
-						//console.log(S,page,S.currentFile);
 						if(page===S.currentFile) return;
 					
 						S.to({file:page,popstate:true,scrollToTop:false});
