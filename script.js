@@ -134,6 +134,7 @@ var propertyInfo={
 	,bookmark:"<em>'file'</em> means queries and bookmarks are saved based on the current file. <em>'time'</em> means it's based on the total time we are into the story. Defaults to <em>'file'</em>"
 	,preloadNext:"Preload upcoming files. Can set to any positive integer you like, or to 0 to not preload. Defaults to <em>1</em>"
 	,showBuffer:"Show the file buffer at the top. For media where loading is incredibly fast, displaying this might just be weird. Defaults to <em>true</em>"
+	,subtitles:"Add in the languages and types you want to support; closed captions should also go in here. Full name and link to the folders where they are. Their names should be the same as the corresponding file names! <em>null</em> means subtitles aren't supported. Defaults to <em>null</em>"
 };
 
 var type=/#[^$?]+/.exec(location.href);

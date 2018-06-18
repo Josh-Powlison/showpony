@@ -85,7 +85,7 @@ d('remoteSave'		,	true												);
 d('bookmark'		,	'file'												);
 d('preloadNext'		,	1													);
 d('showBuffer'		,	true												);
-d('subtitles'		,	{en:'files/subtitles/en'}							);
+d('subtitles'		,	null												);
 d('currentSubtitles',	null												);
 d('infiniteText'	,	false												);
 d('infiniteImage'	,	false												);
@@ -654,6 +654,7 @@ function timeUpdate(time){
 
 function displaySubtitles(){
 	if(S.currentSubtitles===null){
+		subtitles.innerHTML='';
 		return;
 	}
 	
@@ -748,6 +749,9 @@ function displaySubtitles(){
 				
 				if(i==lines.length-1) subtitles.innerHTML='';
 			}
+		}else if(currentType==='multimedia'){
+			//We only add subtitles for unexplained audio
+			//Add support later
 		}
 	});
 }
