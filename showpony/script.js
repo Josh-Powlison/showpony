@@ -2439,201 +2439,205 @@ Promise.all([getFiles,getHeyBard]).then(function(start){
 ///////////////////////////////////////
 
 if(S.admin){
-	var editorUI=m('editor-ui')
-		,uploadFileButton=m('button showpony-upload-file','label')
-		,uploadFile=document.createElement('input')
-		,uploadDate=m('button showpony-editor-date','input')
-		,uploadName=m('button showpony-editor-name','input')
-		,deleteFile=m('button showpony-delete-file','button')
-		,newFile=m('button showpony-new-file','button')
-		,logoutButton=m('button showpony-logout','button')
-	;
-
-	uploadName.type=uploadDate.type='text';
-	uploadName.placeholder='File Title (optional)';
-	uploadDate.placeholder='YYYY-MM-DD HH:MM:SS';
-
-	uploadFile.type='file';
-	uploadFile.style.display='none';
-	uploadFile.accept='.jpg,.jpeg,.png,.gif,.svg,.mp3,.wav,.mp4,.webm,.txt,.mm,.html';
-	
-	uploadFileButton.appendChild(uploadFile);
-	
-	frag([uploadFileButton,uploadDate,uploadName,deleteFile,newFile,logoutButton],editorUI);
-	
-	S.window.appendChild(editorUI);
-	
-	//Edit/adjust file details
-	S.window.addEventListener(
-		'contextmenu'
-		,event=>{
-			event.preventDefault();
-			editor();
-		}
-	);
-	
-	function editor(){
-		//If logged in, toggle the editor
-		if(loggedIn) S.window.classList.toggle('showpony-editor');
-		//Otherwise, try to log in
-		else account('login');
-	}
-	
-	function updateEditor(){
-		//Remove extra values to get these ones
-		uploadName.value=S.files[S.currentFile].title;
-		uploadDate.value=S.files[S.currentFile].date;
-	}
-	
-	logoutButton.addEventListener('click',()=>account('logout'));
-	
-	//Must be set to a variable to be called outside the enclosing 'if' statement
-	var account=function(type){
-		var pass=null;
-		if(type==='login') if(!(pass=prompt('What\'s your password?'))) return;
-		
-		POST({call:type,password:pass})
-		.then(response=>{
-			S.window.classList[loggedIn ? 'add' : 'remove']('showpony-editor');
-				
-			S.to({
-				reload:true
-				,scrollToTop:false
-				,replaceState:true
-			});
-		})
-		.catch(response=>{
-			alert('501: '+response);
-		});
-	}
-	
-	function renameFile(){
-		var thisFile=S.currentFile;
-		var date=uploadDate.value;
-		
-		//Test that the date is safe (must match setup)
-		if(!(/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.test(date))){
-			alert('Date must be formatted as "YYYY-MM-DD" or "YYYY-MM-DD HH-MM-SS". You passed "'+date+'"');
-			return;
-		}
-		
-		var fileName=((S.files[thisFile].name[0]==='x') ? 'x': '')
-			+date.replace(/:/g,';') //date (replace : with ; so it's Windows safe)
-			+' ('+safeFilename(uploadName.value,'to')+')' //title
-			+S.files[thisFile].name.match(/\.\w+$/) //ext
+	if(Array.isArray(S.get)){
+		alert('You can\'t use the admin panel with an array for "get"! Set "get" to a folder path instead!');
+	}else{
+		var editorUI=m('editor-ui')
+			,uploadFileButton=m('button showpony-upload-file','label')
+			,uploadFile=document.createElement('input')
+			,uploadDate=m('button showpony-editor-date','input')
+			,uploadName=m('button showpony-editor-name','input')
+			,deleteFile=m('button showpony-delete-file','button')
+			,newFile=m('button showpony-new-file','button')
+			,logoutButton=m('button showpony-logout','button')
 		;
+
+		uploadName.type=uploadDate.type='text';
+		uploadName.placeholder='File Title (optional)';
+		uploadDate.placeholder='YYYY-MM-DD HH:MM:SS';
+
+		uploadFile.type='file';
+		uploadFile.style.display='none';
+		uploadFile.accept='.jpg,.jpeg,.png,.gif,.svg,.mp3,.wav,.mp4,.webm,.txt,.mm,.html';
 		
-		POST({
-			call:'renameFile'
-			,name:S.files[thisFile].name
-			,newName:fileName
-		})
-		.then(response=>{
-			S.files[thisFile]=saveFileInfo(S.get+response.file);
+		uploadFileButton.appendChild(uploadFile);
+		
+		frag([uploadFileButton,uploadDate,uploadName,deleteFile,newFile,logoutButton],editorUI);
+		
+		S.window.appendChild(editorUI);
+		
+		//Edit/adjust file details
+		S.window.addEventListener(
+			'contextmenu'
+			,event=>{
+				event.preventDefault();
+				editor();
+			}
+		);
+		
+		function editor(){
+			//If logged in, toggle the editor
+			if(loggedIn) S.window.classList.toggle('showpony-editor');
+			//Otherwise, try to log in
+			else account('login');
+		}
+		
+		function updateEditor(){
+			//Remove extra values to get these ones
+			uploadName.value=S.files[S.currentFile].title;
+			uploadDate.value=S.files[S.currentFile].date;
+		}
+		
+		logoutButton.addEventListener('click',()=>account('logout'));
+		
+		//Must be set to a variable to be called outside the enclosing 'if' statement
+		var account=function(type){
+			var pass=null;
+			if(type==='login') if(!(pass=prompt('What\'s your password?'))) return;
 			
-			//Sort the files by order 
-			S.files=S.files.sort(
-				//Return>0, 2nd is returned
-				function(a,b){
-					//If a is first, sort a before
-					if(([a.path,b.path].sort)[0]===a.path) -1;
-				}
-			);
+			POST({call:type,password:pass})
+			.then(response=>{
+				S.window.classList[loggedIn ? 'add' : 'remove']('showpony-editor');
+					
+				S.to({
+					reload:true
+					,scrollToTop:false
+					,replaceState:true
+				});
+			})
+			.catch(response=>{
+				alert('501: '+response);
+			});
+		}
+		
+		function renameFile(){
+			var thisFile=S.currentFile;
+			var date=uploadDate.value;
 			
-			var goToFile=0;
-			
-			for(let i=0;i<S.files.length;i++){
-				if(S.files[i].name===response.file){
-					goToFile=i;
-					break;
-				}
+			//Test that the date is safe (must match setup)
+			if(!(/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.test(date))){
+				alert('Date must be formatted as "YYYY-MM-DD" or "YYYY-MM-DD HH-MM-SS". You passed "'+date+'"');
+				return;
 			}
 			
-			S.to({
-				file:goToFile
-				,scrollToTop:false
-				,replaceState:true
-			});
-			scrub();
-		});
-	}
-	
-	//EVENT LISTENERS//
-	//On time, update the editor
-	S.window.addEventListener('timeupdate',updateEditor);
-	uploadName.addEventListener('change',renameFile);
-	uploadDate.addEventListener('change',renameFile);
-	
-	uploadFile.addEventListener('change'
-		,function(){
-			var thisFile=S.currentFile;
+			var fileName=((S.files[thisFile].name[0]==='x') ? 'x': '')
+				+date.replace(/:/g,';') //date (replace : with ; so it's Windows safe)
+				+' ('+safeFilename(uploadName.value,'to')+')' //title
+				+S.files[thisFile].name.match(/\.\w+$/) //ext
+			;
 			
 			POST({
-				call:'uploadFile'
+				call:'renameFile'
 				,name:S.files[thisFile].name
-				,files:uploadFile.files[0]
+				,newName:fileName
 			})
 			.then(response=>{
 				S.files[thisFile]=saveFileInfo(S.get+response.file);
 				
-				//If still on that file, refresh it
-				if(S.currentFile===thisFile){
-					S.to({
-						file:thisFile
-						,reload:true
-						,refresh:true
-						,scrollToTop:false
-						,replaceState:true
-					});
-				}
-			});
-		}
-	);
-	
-	deleteFile.addEventListener('click'
-		,()=>{
-			var thisFile=S.currentFile;
-			
-			POST({call:'deleteFile',name:S.files[thisFile].name})
-			.then(response=>{
-				//Remove the file from the array
-				S.files.splice(thisFile,1);
+				//Sort the files by order 
+				S.files=S.files.sort(
+					//Return>0, 2nd is returned
+					function(a,b){
+						//If a is first, sort a before
+						if(([a.path,b.path].sort)[0]===a.path) -1;
+					}
+				);
 				
-				//Combine total length of all parts
-				S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
-
-				//If still on the file we're deleting, reload the file
-				if(thisFile===S.currentFile){
-					console.log('its teh same!');
-					S.to({
-						file:thisFile
-						,refresh:true
-						,replaceState:true
-					});
-				}
-			});
-		}
-	);
-	
-	newFile.addEventListener('click'
-		,function(){
-			POST({call:'newFile'})
-			.then(response=>{
-				//Add the file to the array
-				S.files.push(saveFileInfo(S.get+response.file));
+				var goToFile=0;
 				
-				//Combine total length of all parts
-				S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
+				for(let i=0;i<S.files.length;i++){
+					if(S.files[i].name===response.file){
+						goToFile=i;
+						break;
+					}
+				}
 				
 				S.to({
-					file:'last'
+					file:goToFile
+					,scrollToTop:false
+					,replaceState:true
 				});
-			})
-			.catch(
-				
-			);
+				scrub();
+			});
 		}
-	);
+		
+		//EVENT LISTENERS//
+		//On time, update the editor
+		S.window.addEventListener('timeupdate',updateEditor);
+		uploadName.addEventListener('change',renameFile);
+		uploadDate.addEventListener('change',renameFile);
+		
+		uploadFile.addEventListener('change'
+			,function(){
+				var thisFile=S.currentFile;
+				
+				POST({
+					call:'uploadFile'
+					,name:S.files[thisFile].name
+					,files:uploadFile.files[0]
+				})
+				.then(response=>{
+					S.files[thisFile]=saveFileInfo(S.get+response.file);
+					
+					//If still on that file, refresh it
+					if(S.currentFile===thisFile){
+						S.to({
+							file:thisFile
+							,reload:true
+							,refresh:true
+							,scrollToTop:false
+							,replaceState:true
+						});
+					}
+				});
+			}
+		);
+		
+		deleteFile.addEventListener('click'
+			,()=>{
+				var thisFile=S.currentFile;
+				
+				POST({call:'deleteFile',name:S.files[thisFile].name})
+				.then(response=>{
+					//Remove the file from the array
+					S.files.splice(thisFile,1);
+					
+					//Combine total length of all parts
+					S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
+
+					//If still on the file we're deleting, reload the file
+					if(thisFile===S.currentFile){
+						console.log('its teh same!');
+						S.to({
+							file:thisFile
+							,refresh:true
+							,replaceState:true
+						});
+					}
+				});
+			}
+		);
+		
+		newFile.addEventListener('click'
+			,function(){
+				POST({call:'newFile'})
+				.then(response=>{
+					//Add the file to the array
+					S.files.push(saveFileInfo(S.get+response.file));
+					
+					//Combine total length of all parts
+					S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
+					
+					S.to({
+						file:'last'
+					});
+				})
+				.catch(
+					
+				);
+			}
+		);
+	}
 }
 
 }
