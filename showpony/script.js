@@ -1502,14 +1502,14 @@ function runMM(inputNum){
 				
 				var textbox=this.closest('.showpony-textbox');
 				
-				//#1//
-				//Scroll to the newly displayed letter (based on the regular height of the letter)
+				//If the letter's below the textbox
 				if(this.parentNode.getBoundingClientRect().bottom>textbox.getBoundingClientRect().bottom){
-					textbox.scrollTop+=this.parentNode.getBoundingClientRect().height;
+					textbox.scrollTop=this.parentNode.offsetTop+this.parentNode.offsetHeight-textbox.offsetHeight;
 				}
 				
+				//If the letter's above the textbox
 				if(this.parentNode.getBoundingClientRect().top<textbox.getBoundingClientRect().top){
-					textbox.scrollTop-=this.parentNode.getBoundingClientRect().height;
+					textbox.scrollTop=this.parentNode.offsetTop;
 				}
 				
 				//Add post-appearance animations
