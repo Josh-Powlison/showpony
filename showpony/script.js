@@ -1171,13 +1171,15 @@ function saveFileInfo(path){
 	path=path.replace(/\[lang[^\]]*\]/gi,S.language);
 	
 	var file={
-		title:safeFilename(path.replace(/(^[^(]+\()|(\)[^)]+$)/g,''),'from')
-		,path:path
+		path:path
 		,name:/[^\/]+$/.exec(path)[0]
 		,date:null
 		,buffered:false
 		,subtitles:false
 	};
+	
+	var title=/([^()])+(?=\))/.exec(file.name);
+	file.title=safeFilename(title ? title[0] : /.+(?=\.[^.]+$)/.exec(file.name)[0],'from');
 	
 	var date=/\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?/.exec(file.name);
 	if(date) file.date=date[0];
@@ -1211,10 +1213,18 @@ function saveFileInfo(path){
 	file.medium=medium;
 	
 	//Return the value in the file or the default duration
-	var get=/[^\s)]+(?=\.[^.]+$)/.exec(path);
-	get=(get!==null ? parseFloat(get[0]) : S.defaultDuration);
+	var duration=/[^\s)]+(?=\.[^.]+$)/.exec(file.name);
 	
-	file.duration=get;
+	//If the whole filename is a number (matches the title), it's likely not length, just an identifier. Ignore in that case.
+	console.log(duration,file.title);
+	if(duration==file.title || /(:-)/i.test(duration)){
+		duration=S.defaultDuration;
+	}else{
+		if(duration) duration=parseFloat(duration[0]);
+		if(!duration) duration=S.defaultDuration;
+	}
+	
+	file.duration=duration;
 	
 	return file;
 }
