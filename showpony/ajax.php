@@ -22,7 +22,7 @@ if(!empty($_GET['get'])){
 	if(empty($_SESSION['showpony_admin'])) die('You need to be logged in to access private files.');
 	
 	#Go to the correct directory
-	chdir(($_POST['rel-path'] ?: '..').'/');
+	chdir(($_GET['rel-path'] ?: '..').'/');
 	
 	#Get the file path
 	$file=dirname(__FILE__,2).'/'.$_GET['get'];
@@ -54,7 +54,10 @@ if(!empty($_GET['get'])){
 		|| $_POST['call']==='getFiles'
 	){
 		#On login request, attempt to log in; if it fails, let the user know
-		if($_POST['call']==='login' && empty($_SESSION['showpony_admin']=$_POST['password']===$password)) echo 'Wrong password!';
+		if($password===NULL) echo 'The admin panel isn\'t accessible for this Showpony!';
+		else if($_POST['call']==='login' && empty($_SESSION['showpony_admin']=$_POST['password']===$password)){
+			echo 'Wrong password!';
+		}
 		else{
 			#Get files and protect others
 			$response['files']=[];

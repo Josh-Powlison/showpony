@@ -217,33 +217,33 @@ S.to=function(input){
 		,thisType=types[newType];
 	
 	//Multimedia engine resets
-		content.style.cssText=null; //Remove any styles applied to the content
-		waitForInput=false;
-		styles.innerHTML='';
-		if(waitTimer.remaining>0){
-			waitTimer.end();
-		}
-			
-		S.charsHidden=0;
+	content.style.cssText=null;
+	styles.innerHTML='';
+	if(waitTimer.remaining>0){
+		waitTimer.end();
+	}
 		
-		//Remove the continue notice
-		continueNotice.remove();
+	S.charsHidden=0;
+	
+	//Remove the continue notice
+	continueNotice.remove();
+	
+	//Get rid of local styles
+	for(var key in S.objects){
+		//Except for the window and content, of course!
+		if(key==='window' || key==='content') continue;
+		S.objects[key].removeAttribute('style');
 		
-		//Get rid of local styles
-		for(var key in S.objects){
-			//Except for the window and content, of course!
-			if(key==='window' || key==='content') continue;
-			S.objects[key].removeAttribute('style');
-			
-			//Empty out textboxes
-			if(S.objects[key].classList.contains('showpony-textbox')) S.objects[key].innerHTML='';
-		};
-		
-		//Save buffer to check later
-		objectBuffer={window:S.window,content:content};
+		//Empty out textboxes
+		if(S.objects[key].classList.contains('showpony-textbox')) S.objects[key].innerHTML='';
+	};
+	
+	//Save buffer to check later
+	objectBuffer={window:S.window,content:content};
 	
 	//If switching types, do some cleanup
 	if(currentType!=newType){
+		
 		content.innerHTML='';
 		S.objects={window:S.window,content:content};
 		S.lines=[];
@@ -258,10 +258,10 @@ S.to=function(input){
 	}
 	
 	//How we get the file depends on whether or not it's private
-	var src=(S.files[S.currentFile].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.files[S.currentFile].path;
+	var src=(S.files[S.currentFile].name[0]=='x' ? ShowponyFolder+'/ajax.php?rel-path'+encodeURIComponent(ShowponyRunPage)+'&get=' : '')+S.files[S.currentFile].path;
 	
 	//Refresh the file, if requested we do so, by adding a query
-	if(obj.refresh) src+=(S.files[S.currentFile].path[0]==='x' ? '&' : '?')+'refresh-'+Date.now();
+	if(obj.refresh) src+=(S.files[S.currentFile].name[0]==='x' ? '&' : '?')+'refresh-'+Date.now();
 	
 	currentType=newType;
 	
@@ -269,7 +269,6 @@ S.to=function(input){
 	if(sameFile){
 		//Special multimedia engine prep
 		if(currentType==='multimedia'){
-			
 			runTo=keyframes[Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].duration))];
 			runMM(0);
 		}else{
@@ -278,7 +277,7 @@ S.to=function(input){
 				//Infinite scrolling
 				if(S.infiniteText){//Scroll to the right spot
 				}else{ //Page turn
-					pageTurn.scrollTo(0,pageTurn.scrollHeight*(obj.time/S.files[S.currentFile].duration));
+					pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[S.currentFile].duration);
 				}
 			}
 			
@@ -338,7 +337,8 @@ S.to=function(input){
 							if(S.currentFile<S.files.length-1) pageTurn.insertAdjacentElement('beforeend',pageNext);
 							
 							//Scroll to spot
-							pageTurn.scrollTo(0,pageTurn.scrollHeight*(obj.time/S.files[S.currentFile].duration));
+							console.log(pageTurn);
+							pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[S.currentFile].duration);
 							
 							//Stop loading
 							content.classList.remove('showpony-loading');
@@ -352,6 +352,7 @@ S.to=function(input){
 				})
 				.catch((error)=>{
 					alert('329: '+error);
+					console.log(error);
 				})
 			;
 		//Image/Audio/Video
@@ -369,7 +370,7 @@ S.to=function(input){
 		if(S.files[i].buffered!==false) continue;
 		
 		//How we get the file depends on whether or not it's private
-		var src=(S.files[i].path[0]=='x' ? ShowponyFolder+'/ajax.php?get=' : '')+S.files[i].path;
+		var src=(S.files[i].name[0]=='x' ? ShowponyFolder+'/ajax.php?rel-path'+encodeURIComponent(ShowponyRunPage)+'&get=' : '')+S.files[i].path;
 		
 		S.files[i].buffered='buffering';
 		
@@ -769,7 +770,7 @@ function displaySubtitles(){
 		}
 	}else{
 		//If don't have the file
-		fetch(S.subtitles[S.currentSubtitles]+S.files[S.currentFile].name+'.vtt')
+		fetch(S.subtitles[S.currentSubtitles]+S.files[S.currentFile].title+'.vtt')
 		.then(response=>{return response.text();})
 		.then(text=>{
 			S.files[S.currentFile].subtitles=text;
@@ -853,8 +854,6 @@ types.multimedia.play=function(){
 	
 	//Resume waitTimer
 	waitTimer.resume();
-	
-	//Add timer support later
 }
 
 types.multimedia.pause=function(){
@@ -977,8 +976,8 @@ function replaceInfoText(value,fileNum,current){
 	
 	//Save all the values to instantly pass them through
 	var values={
-		name:{
-			currentAll:		S.files[fileNum].name
+		title:{
+			currentAll:		S.files[fileNum].title
 		}
 		,date:{
 			currentAll:		'Undated'
@@ -1043,7 +1042,7 @@ function replaceInfoText(value,fileNum,current){
 		));
 		
 		values.date.current=new Intl.DateTimeFormat(
-			'default'
+			undefined //Uses the default locale
 			,S.dateFormat
 		).format(date);
 	}
@@ -1056,7 +1055,7 @@ function replaceInfoText(value,fileNum,current){
 		var type='file', value='current';
 		
 		//Get the type
-		if(/name|title/i.test(input)) type='name';
+		if(/title/i.test(input)) type='title';
 		else if(/date|release/i.test(input)) type='date';
 		else if(/%|percent/i.test(input)) type='percent';
 		else if(/hour/i.test(input)) type='hours';
@@ -1155,7 +1154,7 @@ function POST(obj){
 			if(json.success){
 				loggedIn=json.admin;
 				if(json.files){
-					saveFileInfo(json.files);
+					saveAllFileInfo(json.files);
 				}
 				
 				resolve(json);
@@ -1167,55 +1166,66 @@ function POST(obj){
 	});
 }
 
+function saveFileInfo(path){
+	//Replace language tags for use
+	path=path.replace(/\[lang[^\]]*\]/gi,S.language);
+	
+	var file={
+		title:safeFilename(path.replace(/(^[^(]+\()|(\)[^)]+$)/g,''),'from')
+		,path:path
+		,name:/[^\/]+$/.exec(path)[0]
+		,date:null
+		,buffered:false
+		,subtitles:false
+	};
+	
+	var date=/\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?/.exec(file.name);
+	if(date) file.date=date[0];
+	
+	var medium='text';
+	
+	//Get the extension- fast!
+	switch(path.slice((path.lastIndexOf('.') - 1 >>> 0) + 2)){
+		case 'jpg':
+		case 'jpeg':
+		case 'png':
+		case 'gif':
+		case 'svg':
+			medium='image';
+			break;
+		case 'mp4':
+		case 'webm':
+			medium='video';
+			break;
+		case 'mp3':
+		case 'wav':
+			medium='audio';
+			break;
+		case 'mm':
+			medium='multimedia';
+			break;
+		//All else defaults to text
+		default:
+			break;
+	}
+	file.medium=medium;
+	
+	//Return the value in the file or the default duration
+	var get=/[^\s)]+(?=\.[^.]+$)/.exec(path);
+	get=(get!==null ? parseFloat(get[0]) : S.defaultDuration);
+	
+	file.duration=get;
+	
+	return file;
+}
+
 //Get all the file info from an array of files
-function saveFileInfo(files){
+function saveAllFileInfo(files){
 	S.files=[];
 	
 	//Get all the files' info and put it in
 	for(let i=0;i<files.length;i++){
-		//Replace language tags for use
-		files[i]=files[i].replace(/\[lang[^\]]*\]/gi,S.language);
-		
-		S.files[i]={};
-		S.files[i].path=files[i];
-		S.files[i].name=safeFilename(files[i].replace(/(^[^(]+\()|(\)[^)]+$)/g,''),'from');
-		S.files[i].buffered=false;
-		S.files[i].subtitles=false;
-		
-		S.files[i].date=/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.exec(files[i]);
-		
-		var medium='text';
-		
-		//Get the extension- fast!
-		switch(files[i].slice((files[i].lastIndexOf('.') - 1 >>> 0) + 2)){
-			case 'jpg':
-			case 'jpeg':
-			case 'png':
-			case 'gif':
-			case 'svg':
-				medium='image';
-				break;
-			case 'mp4':
-			case 'webm':
-				medium='video';
-				break;
-			case 'mp3':
-			case 'wav':
-				medium='audio';
-				break;
-			case 'mm':
-				medium='multimedia';
-				break;
-			//All else defaults to text
-			default:
-		}
-		S.files[i].medium=medium;
-		
-		//Return the value in the file or the default duration
-		var get=/[^\s)]+(?=\.[^.]+$)/.exec(files[i]);
-		get=(get ? parseFloat(get[0]) : S.defaultDuration);
-		
-		S.files[i].duration=get;
+		S.files[i]=saveFileInfo(files[i]);
 	}
 	
 	//Combine total length of all parts
@@ -1293,17 +1303,14 @@ function runMM(inputNum){
 	var match;
 	while(match=/[^\[]+(?=\])/g.exec(text)) text=text.replace('['+match[0]+']',S.data[match[0]]);
 	
+	//Run functions
 	if(text[0]==='>'){
 		var vals=text.replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/);
 		
-		//We run a function based on the value passed.
-		//If it returns multimediaSettings, we use those new ones over the old ones.
-		multimediaSettings=multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals,multimediaSettings) || multimediaSettings;
+		multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals);
 		
 		//If it's a textbox
 		if(vals[0].toLowerCase()==='tb'){
-			//multimediaSettings.go=false;
-			//If there's text passed, use it; if not, empty the textbox
 			text=vals[2];
 		}else return; //Return if it's not a textbox
 	}else{
@@ -1320,12 +1327,14 @@ function runMM(inputNum){
 	if(!S.objects[multimediaSettings.textbox]){
 		content.appendChild(S.objects[multimediaSettings.textbox]=m('textbox'));
 		
-		S.objects[multimediaSettings.textbox].addEventListener('animationend',function(){
+		S.objects[multimediaSettings.textbox].addEventListener('animationend',function(event){
+			
 			var updateStyle=new RegExp('@keyframes '+multimediaSettings.textbox+'{100%{[^}]*}}','i').exec(styles.innerHTML);
 			
 			var styleAdd=/[^{]+;/.exec(updateStyle);
 			
 			if(styleAdd) this.style.cssText+=styleAdd[0];
+			console.log('teseting!');
 		})
 	}
 	
@@ -1337,10 +1346,9 @@ function runMM(inputNum){
 		return;
 	}
 	
-	if(runTo) objectBuffer[multimediaSettings.textbox]=S.objects[multimediaSettings.textbox];
-	
 	//If we're running through, skip displaying text until we get to the right point
 	if(runTo){
+		objectBuffer[multimediaSettings.textbox]=S.objects[multimediaSettings.textbox];
 		runMM(undefined);
 		return;
 	}
@@ -1831,7 +1839,7 @@ var multimediaFunction={
 		//Go to the next line
 		runMM();
 	}
-	,'tb':(vals,multimediaSettings)=>{
+	,'tb':(vals)=>{
 		//Set the current textbox
 		multimediaSettings.textbox=vals[1];
 		
@@ -1840,8 +1848,6 @@ var multimediaFunction={
 		
 		//Turn off automatic waiting for this, we're assuming waiting is off
 		multimediaSettings.wait=false;	//Wait at the end of the text display
-		
-		return multimediaSettings;
 	}
 }
 
@@ -1875,7 +1881,7 @@ function safeFilename(string,type){
 ///////////////////////////////////////
 
 var shortcutKeys={
-	'Space': 			()=>S.input()
+	' ': 				()=>S.input()
 	,'ArrowLeft':		()=>S.to({time:'-10'})
 	,'ArrowRight':		()=>S.to({time:'+10'})
 	,'Home':			()=>S.to({file:'first'})
@@ -1900,6 +1906,8 @@ if(S.shortcuts){
 					if(S.shortcuts!=='fullscreen' && S.window!==document.activeElement) return;
 				}
 			}
+			
+			console.log(event.key);
 			
 			if(shortcutKeys[event.key]
 				&& !event.ctrlKey
@@ -1944,7 +1952,12 @@ window.addEventListener('mouseup',function(event){
 });
 
 //On mousedown, we prepare to move the cursor (but not over overlay buttons)
-overlay.addEventListener('mousedown',function(event){if(event.target===this) scrubbing=event.clientX;});
+overlay.addEventListener('mousedown',function(event){
+	if(event.target===this){
+		scrubbing=event.clientX;
+		window.getSelection().removeAllRanges();
+	}
+});
 
 //On touch end, don't keep moving the bar to the user's touch
 overlay.addEventListener('touchend',userScrub);
@@ -2163,7 +2176,7 @@ var getFiles=new Promise(function(resolve,reject){
 	}else{
 		S.files=S.get;
 		//Skip to next then if an array was passed instead
-		saveFileInfo(S.files);
+		saveAllFileInfo(S.files);
 		resolve();
 	}
 });
@@ -2410,6 +2423,7 @@ Promise.all([getFiles,getHeyBard]).then(function(start){
 //On failure (or not getting)
 .catch((response)=>{
 	alert('Failed to successfully load the Showpony object! '+response);
+	console.log(response);
 	
 	//Send an event to let the user know that Showpony has started up!
 	S.window.dispatchEvent(
@@ -2467,7 +2481,7 @@ if(S.admin){
 	
 	function updateEditor(){
 		//Remove extra values to get these ones
-		uploadName.value=S.files[S.currentFile].name;
+		uploadName.value=S.files[S.currentFile].title;
 		uploadDate.value=S.files[S.currentFile].date;
 	}
 	
@@ -2482,7 +2496,11 @@ if(S.admin){
 		.then(response=>{
 			S.window.classList[loggedIn ? 'add' : 'remove']('showpony-editor');
 				
-			S.to({reload:true,scrollToTop:false,replaceState:true});
+			S.to({
+				reload:true
+				,scrollToTop:false
+				,replaceState:true
+			});
 		})
 		.catch(response=>{
 			alert('501: '+response);
@@ -2499,28 +2517,50 @@ if(S.admin){
 			return;
 		}
 		
-		var fileName=(S.files[thisFile].path[0]==='x') ? 'x': ''
+		var fileName=((S.files[thisFile].name[0]==='x') ? 'x': '')
 			+date.replace(/:/g,';') //date (replace : with ; so it's Windows safe)
-			+' ('+safeFilename(uploadName.value,'to')+')' //name
-			+S.files[thisFile].path.match(/\.\w+$/) //ext
+			+' ('+safeFilename(uploadName.value,'to')+')' //title
+			+S.files[thisFile].name.match(/\.\w+$/) //ext
 		;
 		
-		POST({call:'renameFile',name:S.files[thisFile],newName:fileName})
+		POST({
+			call:'renameFile'
+			,name:S.files[thisFile].name
+			,newName:fileName
+		})
 		.then(response=>{
-			/**** NEEDS FIXING WITH UPDATED METHOD OF FILE HANDLING ****/
-			S.files[thisFile]=response.file;
+			S.files[thisFile]=saveFileInfo(S.get+response.file);
 			
 			//Sort the files by order 
-			S.files.sort();
+			S.files=S.files.sort(
+				//Return>0, 2nd is returned
+				function(a,b){
+					//If a is first, sort a before
+					if(([a.path,b.path].sort)[0]===a.path) -1;
+				}
+			);
 			
-			S.to({file:S.files.indexOf(response.file),scrollToTop:false,replaceState:true});
+			var goToFile=0;
+			
+			for(let i=0;i<S.files.length;i++){
+				if(S.files[i].name===response.file){
+					goToFile=i;
+					break;
+				}
+			}
+			
+			S.to({
+				file:goToFile
+				,scrollToTop:false
+				,replaceState:true
+			});
 			scrub();
 		});
 	}
 	
 	//EVENT LISTENERS//
 	//On time, update the editor
-	S.window.addEventListener('time',updateEditor);
+	S.window.addEventListener('timeupdate',updateEditor);
 	uploadName.addEventListener('change',renameFile);
 	uploadDate.addEventListener('change',renameFile);
 	
@@ -2534,11 +2574,18 @@ if(S.admin){
 				,files:uploadFile.files[0]
 			})
 			.then(response=>{
-				///NEEDS UPDATING WITH NEW FILE OBJECT SETUP
-				S.files[thisFile]=response.file;
+				S.files[thisFile]=saveFileInfo(S.get+response.file);
 				
 				//If still on that file, refresh it
-				S.currentFile===thisFile && S.to({file:thisFile,refresh:true,scrollToTop:false,replaceState:true})
+				if(S.currentFile===thisFile){
+					S.to({
+						file:thisFile
+						,reload:true
+						,refresh:true
+						,scrollToTop:false
+						,replaceState:true
+					});
+				}
 			});
 		}
 	);
@@ -2547,13 +2594,23 @@ if(S.admin){
 		,()=>{
 			var thisFile=S.currentFile;
 			
-			POST({call:'deleteFile',name:S.files[thisFile].path})
+			POST({call:'deleteFile',name:S.files[thisFile].name})
 			.then(response=>{
 				//Remove the file from the array
 				S.files.splice(thisFile,1);
+				
+				//Combine total length of all parts
+				S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 
 				//If still on the file we're deleting, reload the file
-				if(thisFile===S.currentFile) S.to({file:thisFile,reload:true,replaceState:true})
+				if(thisFile===S.currentFile){
+					console.log('its teh same!');
+					S.to({
+						file:thisFile
+						,refresh:true
+						,replaceState:true
+					});
+				}
 			});
 		}
 	);
@@ -2563,8 +2620,14 @@ if(S.admin){
 			POST({call:'newFile'})
 			.then(response=>{
 				//Add the file to the array
-				S.files.push(response.file);
-				S.to({file:'last'});
+				S.files.push(saveFileInfo(S.get+response.file));
+				
+				//Combine total length of all parts
+				S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
+				
+				S.to({
+					file:'last'
+				});
 			})
 			.catch(
 				
