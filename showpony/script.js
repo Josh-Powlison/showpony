@@ -2090,6 +2090,9 @@ types.image.addEventListener('load',function(){
 	getTotalBuffered();
 });
 
+//Allow playing videos using Showpony in iOS
+types.video.setAttribute('playsinline','');
+
 //Fix for Safari not going to the right time
 types.video.addEventListener('loadeddata',function(){
 	this.currentTime=goToTime;
