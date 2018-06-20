@@ -507,16 +507,46 @@ S.fullscreen=function(type){
 				,request:'mozRequestFullScreen'
 				,exit:'mozCancelFullScreen'
 			}
-		: null
+		: false
 	;
 	
-	//If a fullscreen-supporting browser wasn't found, return
-	if(!browser) return;
+	//If a fullscreen-supporting browser wasn't found, use our rigged version
+	if(!browser){
+		if(!type){
+			if(S.window.classList.contains('showpony-fullscreen-alt')) type='exit';
+			else type='request';
+		}
+		
+		if(type=='request'){
+			S.window.classList.add('showpony-fullscreen-alt');
+			document.getElementsByTagName('html')[0].classList.add('showpony-fullscreen-control');
+			
+			S.window.dataset.prevz=S.window.style.zIndex || 'initial';
+			
+			//From: https://stackoverflow.com/questions/1118198/how-can-you-figure-out-the-highest-z-index-in-your-document
+			S.window.style.zIndex=Array.from(document.querySelectorAll('body *'))
+			   .map(a => parseFloat(window.getComputedStyle(a).zIndex))
+			   .filter(a => !isNaN(a))
+			   .sort((a,b)=>a-b)
+			   .pop()+1;
+		}else{
+			S.window.classList.remove('showpony-fullscreen-alt');
+			document.getElementsByTagName('html')[0].classList.remove('showpony-fullscreen-control');
+			
+			//Get the original z-index value
+			S.window.style.zIndex=S.window.dataset.prevz;
+			S.window.removeAttribute('data-prevz');
+		}
+		
+		return;
+	}
 	
 	//If fullscreen and not requesting, exit
-	if(document[browser.element]) type!=='request' && document[browser.exit]();
+	if(document[browser.element]){
+		if(type!=='request') document[browser.exit]();
+	}
 	//If not fullscreen and not exiting, request
-	else type!=='exit' && S.window[browser.request]();
+	else if(type!=='exit') S.window[browser.request]();
 }
 
 //When the viewer inputs to Showpony (click, space, general action)
@@ -2173,10 +2203,10 @@ function updateInfo(pushState){
 /////////////////START/////////////////
 ///////////////////////////////////////
 
+S.window.classList.add('showpony');
+
 //If the window is statically positioned, set it to relative! (so positions of children work)
 if(window.getComputedStyle(S.window).getPropertyValue('position')=='static') S.window.style.position='relative';
-
-S.window.classList.add('showpony');
 
 //Set tabIndex so it's selectable (if it's not already set)
 if(S.window.tabIndex<0) S.window.tabIndex=0;
