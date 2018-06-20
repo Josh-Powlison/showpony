@@ -399,15 +399,15 @@ S.menu=function(event,action){
 		(!S.window.classList.contains('showpony-paused') && action=='play'))
 	) return;
 	
-	else //If we aren't moving the bar
+	else if(currentType!==null) //If we aren't moving the bar
 	{
 		//On toggling classes, returns 'true' if just added
 		if(S.window.classList.toggle('showpony-paused')){
 			//Pause media
-			types[currentType].play && types[currentType].pause();
+			if(types[currentType].play) types[currentType].pause();
 		}else{
 			//Play media
-			types[currentType].play && types[currentType].play();
+			if(types[currentType].play) types[currentType].play();
 		}
 	}
 	
