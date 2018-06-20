@@ -382,9 +382,12 @@ S.to=function(input){
 	}
 	
 	////MAY NEED TO PUT THIS ALL IN A "THEN" AFTER A PROMISE SETUP FOR THE DIFFERENT MEDIA (so timing is perfect)
+	goToTime=obj.time;
 	thisType.currentTime=obj.time; //Update the time
 	timeUpdate();
 }
+
+var goToTime=0;
 
 //Toggle the menu
 S.menu=function(event,action){
@@ -2056,6 +2059,18 @@ types.image.addEventListener('load',function(){
 	S.files[S.currentFile].buffered=true;
 	getTotalBuffered();
 });
+
+//Fix for Safari not going to the right time
+types.video.addEventListener('loadeddata',function(){
+	this.currentTime=goToTime;
+	console.log(goToTime,this);
+});
+
+types.audio.addEventListener('loadeddata',function(){
+	this.currentTime=goToTime;
+	console.log(goToTime,this);
+});
+
 types.video.addEventListener('canplay',function(){
 	content.classList.remove('showpony-loading');
 	//Consider how much has already been loaded; this isn't run on first chunk loaded
