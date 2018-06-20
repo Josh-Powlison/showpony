@@ -1438,6 +1438,10 @@ function runMM(inputNum){
 				continue;
 			//Lines breaks
 			case '#':
+				var lineBreak=document.createElement('span');
+				lineBreak.style.whiteSpace='pre-line';
+				lineBreak.innerHTML=' <wbr>';
+				fragment.appendChild(lineBreak); //wbr fixes missing lines breaks in Firefox
 				fragment.appendChild(document.createElement('br'));
 				continue;
 			default:
