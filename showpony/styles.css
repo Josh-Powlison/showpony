@@ -162,17 +162,20 @@
 }
 
 .showpony-overlay:hover
-,.showpony-overlay:active
 ,.showpony-paused .showpony-overlay{
 	opacity:1;
 	cursor:auto;
 }
 
 @media (hover:none), -moz-touch-enabled{
-	.showpony:not(.showpony-paused) .showpony-overlay:hover
-	,.showpony:not(.showpony-paused) .showpony-overlay:active{
+	.showpony:not(.showpony-paused) .showpony-overlay:hover{
 		opacity:0;
 		cursor:initial;
+	}
+	
+	.showpony:not(.showpony-paused) .showpony-overlay:hover button
+	,.showpony:not(.showpony-paused) .showpony-overlay:hover select{
+		pointer-events:none;
 	}
 }
 
