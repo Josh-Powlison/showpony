@@ -524,7 +524,7 @@ button.showpony-account-button{
 }
 
 .showpony-char-container>.showpony-char{
-	animation:kn-display 0s linear;
+	animation:kn-display 1s linear;
 	animation-fill-mode:forwards;
 }
 

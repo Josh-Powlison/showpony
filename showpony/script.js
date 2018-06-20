@@ -32,7 +32,7 @@ for(var i=0;i<splitStart.length;i++){
 }
 
 //Load CSS if not loaded already
-if(!document.querySelector('[href$="showpony/styles.css"')){
+if(!document.querySelector('[href$="showpony/styles.css"]')){
 	var styles=document.createElement('link');
 	styles.rel='stylesheet';
 	styles.href=ShowponyFolder+'/styles.css';
@@ -1937,8 +1937,6 @@ if(S.shortcuts){
 				}
 			}
 			
-			console.log(event.key);
-			
 			if(shortcutKeys[event.key]
 				&& !event.ctrlKey
 				&& !event.altKey
@@ -2350,13 +2348,13 @@ var getHeyBard=new Promise((resolve,reject)=>{
 	}
 	
 	//Otherwise, if it doesn't exist add the element
-	if(!document.querySelector('[src="https://heybard.com/apis/accounts/script.js"')){
+	if(!document.querySelector('[src="https://heybard.com/apis/accounts/script.js"]')){
 		var script=document.createElement('script');
 		script.src='https://heybard.com/apis/accounts/script.js';
 		document.head.appendChild(script);
 	}
 	
-	document.querySelector('[src="https://heybard.com/apis/accounts/script.js"').addEventListener('load',function(){
+	document.querySelector('[src="https://heybard.com/apis/accounts/script.js"]').addEventListener('load',function(){
 		resolve(bookmark);
 	});
 });
