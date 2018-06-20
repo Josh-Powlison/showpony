@@ -644,6 +644,7 @@ S.window.addEventListener('animationend',function(){
 	var styleAdd=/[^{]+;/.exec(updateStyle);
 	
 	if(styleAdd) this.style.cssText+=styleAdd[0];
+	this.style.animation=null;
 })
 
 content.addEventListener('animationend',function(){
@@ -652,6 +653,7 @@ content.addEventListener('animationend',function(){
 	var styleAdd=/[^{]+;/.exec(updateStyle);
 	
 	if(styleAdd) this.style.cssText+=styleAdd[0];
+	this.style.animation=null;
 })
 
 if(S.credits) useIcons(S.credits);
@@ -1351,7 +1353,7 @@ function runMM(inputNum){
 			var styleAdd=/[^{]+;/.exec(updateStyle);
 			
 			if(styleAdd) this.style.cssText+=styleAdd[0];
-			console.log('teseting!');
+			this.style.animation=null;
 		})
 	}
 	
@@ -1748,6 +1750,7 @@ var multimediaFunction={
 				var styleAdd=/[^{]+;/.exec(updateStyle);
 				
 				if(styleAdd) this.style.cssText+=styleAdd[0];
+				this.style.animation=null;
 			})
 		}
 		
@@ -1847,6 +1850,7 @@ var multimediaFunction={
 				var styleAdd=/[^{]+;/.exec(updateStyle);
 				
 				if(styleAdd) this.style.cssText+=styleAdd[0];
+				this.style.animation=null;
 			})
 		}
 		
