@@ -269,7 +269,10 @@ S.to=function(input){
 	if(sameFile){
 		//Special multimedia engine prep
 		if(currentType==='multimedia'){
-			runTo=keyframes[Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].duration))];
+			runTo=Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].duration));
+			if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
+			else runTo=keyframes[runTo];
+			
 			runMM(0);
 		}else{
 			//If text, scroll to specified spot
@@ -320,7 +323,9 @@ S.to=function(input){
 							if(S.lines[i].indexOf('>')!==0) keyframes.push(i);
 						}
 						
-						runTo=keyframes[Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].duration))];
+						runTo=Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].duration));
+						if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
+						else runTo=keyframes[runTo];
 						
 						runMM(0);
 					//Regular text
