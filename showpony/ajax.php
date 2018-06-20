@@ -54,8 +54,8 @@ if(!empty($_GET['get'])){
 		|| $_POST['call']==='getFiles'
 	){
 		#On login request, attempt to log in; if it fails, let the user know
-		if($password===NULL) echo 'The admin panel isn\'t accessible for this Showpony!';
-		else if($_POST['call']==='login' && empty($_SESSION['showpony_admin']=$_POST['password']===$password)){
+		if($_POST['call']==='login' && empty($_SESSION['showpony_admin']=$_POST['password']===$password)){
+			if($password===NULL) echo 'The admin panel isn\'t accessible for this Showpony!';
 			echo 'Wrong password!';
 		}
 		else{
