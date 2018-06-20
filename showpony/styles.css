@@ -166,8 +166,14 @@
 ,.showpony-paused .showpony-overlay{
 	opacity:1;
 	cursor:auto;
-	animation:hide-menu 1s linear 2s;
-	animation-fill-mode:forwards;
+}
+
+@media (hover:none), -moz-touch-enabled{
+	.showpony:not(.showpony-paused) .showpony-overlay:hover
+	,.showpony:not(.showpony-paused) .showpony-overlay:active{
+		opacity:0;
+		cursor:initial;
+	}
 }
 
 .showpony-paused .showpony-overlay{
