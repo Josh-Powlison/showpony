@@ -558,10 +558,12 @@ S.input=function(){
 			
 			//Display all letters
 			content.querySelectorAll('.showpony-char').forEach(function(key){
-				//Remove the delay so they're displayed immediately
-				//console.log('try to delay!',key.outerHTML.replace(/animation-delay:[^;]+;/,''));
+				//Skip creating animation, and display the letter
 				key.style.animationDelay=null;
-				//key.outerHTML=key.outerHTML.replace(/animation-delay:[^;]+;/,'');
+				var classes=key.className;
+				key.className=classes;
+				key.style.animation='initial';
+				key.dispatchEvent(new CustomEvent('animationstart'));
 			});
 			
 			//console.log('Animations 2');
