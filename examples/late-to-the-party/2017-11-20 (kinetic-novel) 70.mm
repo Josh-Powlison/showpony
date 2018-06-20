@@ -37,8 +37,8 @@
 >	CH	ben		habit
 [ben]I don't want anyone to sing. I just want {,,#ffa533,bold}cake{}.
 
->	CH	ben		scared	25%
->	CH	susan	angry	-25%
+>	CH	ben		scared
+>	CH	susan	angry
 
 [susan]{,,,shout}So do I! And guess what, if you don't get your butt back to the party, {,,,italic}neither{}{,,,shout} of us is getting {,,#ffa533,bold}cake{}!
 >	CH	ben		shock
@@ -71,7 +71,7 @@
 >	CH	susan	angry	100%
 >	CH	ben		scared	100%
 >	AN	main	.2s	bottom:-5em;opacity:0;
->	WT	.2
+>	WT	.5
 >	ST	main	bottom:initial;top:0;height:100%;text-align:center;opacity:0;
 >	AN	main	3s	opacity:1;
 
