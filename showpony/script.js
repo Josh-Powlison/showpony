@@ -171,12 +171,9 @@ S.to=function(input){
 	
 	//If we're at the end, run the readable event
 	if(S.currentFile>=S.files.length){
-		//Go to the beginning of the final file or 10 seconds before the end of the steam, whichever is later.
 		S.currentFile=S.files.length-1;
-		obj.time=S.files[S.files.length-1].duration-10;
+		obj.time=S.files[S.files.length-1].duration;
 		if(obj.time<0) obj.time=0;
-		
-		console.log(S.currentFile,S.files.length,S.currentFile,S);
 		
 		//If we aren't just trying to reload a file, end; otherwise, get to that last file
 		if(!obj || !obj.reload){
@@ -269,7 +266,7 @@ S.to=function(input){
 	if(sameFile){
 		//Special multimedia engine prep
 		if(currentType==='multimedia'){
-			runTo=Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].duration));
+			runTo=Math.round(keyframes.length*(obj.time/S.files[S.currentFile].duration));
 			if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
 			else runTo=keyframes[runTo];
 			
@@ -323,7 +320,7 @@ S.to=function(input){
 							if(S.lines[i].indexOf('>')!==0) keyframes.push(i);
 						}
 						
-						runTo=Math.floor(keyframes.length*(obj.time/S.files[S.currentFile].duration));
+						runTo=Math.round(keyframes.length*(obj.time/S.files[S.currentFile].duration));
 						if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
 						else runTo=keyframes[runTo];
 						
@@ -342,7 +339,6 @@ S.to=function(input){
 							if(S.currentFile<S.files.length-1) pageTurn.insertAdjacentElement('beforeend',pageNext);
 							
 							//Scroll to spot
-							console.log(pageTurn);
 							pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[S.currentFile].duration);
 							
 							//Stop loading
@@ -535,8 +531,6 @@ S.input=function(){
 	
 		//If a wait timer was going, stop it.
 		if(waitTimer.remaining>0){
-			//console.log(waitTimer,waitTimer.remaining);
-			//console.log('Animations');
 			//Run all animations, end all transitions
 			content.classList.add('showpony-loading');
 			content.offsetHeight; //Trigger reflow to flush CSS changes
@@ -1230,7 +1224,6 @@ function saveFileInfo(path){
 	var duration=/[^\s)]+(?=\.[^.]+$)/.exec(file.name);
 	
 	//If the whole filename is a number (matches the title), it's likely not length, just an identifier. Ignore in that case.
-	console.log(duration,file.title);
 	if(duration==file.title || /(:-)/i.test(duration)){
 		duration=S.defaultDuration;
 	}else{
