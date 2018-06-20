@@ -517,6 +517,11 @@ S.fullscreen=function(type){
 
 //When the viewer inputs to Showpony (click, space, general action)
 S.input=function(){
+	if(S.window.classList.contains('showpony-paused')){
+		S.menu(null,'play');
+		return;
+	}
+	
 	if(currentType==='image') S.to({file:'+1'});
 	else if(currentType==='audio' || currentType==='video') S.menu();
 	else if(currentType==='multimedia'){
