@@ -437,7 +437,7 @@ button.showpony-account-button{
 	word-break:normal;
 	break-word:normal;
 	overflow-wrap:break-word;
-	white-space:pre-line;
+	white-space:nowrap;
 }
 
 .showpony-background{

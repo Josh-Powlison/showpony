@@ -1394,7 +1394,7 @@ function runMM(inputNum){
 	var charNum=0; //The number of the letter (for order-specific values)
 	
 	var l=text.length;
-	for(let i=0;i<l;i++){	
+	for(let i=0;i<=l;i++){	
 		var waitTime=baseWaitTime;
 		
 		//Check the current character//
@@ -1459,7 +1459,14 @@ function runMM(inputNum){
 		let showChar=m('char','span');				//Display char (appear, shout, etc), parent to animChar
 		let animChar=m('char-anim','span');				//Constant animation character (singing, shaking...)
 		let hideChar=m('char-placeholder','span');	//Hidden char for positioning
-		hideChar.innerHTML=animChar.innerHTML=text[i];
+		
+		//Spaces
+		//and Ending! (needs this to wrap lines correctly on Firefox)
+		if(text[i]==' ' || i==l){
+			thisChar.style.whiteSpace='pre-line';
+			hideChar.innerHTML=animChar.innerHTML=' <wbr>';
+		}
+		else hideChar.innerHTML=animChar.innerHTML=text[i];
 		
 		frag([animChar],showChar);
 		frag([showChar,hideChar],thisChar);
