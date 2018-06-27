@@ -572,17 +572,16 @@ S.input=function(){
 			waitTimer.end();
 		}
 		
-		//End animations on going to the next frame
+		//End object animations on going to the next frame
 		for(var key in S.objects) S.objects[key].dispatchEvent(new Event('animationend'));
 		
 		//Remove the continue notice
 		continueNotice.remove();
 		
 		//If all letters are displayed
-		if(S.charsHidden<1) runMM();
+		if(!S.objects[multimediaSettings.textbox] || S.objects[multimediaSettings.textbox].children.length===0 || S.objects[multimediaSettings.textbox].lastChild.firstChild.style.visibility=='visible') runMM();
 		else //If some S.objects have yet to be displayed
 		{
-			
 			//Run all animations, end all transitions
 			content.classList.add('showpony-loading');
 			content.offsetHeight; //Trigger reflow to flush CSS changes
@@ -596,9 +595,8 @@ S.input=function(){
 				key.className=classes;
 				key.style.animation='initial';
 				key.dispatchEvent(new CustomEvent('animationstart'));
+				key.style.visibility='visible';
 			});
-			
-			//console.log('Animations 2');
 		}
 	}
 }
@@ -618,7 +616,7 @@ S.close=function(){
 
 var multimediaSettings={
 	textbox:'main'
-	,text: null
+	,text:null
 	,go:false
 };
 
@@ -1369,7 +1367,6 @@ function runMM(inputNum){
 		multimediaSettings.textbox='main';
 		if(S.objects.main){
 			S.objects.main.innerHTML='';
-			S.objects.main.scrollTop=0;
 		}
 	}
 	
@@ -1424,7 +1421,6 @@ function runMM(inputNum){
 	//The total time we're waiting until x happens
 	var totalWait=0;
 	var fragment=document.createDocumentFragment();
-	var charNum=0; //The number of the letter (for order-specific values)
 	
 	var l=text.length;
 	for(let i=0;i<=l;i++){	
@@ -1479,95 +1475,91 @@ function runMM(inputNum){
 				continue;
 			default:
 				//Handle punctuation
-				if(i!=text.length && text[i+1]==' '){
-					if(/[.!?:;-]/.test(text[i])) waitTime*=20;
-					if(/[,]/.test(text[i])) waitTime*=10;
+				if(i!=text.length && (text[i]==' ')){
+					/*Pause at:
+						. ! ? : ; -
+						but if there's a " or ' after it, wait until that's set.
+					*/
+					
+					//Long pause
+					if(/[.!?:;-]["']*$/.test(text.substr(i-3,3))) waitTime*=20;
+					
+					//Short pause
+					if(/[,]["']*$/.test(text.substr(i-3,3))) waitTime*=10;
+				}
+
+				//Make the char based on charElement
+				var thisChar=charElement.cloneNode(false);
+				
+				let showChar=m('char','span');				//Display char (appear, shout, etc), parent to animChar
+				let animChar=m('char-anim','span');			//Constant animation character (singing, shaking...)
+				let hideChar=m('char-placeholder','span');	//Hidden char for positioning
+				
+				//Spaces
+				//and Ending! (needs this to wrap lines correctly on Firefox)
+				if(text[i]==' ' || i==l){
+					thisChar.style.whiteSpace='pre-line';
+					hideChar.innerHTML=animChar.innerHTML=' <wbr>';
+					
+					showChar.addEventListener('animationstart',function(event){
+						//If the animation ended on a child, don't continue! (animations are applied to children for text effects)
+						if(this!=event.target) return;
+						
+						//If the element's currently hidden (the animation that ended is for unhiding)
+						if(this.style.visibility!=='visible'){
+							this.style.visibility='visible';
+							
+							var textbox=this.closest('.showpony-textbox');
+							
+							//If the letter's below the textbox
+							if(this.parentNode.getBoundingClientRect().bottom>textbox.getBoundingClientRect().bottom){
+								textbox.scrollTop=this.parentNode.offsetTop+this.parentNode.offsetHeight-textbox.offsetHeight;
+							}
+							
+							//If the letter's above the textbox
+							if(this.parentNode.getBoundingClientRect().top<textbox.getBoundingClientRect().top){
+								textbox.scrollTop=this.parentNode.offsetTop;
+							}
+							
+						}
+					});
+				}
+				else hideChar.innerHTML=animChar.innerHTML=text[i];
+				
+				frag([animChar],showChar);
+				frag([showChar,hideChar],thisChar);
+				
+				//Set the display time here- but if we're paused, no delay!
+				if(!S.window.classList.contains('showpony-paused')) showChar.style.animationDelay=totalWait+'s';
+				
+				//Set animation timing for animChar, based on the type of animation
+				if(thisChar.classList.contains('showpony-char-sing')){
+					animChar.style.animationDelay=-(fragment.children.length*.1)+'s';
 				}
 				
-				//The number of characters is going up!
-				charNum++;
-
+				if(thisChar.classList.contains('showpony-char-shake')){
+					animChar.style.animationDelay=-(Math.random()*3)+'s';
+				}
+				
+				//Add the char to the document fragment
+				fragment.appendChild(thisChar);
+				totalWait+=waitTime;
+				
 				break;
 		}
-		
-		//Make the char based on charElement
-		var thisChar=charElement.cloneNode(false);
-		
-		let showChar=m('char','span');				//Display char (appear, shout, etc), parent to animChar
-		let animChar=m('char-anim','span');				//Constant animation character (singing, shaking...)
-		let hideChar=m('char-placeholder','span');	//Hidden char for positioning
-		
-		//Spaces
-		//and Ending! (needs this to wrap lines correctly on Firefox)
-		if(text[i]==' ' || i==l){
-			thisChar.style.whiteSpace='pre-line';
-			hideChar.innerHTML=animChar.innerHTML=' <wbr>';
-		}
-		else hideChar.innerHTML=animChar.innerHTML=text[i];
-		
-		frag([animChar],showChar);
-		frag([showChar,hideChar],thisChar);
-		
-		//This character is adding to the list of hidden S.objects
-		S.charsHidden++;
-		
-		//Set the display time here- but if we're paused, no delay!
-		if(!S.window.classList.contains('showpony-paused')) showChar.style.animationDelay=totalWait+'s';
-		
-		//Set animation timing for animChar, based on the type of animation
-		if(thisChar.classList.contains('showpony-char-sing')){
-			animChar.style.animationDelay=-(charNum*.1)+'s';
-		}
-		
-		if(thisChar.classList.contains('showpony-char-shake')){
-			animChar.style.animationDelay=-(Math.random()*3)+'s';
-		}
-		
-		//Add the char to the document fragment
-		fragment.appendChild(thisChar);
-		
-		totalWait+=waitTime;
-		
-		//Add event listeners to each
-		//On displaying, do this:
-		showChar.addEventListener('animationstart',function(event){
-			//If the animation ended on a child, don't continue! (animations are applied to children for text effects)
-			if(this!=event.target) return;
-			
-			//If the element's currently hidden (the animation that ended is for unhiding)
-			if(this.style.visibility!=='visible'){
-				S.charsHidden--;
-				this.style.visibility='visible';
-				
-				//If there are no more S.objects to show
-				if(S.charsHidden<1){
-					//If we aren't waiting to continue, continue
-					if(!multimediaSettings.wait){
-						runMM();
-						return;
-					}else{
-						//If we need player input, notify them:
-						content.appendChild(continueNotice);
-					}
-				}
-				
-				var textbox=this.closest('.showpony-textbox');
-				
-				//If the letter's below the textbox
-				if(this.parentNode.getBoundingClientRect().bottom>textbox.getBoundingClientRect().bottom){
-					textbox.scrollTop=this.parentNode.offsetTop+this.parentNode.offsetHeight-textbox.offsetHeight;
-				}
-				
-				//If the letter's above the textbox
-				if(this.parentNode.getBoundingClientRect().top<textbox.getBoundingClientRect().top){
-					textbox.scrollTop=this.parentNode.offsetTop;
-				}
-				
-				//Add post-appearance animations
-				
-			}
-		});
 	}
+	
+	fragment.lastChild.addEventListener('animationstart',function(event){
+		if(this===event.target) this.style.visibility='visible';
+		
+		//If we aren't waiting to continue, continue
+		if(!multimediaSettings.wait){
+			runMM();
+		}else{
+			//If we need player input, notify them:
+			content.appendChild(continueNotice);
+		}
+	});
 	
 	//Add the chars to the textbox
 	S.objects[multimediaSettings.textbox].appendChild(fragment);
