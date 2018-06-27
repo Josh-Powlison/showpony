@@ -21,34 +21,24 @@
 <body>
 <header>
 	<nav>
+		<span><img class="svg-inline" src="design-files/logo.svg"></span>
 		<a href="https://github.com/Josh-Powlison/showpony"><p>Github</p></a>
 		<a href="https://github.com/Josh-Powlison/showpony/tree/develop"><p>Dev Branch</p></a>
 	</nav>
 </header>
 <main>
 
-<h1><img class="svg-inline" src="design-files/logo.svg"> Showpony</h1>
-<p>So, you want to post your <span id="current-medium">comics</span> on your website. That can be intimidating. Would you like to get it up quickly with a powerful open-source engine? Do you want:</p>
-<ul>
-	<li>Fullscreen</li>
-	<li>Automatic bookmarking</li>
-	<li>Easy archives</li>
-	<li>Preloading</li>
-	<li>Multimedia options (switch from images, to text, to video, to audio...)</li>
-	<li>To get it running on your site in less than 5 minutes</li>
-</ul>
-<p>Try Showpony out below!</p>
-<p><strong>NOTE: the stable release doesn't support all these features yet.</strong></p>
-
 <script src="showpony/script.js"></script>
 
-<nav id="example-list">
-	<button id="show-comic">Comics</button>
-	<button id="show-video">Video</button>
-	<button id="show-text">Text</button>
-	<button id="show-kn">Kinetic Novel</button>
-	<button id="show-audio">Audio</button>
-</nav>
+<h1><img class="svg-inline" src="design-files/logo.svg"> Showpony</h1>
+
+<p id="intro">The best way to share your <select id="example-list">
+	<option value="comic">comics</option>
+	<option value="video">video series</option>
+	<option value="text">serial novel</option>
+	<option value="kn">kinetic novel</option>
+	<option value="audio">audiobook</option>
+</select>!</p>
 
 <script>
 	showponies={};
@@ -160,58 +150,31 @@
 	showponies.audio=new Showpony(showponyInputs.audio);
 </script>
 
-<h2>Setup</h2>
+<h2>Install in 5 minutes!</h2>
 
-<p>Download <a href="https://github.com/Josh-Powlison/showpony/releases" target="_blank">the latest release</a> and put the <em>showpony</em> and <em>files</em> folders onto your website! Then, put this code in your webpage to get up-and-running immediately:</p>
+<p><a href="https://github.com/Josh-Powlison/showpony/releases" target="_blank">Download</a> and put the <em>showpony</em> folder and <em>files</em> folder on your website! Then use this HTML:</p>
 
-<pre class="html">
-<h3>HTML</h3>
+<pre>
 &lt;script src="showpony/script.js"&gt;&lt;/script&gt;
 &lt;script&gt;new Showpony;&lt;/script&gt;
 </pre>
 
-<p>You'll likely want a more custom Showpony. Here are the properties used for the Showpony above:</p>
+<p>To customize your Showpony, look at the code below or the <a href="https://github.com/Josh-Powlison/showpony/wiki">Wiki</a>!</p>
 
-<pre class="js">
-<h3>JavaScript</h3>
+<pre>
+&lt;script&gt;
 new Showpony({
 <span id="code"></span>
 });
+&lt;/script&gt;
 
 <p id="propertyExplanation"></p></pre>
 
-<p>You can go to the <a href="https://github.com/Josh-Powlison/showpony/wiki">Showpony Wiki</a> for more info.</p>
-
-<!--
-<h2>Custom Setup</h2>
-
-<div class="story" id="custom"></div>
-<script>
-	window.addEventListener(
-		"load"
-		,function(){
-			showponyCustom=new Showpony({
-				window:document.getElementById("custom")
-				,get:"examples/orbit/"
-				,scrubLoad:true
-				,start:0
-				,info:"[Current File PAD2]/[Total Files PAD2]<br>[Title]"
-				,title:"Orbit [Current File PAD2]: [Title]"
-				,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a target='_blank' href='http://www.webtoons.com/en/challenge/orbit/list?title_no=58078'>LineWebtoon.logo</a><br>Orbit by Josh Powlison, © 2018<br>Rights reserved except where otherwise stated"
-				,query:"orbit"
-				,preloadNext:3
-				,saveId:"orbit-test"
-			});
-		}
-	);
-</script>!-->
-
-<h2>Websites using Showpony</h3>
+<h2>Used by:</h3>
 <div id="websites-using"><a href="http://gameplanmanga.com" target="_blank"><img src="images/gameplan-banner.jpg"></a></div>
 <p><small>Email me at <a href="mailto:joshuapowlison@gmail.com" target="_blank">joshuapowlison@gmail.com</a> if you want to be included in the list! I will not include NSFW stories.</small></p>
 
 <script src="script.js"></script>
-
 
 </main>
 <footer><p>Showpony is Open Source under an MIT License. Version in Demo: DEV BRANCH</p></footer>

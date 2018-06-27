@@ -1,30 +1,16 @@
-document.getElementById("show-comic").addEventListener("click",function(){
-	chooseStory('comic');
+document.getElementById("example-list").addEventListener("change",function(){
+	chooseStory(this.value);
 });
-
-document.getElementById("show-video").addEventListener("click",function(){
-	chooseStory('video');
-});
-
-document.getElementById("show-text").addEventListener("click",function(){
-	chooseStory('text');
-});
-
-document.getElementById("show-kn").addEventListener("click",function(){
-	chooseStory('kn');
-});
-
-document.getElementById("show-audio").addEventListener("click",function(){
-	chooseStory('audio');
-});
-
-console.log("HEEEEEEEEEEEEY");
 
 function chooseStory(id){
 	var stories=document.getElementsByClassName("story");
 	
-	if(document.querySelector(".show-selected")) document.querySelector(".show-selected").classList.remove("show-selected");
-	document.getElementById("show-"+id).classList.add("show-selected");
+	//if(document.querySelector(".show-selected")) document.querySelector(".show-selected").classList.remove("show-selected");
+	//document.getElementById("show-"+id).classList.add("show-selected");
+	
+	if(document.getElementById("example-list").value!==id){ 
+		document.getElementById("example-list").value=id;
+	}
 	
 	for(var i=0;i<stories.length;i++){
 		if(stories.item(i).id==id){
@@ -48,22 +34,14 @@ function chooseStory(id){
 		}
 	}
 	
-	document.getElementById("current-medium").innerHTML={
-		"comic":"comic"
-		,"text":"serial novel"
-		,"kn":"kinetic novel"
-		,"audio":"dramatized audiobook"
-		,"video":"video series"
-	}[id];
-	
-	var container=document.createElement("span");
+	var container=document.createElement("p");
 	
 	var objects=Object.keys(showponyInputs[id]);
 	
 	for(var i=0;i<objects.length;i++){
 		var line=document.createElement("span");
 		
-		line.innerHTML+='\t<span class="obj-name">'+objects[i]+'</span>: ';
+		line.innerHTML+='    <span class="obj-name">'+objects[i]+'</span>: ';
 		var value=showponyInputs[id][objects[i]];
 		
 		var print='';
@@ -81,7 +59,7 @@ function chooseStory(id){
 				break;
 			case 'object':
 				if(value && value.id) print+='document.getElementById("'+value.id+'")';
-				else print+=JSON.stringify(value,null,'\t');
+				else print+=JSON.stringify(value,null,'    ');
 				break;
 			default:
 				//
