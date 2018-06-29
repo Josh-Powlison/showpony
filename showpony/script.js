@@ -1423,6 +1423,8 @@ function runMM(inputNum){
 	var fragment=document.createDocumentFragment();
 	var currentParent=fragment;
 	
+	var letters=''; //Have to save actual letters separately; special tags and such can mess with our calculations
+	
 	var l=text.length;
 	for(let i=0;i<=l;i++){	
 		var waitTime=baseWaitTime;
@@ -1479,8 +1481,6 @@ function runMM(inputNum){
 					i++;
 				}
 				
-				console.log(values);
-				
 				//We're closing the element
 				if(values[0]=='/'){
 					//If the parent doesn't have a parent (it's top-level)
@@ -1491,8 +1491,6 @@ function runMM(inputNum){
 					}else{
 						currentParent=currentParent.parentElement;
 					}
-					
-					console.log(currentParent);
 				//We're creating the element
 				}else{
 					values=values.split(' ');
@@ -1545,12 +1543,17 @@ function runMM(inputNum){
 						but if there's a " or ' after it, wait until that's set.
 					*/
 					
+					var start=letters.length-3;
+					if(start<0) start=0;
+					
 					//Long pause
-					if(/[.!?:;-]["']*$/.test(text.substr(i-3,3))) waitTime*=20;
+					if(/[.!?:;-]["']*$/.test(letters.substr(start,3))) waitTime*=20;
 					
 					//Short pause
-					if(/[,]["']*$/.test(text.substr(i-3,3))) waitTime*=10;
+					if(/[,]["']*$/.test(letters.substr(start,3))) waitTime*=10;
 				}
+				
+				letters+=text[i];
 
 				//Make the char based on charElement
 				var thisChar=charElement.cloneNode(false);
@@ -1598,7 +1601,7 @@ function runMM(inputNum){
 				
 				//Set animation timing for animChar, based on the type of animation
 				if(thisChar.classList.contains('showpony-char-sing')){
-					animChar.style.animationDelay=-(fragment.children.length*.1)+'s';
+					animChar.style.animationDelay=-(letters.length*.1)+'s';
 				}
 				
 				if(thisChar.classList.contains('showpony-char-shake')){
