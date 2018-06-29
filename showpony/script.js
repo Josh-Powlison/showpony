@@ -1510,9 +1510,9 @@ function runMM(inputNum){
 								attValues[1]=attValues[1].substr(1,attValues[1].length-2);
 							}
 							
-							currentParent.setAttribute(attValues[0],attValues[1]);
+							newParent.setAttribute(attValues[0],attValues[1]);
 						}else{
-							currentParent.setAttribute(attValues[0],'true');
+							newParent.setAttribute(attValues[0],'true');
 						}
 					}
 					
@@ -1529,7 +1529,6 @@ function runMM(inputNum){
 				
 				//Pass over the closing bracket
 				continue;
-			//Lines breaks
 			//Lines breaks
 			case '#':
 				var lineBreak=document.createElement('span');
