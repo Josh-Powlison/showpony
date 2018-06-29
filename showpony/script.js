@@ -1421,6 +1421,7 @@ function runMM(inputNum){
 	//The total time we're waiting until x happens
 	var totalWait=0;
 	var fragment=document.createDocumentFragment();
+	var currentParent=fragment;
 	
 	var l=text.length;
 	for(let i=0;i<=l;i++){	
@@ -1465,13 +1466,77 @@ function runMM(inputNum){
 				
 				//Pass over the closing bracket
 				continue;
+			//HTML
+			case '<':
+				//Skip over the opening bracket
+				i++;
+			
+				var values='';
+				
+				//Wait until a closing bracket (or the end of the text)
+				while(text[i]!='>' && i<text.length){
+					values+=text[i];
+					i++;
+				}
+				
+				console.log(values);
+				
+				//We're closing the element
+				if(values[0]=='/'){
+					//If the parent doesn't have a parent (it's top-level)
+					if(currentParent.parentElement==null){
+						fragment.appendChild(currentParent);
+						currentParent=fragment;
+					//If a parent element exists, it's the new parent
+					}else{
+						currentParent=currentParent.parentElement;
+					}
+					
+					console.log(currentParent);
+				//We're creating the element
+				}else{
+					values=values.split(' ');
+					
+					var newParent=document.createElement(values[0]);
+					
+					//Set attributes, if any were passed
+					for(let ii=1;ii<values.length;ii++){
+						
+						if(values[ii].indexOf('=')>-1){
+							var attValues=values[ii].substr().split('=');
+							
+							//Remove surrounding quotes
+							if(/['"]/.test(attValues[1])){
+								attValues[1]=attValues[1].substr(1,attValues[1].length-2);
+							}
+							
+							currentParent.setAttribute(attValues[0],attValues[1]);
+						}else{
+							currentParent.setAttribute(attValues[0],'true');
+						}
+					}
+					
+					currentParent.appendChild(newParent);
+					
+					//If it's a self-closing tag, it's not our new parent:
+					if(/br|wbr|img|embed|hr|input/.test(values[0])){
+					}else{
+						//This new element is now the current parent
+						currentParent=newParent;
+					}
+					
+				}
+				
+				//Pass over the closing bracket
+				continue;
+			//Lines breaks
 			//Lines breaks
 			case '#':
 				var lineBreak=document.createElement('span');
 				lineBreak.style.whiteSpace='pre-line';
 				lineBreak.innerHTML=' <wbr>';
-				fragment.appendChild(lineBreak); //wbr fixes missing lines breaks in Firefox
-				fragment.appendChild(document.createElement('br'));
+				currentParent.appendChild(lineBreak); //wbr fixes missing lines breaks in Firefox
+				currentParent.appendChild(document.createElement('br'));
 				continue;
 			default:
 				//Handle punctuation
@@ -1542,7 +1607,7 @@ function runMM(inputNum){
 				}
 				
 				//Add the char to the document fragment
-				fragment.appendChild(thisChar);
+				currentParent.appendChild(thisChar);
 				totalWait+=waitTime;
 				
 				break;

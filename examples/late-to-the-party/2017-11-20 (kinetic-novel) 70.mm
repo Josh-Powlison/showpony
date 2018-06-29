@@ -1,7 +1,7 @@
 >	AU	little-idea		loop	play
 >	BG	forest	forest.jpg
->	DS	susan	=	{,0,magenta,bold}Susan{}#
->	DS	ben		=	{,0,aqua,bold}Ben{}#
+>	DS	susan	=	{,0,magenta,}<strong>Susan</strong>{}#
+>	DS	ben		=	{,0,aqua,}<strong>Ben</strong>{}#
 
 >	CH	ben		habit	25%
 >	CH	susan	angry	-100%
@@ -40,7 +40,7 @@
 >	CH	ben		scared
 >	CH	susan	angry
 
-[susan]{,,,shout}So do I! And guess what, if you don't get your butt back to the party, {,,,italic}neither{}{,,,shout} of us is getting {,,#ffa533,bold}cake{}!
+[susan]{,,,shout}So do I! And guess what, if you don't get your butt back to the party, {,,,italic}neither{}{,,,shout} of us is getting {,,#ffa533,}<strong>cake</strong>{}!
 >	CH	ben		shock
 >	CH	susan	frown
 [ben]...
@@ -56,7 +56,7 @@
 
 >	CH	susan	sad
 >	TB	main
->	TB	main	[susan]Sorry. I just worked really hard on this {,,#ffa533,bold}cake{}, and I've {,,,italic}REALLY{} been looking forward to sharing it with you and all my friends! 
+>	TB	main	[susan]Sorry. I just worked really hard on this {,,#ffa533,}<strong>cake</strong>{}, and I've {,,,italic}REALLY{} been looking forward to sharing it with you and all my friends! 
 >	CH	ben		sad
 >	CH	susan	cry
 >	TB	main	But if you just want to relax today, I understand...
