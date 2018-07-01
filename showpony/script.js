@@ -317,7 +317,8 @@ S.to=function(input){
 								continue;
 							}
 							
-							if(S.lines[i].indexOf('>')!==0) keyframes.push(i);
+							//Regular text lines (not continuing) can be keyframes
+							if(/>|\+/i.test(S.lines[i][0])==false) keyframes.push(i);
 						}
 						
 						runTo=Math.round(keyframes.length*(obj.time/S.files[S.currentFile].duration));
@@ -594,9 +595,12 @@ S.input=function(){
 				var classes=key.className;
 				key.className=classes;
 				key.style.animation='initial';
-				key.dispatchEvent(new CustomEvent('animationstart'));
+				key.firstChild.dispatchEvent(new CustomEvent('animationstart'));
 				key.style.visibility='visible';
 			});
+			
+			//Continue if not waiting
+			if(!multimediaSettings.wait) runMM();
 		}
 	}
 }
@@ -1364,9 +1368,10 @@ function runMM(inputNum){
 	}else{
 		//If it's regular text display, use the regular settings
 		multimediaSettings.wait=true; //Assume we're waiting at the end time
-		multimediaSettings.textbox='main';
 		if(S.objects.main){
-			S.objects.main.innerHTML='';
+			//If the line starts with a "+", append the text
+			if(text[0]!=='+') S.objects.main.innerHTML='';
+			else text=text.substr(1);
 		}
 	}
 	
@@ -1426,8 +1431,16 @@ function runMM(inputNum){
 	var letters=''; //Have to save actual letters separately; special tags and such can mess with our calculations
 	
 	var l=text.length;
-	for(let i=0;i<=l;i++){	
+	//We check beyond the length of the text because that lets us place characters that allow text wrapping in Firefox
+	for(let i=0;i<=l;i++){
 		var waitTime=baseWaitTime;
+		
+		//If a > is at the end of a text line, continue automatically.
+		//Won't interfere with tags, no worries!
+		if(i==l-1 && text[i]==='>'){
+			multimediaSettings.wait=false;
+			continue;
+		}
 		
 		//Check the current character//
 		switch(text[i]){
@@ -1616,8 +1629,11 @@ function runMM(inputNum){
 		}
 	}
 	
-	fragment.lastChild.addEventListener('animationstart',function(event){
+	fragment.lastChild.firstChild.addEventListener('animationstart',function(event){
+		console.log(this,event.target);
+		
 		if(this===event.target) this.style.visibility='visible';
+		else return;
 		
 		//If we aren't waiting to continue, continue
 		if(!multimediaSettings.wait){
@@ -1627,6 +1643,8 @@ function runMM(inputNum){
 			content.appendChild(continueNotice);
 		}
 	});
+	
+	console.log(fragment.lastChild);
 	
 	//Add the chars to the textbox
 	S.objects[multimediaSettings.textbox].appendChild(fragment);
@@ -1964,12 +1982,6 @@ var multimediaFunction={
 	,'tb':(vals)=>{
 		//Set the current textbox
 		multimediaSettings.textbox=vals[1];
-		
-		//Get the text to display
-		multimediaSettings.text=vals[2];
-		
-		//Turn off automatic waiting for this, we're assuming waiting is off
-		multimediaSettings.wait=false;	//Wait at the end of the text display
 	}
 }
 

@@ -20,7 +20,7 @@
 >	CH	ben		shock_blush
 >	CH	susan	frown
 [ben]Um... well...
-[ben]{.5,,,}...I hate it when everyone sings me Happy Birthday.
+[ben]{.5,,,}...I hate it when everyone sings me Happy Birthday...
 >	CH	susan	smirk
 [susan]{,1,,}...{}what was that?
 >	CH	ben		scared
@@ -29,8 +29,7 @@
 >	CH	susan	grin
 [susan]{,,,sing}Then we'll sing something else!
 >	CH	ben		shy_blush
->	TB	main
->	TB	main	[ben]It's not that. They're all surrounding me, {,.025,,}I get so claustrophobic, {,.02,,}it's like I can hear them all breathing at once {,.015,,}and I can feel the air around me get thick {,.01,,}and it becomes hard to breathe {,.005,,}and even think-
+[ben]It's not that. They're all surrounding me, {,.025,,}I get so claustrophobic, {,.02,,}it's like I can hear them all breathing at once {,.015,,}and I can feel the air around me get thick {,.01,,}and it becomes hard to breathe {,.005,,}and even think->
 
 [susan]{,0,,}What do you want us to sing?
 
@@ -54,27 +53,28 @@
 >	CH	ben		shy
 [ben]...
 
+[susan]Sorry. I just worked really hard on this {,,#ffa533,}<strong>cake</strong>{}, and I've {,,,italic}REALLY{} been looking forward to sharing it with you and all my friends! >
 >	CH	susan	sad
->	TB	main
->	TB	main	[susan]Sorry. I just worked really hard on this {,,#ffa533,}<strong>cake</strong>{}, and I've {,,,italic}REALLY{} been looking forward to sharing it with you and all my friends! 
 >	CH	ben		sad
 >	CH	susan	cry
->	TB	main	But if you just want to relax today, I understand...
->	WT
++But if you just want to relax today, I understand...
 
 >	CH	ben		laugh
 [ben]No you don't. You're just trying to guilt trip me right now.
 >	CH	susan	angry
 >	CH	ben		scared
 [susan]{1.5,,,shout}DANG IT BEN!
->	TB	main
+
+<span></span>>
+
 >	CH	susan	angry	100%
 >	CH	ben		scared	100%
 >	AN	main	.2s	bottom:-5em;opacity:0;
 >	WT	.5
->	ST	main	bottom:initial;top:0;height:100%;text-align:center;opacity:0;
+>	ST	main	bottom:0;top:0;height:100%;text-align:center;opacity:0;
+>	WT	1
 >	AN	main	3s	opacity:1;
 
->	WT	3
+>	WT	3.5
 
->	TB	main	{,,,fade}Writer#Josh Powlison##Characters#konett (cosmickonett.tumblr.com) (under CC-BY-3.0)##{.5,,,}Go to the menu at the top of the screen and drag to go to any place in the kinetic novel!
+{,,,fade}Writer#Josh Powlison##Characters#konett (cosmickonett.tumblr.com) (under CC-BY-3.0)##{.5,,,}Go to the menu at the top of the screen and drag to go to any place in the kinetic novel!
