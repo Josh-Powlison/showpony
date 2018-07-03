@@ -1859,9 +1859,6 @@ var multimediaFunction={
 		}
 	}
 	,'ch':vals=>{
-		//Get the folder, which is the character name. Anything after a hash is an id; it's not a part of the folder name.
-		var folder=vals[1].split('#')[0];
-		
 		//Check for images for this character; go through future lines
 		var lines=[vals[2]];
 		
@@ -1881,10 +1878,12 @@ var multimediaFunction={
 			//Go through the rest of the lines, looking for images to preload
 			for(let i=S.currentLine;i<S.lines.length;i++){
 				
+				var thisLine=S.lines[i].split(/\s{3,}|\t+/);
+				
 				//If this character is listed on this line
-				if(new RegExp('^>\\s+CH\\s+'+vals[1]+'\\s','i').test(S.lines[i])){
+				if(vals[1]===thisLine[2]){
 					//Add the image names to the images to load
-					lines.push(S.lines[i].replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/)[2]);
+					lines.push(thisLine[3]);
 				}
 			}
 		}
@@ -1893,6 +1892,9 @@ var multimediaFunction={
 		if(runTo) objectBuffer[vals[1]]=S.objects[vals[1]];
 		
 		var cha=S.objects[vals[1]];
+		
+		//Get the folder, which is the character name. Anything after a hash is an id; it's not a part of the folder name.
+		var folder=/^[^#]+/.exec(vals[1])[0];
 		
 		//Character level
 		for(let i=0,len=lines.length;i<len;i++){
@@ -1904,7 +1906,7 @@ var multimediaFunction={
 			//Go through each passed image and see if it exists
 			for(let ii=0,len=imageNames.length;ii<len;ii++){
 				//If there's no period, add '.png' to the end- assume the extension
-				if(imageNames[ii].indexOf('.')===-1) imageNames[ii]+='.png';
+				if(!/\./.test(imageNames[ii])) imageNames[ii]+='.png';
 				
 				var image='url("resources/characters/'+folder+'/'+imageNames[ii]+'")';
 				
