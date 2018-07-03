@@ -580,13 +580,16 @@ S.input=function(){
 		continueNotice.remove();
 		
 		//If all letters are displayed
-		if(!S.objects[multimediaSettings.textbox] || S.objects[multimediaSettings.textbox].children.length===0 || S.objects[multimediaSettings.textbox].lastChild.firstChild.style.visibility=='visible') runMM();
+		if(!S.objects[multimediaSettings.textbox] || S.objects[multimediaSettings.textbox].children.length===0 || S.objects[multimediaSettings.textbox].lastChild.firstChild.style.visibility=='visible'){
+			multimediaSettings.input=false;
+			runMM();
+		}
 		else //If some S.objects have yet to be displayed
 		{
 			//Run all animations, end all transitions
 			content.classList.add('showpony-loading');
 			content.offsetHeight; //Trigger reflow to flush CSS changes
-			content.classList.remove('showpony-loading');
+			content.classList.remove('showpony-loading'); //Needs to happen before the latter; otherwise, it'll mess up stuff
 			
 			//Display all letters
 			content.querySelectorAll('.showpony-char').forEach(function(key){
@@ -598,6 +601,8 @@ S.input=function(){
 				key.firstChild.dispatchEvent(new CustomEvent('animationstart'));
 				key.style.visibility='visible';
 			});
+			
+			multimediaSettings.input=true;
 			
 			//Continue if not waiting
 			if(!multimediaSettings.wait) runMM();
@@ -622,6 +627,7 @@ var multimediaSettings={
 	textbox:'main'
 	,text:null
 	,go:false
+	,input:false
 };
 
 //Waiting for user input
@@ -1316,7 +1322,10 @@ function runMM(inputNum){
 	S.currentLine=(inputNum!==undefined ? inputNum : S.currentLine+1);
 	
 	//Run through if we're running to a point; if we're there or beyond though, stop running through
-	if(runTo!==false && S.currentLine>=runTo) runTo=false;
+	if(runTo!==false && S.currentLine>=runTo){
+		runTo=false;
+		multimediaSettings.input=false;
+	}
 	
 	//We've run through!
 	if(runTo===false && content.classList.contains('showpony-loading')){
@@ -1359,20 +1368,18 @@ function runMM(inputNum){
 	if(text[0]==='>'){
 		var vals=text.replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/);
 		
-		multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals);
+		var keepGoing=multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals);
 		
-		//If it's a textbox
-		if(vals[0].toLowerCase()==='tb'){
-			text=vals[2];
-		}else return; //Return if it's not a textbox
-	}else{
-		//If it's regular text display, use the regular settings
-		multimediaSettings.wait=true; //Assume we're waiting at the end time
-		if(S.objects.main){
-			//If the line starts with a "+", append the text
-			if(text[0]!=='+') S.objects.main.innerHTML='';
-			else text=text.substr(1);
-		}
+		if(!keepGoing) runMM();
+		
+		return;
+	}
+	
+	//If we're running through, skip displaying text until we get to the right point
+	if(runTo){
+		objectBuffer[multimediaSettings.textbox]=S.objects[multimediaSettings.textbox];
+		runMM(undefined);
+		return;
 	}
 	
 	//If the textbox hasn't been created, create it!
@@ -1390,20 +1397,29 @@ function runMM(inputNum){
 		})
 	}
 	
-	//If no text was passed, empty the textbox and continue
-	if(typeof(text)==='undefined'){
-		S.objects[multimediaSettings.textbox].innerHTML='';
-		S.objects.main.scrollTop=0;
-		runMM();
-		return;
-	}
+	multimediaSettings.wait=true; //Assume we're waiting at the end time
 	
-	//If we're running through, skip displaying text until we get to the right point
-	if(runTo){
-		objectBuffer[multimediaSettings.textbox]=S.objects[multimediaSettings.textbox];
-		runMM(undefined);
-		return;
+	//If the line doesn't start with +, replace the text
+	if(text[0]!=='+'){
+		S.objects[multimediaSettings.textbox].innerHTML='';
+		
+		if(!S.objects.name) content.appendChild(S.objects.name=m('name'));
+		
+		//Split up the text so we can have names automatically written
+		var nameText=text.split('|');
+		if(nameText.length>1){
+			text=nameText[1];
+			S.objects.name.innerHTML=nameText[0];
+			S.objects.name.style.visibility='visible';
+		}else{
+			S.objects.name.style.visibility='hidden';
+		}
+		
+		multimediaSettings.input=false;
+		
+		console.log(nameText[0]);
 	}
+	else text=text.substr(1);
 	
 	//STEP 2: Design the text//
 	
@@ -1429,7 +1445,7 @@ function runMM(inputNum){
 	var currentParent=fragment;
 	
 	var letters=''; //Have to save actual letters separately; special tags and such can mess with our calculations
-	
+		
 	var l=text.length;
 	//We check beyond the length of the text because that lets us place characters that allow text wrapping in Firefox
 	for(let i=0;i<=l;i++){
@@ -1604,13 +1620,17 @@ function runMM(inputNum){
 						}
 					});
 				}
-				else hideChar.innerHTML=animChar.innerHTML=text[i];
+				else{
+					hideChar.innerHTML=animChar.innerHTML=text[i];
+				}
 				
 				frag([animChar],showChar);
 				frag([showChar,hideChar],thisChar);
 				
+				console.log(multimediaSettings.input);
+				
 				//Set the display time here- but if we're paused, no delay!
-				if(!S.window.classList.contains('showpony-paused')) showChar.style.animationDelay=totalWait+'s';
+				if(!S.window.classList.contains('showpony-paused') && !multimediaSettings.input) showChar.style.animationDelay=totalWait+'s';
 				
 				//Set animation timing for animChar, based on the type of animation
 				if(thisChar.classList.contains('showpony-char-sing')){
@@ -1629,6 +1649,13 @@ function runMM(inputNum){
 		}
 	}
 	
+	//If the user's trying to skip text, let them
+	if(multimediaSettings.input && text[text.length-1]=='>'){
+		console.log('Hey! skip this!');
+	}else{
+		multimediaSettings.input=false;
+	}
+	
 	fragment.lastChild.firstChild.addEventListener('animationstart',function(event){
 		console.log(this,event.target);
 		
@@ -1643,8 +1670,6 @@ function runMM(inputNum){
 			content.appendChild(continueNotice);
 		}
 	});
-	
-	console.log(fragment.lastChild);
 	
 	//Add the chars to the textbox
 	S.objects[multimediaSettings.textbox].appendChild(fragment);
@@ -1683,7 +1708,7 @@ function powerTimer(callback,delay){
 }
 
 var multimediaFunction={
-	'en':()=> S.to({file:'+1'})
+	/*'en':()=> S.to({file:'+1'})
 	,'go':vals=> runMM(S.lines.indexOf(vals[1])!==-1 ? S.lines.indexOf(vals[1])+1 : null)
 	,'in':vals=>{
 		var thisButton=m('kn-choice','button');
@@ -1709,9 +1734,9 @@ var multimediaFunction={
 	,'if':vals=>{
 		if(operators[vals[2]](vals[1],vals[3])) runMM(S.lines.indexOf(vals[4])+1 || null);
 		else runMM();
-	}
+	}*/
 	//DS	var		=	val
-	,'ds':vals=>{
+	'ds':vals=>{
 		//If a value's a number, return it as one
 		function ifParse(input){
 			return isNaN(input) ? input : parseFloat(input);
@@ -1734,17 +1759,11 @@ var multimediaFunction={
 				}
 			)
 		);
-		
-		//Go to the next line
-		runMM();
 	}
 	//EV	event
 	,'ev':vals=>{
 		//Dispatch the event the user requested to
 		S.window.dispatchEvent(new CustomEvent(vals[1]));
-		
-		//Go to the next line
-		runMM();
 	}
 	,'wt':vals=>{
 		//If there's a waitTimer, clear it out
@@ -1753,10 +1772,7 @@ var multimediaFunction={
 		}
 		
 		//Skip waiting if we're running through
-		if(runTo){
-			runMM();
-			return;
-		}
+		if(runTo) return;
 		
 		//If a value was included, wait for the set time
 		if(vals[1]) waitTimer=new powerTimer(runMM,parseFloat(vals[1])*1000);
@@ -1765,6 +1781,9 @@ var multimediaFunction={
 		
 		//If we're paused, pause the timer
 		if(S.window.classList.contains('showpony-paused')) waitTimer.pause();
+		
+		//Don't automatically go to the next line
+		return true;
 	}
 	,'au':vals=>{
 		//If the audio doesn't exist
@@ -1822,16 +1841,10 @@ var multimediaFunction={
 					break;
 			}
 		}
-		
-		//Go to the next line
-		runMM();
 	}
 	,'st':vals=>{
 		//Update the object's style
 		S.objects[vals[1]].style.cssText+=vals[2];
-		
-		//Go to the next line
-		runMM();
 	}
 	,'an':vals=>{
 		//If running to, add styles without implementing animation
@@ -1844,18 +1857,18 @@ var multimediaFunction={
 			styles.innerHTML=styles.innerHTML.replace(new RegExp('(@keyframes '+vals[1]+'{100%{[^}]*}})|$'),keyframes);
 			S.objects[vals[1]].style.animation=[vals[1]]+' '+[vals[2]]+' forwards';
 		}
-		
-		//Go to the next line
-		runMM();
 	}
 	,'ch':vals=>{
 		//Get the folder, which is the character name. Anything after a hash is an id; it's not a part of the folder name.
 		var folder=vals[1].split('#')[0];
 		
+		//Check for images for this character; go through future lines
+		var lines=[vals[2]];
+		
 		//If an object with the name doesn't exist, make it!
 		if(!S.objects[vals[1]]){
 			content.appendChild(S.objects[vals[1]]=m('character'));
-			
+
 			S.objects[vals[1]].addEventListener('animationend',function(){
 				var updateStyle=new RegExp('@keyframes '+vals[1]+'{100%{[^}]*}}','i').exec(styles.innerHTML);
 				
@@ -1864,27 +1877,22 @@ var multimediaFunction={
 				if(styleAdd) this.style.cssText+=styleAdd[0];
 				this.style.animation=null;
 			})
+		
+			//Go through the rest of the lines, looking for images to preload
+			for(let i=S.currentLine;i<S.lines.length;i++){
+				
+				//If this character is listed on this line
+				if(new RegExp('^>\\s+CH\\s+'+vals[1]+'\\s','i').test(S.lines[i])){
+					//Add the image names to the images to load
+					lines.push(S.lines[i].replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/)[2]);
+				}
+			}
 		}
 		
 		//If we're buffering, add this character listing to the buffer so it's not deleted later
 		if(runTo) objectBuffer[vals[1]]=S.objects[vals[1]];
 		
 		var cha=S.objects[vals[1]];
-		
-		//Check for images for this character; go through future lines
-		var lines=[vals[2]];
-		
-		var reg=new RegExp('^>\\s+CH\\s+'+vals[1]+'\\s','i');
-		
-		//Go through the rest of the lines, looking for images to preload
-		for(let i=S.currentLine;i<S.lines.length;i++){
-			
-			//If this character is listed on this line
-			if(reg.test(S.lines[i])){
-				//Add the image names to the images to load
-				lines.push(S.lines[i].replace(/^>\s+/,'').split(/(?:\s{3,}|\t+)/)[2]);
-			}
-		}
 		
 		//Character level
 		for(let i=0,len=lines.length;i<len;i++){
@@ -1947,9 +1955,6 @@ var multimediaFunction={
 				S.objects[vals[1]].style.animation=[vals[1]]+' 1s forwards';
 			}
 		}
-		
-		//Go to the next line
-		runMM();
 	}
 	,'bg':vals=>{
 		//If the background doesn't exist, make it
@@ -1975,9 +1980,6 @@ var multimediaFunction={
 		
 		//If a 4th value exists, adjust 'zIndex'
 		if(vals[3]) S.objects[vals[1]].style.zIndex=vals[3];
-		
-		//Go to the next line
-		runMM();
 	}
 	,'tb':(vals)=>{
 		//Set the current textbox
