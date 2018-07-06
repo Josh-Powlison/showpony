@@ -1605,6 +1605,25 @@ function runMM(inputNum){
 				
 				runMM();
 				break;
+			case 'stop':
+				S.objects[object].wasPlaying=false;
+				S.objects[object].pause();
+				S.objects[object].currentTime=0;
+				
+				runMM();
+				break;
+			case 'volume':
+				S.objects[object].volume=parseFloat(vals[1]);
+				runMM();
+				break;
+			case 'time':
+				S.objects[object].currentTime=parseFloat(vals[1]);
+				runMM();
+				break;
+			case 'speed':
+				S.objects[object].playbackRate=parseFloat(vals[1]);
+				runMM();
+				break;
 			case 'loop':
 				S.objects[object].loop=true;
 				runMM();
