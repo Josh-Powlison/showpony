@@ -247,7 +247,7 @@ S.to=function(input){
 		
 		//Use either infinite text or page turn, whichever is requested
 		if(newType==='text'){
-			content.appendChild(S.infiniteText ? pageInfinite : pageTurn);
+			content.appendChild(pageTurn);
 		}else{
 			//General setup
 			content.appendChild(types[newType]);
@@ -291,7 +291,7 @@ S.to=function(input){
 		if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
 		
 		//Display the medium based on the file extension
-		//Multmedia Engine/Text/Copy
+		//Multimedia Engine/Text/Copy
 		if(currentType==='multimedia' || currentType==='text'){
 			fetch(src,{credentials:'include'})
 				.then(response=>{
@@ -325,28 +325,21 @@ S.to=function(input){
 						runMM(0);
 					//Regular text
 					}else{
-						
-						
 						//Use either page infinite or page turn, whichever is requested
 						if(S.infiniteScroll){
 							//If file hasn't already been loaded, load it!
 							let part=content.querySelector('[data-file="'+obj.file+'"]');
 							
-							if(part){
-								part.innerHTML=text;
-								//Stop loading
-								content.classList.remove('showpony-loading');
-							}else{
-								pageTurn.innerHTML='';
-								
-								let part=document.createElement('div');
+							//If the part hasn't been created, it's not being automatically appended; so empty the div!
+							if(!part){
+								part=document.createElement('div');
 								part.dataset.file=obj.file;
+								pageTurn.innerHTML='';
 								pageTurn.appendChild(part);
-								
-								part.innerHTML=text;
-								
-								content.classList.remove('showpony-loading');
 							}
+							
+							part.innerHTML=text;
+							content.classList.remove('showpony-loading');
 							
 							pageTurn.dispatchEvent(new CustomEvent('scroll'));
 						}else{ //Page turning
@@ -673,8 +666,6 @@ var waitForInput=false
 	}
 	//Page turning
 	,pageTurn=m('page-turn')
-	//Infinite pages
-	,pageInfinite=m('page-infinite')
 	//Multimedia
 	,continueNotice=m('continue')
 ;
@@ -717,7 +708,12 @@ frag([overlayBuffer,progress,overlayText,fullscreenButton,captionsButton,showpon
 ///////////////////////////////////////
 
 function timeUpdate(time){
-	if(!isNaN(time)) types[currentType].currentTime=time;
+	if(!isNaN(time)){
+		//Don't exceed the file's duration
+		var duration=S.files[S.currentFile].duration;
+		if(time>duration) time=duration;
+		types[currentType].currentTime=time;
+	}
 	
 	updateInfo();
 	displaySubtitles();
@@ -2179,6 +2175,29 @@ pageTurn.addEventListener('scroll',function(event){
 	event.stopPropagation();
 	
 	if(S.infiniteScroll){
+		//This prevents sticking to the top when previous files load
+		if(pageTurn.scrollTop===0) pageTurn.scrollTop=1;
+		
+		//Set current time to percent scrolled
+		if(!scrubbing){
+			var parts=pageTurn.children;
+			for(var i=0;i<parts.length;i++){
+				if(pageTurn.scrollTop>=parts[i].offsetTop) continue;
+				
+				//We get the file that meets the top of the window
+				i--;
+				if(i<0) i=0;
+				
+				var file=parseInt(parts[i].dataset.file);
+				
+				S.currentFile=file;
+				
+				timeUpdate(S.files[file].duration*((pageTurn.scrollTop-parts[i].offsetTop)/parts[i].offsetHeight));
+				
+				break;
+			}
+		}
+		
 		//Don't load more files yet if some are already loading
 		if(content.classList.contains('showpony-loading')) return;
 		
@@ -2212,11 +2231,6 @@ pageTurn.addEventListener('scroll',function(event){
 				S.to({file:goTo});
 			}
 		}
-		
-		
-		
-		//Set current time to percent scrolled
-		//timeUpdate(S.files[S.currentFile].duration*(this.scrollTop+document.querySelector('[data-file="'+S.currentFile+'"]').offsetTop/this.scrollHeight));
 	}else{
 		//Set current time to percent scrolled
 		timeUpdate(S.files[S.currentFile].duration*(this.scrollTop/this.scrollHeight));
@@ -2230,12 +2244,6 @@ pageTurn.addEventListener('scroll',function(event){
 		if(this.scrollTop>=this.scrollHeight-this.scrollTop){
 			S.to({file:'+1'});
 		}
-	}
-});
-
-//Infinite scrolling setup
-pageInfinite.addEventListener('scroll',function(){
-	if(pageInfinite.scrollTop=0){
 	}
 });
 
@@ -2568,13 +2576,9 @@ Promise.all([getFiles,getHeyBard]).then(function(start){
 	//Start at the first legit number: start, input.start, or the last file
 	start=start[1];
 	
-	S.start=(
-		!isNaN(start)
-		? start
-		: !isNaN(input.start)
-		? parseInt(input.start)
-		: S.files.length-1
-	);
+	if(start) S.start=start;
+	else if(input.start!==null) S.start=start;
+	else S.start=S.files.length-1;
 	
 	//If querystrings are in use, consider the querystring in the URL
 	if(S.query){

@@ -390,6 +390,7 @@ button.showpony-account-button{
 	box-sizing:border-box;
 	background-color:white;
 	color:black;
+	word-break:break-word;
 }
 
 .showpony-page-prev:hover
