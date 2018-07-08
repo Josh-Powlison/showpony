@@ -393,6 +393,14 @@ button.showpony-account-button{
 	word-break:break-word;
 }
 
+.showpony-page-turn img{
+	width:40em;
+	max-width:100%;
+	display:block;
+	margin:auto;
+	margin-bottom:10em;
+}
+
 .showpony-page-prev:hover
 ,.showpony-page-next:hover{
 	opacity:.7;

@@ -246,7 +246,7 @@ S.to=function(input){
 		S.lines=[];
 		
 		//Use either infinite text or page turn, whichever is requested
-		if(newType==='text'){
+		if(S.infiniteScroll || newType==='text'){
 			content.appendChild(pageTurn);
 		}else{
 			//General setup
@@ -272,16 +272,14 @@ S.to=function(input){
 			
 			runMM(0);
 		}else{
-			//If text, scroll to specified spot
-			if(currentType==='text'){
-				//Infinite scrolling
-				if(S.infiniteScroll){//Scroll to the right spot
-					var part=document.querySelector('[data-file="'+obj.file+'"]');
-				
-					pageTurn.scrollTop=part.offsetTop+part.offsetHeight*(obj.time/S.files[obj.file].duration);
-				}else{ //Page turn
-					pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[obj.file].duration);
-				}
+			//Infinite scrolling
+			if(S.infiniteScroll){//Scroll to the right spot
+				var part=document.querySelector('[data-file="'+obj.file+'"]');
+			
+				pageTurn.scrollTop=part.offsetTop+part.offsetHeight*(obj.time/S.files[obj.file].duration);
+			}else{ //Page turn
+				if(currentType==='text')
+				pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[obj.file].duration);
 			}
 			
 			content.classList.remove('showpony-loading');
@@ -338,7 +336,7 @@ S.to=function(input){
 								pageTurn.appendChild(part);
 							}
 							
-							part.innerHTML=text;
+							if(!part.innerHTML) part.innerHTML=text;
 							content.classList.remove('showpony-loading');
 							
 							pageTurn.dispatchEvent(new CustomEvent('scroll'));
@@ -366,9 +364,41 @@ S.to=function(input){
 			;
 		//Image/Audio/Video
 		}else{
-			thisType.src=src;
-			if((currentType==='video' || currentType==='audio') && !S.window.classList.contains('showpony-paused')){
-				thisType.play();
+			if(S.infiniteScroll){
+				if(currentType==='image'){
+					//If file hasn't already been loaded, load it!
+					let part=content.querySelector('[data-file="'+obj.file+'"]');
+					
+					//If the part hasn't been created, it's not being automatically appended; so empty the div!
+					if(!part){
+						part=document.createElement('div');
+						part.dataset.file=obj.file;
+						pageTurn.innerHTML='';
+						pageTurn.appendChild(part);
+					}
+					
+					if(!part.innerHTML){
+						var img=document.createElement('img');
+						img.src=src;
+						part.appendChild(img);
+						
+						img.addEventListener('load',function(){
+							content.classList.remove('showpony-loading');
+							
+							S.files[obj.file].buffered=true;
+							getTotalBuffered();
+							
+							pageTurn.dispatchEvent(new CustomEvent('scroll'));
+						});
+					}else{
+						content.classList.remove('showpony-loading');
+					}
+				}
+			}else{
+				thisType.src=src;
+				if((currentType==='video' || currentType==='audio') && !S.window.classList.contains('showpony-paused')){
+					thisType.play();
+				}
 			}
 		}
 	}
@@ -966,7 +996,7 @@ function scrub(inputPercent){
 			if(i==l-1 || newTime<S.files[i].duration){
 			//If this is the media!
 				//If we allow scrubbing or we're not moving the bar, we can load the file
-				if(S.scrubLoad!==false || scrubbing===false) S.to({file:i,time:newTime,scrollToTop:false});
+				if(S.scrubLoad || scrubbing===false) S.to({file:i,time:newTime,scrollToTop:false});
 				
 				newPart=i;
 				
@@ -2214,6 +2244,8 @@ pageTurn.addEventListener('scroll',function(event){
 				pageTurn.insertAdjacentElement('afterbegin',part);
 				
 				S.to({file:goTo});
+				
+				return;
 			}
 		}
 		
