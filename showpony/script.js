@@ -87,8 +87,7 @@ d('showBuffer'		,	true												);
 d('subtitles'		,	null												);
 d('currentSubtitles',	null												);
 d('cover'			,	null												);
-d('infiniteText'	,	false												);
-d('infiniteImage'	,	false												);
+d('infiniteScroll'	,	false												);
 
 var HeyBardConnection;
 
@@ -161,7 +160,7 @@ S.to=function(input){
 	if(obj.file==S.currentFile && !obj.refresh) return;*/
 	
 	//Use different options
-	S.currentFile=
+	obj.file=
 		obj.file==='first' ? 0
 		: obj.file==='prev' ? S.currentFile-1
 		: obj.file==='next' ? S.currentFile+1
@@ -170,8 +169,8 @@ S.to=function(input){
 	;
 	
 	//If we're at the end, run the readable event
-	if(S.currentFile>=S.files.length){
-		S.currentFile=S.files.length-1;
+	if(obj.file>=S.files.length){
+		obj.file=S.files.length-1;
 		obj.time=S.files[S.files.length-1].duration;
 		if(obj.time<0) obj.time=0;
 		
@@ -184,7 +183,8 @@ S.to=function(input){
 		}
 	}
 	
-	if(S.currentFile<0) S.currentFile=0;
+	if(obj.file<0) obj.file=0;
+	S.currentFile=obj.file;
 	
 	//Update info on file load
 	if(!obj.popstate){
@@ -210,7 +210,7 @@ S.to=function(input){
 		}
 	}
 	
-	var newType=S.files[S.currentFile].medium
+	var newType=S.files[obj.file].medium
 		,thisType=types[newType];
 	
 	//Multimedia engine resets
@@ -255,10 +255,10 @@ S.to=function(input){
 	}
 	
 	//How we get the file depends on whether or not it's private
-	var src=(S.files[S.currentFile].name[0]=='x' ? ShowponyFolder+'/ajax.php?rel-path'+encodeURIComponent(ShowponyRunPage)+'&get=' : '')+S.files[S.currentFile].path;
+	var src=(S.files[obj.file].name[0]=='x' ? ShowponyFolder+'/ajax.php?rel-path'+encodeURIComponent(ShowponyRunPage)+'&get=' : '')+S.files[obj.file].path;
 	
 	//Refresh the file, if requested we do so, by adding a query
-	if(obj.refresh) src+=(S.files[S.currentFile].name[0]==='x' ? '&' : '?')+'refresh-'+Date.now();
+	if(obj.refresh) src+=(S.files[obj.file].name[0]==='x' ? '&' : '?')+'refresh-'+Date.now();
 	
 	currentType=newType;
 	
@@ -266,7 +266,7 @@ S.to=function(input){
 	if(sameFile){
 		//Special multimedia engine prep
 		if(currentType==='multimedia'){
-			runTo=Math.round(keyframes.length*(obj.time/S.files[S.currentFile].duration));
+			runTo=Math.round(keyframes.length*(obj.time/S.files[obj.file].duration));
 			if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
 			else runTo=keyframes[runTo];
 			
@@ -275,9 +275,12 @@ S.to=function(input){
 			//If text, scroll to specified spot
 			if(currentType==='text'){
 				//Infinite scrolling
-				if(S.infiniteText){//Scroll to the right spot
+				if(S.infiniteScroll){//Scroll to the right spot
+					var part=document.querySelector('[data-file="'+obj.file+'"]');
+				
+					pageTurn.scrollTop=part.offsetTop+part.offsetHeight*(obj.time/S.files[obj.file].duration);
 				}else{ //Page turn
-					pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[S.currentFile].duration);
+					pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[obj.file].duration);
 				}
 			}
 			
@@ -285,7 +288,7 @@ S.to=function(input){
 		}
 	//If it's not the same file, load it!
 	}else{
-		if(S.files[S.currentFile].buffered===false) S.files[S.currentFile].buffered='buffering';
+		if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
 		
 		//Display the medium based on the file extension
 		//Multmedia Engine/Text/Copy
@@ -313,7 +316,7 @@ S.to=function(input){
 							if(/^\t+(?!\t*\+)/i.test(S.lines[i])) keyframes.push(i);
 						}
 						
-						runTo=Math.round(keyframes.length*(obj.time/S.files[S.currentFile].duration));
+						runTo=Math.round(keyframes.length*(obj.time/S.files[obj.file].duration));
 						if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
 						else runTo=keyframes[runTo];
 						
@@ -322,27 +325,44 @@ S.to=function(input){
 						runMM(0);
 					//Regular text
 					}else{
+						
+						
 						//Use either page infinite or page turn, whichever is requested
-						if(S.infiniteText){ //Infinite text
-							//Jump to the file if it's visible? Or just remove everything and start from it?
+						if(S.infiniteScroll){
+							//If file hasn't already been loaded, load it!
+							let part=content.querySelector('[data-file="'+obj.file+'"]');
+							
+							if(part){
+								part.innerHTML=text;
+								//Stop loading
+								content.classList.remove('showpony-loading');
+							}else{
+								pageTurn.innerHTML='';
+								
+								let part=document.createElement('div');
+								part.dataset.file=obj.file;
+								pageTurn.appendChild(part);
+								
+								part.innerHTML=text;
+								
+								content.classList.remove('showpony-loading');
+							}
+							
+							pageTurn.dispatchEvent(new CustomEvent('scroll'));
 						}else{ //Page turning
 							//Put in the text
 							pageTurn.innerHTML=text;
 							
-							//Add loading buttons
-							if(S.currentFile>0) pageTurn.insertAdjacentElement('afterbegin',pagePrev);
-							if(S.currentFile<S.files.length-1) pageTurn.insertAdjacentElement('beforeend',pageNext);
-							
 							//Scroll to spot
-							pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[S.currentFile].duration);
+							pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[obj.file].duration);
 							
 							//Stop loading
 							content.classList.remove('showpony-loading');
 						}
 					}
 					
-					if(S.files[S.currentFile].buffered!==true){
-						S.files[S.currentFile].buffered=true;
+					if(S.files[obj.file].buffered!==true){
+						S.files[obj.file].buffered=true;
 						getTotalBuffered();
 					}
 				})
@@ -361,7 +381,7 @@ S.to=function(input){
 	}
 
 	//Preload next files, if allowed and/or needed
-	for(let i=S.currentFile+1;i<=S.currentFile+S.preloadNext;i++){
+	for(let i=obj.file+1;i<=obj.file+S.preloadNext;i++){
 		if(i>=S.files.length) break;
 		if(S.files[i].buffered!==false) continue;
 		
@@ -653,8 +673,6 @@ var waitForInput=false
 	}
 	//Page turning
 	,pageTurn=m('page-turn')
-	,pagePrev=m('page-prev','button')
-	,pageNext=m('page-next','button')
 	//Infinite pages
 	,pageInfinite=m('page-infinite')
 	//Multimedia
@@ -2156,34 +2174,63 @@ if(S.subtitles){
 
 content.addEventListener('click',()=>{S.input();});
 
-///TEXT///
-//Navigate text
-pagePrev.addEventListener('click',function(){
-	event.stopPropagation();
-	
-	var goToFile=S.currentFile-1;
-	
-	//Go to end of previous file, if it's one that uses scrolling. Otherwise, go to the beginning of it.
-	if(S.files[goToFile].medium=='text'){
-		S.to({file:goToFile,time:S.files[goToFile].duration});
-	}else{
-	//For most media, go to the beginning.
-		S.to({file:'-1'});
-	}
-});
-
-pageNext.addEventListener('click',function(event){
-	event.stopPropagation();
-	//Go to next file
-	S.to({file:'+1'});
-});
-
 //Update the scrub bar when scrolling
 pageTurn.addEventListener('scroll',function(event){
-	//Set current time to percent scrolled
-	timeUpdate(S.files[S.currentFile].duration*(pageTurn.scrollTop/pageTurn.scrollHeight));
-	
 	event.stopPropagation();
+	
+	if(S.infiniteScroll){
+		//Don't load more files yet if some are already loading
+		if(content.classList.contains('showpony-loading')) return;
+		
+		//If 1 page height away from top
+		if(this.scrollTop<=this.clientHeight){
+			var goTo=S.currentFile-1;
+			
+			//Find the file we actually need to load
+			while(goTo>=0 && content.querySelector('[data-file="'+goTo+'"]')) goTo--;
+			
+			if(goTo>-1){
+				let part=document.createElement('div');
+				part.dataset.file=goTo;
+				pageTurn.insertAdjacentElement('afterbegin',part);
+				
+				S.to({file:goTo});
+			}
+		}
+		
+		//If 1 page height away from bottom
+		if(this.scrollTop>=this.scrollHeight-this.clientHeight*2){
+			var goTo=S.currentFile+1;
+			
+			while(goTo<=S.files.length && content.querySelector('[data-file="'+goTo+'"]')) goTo++;
+			
+			if(goTo<S.files.length){
+				let part=document.createElement('div');
+				part.dataset.file=goTo;
+				pageTurn.insertAdjacentElement('beforeend',part);
+				
+				S.to({file:goTo});
+			}
+		}
+		
+		
+		
+		//Set current time to percent scrolled
+		//timeUpdate(S.files[S.currentFile].duration*(this.scrollTop+document.querySelector('[data-file="'+S.currentFile+'"]').offsetTop/this.scrollHeight));
+	}else{
+		//Set current time to percent scrolled
+		timeUpdate(S.files[S.currentFile].duration*(this.scrollTop/this.scrollHeight));
+		
+		//If at top
+		if(this.scrollTop<=0){
+			S.to({time:'-1'});
+		}
+		
+		//If at bottom
+		if(this.scrollTop>=this.scrollHeight-this.scrollTop){
+			S.to({file:'+1'});
+		}
+	}
 });
 
 //Infinite scrolling setup
