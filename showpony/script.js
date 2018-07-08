@@ -2229,7 +2229,9 @@ pageTurn.addEventListener('scroll',function(event){
 		}
 		
 		//Don't load more files yet if some are already loading
-		if(content.classList.contains('showpony-loading')) return;
+		if(content.classList.contains('showpony-loading')){
+			return;
+		}
 		
 		//If 1 page height away from top
 		if(this.scrollTop<=this.clientHeight){

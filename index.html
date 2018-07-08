@@ -34,6 +34,7 @@
 
 <p id="intro">The best way to share your <select id="example-list">
 	<option value="comic">comics</option>
+	<option value="comicScroll">comicscroll</option>
 	<option value="video">video series</option>
 	<option value="text">serial novel</option>
 	<option value="kn">kinetic novel</option>
@@ -63,6 +64,24 @@
 		,defaultDuration:1
 	};
 	showponies.comic=new Showpony(showponyInputs.comic);
+</script>
+
+<div class="story" id="comicScroll"></div>
+<script>
+	showponyInputs.comicScroll={
+		window:document.getElementById("comicScroll")
+		,get:"examples/orbit/" //The path to the story files. Remember the slash!
+		,info:"Orbit<br>[Current File] | [File Left]"
+		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><br>Orbit by Josh Powlison"
+		,query:null
+		,start:0
+		,saveId:null
+		,remoteSave:false
+		,infiniteScroll:true
+		,scrubLoad:true
+		,defaultDuration:4
+	};
+	showponies.comicScroll=new Showpony(showponyInputs.comicScroll);
 </script>
 
 <div class="story showpony-paused" id="video"></div>
