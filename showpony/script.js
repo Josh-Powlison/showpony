@@ -184,34 +184,37 @@ S.to=function(input){
 	}
 	
 	if(obj.file<0) obj.file=0;
-	S.currentFile=obj.file;
-	
-	//Update info on file load
-	if(!obj.popstate){
-		//Only allow adding to history if we aren't scrubbing
+	if(!S.infiniteScroll){
+		S.currentFile=obj.file;
 		
-		//If the same file, and not a medium where time changes it (like images), replace history state instead
-		if(sameFile && currentType!=='video' && currentType!=='audio'){
-			obj.replaceState=true;
+		//Update info on file load
+		if(!obj.popstate){
+			//Only allow adding to history if we aren't scrubbing
+			
+			//If the same file, and not a medium where time changes it (like images), replace history state instead
+			if(sameFile && currentType!=='video' && currentType!=='audio'){
+				obj.replaceState=true;
+			}
+			
+			var popstate=!obj.replaceState;
+			if(scrubbing===true) popstate=false; //Only replace history if we're scrubbing right now
+			
+			updateInfo(popstate);
 		}
 		
-		var popstate=!obj.replaceState;
-		if(scrubbing===true) popstate=false; //Only replace history if we're scrubbing right now
-		
-		updateInfo(popstate);
-	}
-	
-	//If we aren't moving the bar, update the overlay
-	if(scrubbing===false){
-		//Go to the top of the page (if we didn't come here by autoloading)
-		if(obj.scrollToTop){
-			//Check that it's not below the viewport top already
-			if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
+		//If we aren't moving the bar, update the overlay
+		if(scrubbing===false){
+			//Go to the top of the page (if we didn't come here by autoloading)
+			if(obj.scrollToTop){
+				//Check that it's not below the viewport top already
+				if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
+			}
 		}
+	}else if(!content.querySelector('[data-file]')){
+		S.currentFile=obj.file;
 	}
 	
-	var newType=S.files[obj.file].medium
-		,thisType=types[newType];
+	var newType=S.files[obj.file].medium;
 	
 	//Multimedia engine resets
 	content.style.cssText=null;
@@ -325,8 +328,12 @@ S.to=function(input){
 					}else{
 						//Use either page infinite or page turn, whichever is requested
 						if(S.infiniteScroll){
+							
 							//If file hasn't already been loaded, load it!
 							let part=content.querySelector('[data-file="'+obj.file+'"]');
+							
+							//Safety check; if we're sticking, and trying to load a part that doesn't have a div, something's off and we need to get outta here!
+							if(sticky!==false && !part) return;
 							
 							//If the part hasn't been created, it's not being automatically appended; so empty the div!
 							if(!part){
@@ -334,12 +341,37 @@ S.to=function(input){
 								part.dataset.file=obj.file;
 								pageTurn.innerHTML='';
 								pageTurn.appendChild(part);
+								
+								S.currentFile=obj.file;
+								
+								//Stick to the set file and time
+								sticky={file:S.currentFile,time:obj.time};
+								console.log(sticky);
 							}
 							
-							if(!part.innerHTML) part.innerHTML=text;
+							var currentPart=content.querySelector('[data-file="'+S.currentFile+'"]');
+							var addScroll=pageTurn.scrollTop-currentPart.offsetTop;
+							
+							if(!part.innerHTML){
+								//If adding a file in normally, just add it in
+								part.innerHTML=text;
+							
+								pageTurn.scrollTop=currentPart.offsetTop+addScroll;
+							}else{
+								//Scroll to spot for file
+								pageTurn.scrollTop=part.offsetTop+(obj.time/S.files[obj.file].duration)*part.offsetHeight;
+							}
+							
+							if(sticky!==false){
+								var stickyPart=content.querySelector('[data-file="'+sticky.file+'"]');
+								
+								pageTurn.scrollTop=stickyPart.offsetTop+(sticky.time/S.files[sticky.file].duration)*stickyPart.offsetHeight;
+								
+								pageTurn.dispatchEvent(new CustomEvent('scroll'));
+							}
+							
 							content.classList.remove('showpony-loading');
 							
-							pageTurn.dispatchEvent(new CustomEvent('scroll'));
 						}else{ //Page turning
 							//Put in the text
 							pageTurn.innerHTML=text;
@@ -375,6 +407,8 @@ S.to=function(input){
 						part.dataset.file=obj.file;
 						pageTurn.innerHTML='';
 						pageTurn.appendChild(part);
+						
+						S.currentFile=obj.file;
 					}
 					
 					if(!part.innerHTML){
@@ -387,17 +421,15 @@ S.to=function(input){
 							
 							S.files[obj.file].buffered=true;
 							getTotalBuffered();
-							
-							pageTurn.dispatchEvent(new CustomEvent('scroll'));
 						});
 					}else{
 						content.classList.remove('showpony-loading');
 					}
 				}
 			}else{
-				thisType.src=src;
+				types[newType].src=src;
 				if((currentType==='video' || currentType==='audio') && !S.window.classList.contains('showpony-paused')){
-					thisType.play();
+					types[newType].play();
 				}
 			}
 		}
@@ -421,7 +453,7 @@ S.to=function(input){
 	
 	////MAY NEED TO PUT THIS ALL IN A "THEN" AFTER A PROMISE SETUP FOR THE DIFFERENT MEDIA (so timing is perfect)
 	goToTime=obj.time;
-	thisType.currentTime=obj.time; //Update the time
+	types[newType].currentTime=obj.time; //Update the time
 	timeUpdate();
 }
 
@@ -972,6 +1004,8 @@ function getCurrentTime(){
 
 //Update the scrubber's position
 function scrub(inputPercent){
+	//if(sticky!==false) return;
+	
 	//If no inputPercent was passed, estimate it
 	if(typeof(inputPercent)==='undefined'){
 		var timeInTotal=getCurrentTime();
@@ -1249,6 +1283,7 @@ function POST(obj){
 		})
 		.catch(response=>{
 			alert('913: '+response);
+			console.log(response);
 		});
 	});
 }
@@ -2200,71 +2235,74 @@ if(S.subtitles){
 
 content.addEventListener('click',()=>{S.input();});
 
+var sticky=false;
+
 //Update the scrub bar when scrolling
 pageTurn.addEventListener('scroll',function(event){
 	event.stopPropagation();
 	
 	if(S.infiniteScroll){
-		//This prevents sticking to the top when previous files load
-		if(pageTurn.scrollTop===0) pageTurn.scrollTop=1;
+		//if(content.classList.contains('showpony-loading')) return;
+		
+		console.log(sticky);
 		
 		//Set current time to percent scrolled
-		if(!scrubbing){
+		if(!scrubbing && sticky===false){
 			var parts=pageTurn.children;
 			for(var i=0;i<parts.length;i++){
-				if(pageTurn.scrollTop>=parts[i].offsetTop) continue;
+				//If we're beyond a part
+				if(pageTurn.scrollTop>parts[i].offsetTop+parts[i].offsetHeight) continue;
 				
-				//We get the file that meets the top of the window
-				i--;
-				if(i<0) i=0;
+				S.currentFile=parseInt(parts[i].dataset.file);
 				
-				var file=parseInt(parts[i].dataset.file);
-				
-				S.currentFile=file;
-				
-				timeUpdate(S.files[file].duration*((pageTurn.scrollTop-parts[i].offsetTop)/parts[i].offsetHeight));
+				timeUpdate(S.files[S.currentFile].duration*((pageTurn.scrollTop-parts[i].offsetTop)/parts[i].offsetHeight));
 				
 				break;
 			}
 		}
 		
-		//Don't load more files yet if some are already loading
-		if(content.classList.contains('showpony-loading')){
-			return;
+		//If 1 page height away from bottom
+		if(this.scrollTop>=this.scrollHeight-this.clientHeight*2){
+			for(var i=S.currentFile+1;i<S.files.length;i++){
+				
+				var check=content.querySelector('[data-file="'+i+'"]');
+				
+				//Not started loading
+				if(!check){
+					pageTurn.insertAdjacentHTML('beforeend','<div data-file="'+i+'"></div>');
+					S.to({file:i});
+					return;
+				}
+				
+				//Keep the loop going if it has text
+				if(!check.innerHTML){
+					return;
+				}
+			}
 		}
 		
 		//If 1 page height away from top
 		if(this.scrollTop<=this.clientHeight){
-			var goTo=S.currentFile-1;
-			
-			//Find the file we actually need to load
-			while(goTo>=0 && content.querySelector('[data-file="'+goTo+'"]')) goTo--;
-			
-			if(goTo>-1){
-				let part=document.createElement('div');
-				part.dataset.file=goTo;
-				pageTurn.insertAdjacentElement('afterbegin',part);
+			for(var i=S.currentFile-1;i>=0;i--){
+				console.log(i);
 				
-				S.to({file:goTo});
+				var check=content.querySelector('[data-file="'+i+'"]');
 				
-				return;
+				//Not started loading
+				if(!check){
+					pageTurn.insertAdjacentHTML('afterbegin','<div data-file="'+i+'"></div>');
+					S.to({file:i});
+					return;
+				}
+				
+				//Keep the loop going if it has text
+				if(!check.innerHTML){
+					return;
+				}
 			}
 		}
 		
-		//If 1 page height away from bottom
-		if(this.scrollTop>=this.scrollHeight-this.clientHeight*2){
-			var goTo=S.currentFile+1;
-			
-			while(goTo<=S.files.length && content.querySelector('[data-file="'+goTo+'"]')) goTo++;
-			
-			if(goTo<S.files.length){
-				let part=document.createElement('div');
-				part.dataset.file=goTo;
-				pageTurn.insertAdjacentElement('beforeend',part);
-				
-				S.to({file:goTo});
-			}
-		}
+		sticky=false;
 	}else{
 		//Set current time to percent scrolled
 		timeUpdate(S.files[S.currentFile].duration*(this.scrollTop/this.scrollHeight));
@@ -2490,7 +2528,10 @@ var getHeyBard=new Promise((resolve,reject)=>{
 								location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
 							})
 							//If it fails, let the user know
-							.catch((response)=>alert('1820: '+response))
+							.catch((response)=>{
+								alert('1820: '+response);
+								console.log(response);
+							})
 							;
 						//Regardless of whether or not we got something back, go there
 						}else{
@@ -2777,6 +2818,7 @@ if(S.admin){
 			})
 			.catch(response=>{
 				alert('501: '+response);
+				console.log(response);
 			});
 		}
 		
