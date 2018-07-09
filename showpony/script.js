@@ -649,6 +649,11 @@ S.input=function(){
 		return;
 	}
 	
+	if(S.infiniteScroll){
+		S.menu();
+		return;
+	}
+	
 	if(currentType==='image') S.to({file:'+1'});
 	else if(currentType==='audio' || currentType==='video') S.menu();
 	else if(currentType==='multimedia'){
