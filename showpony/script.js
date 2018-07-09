@@ -88,6 +88,7 @@ d('subtitles'		,	null												);
 d('currentSubtitles',	null												);
 d('cover'			,	null												);
 d('infiniteScroll'	,	false												);
+d('start'			,	'last'												);
 
 var HeyBardConnection;
 
@@ -2659,7 +2660,7 @@ var getHeyBard=new Promise((resolve,reject)=>{
 	//If it's finished loading, we're good!
 	if(!S.remoteSave || typeof HeyBard==='function'){
 		resolve(bookmark);
-		return;
+		return null;
 	}
 	
 	//Otherwise, if it doesn't exist add the element
@@ -2679,9 +2680,21 @@ Promise.all([getFiles,getHeyBard]).then(function(start){
 	//Start at the first legit number: start, input.start, or the last file
 	start=start[1];
 	
-	if(start) S.start=start;
-	else if(input.start!==null) S.start=start;
-	else S.start=S.files.length-1;
+	if(start===null){
+		switch(S.start){
+			case 'first':
+				start=0;
+				break;
+			case 'last':
+				start=S.files.length-1;
+				break;
+			default:
+				start=parseInt(S.start);
+				break;
+		}
+	}
+	
+	console.log(S.start,start);
 	
 	//If querystrings are in use, consider the querystring in the URL
 	if(S.query){
@@ -2712,13 +2725,13 @@ Promise.all([getFiles,getHeyBard]).then(function(start){
 			,reload:true
 		};
 		
-		passObj.time=(page!==null) ? page : S.start;
+		passObj.time=(page!==null) ? page : start;
 		
 		S.to(passObj);
 	//Start
 	}else{
 		//Use time or file to bookmark, whichever is requested
-		S.to({time:S.start,scrollToTop:false});
+		S.to({time:start,scrollToTop:false});
 	}
 	
 	//Set input to null in hopes that garbage collection will come pick it up
