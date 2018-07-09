@@ -78,24 +78,18 @@
 /*Menu scrub bar*/
 .showpony-progress{
 	position:absolute;
-	bottom:0;
-	top:5.5em;
-	width:.5em;
-	min-height:1em;
+	top:4.5em;
 	transform:translate(-.25em,0);
-	background:linear-gradient(#fff 0%,rgba(0,0,0,0) 125%);
-	pointer-events:none;
-}
-
-.showpony-progress::after{
-	content:" ";
-	position:absolute;
+	
 	border:solid white .5em;
+	background-color:#fff;
 	border-radius:100%;
-	transform:translate(-.75em,-1.5em);
+	transform:translate(-.5em,0);
 	box-sizing:border-box;
-	width:2em;
-	height:2em;
+	width:1em;
+	height:1em;
+	pointer-events:none;
+	
 	pointer-events:none;
 }
 
@@ -196,11 +190,12 @@
 
 .showpony-overlay-buffer{
 	width:100%;
-	top:4.5rem;
-	height:1rem;
+	top:4.75em;
+	height:.5em;
 	position:absolute;
 	pointer-events:none;
 	opacity:.5;
+	background-color:black;
 }
 
 .showpony-fullscreen-button{
