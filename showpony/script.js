@@ -401,6 +401,9 @@ S.to=function(input){
 					//If file hasn't already been loaded, load it!
 					let part=content.querySelector('[data-file="'+obj.file+'"]');
 					
+					//Safety check; if we're sticking, and trying to load a part that doesn't have a div, something's off and we need to get outta here!
+					if(sticky!==false && !part) return;
+					
 					//If the part hasn't been created, it's not being automatically appended; so empty the div!
 					if(!part){
 						part=document.createElement('div');
@@ -409,7 +412,14 @@ S.to=function(input){
 						pageTurn.appendChild(part);
 						
 						S.currentFile=obj.file;
+						
+						//Stick to the set file and time
+						sticky={file:S.currentFile,time:obj.time};
+						console.log(sticky);
 					}
+					
+					var currentPart=content.querySelector('[data-file="'+S.currentFile+'"]');
+					var addScroll=pageTurn.scrollTop-currentPart.offsetTop;
 					
 					if(!part.innerHTML){
 						var img=document.createElement('img');
@@ -421,10 +431,23 @@ S.to=function(input){
 							
 							S.files[obj.file].buffered=true;
 							getTotalBuffered();
+							
+							pageTurn.scrollTop=currentPart.offsetTop+addScroll;
+							
+							if(sticky!==false){
+								var stickyPart=content.querySelector('[data-file="'+sticky.file+'"]');
+								
+								pageTurn.scrollTop=stickyPart.offsetTop+(sticky.time/S.files[sticky.file].duration)*stickyPart.offsetHeight;
+								
+								pageTurn.dispatchEvent(new CustomEvent('scroll'));
+							}
 						});
 					}else{
+						//Scroll to spot for file
+						pageTurn.scrollTop=part.offsetTop+(obj.time/S.files[obj.file].duration)*part.offsetHeight;
 						content.classList.remove('showpony-loading');
 					}
+					
 				}
 			}else{
 				types[newType].src=src;
