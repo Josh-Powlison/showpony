@@ -747,7 +747,7 @@ var waitForInput=false
 	,currentType=null
 	,loggedIn=false //Logged in as admin
 	//Elements
-	,overlayText=m('overlay-text')
+	,overlayText=m('overlay-text','p')
 	,overlayBuffer=m('overlay-buffer','canvas')
 	,progress=m('progress')
 	,content=m('content')
@@ -1085,11 +1085,11 @@ function scrub(inputPercent){
 	progress.style.left=(inputPercent*100)+'%';
 	
 	//Set the overlay text
-	var newHTML='<p>'+replaceInfoText(
+	var newHTML=replaceInfoText(
 		S.info
 		,newPart
 		,Math.floor(timeInTotal)
-	)+'</p>';
+	);
 	if(newHTML!==overlayText.innerHTML) overlayText.innerHTML=newHTML;
 	
 	//Update the title, if set up for it

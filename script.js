@@ -93,7 +93,7 @@ function chooseStory(id){
 
 var propertyInfo={
 	window:"The element to put Showpony into. Ideally a div. If unset or <em>null</em>, will create an element."
-	,start:"What file to start at if one isn't set in the querystring or bookmark. Can be a number or the value <em>'last'</em>. Defaults to <em>'last'</em>"
+	,start:"What file to start at if one isn't set in the querystring or bookmark. Can be a number or <em>'last'</em>. Defaults to <em>'last'</em>"
 	,get:"If set to a folder, will automatically get all files in that folder (unless they're not ready to be released yet, more info in the Wiki). If an array of paths to files, will just get those files. [lang] will be replaced with the <strong>language</strong> value and can be placed anywhere in the <strong>get</strong> value. Defaults to 'files/[lang]/'"
 	,language:"The language to use. Defaults to <em>'en'</em>"
 	,scrubLoad:"If <em>false</em>, don't load files while scrubbing. If <em>true</em>, load files while scrubbing. Defaults to <em>false</em>"
@@ -114,7 +114,7 @@ var propertyInfo={
 	,showBuffer:"Show the file buffer at the top. For media where loading is incredibly fast, displaying this might just be weird. Defaults to <em>true</em>"
 	,subtitles:"Add in the languages and types you want to support; closed captions should also go in here. Full name and link to the folders where they are. Their names should be the same as the corresponding file names! <em>null</em> means subtitles aren't supported. Defaults to <em>null</em>"
 	,cover:"Create a cover that shows up before you start the story. It disappears once you click on it or if you're loading a local or remote bookmark. Will play media once closed. If you don't want a cover, set it to <em>null</em>. Set <em>image</em> to a background image or <em>null</em>; set <em>content</em> to containing content (with or without HTML) or <em>null</em>. Both default to <em>null</em>. Cover as a whole defaults to <em>null</em>"
-	,infiniteScroll:"Sets all content into a box and automatically adds content above and below as you scroll for a seamless experience. Text and images only. Defaults to <em>false</em>"
+	,infiniteScroll:"Text and images only. Sets all content into a scrollable box and automatically adds content above and below as you scroll. Defaults to <em>false</em>"
 };
 
 var type=/#[^$?]+/.exec(location.href);

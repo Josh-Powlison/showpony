@@ -34,10 +34,9 @@
 
 <p id="intro">The best way to share your <select id="example-list">
 	<option value="comic">comics</option>
-	<option value="comicScroll">comicscroll</option>
 	<option value="video">video series</option>
 	<option value="text">serial novel</option>
-	<option value="kn">kinetic novel</option>
+	<option value="vn">visual novel</option>
 	<option value="audio">audiobook</option>
 </select>!</p>
 
@@ -51,7 +50,7 @@
 	showponyInputs.comic={
 		window:document.getElementById("comic")
 		,get:"examples/entreprenewb/" //The path to the story files. Remember the slash!
-		,info:"Entreprenewb<br>[Current File] | [File Left]"
+		,info:"[Current File] | [File Left]"
 		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a href='https://www.webtoons.com/en/challenge/entreprenewb/list?title_no=58042' target='_blank'>LineWebtoon.logo</a><br>Entreprenewb by Josh Powlison, Public Domain"
 		,query:"entreprenewb"
 		,start:0
@@ -66,30 +65,12 @@
 	showponies.comic=new Showpony(showponyInputs.comic);
 </script>
 
-<div class="story" id="comicScroll"></div>
-<script>
-	showponyInputs.comicScroll={
-		window:document.getElementById("comicScroll")
-		,get:"examples/orbit/" //The path to the story files. Remember the slash!
-		,info:"Orbit<br>[Current File] | [File Left]"
-		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><br>Orbit by Josh Powlison"
-		,query:null
-		,start:0
-		,saveId:null
-		,remoteSave:false
-		,infiniteScroll:true
-		,scrubLoad:true
-		,defaultDuration:4
-	};
-	showponies.comicScroll=new Showpony(showponyInputs.comicScroll);
-</script>
-
 <div class="story showpony-paused" id="video"></div>
 <script>
 	showponyInputs.video={
 		window:document.getElementById("video")
 		,get:["examples/sintel/(Sintel) 52.mp4"] //The path to the story files. Remember the slash!
-		,info:"Sintel Trailer<br>[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
+		,info:"[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
 		,title:"Sintel [Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
 		,credits:"<a href='https://blender.org/' target='_blank'>Blender.logo</a><br>© copyright Blender Foundation | www.sintel.org"
 		,query:"sintel"
@@ -112,27 +93,25 @@
 	showponyInputs.text={
 		window:document.getElementById("text")
 		,get:"examples/ecocrystals/[lang]/" //The path to the story files. Remember the slash!
-		,info:"Ecocrystals<br>[Current File] | [File Left]"
+		,info:"[Current File] | [File Left]"
 		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><br>by Josh Powlison"
-		,query:false
+		,query:null
 		,scrubLoad:true
-		,preloadNext:3
-		,language:"en"
 		,start:0
 		,saveId:null
 		,remoteSave:false
-		,showBuffer:false
 		,subtitles:null
+		,infiniteScroll:true
 	};
 	showponies.text=new Showpony(showponyInputs.text);
 </script>
 
-<div class="story showpony-paused" id="kn"></div>
+<div class="story showpony-paused" id="vn"></div>
 <script>
-	showponyInputs.kn={
-		window:document.getElementById("kn")
+	showponyInputs.vn={
+		window:document.getElementById("vn")
 		,get:"examples/late-to-the-party/"
-		,info:"Late to the Party<br>[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
+		,info:"[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
 		,query:"late-to-the-party"
 		,start:0
 		,saveId:"showpony-site-lttp"
@@ -143,7 +122,7 @@
 			,content:'Late to the Party'
 		}
 	};
-	showponies.kn=new Showpony(showponyInputs.kn);
+	showponies.vn=new Showpony(showponyInputs.vn);
 </script>
 
 <div class="story showpony-paused" id="audio"></div>
@@ -151,7 +130,7 @@
 	showponyInputs.audio={
 		window:document.getElementById("audio")
 		,get:"examples/bob-and-susie/" //The path to the story files. Remember the slash!
-		,info:"The Adventures of Bob and Susie<br>[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
+		,info:"[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
 		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a href='https://soundcloud.com/joshuapowlison/sets/the-adventures-of-bob-and' target='_blank'>Soundcloud.logo</a><br>The Adventures of Bob and Susie by Josh Powlison, Public Domain"
 		,query:false
 		,start:0
