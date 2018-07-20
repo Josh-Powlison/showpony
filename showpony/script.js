@@ -2561,37 +2561,36 @@ function gamepadControls(){
 		
 		var gamepad=navigator.getGamepads()[S.gamepad.id];
 		
-		//START//
-		gamepadButton(gamepad,9,'menu');
+		//XBOX Gamepad
+		if(/360/.test(gamepad.id)){
+			gamepadButton(gamepad,9,'menu');		//Start
+			gamepadButton(gamepad,0,'input');		//A
+			gamepadButton(gamepad,14,'dpadL');		//Dpad Left
+			gamepadButton(gamepad,15,'dpadR');		//Dpad Right
+			gamepadButton(gamepad,8,'fullscreen');	//Select
+			gamepadButton(gamepad,6,'home');		//Left trigger
+			gamepadButton(gamepad,7,'end');			//Right trigger
+				
+			//ANALOGUE STICK//
+			//Use for scrubbing
+			//TODO: use for scrubbing
+		//Normal, average gamepad
+		}else{
+			gamepadButton(gamepad,9,'menu');		//Start
+			gamepadButton(gamepad,0,'input');		//A
+			gamepadButton(gamepad,8,'fullscreen');	//Select
+			gamepadButton(gamepad,6,'home');		//Left trigger
+			gamepadButton(gamepad,7,'end');			//Right trigger
+		}
+		
+		//Register inputs
 		if(S.gamepad.menu==2) S.menu();
-		
-		//INPUT//
-		gamepadButton(gamepad,0,'input');
 		if(S.gamepad.input==2) S.input();
-		
-		//Dpad Left//
-		gamepadButton(gamepad,14,'dpadL');
 		if(S.gamepad.dpadL==2) S.to({file:'-1'});
-			
-		//Dpad Right//
-		gamepadButton(gamepad,15,'dpadR');
 		if(S.gamepad.dpadR==2) S.to({file:'+1'});
-			
-		//Select//
-		gamepadButton(gamepad,8,'fullscreen');
-		if(S.gamepad.fullscreen==2) S.fullscreen();
-		
-		//Left trigger//
-		gamepadButton(gamepad,6,'home');
-		if(S.gamepad.home==2) S.to({file:'first'})
-		
-		//Right trigger//
-		gamepadButton(gamepad,7,'end');
 		if(S.gamepad.end==2) S.to({file:'last'})
-			
-		//ANALOGUE STICK//
-		//Use for scrubbing
-		//TODO: use for scrubbing
+		if(S.gamepad.home==2) S.to({file:'first'})
+		if(S.gamepad.fullscreen==2) S.fullscreen();
 	}
 }
 
