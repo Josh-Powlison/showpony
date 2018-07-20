@@ -2562,6 +2562,13 @@ function updateInfo(pushState){
 	}
 }
 
+//Hiding the webpage
+S.hidden=false;
+
+document.addEventListener('visibilitychange',function(){
+	S.hidden=document.hidden;
+});
+
 //Gamepad support
 
 //Showpony framerate- which is connected not to animations, etc, but to gamepad use and games
@@ -2594,6 +2601,9 @@ window.addEventListener('gamepaddisconnected',function(e){
 });
 
 function gamepadControls(){
+	//Exit if the window isn't in focus
+	if(S.hidden) return;
+	
 	if(S.gamepad!==null){
 		//If shortcuts aren't always enabled, perform checks
 		if(S.shortcuts!=='always'){
