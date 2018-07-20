@@ -1964,7 +1964,7 @@ function runMM(inputNum){
 													newParent.addEventListener('change',function(){
 														S.data[this.dataset.var]=this.value;
 														console.log(this.value);
-													})
+													});
 												}
 											}
 											break;
@@ -2231,6 +2231,11 @@ if(S.shortcuts){
 	window.addEventListener(
 		'keydown'
 		,function(event){
+			//Don't use shortcut keys if we're writing into an input right now
+			if(event.key==='f' || event.key===' '){
+				if(event.target.tagName==='INPUT') return;
+			}
+			
 			//If shortcuts aren't always enabled, perform checks
 			if(S.shortcuts!=='always'){
 				//Exit if it isn't fullscreen
