@@ -302,7 +302,7 @@ S.to=function(input){
 				.then(text=>{
 					if(currentType==='multimedia'){
 						//Remove multiline comments
-						text=text.replace(/\/\*.*?\*\//gs,'');
+						text=text.replace(/\/\*[^]*?\*\//g,'');
 						
 						//Get all non-blank lines
 						S.lines=text.match(/.+(?=\S).+/g);
