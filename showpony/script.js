@@ -1595,7 +1595,9 @@ function runMM(inputNum){
 			}
 			else content.appendChild(S.objects[object]=m(type));
 
-			S.objects[object].addEventListener('animationend',function(){
+			S.objects[object].addEventListener('animationend',function(event){
+				if(this!==event.target) return;
+				
 				var objectName=object.replace(/#/g,'id');
 				
 				var updateStyle=new RegExp('@keyframes '+objectName+'{100%{[^}]*}}','i').exec(styles.innerHTML);
@@ -1603,7 +1605,9 @@ function runMM(inputNum){
 				var styleAdd=/[^{]+;/.exec(updateStyle);
 				
 				if(styleAdd) this.style.cssText+=styleAdd[0];
-				this.style.animation=null;
+				this.style.animationName=null;
+				this.style.animationDuration=null;
+				this.style.animationFillMode=null;
 			})
 			
 			if(type==='character'){
@@ -1668,9 +1672,15 @@ function runMM(inputNum){
 			
 				//Either replace existing keyframes or append to the end
 				styles.innerHTML=styles.innerHTML.replace(new RegExp('(@keyframes '+objectName+'{100%{[^}]*}})|$'),animation);
-				S.objects[object].style.animation=objectName+' '+animationSpeed+' forwards';
+				S.objects[object].style.animationName=objectName;
+				S.objects[object].style.animationFillMode='forwards';
+				S.objects[object].style.animationDuration=animationSpeed;
 			}
 			
+			runMM();
+			break;
+		case 'async':
+			S.objects[object].dataset.async=vals[1];
 			runMM();
 			break;
 		case 'content':
@@ -2091,22 +2101,28 @@ function runMM(inputNum){
 						multimediaSettings.input=false;
 					}
 					
-					lastLetter.addEventListener('animationstart',function(event){
-						if(this!==event.target) return;
-						
-						//If we aren't waiting to continue, continue
-						if(!multimediaSettings.wait){
-							runMM();
-						}else{
-							//If we need player's to click to continue (and they have no inputs to fill out or anything), notify them:
-							if(!S.objects[multimediaSettings.textbox].querySelector('input')){
-								content.appendChild(continueNotice);
+					if(S.objects[multimediaSettings.textbox].dataset.async!=true){
+					
+						lastLetter.addEventListener('animationstart',function(event){
+							if(this!==event.target) return;
+							
+							//If we aren't waiting to continue, continue
+							if(!multimediaSettings.wait){
+								runMM();
+							}else{
+								//If we need player's to click to continue (and they have no inputs to fill out or anything), notify them:
+								if(!S.objects[multimediaSettings.textbox].querySelector('input')){
+									content.appendChild(continueNotice);
+								}
 							}
-						}
-					});
+						});
+					}
 					
 					//Add the chars to the textbox
 					S.objects[multimediaSettings.textbox].appendChild(fragment);
+					
+					//Continue if async textbox
+					if(S.objects[multimediaSettings.textbox].dataset.async==true) runMM();
 					break;
 			}
 			break;
