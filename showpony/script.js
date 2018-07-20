@@ -2557,7 +2557,7 @@ function updateInfo(pushState){
 //Showpony framerate- which is connected not to animations, etc, but to gamepad use and games
 S.gamepad=null;
 var framerate=60;
-var checkGamepad=setInterval(gamepadControls,1000/framerate);
+var checkGamepad=null;
 
 window.addEventListener('gamepadconnected',function(e){
 	S.gamepad={
@@ -2569,11 +2569,14 @@ window.addEventListener('gamepadconnected',function(e){
 		,dpadL:-1
 		,dpadR:-1
 		,fullscreen:-1
-	}
+	};
+	
+	checkGamepad=setInterval(gamepadControls,1000/framerate);
 });
 
 window.addEventListener('gamepaddisconnected',function(e){
 	S.gamepad=null;
+	clearInterval(checkGamepad);
 });
 
 function gamepadControls(){
