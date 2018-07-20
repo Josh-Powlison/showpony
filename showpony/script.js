@@ -497,6 +497,15 @@ S.menu=function(event,action){
 	//Exit if we're not targeting the overlay.
 	if(event && event.target!==overlay) return;
 	
+	//If a cover exists, hide it rather than playing/pausing
+	if(typeof(action)==='undefined' || action==='play'){
+		console.log(cover);
+		if(cover){
+			cover.dispatchEvent(new CustomEvent('click'));
+			return;
+		}
+	}
+	
 	//Allow playing and pausing, but return if either's already done
 	if(
 		action &&
@@ -2715,8 +2724,9 @@ var getFiles=new Promise(function(resolve,reject){
 		S.window.appendChild(cover);
 		
 		cover.addEventListener('click',function(){
-			S.menu(null,'play');
 			this.remove();
+			cover=null;
+			S.menu(null,'play');
 		});
 	}
 
