@@ -2571,12 +2571,16 @@ window.addEventListener('gamepadconnected',function(e){
 		,fullscreen:-1
 	};
 	
-	checkGamepad=setInterval(gamepadControls,1000/framerate);
+	if(checkGamepad===null) checkGamepad=setInterval(gamepadControls,1000/framerate);
 });
 
 window.addEventListener('gamepaddisconnected',function(e){
+	//Ignore if it's not the same gamepad
+	if(e.gamepad.index!==S.gamepad.id) return;
+	
 	S.gamepad=null;
 	clearInterval(checkGamepad);
+	checkGamepad=null;
 });
 
 function gamepadControls(){
