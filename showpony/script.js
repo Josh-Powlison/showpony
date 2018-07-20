@@ -2251,6 +2251,7 @@ function safeFilename(string,type){
 
 var shortcutKeys={
 	' ': 				()=>S.input()
+	,'Enter': 			()=>S.input()
 	,'ArrowLeft':		()=>S.to({time:'-10'})
 	,'ArrowRight':		()=>S.to({time:'+10'})
 	,'Home':			()=>S.to({file:'first'})
@@ -2268,7 +2269,7 @@ if(S.shortcuts){
 		'keydown'
 		,function(event){
 			//Don't use shortcut keys if we're writing into an input right now
-			if(event.key==='f' || event.key===' '){
+			if(event.key===' ' || event.key==='Enter' || event.key==='f'){
 				if(event.target.tagName==='INPUT') return;
 			}
 			
