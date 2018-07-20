@@ -529,21 +529,32 @@ S.menu=function(event,action){
 	);
 };
 
+var pos=0;
+
 //Handles starting, running, and ending scrubbing
 function userScrub(event,start){
-	//Mouse and touch work slightly differently		
-	var touch=event.changedTouches ? true : false;
-	var pos=touch ? event.changedTouches[0].clientX : event.clientX;
+	var input;
+	
+	//General events
+	if(isNaN(event)){
+		//Mouse and touch work slightly differently
+		input=event.changedTouches ? 'touch' : 'cursor';
+		pos=input==='touch' ? event.changedTouches[0].clientX : event.clientX;
+	//Relative scrubbing
+	}else{
+		input='joystick';
+		pos=progress.getBoundingClientRect().left+progress.getBoundingClientRect().width/2+event*5;
+	}
 	
 	if(start){
 		if(scrubbing===false){
-			if(touch) scrubbing=pos;
+			if(input==='touch') scrubbing=pos;
 			else return;
 		}
 			
 		//You have to swipe farther than you move the cursor to adjust the position
 		if(scrubbing!==true){
-			if(Math.abs(scrubbing-pos)>screen.width/(touch ? 20 : 100)){ 
+			if(input==='joystick' || Math.abs(scrubbing-pos)>screen.width/(input==='touch' ? 20 : 100)){ 
 				scrubbing=true;
 				
 				//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
@@ -556,7 +567,7 @@ function userScrub(event,start){
 		}
 		
 		//Don't want the users to accidentally swipe to another page!
-		if(touch) event.preventDefault();
+		if(input==='touch') event.preventDefault();
 		
 		scrub(
 			(pos-S.window.getBoundingClientRect().left)
@@ -2553,7 +2564,8 @@ window.addEventListener('gamepadconnected',function(e){
 		id:e.gamepad.index
 		,menu:-1
 		,input:-1
-		,analogueL:0
+		,analogL:0
+		,analogLPress:-1
 		,dpadL:-1
 		,dpadR:-1
 		,fullscreen:-1
@@ -2587,9 +2599,7 @@ function gamepadControls(){
 			gamepadButton(gamepad,6,'home');		//Left trigger
 			gamepadButton(gamepad,7,'end');			//Right trigger
 				
-			//ANALOGUE STICK//
-			//Use for scrubbing
-			//TODO: use for scrubbing
+			gamepadAxis(gamepad,0,'analogL');		//Left analogue
 		//Normal, average gamepad
 		}else{
 			gamepadButton(gamepad,9,'menu');		//Start
@@ -2607,6 +2617,48 @@ function gamepadControls(){
 		if(S.gamepad.end==2) S.to({file:'last'})
 		if(S.gamepad.home==2) S.to({file:'first'})
 		if(S.gamepad.fullscreen==2) S.fullscreen();
+	
+		//Scrubbing with the analogue stick
+		if(S.gamepad.analogLPress===2){
+			pos=0;
+		}
+	
+		if(S.gamepad.analogL!==0){
+			scrubbing=S.gamepad.analogL;
+			userScrub(S.gamepad.analogL,true);
+		}
+		
+		if(S.gamepad.analogLPress===-2){
+			//If we're not scrubbing, set scrubbing to false and return
+			if(scrubbing!==true){
+				scrubbing=false;
+			}else{
+				userScrub(S.gamepad.analogL);
+				pos=0;
+			}
+		}
+	}
+}
+
+function gamepadAxis(gamepad,number,type){
+	//Active space
+	var min=.5;
+	var max=1;
+	
+	//Get amount between -1 and 1 based on distance between values
+	if(Math.abs(gamepad.axes[number])>=min){
+		if(gamepad.axes[number]>0) S.gamepad[type]=(gamepad.axes[number]-min)/(max-min);
+		else S.gamepad[type]=((gamepad.axes[number]-(-max))/(-min-(-max)))-1;
+		
+		//Set pressing values right
+		if(S.gamepad[type+'Press']<0) S.gamepad[type+'Press']=2;
+		else S.gamepad[type+'Press']=1;
+	}else{
+		S.gamepad[type]=0;
+		
+		//Set pressing values right
+		if(S.gamepad[type+'Press']>0) S.gamepad[type+'Press']=-2;
+		else S.gamepad[type+'Press']=-1;
 	}
 }
 
