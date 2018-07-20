@@ -2525,6 +2525,88 @@ function updateInfo(pushState){
 	}
 }
 
+//Gamepad support
+
+//Showpony framerate- which is connected not to animations, etc, but to gamepad use and games
+S.gamepad=null;
+var framerate=60;
+var checkGamepad=setInterval(gamepadControls,1000/framerate);
+
+window.addEventListener('gamepadconnected',function(e){
+	S.gamepad={
+		id:e.gamepad.index
+		,menu:-1
+		,input:-1
+		,analogueL:0
+		,dpadL:-1
+		,dpadR:-1
+		,fullscreen:-1
+	}
+});
+
+window.addEventListener('gamepaddisconnected',function(e){
+	S.gamepad=null;
+});
+
+function gamepadControls(){
+	if(S.gamepad!==null){
+		//If shortcuts aren't always enabled, perform checks
+		if(S.shortcuts!=='always'){
+			//Exit if it isn't fullscreen
+			if(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.fullscreenElement){
+				//If needs to be focused
+				if(S.shortcuts!=='fullscreen' && S.window!==document.activeElement) return;
+			}
+		}
+		
+		var gamepad=navigator.getGamepads()[S.gamepad.id];
+		
+		//START//
+		gamepadButton(gamepad,9,'menu');
+		if(S.gamepad.menu==2) S.menu();
+		
+		//INPUT//
+		gamepadButton(gamepad,0,'input');
+		if(S.gamepad.input==2) S.input();
+		
+		//Dpad Left//
+		gamepadButton(gamepad,14,'dpadL');
+		if(S.gamepad.dpadL==2) S.to({file:'-1'});
+			
+		//Dpad Right//
+		gamepadButton(gamepad,15,'dpadR');
+		if(S.gamepad.dpadR==2) S.to({file:'+1'});
+			
+		//Select//
+		gamepadButton(gamepad,8,'fullscreen');
+		if(S.gamepad.fullscreen==2) S.fullscreen();
+		
+		//Left trigger//
+		gamepadButton(gamepad,6,'home');
+		if(S.gamepad.home==2) S.to({file:'first'})
+		
+		//Right trigger//
+		gamepadButton(gamepad,7,'end');
+		if(S.gamepad.end==2) S.to({file:'last'})
+			
+		//ANALOGUE STICK//
+		//Use for scrubbing
+		//TODO: use for scrubbing
+	}
+}
+
+function gamepadButton(gamepad,number,type){
+	if(gamepad.buttons[number].pressed){
+		//Set pressing values right
+		if(S.gamepad[type]<0) S.gamepad[type]=2;
+		else S.gamepad[type]=1;
+	}else{
+		if(S.gamepad[type]>0) S.gamepad[type]=-2;
+		else S.gamepad[type]=-1;
+	}
+}
+
+
 ///////////////////////////////////////
 /////////////////START/////////////////
 ///////////////////////////////////////
