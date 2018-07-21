@@ -711,11 +711,11 @@ S.input=function(){
 			waitTimer.end();
 		}
 		
-		//End object animations on going to the next frame
-		for(var key in S.objects) S.objects[key].dispatchEvent(new Event('animationend'));
-		
 		//Remove the continue notice
 		continueNotice.remove();
+		
+		//End object animations on going to the next frame
+		for(var key in S.objects) S.objects[key].dispatchEvent(new Event('animationend'));
 		
 		var choices=false;
 		
@@ -751,6 +751,7 @@ S.input=function(){
 			
 			//Continue if not waiting
 			if(!multimediaSettings.wait) runMM();
+			else content.appendChild(continueNotice);
 		}
 	}
 }
