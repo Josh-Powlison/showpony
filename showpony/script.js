@@ -2145,7 +2145,7 @@ function runMM(inputNum){
 							if(!multimediaSettings.wait){
 								runMM();
 							}else{
-								//If we need player's to click to continue (and they have no inputs to fill out or anything), notify them:
+								//If we need players to click to continue (and they have no inputs to fill out or anything), notify them:
 								if(!S.objects[multimediaSettings.textbox].querySelector('input')){
 									content.appendChild(continueNotice);
 								}
@@ -2601,6 +2601,8 @@ window.addEventListener('gamepadconnected',function(e){
 		,dpadL:-1
 		,dpadR:-1
 		,fullscreen:-1
+		,axisMin:.25
+		,axisMax:1
 	};
 	
 	if(checkGamepad===null) checkGamepad=setInterval(gamepadControls,1000/framerate);
@@ -2632,7 +2634,7 @@ function gamepadControls(){
 		var gamepad=navigator.getGamepads()[S.gamepad.id];
 		
 		//XBOX Gamepad
-		if(/360/.test(gamepad.id)){
+		if(/xinput/i.test(gamepad.id)){
 			gamepadButton(gamepad,9,'menu');		//Start
 			gamepadButton(gamepad,0,'input');		//A
 			gamepadButton(gamepad,14,'dpadL');		//Dpad Left
@@ -2659,18 +2661,21 @@ function gamepadControls(){
 		if(S.gamepad.end==2) S.to({time:'end'});
 		if(S.gamepad.home==2) S.to({time:'start'});
 		if(S.gamepad.fullscreen==2) S.fullscreen();
-	
+		
 		//Scrubbing with the analogue stick
 		if(S.gamepad.analogLPress===2){
+			overlay.style.opacity=1; //Show the overlay
 			pos=0;
 		}
 	
 		if(S.gamepad.analogL!==0){
+			
 			scrubbing=S.gamepad.analogL;
 			userScrub(S.gamepad.analogL,true);
 		}
 		
 		if(S.gamepad.analogLPress===-2){
+			overlay.style.opacity=''; //Hide the overlay
 			//If we're not scrubbing, set scrubbing to false and return
 			if(scrubbing!==true){
 				scrubbing=false;
@@ -2684,8 +2689,8 @@ function gamepadControls(){
 
 function gamepadAxis(gamepad,number,type){
 	//Active space
-	var min=.5;
-	var max=1;
+	var min=S.gamepad.axisMin;
+	var max=S.gamepad.axisMax;
 	
 	//Get amount between -1 and 1 based on distance between values
 	if(Math.abs(gamepad.axes[number])>=min){
