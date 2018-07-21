@@ -2311,6 +2311,20 @@ if(S.shortcuts){
 	);
 }
 
+//Scrolling
+window.addEventListener('wheel',function(event){
+	if(event.ctrlKey) return;
+	
+	if(currentType==='multimedia'){
+		if(event.deltaY<0){
+			//Go back a keyframe's length, so we get to the previous keyframe
+			var keyframeLength=S.files[S.currentFile].duration/keyframes.length;
+			
+			S.to({time:'-'+keyframeLength});
+		}
+	}
+});
+
 //We need to set this as a variable to remove it later on
 //This needs to be click- otherwise, you could click outside of Showpony, release inside, and the menu would toggle. This results in messy scenarios when you're using the UI.
 var windowClick=function(event){
