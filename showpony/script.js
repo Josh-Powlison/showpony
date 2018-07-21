@@ -121,8 +121,8 @@ S.to=function(input){
 		if(obj.time<0) obj.time=0;
 	}
 	
-	//If a time is passed but no file, get file and time based on the place in the total
-	if(obj.time!==undefined && obj.file===undefined){
+	//If a numerical time is passed but no file, get file and time based on the place in the total
+	if(obj.time!==undefined && !isNaN(obj.time) && obj.file===undefined){
 		obj.file=0;
 		
 		//Look through the videos for the right one
@@ -159,6 +159,21 @@ S.to=function(input){
 	/*
 	
 	if(obj.file==S.currentFile && !obj.refresh) return;*/
+	
+	//Go to the beginning of the story
+	if(obj.time==='start'){
+		obj.file=0;
+		obj.time=0;
+	}
+	
+	//Go to the end of the story
+	if(obj.time==='end'){
+		obj.file=S.files.length-1;
+		
+		//Go to near the end of the last file. If we go too far back, set time to 0.
+		obj.time=S.files[obj.file].duration-S.defaultDuration;
+		if(obj.time<0) obj.time=0;
+	}
 	
 	//Use different options
 	obj.file=
@@ -2254,8 +2269,8 @@ var shortcutKeys={
 	,'Enter': 			()=>S.input()
 	,'ArrowLeft':		()=>S.to({time:'-10'})
 	,'ArrowRight':		()=>S.to({time:'+10'})
-	,'Home':			()=>S.to({file:'first'})
-	,'End':				()=>S.to({file:'last'})
+	,'Home':			()=>S.to({time:'start'})
+	,'End':				()=>S.to({time:'end'})
 	,'MediaPrevious':	()=>S.to({file:'-1'})
 	,'MediaNext':		()=>S.to({file:'+1'})
 	,'MediaPlayPause':	()=>S.menu()
@@ -2641,8 +2656,8 @@ function gamepadControls(){
 		if(S.gamepad.input==2) S.input();
 		if(S.gamepad.dpadL==2) S.to({file:'-1'});
 		if(S.gamepad.dpadR==2) S.to({file:'+1'});
-		if(S.gamepad.end==2) S.to({file:'last'})
-		if(S.gamepad.home==2) S.to({file:'first'})
+		if(S.gamepad.end==2) S.to({time:'end'});
+		if(S.gamepad.home==2) S.to({time:'start'});
 		if(S.gamepad.fullscreen==2) S.fullscreen();
 	
 		//Scrubbing with the analogue stick
