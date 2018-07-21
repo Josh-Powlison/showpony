@@ -506,6 +506,8 @@ button.showpony-account-button{
 	background-position:50% 50%;
 	background-repeat:no-repeat;
 	background-size:cover;
+	
+	pointer-events:none; /*Sometimes backgrounds are in front of scrollable elements. We need to not let that mess things up.*/
 }
 
 .showpony-character{
@@ -515,6 +517,8 @@ button.showpony-account-button{
 	left:0%;
 	position:absolute;
 	z-index:5;
+	
+	pointer-events:none; /*Sometimes characters are in front of scrollable elements. We need to not let that mess things up.*/
 }
 
 .showpony-character-image{
