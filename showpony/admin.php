@@ -56,6 +56,14 @@ foreach(scandir('.') as $file){
 	#File
 		echo '<a href="',realpath($file),'">',$file,'</a>: ';
 		
+		$live=!preg_match('/^x/',$file);
+		$hidden=preg_match('/^~/',$file);
+		preg_match('/.+(?=\s\()/',$file,$date);
+		preg_match('/(?<=\().+(?=\))/',$file,$name);
+		preg_match('/(?<=\s)\d.+(?=\.)/',$file,$length);
+		
+		echo 'Name: ',$name[0],' Date: ',$date[0],' Length: ',$length[0],' | ';
+		
 		switch(pathinfo($file,PATHINFO_EXTENSION)){
 			case 'mm';
 				echo 'A multimedia file.';
