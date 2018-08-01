@@ -1,0 +1,188 @@
+///FILE SYNTAX///
+Kinetic Novel files have the extension "mm" for MultiMedia.
+
+///FILE STRUCTURE///
+resources/
+	-audio/
+		-music.mp3
+		-...
+	-backgrounds/
+		-background.jpg
+		-...
+	-characters/
+		-name/
+			-excited.png
+			-happy.png
+			-upset.png
+		-...
+
+///SHOW TEXT///
+Note: the multiple spaces are actually tabs. Make sure you use tabs in your files!
+
+	This will show up in the textbox!
+	
+	Billy::This is being spoken by Billy!
+	Billy::<shake>Billy's scared...</shake> 
+	+On clicking, Billy says this immediately after on the same line because of the + at the beginning!>
+	Billy::I'm going to automatically continue with a >
+
+You can use any HTML tags, and you can use a few special ones too:
+<shout></shout> <shake></shake> <sing></sing> <fade></fade>
+<speed rate="1" constant></speed>
+
+For <speed>, "constant" means punctuation won't affect the text's speed. Rate is the relative rate of text- the regular speed is multiplied by it. 0 means text appears instantly; 2 means letters appear in 2x the time; .5 means letters appear in 1/2 the time.
+
+///CHARACTERS///
+name	excited
+name	upset
+
+If you want to have multiple images, you can comma-separate them. This allows you to use layers!
+
+name	pose-01,eyes/excited,mouth/happy
+
+You can also specify an extension if you'd like. If you don't, it'll default to "png".
+
+name	excited.svg
+
+///BACKGROUNDS///
+filename
+
+That's it!
+
+///HAVING MULTIPLE OBJECTS WITH THE SAME FILES///
+If you want multiple elements to use the same files, you can add info with #. This would let you have multiple characters use the same images, for example:
+
+fan#1	excited
+fan#2	upset
+
+///AUDIO///
+filename.play
+
+You must include an audio command for Showpony to know it's audio!
+
+///SPECIAL OBJECTS///
+
+A few objects are created automatically:
+
+"main" is the main textbox.
+"content" covers all of the multimedia area's content.
+"window" includes the user UI. You probably won't want to mess with this so much.
+
+If no object is specified, "main" is assumed to be used.
+
+///COMMANDS///
+All objects are called the same way, and most have the same options. Commands are called this way:
+
+object.command-name
+
+Most of the above are actually calling a command! When a command isn't specified, the assumed command is "content":
+
+object.content	excited
+
+The "style" command adjusts CSS for an object. The following would start a character off the left side of the screen:
+
+object.style	left:-100%;
+
+This would move them to the center of the screen over the course of 1 second:
+
+object.style	time:1s;left:0%;
+
+You can use any CSS styles you want! In order to animate a style though, you'll have to have set it previously. Just add "time:Xs" in order to have it animate in a way that Showpony can pause effectively!
+
+Audio has special commands:
+
+audio.play
+audio.pause
+audio.stop
+audio.loop
+audio.time		0
+audio.speed		1
+audio.volume	1
+
+If you don't specify an object, the assumed object will be "engine". engine is a special object with special commands:
+
+engine.wait
+engine.go
+
+"wait" will force users to click to continue. If you want to wait for 5 seconds instead (skippable by clicking), you can use:
+
+engine.wait		5s
+
+Remember, if you don't specify an object, "engine" will be assumed!" "go" will take you to the specified line:
+
+.go		//Go here
+		Let's skip this line of text!
+		
+//Go here
+		We're skipping to here!
+
+///COMMENTING///
+
+You can create multiline comments with /* and */. These will be parsed out of the file at runtime.
+
+/*
+
+		This is great! I can hide this part for now or just add a bunch of info here:
+		
+		Lalala, comments are great!~
+
+*/
+
+You can create singleline comments with //. These will remain, because they can be used with engine.go to send you to a specific spot!
+
+engine.go		//Excited
+
+//Excited
+		I am WAY too pumped about this date.
+
+///VARIABLES///
+You can set and adjust variables by stating a variable name and following it up with an = sign, with tabs after the =:
+
+variable=	Hello!
+
+Then you can call it in a textbox this way:
+
+		"[variable]" Bobby greeted Susie cheerfully.
+
+You can even nest variables!
+
+variable=	[one] and [two]
+one=		ONE!
+two=		TWO!
+			Come on, let's go! [variable] and THREE! and FOUR!
+			
+You can include HTML tags and even commands in variables!
+
+shouting=	<shout>YES I DID, AND I'M SOOOO EXCITED!!!!</shout>
+		Did you know you can use variables for text?
+		[shouting]
+		But did you?
+		[shouting]
+		I'm not quite sure if you get it...
+		[shouting]
+
+commonCommand=	character	pose-excited,eyes/excited,mouth/excited
+[commonCommand]
+
+You can adjust values with operations as well:
+
+variable=	1
+variable+=	1
+variable-=	1
+
+///USER INPUT///
+In order to get user input, use any <input> HTML element in your text. When an <input> element is present, the user won't be able to click through to the next section without selecting an option; so if you have an <input type="text"> element, make sure you also have an <input type="submit"> element present too!
+
+In order to state what variable to adjust, set a data-var attribute to your input. When the user adjusts the variables, it will be set to the value present.
+
+		What's your name? <input type="text" data-var="name"> <input type="submit" value="Continue">
+		
+If you want to have buttons with different values, you can also use the data-val attribute, which is only relevant for button inputs. Regular value just adjusts the button text, as normal.
+
+		Do you like me? <input type="button" data-var="like" data-val="1" value="Yes"> <input type="button" data-var="like" data-val="0" value="No">
+		
+You don't need a continue button if you use button inputs.
+
+Let's say that you want, on clicking an input submit or button, to go to a new position in the text rather than just adjusting a variable. You can use data-go:
+
+		Where do you want to go? <input type="button" data-go="//North" value="North"> <input type="button" data-go="//South" value="South">
