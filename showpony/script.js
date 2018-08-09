@@ -1,3 +1,5 @@
+'use strict';
+
 //Get location of the Showpony folder
 const ShowponyFolder=document.currentScript.src.replace('/script.js','');
 
@@ -39,12 +41,7 @@ if(!document.querySelector('[href$="showpony/styles.css"]')){
 	document.head.appendChild(styles);
 }
 
-function Showpony(input){
-
-'use strict';
-
-//If an input object doesn't exist, make one
-if(!input) input={};
+function Showpony(input={}){
 
 //If no window was passed, make one!
 if(!input.window){
@@ -99,10 +96,8 @@ var HeyBardConnection;
 var objectBuffer, keyframes;
 
 //Go to another file
-S.to=function(input){
+S.to=function(obj={}){
 	content.classList.add('showpony-loading');
-	
-	var obj=input || {};
 	
 	//Relative file
 	if(obj.file && (obj.file[0]==='+' || obj.file[0]==='-')) obj.file=S.currentFile+(parseInt(obj.file.substring(1))*(obj.file[0]==='-' ? -1 : 1));
@@ -507,7 +502,7 @@ S.to=function(input){
 var goToTime=0;
 
 //Toggle the menu
-S.menu=function(event,action){
+S.menu=function(event=null,action=false){
 	//We can cancel moving the bar outside of the overlay, but we can't do anything else.
 	//Exit if we're not targeting the overlay.
 	if(event && event.target!==overlay) return;
@@ -556,7 +551,7 @@ S.menu=function(event,action){
 var pos=0;
 
 //Handles starting, running, and ending scrubbing
-function userScrub(event,start){
+function userScrub(event=null,start=false){
 	var input;
 	
 	//General events
@@ -624,7 +619,7 @@ function userScrub(event,start){
 }
 
 //Toggle fullscreen
-S.fullscreen=function(type){
+S.fullscreen=function(type='toggle'){
 	//Get fullscreen type
 	var browser=S.window.requestFullscreen ?
 			{
@@ -649,7 +644,7 @@ S.fullscreen=function(type){
 	
 	//If a fullscreen-supporting browser wasn't found, use our rigged version
 	if(!browser){
-		if(!type){
+		if(!type || type=='toggle'){
 			if(S.window.classList.contains('showpony-fullscreen-alt')) type='exit';
 			else type='request';
 		}
@@ -1465,10 +1460,10 @@ function mediaEnd(){
 var runTo=false;
 
 //Run multimedia (interactive fiction, visual novels, etc)
-function runMM(inputNum){
+function runMM(inputNum=S.currentLine+1){
 	
 	//Go to either the specified line or the next one
-	S.currentLine=(inputNum!==undefined ? inputNum : S.currentLine+1);
+	S.currentLine=inputNum;
 	
 	//Run through if we're running to a point; if we're there or beyond though, stop running through
 	if(runTo!==false && S.currentLine>=runTo){
