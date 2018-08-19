@@ -23,6 +23,9 @@ ini_set('display_errors',1);
 #Log out if there's no password
 if(!$password) unset($_SESSION['showpony_admin']);
 
+#Start with it based on current file
+$info='[Current File] | [Files Left]';
+
 #Get a private file
 if(!empty($_GET['get'])){
 	#If we aren't logged in, block the effort
@@ -44,7 +47,6 @@ if(!empty($_GET['get'])){
 	
 	#This object is sent to the user as JSON
 	$response=[];
-	
 	
 	#die(($_POST['rel-path'] ?: '..').'/'.$_POST['path']);
 	#Go to the story's file directory
@@ -93,6 +95,16 @@ if(!empty($_GET['get'])){
 					}
 				}
 				
+				#See if it's video or audio- if so, we want a timed setup
+				$finfo=finfo_open(FILEINFO_MIME_TYPE);
+				
+				#If video or audio, show info in minutes and seconds
+				if(preg_match('/video\/|audio\//',finfo_file($finfo,$language.'/'.$file))){
+					$info='[Minutes PAD2]:[Seconds PAD2] | [Minutes Left PAD2]:[Seconds Left PAD2]';
+				}
+				
+				finfo_close($finfo);
+				
 				#Add the file to the array
 				$response['files'][]=$_POST['path'].$language.'/'.$file;
 			}
@@ -126,6 +138,7 @@ if(!empty($_GET['get'])){
 
 ?>'use strict';
 
+/*
 //Get location of the Showpony folder
 const ShowponyFolder=document.currentScript.src.replace('/script.js','');
 
@@ -156,8 +169,10 @@ for(var i=0;i<splitStart.length;i++){
 		//Break out of the main for loop
 		break;
 	}
-	
-}
+}*/
+
+var ShowponyFolder='';
+var ShowponyRunPage='';
 
 //Load CSS if not loaded already
 if(!document.querySelector('[href$="showpony/styles.css"]')){
@@ -201,7 +216,7 @@ d('title'			,	false												);
 d('dateFormat'		,	{year:'numeric',month:'numeric',day:'numeric'}		);
 d('admin'			,	false												);
 
-S.info='[Current File] | [Files Left]';
+S.info='<?=$info?>';
 S.query='<?php
 	#Get the query from the paths
 	preg_match('/[^\/]+$/',$_GET['path'],$matches);
@@ -3394,3 +3409,12 @@ if(S.admin){
 }
 
 }
+
+var showponyPHP=new Showpony({
+	credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a href='https://www.webtoons.com/en/challenge/entreprenewb/list?title_no=58042' target='_blank'>LineWebtoon.logo</a><br>Entreprenewb by Josh Powlison, Public Domain"
+	,start:0
+	,scrubLoad:true
+	,saveId:null
+	,remoteSave:false
+	,defaultDuration:1
+});
