@@ -1,4 +1,4 @@
-<img src="https://showpony.heybard.com/design-files/logo.svg" width="100"><br>[Check out demos on the website!](https://showpony.heybard.com/)<br>[Download the latest version](https://github.com/Josh-Powlison/showpony/releases)
+<img src="https://showpony.heybard.com/design-files/logo.svg" width="100"><br>[Check out a demo on the website!](https://showpony.heybard.com/)<br>[Download the latest version](https://github.com/Josh-Powlison/showpony/releases)
 
 # What is Showpony?
 

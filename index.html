@@ -28,7 +28,7 @@
 </header>
 <main>
 
-<script src="showpony/script.js"></script>
+<!--<script src="showpony/script.js"></script>-->
 
 <h1><img class="svg-inline" src="design-files/logo.svg"> Showpony</h1>
 
@@ -40,6 +40,29 @@
 	<option value="audio">audiobook</option>
 </select>!</p>
 
+<script src="showpony/showpony.php"></script>
+<link rel="stylesheet" href="showpony/styles.css">
+<div class="story" id="comic"></div>
+
+<script>
+	var showponyPHP=new Showpony({
+		window:document.getElementById("comic")
+		,get:"examples/entreprenewb/[lang]/" //The path to the story files. Remember the slash!
+		,info:"[Current File] | [File Left]"
+		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a href='https://www.webtoons.com/en/challenge/entreprenewb/list?title_no=58042' target='_blank'>LineWebtoon.logo</a><br>Entreprenewb by Josh Powlison, Public Domain"
+		,query:"entreprenewb"
+		,start:0
+		,scrubLoad:true
+		,saveId:null
+		,remoteSave:false
+		,subtitles:{
+			English:'examples/entreprenewb/subtitles/en/'
+		}
+		,defaultDuration:1
+	});
+</script>
+
+<!--
 <script>
 	showponies={};
 	showponyInputs={};
@@ -149,7 +172,7 @@
 		}
 	};
 	showponies.audio=new Showpony(showponyInputs.audio);
-</script>
+</script>-->
 
 <h2>Install in 5 minutes!</h2>
 

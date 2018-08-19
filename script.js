@@ -115,6 +115,7 @@ var propertyInfo={
 	,subtitles:"Add in the languages and types you want to support; closed captions should also go in here. Full name and link to the folders where they are. Their names should be the same as the corresponding file names! <em>null</em> means subtitles aren't supported. Defaults to <em>null</em>"
 	,cover:"Create a cover that shows up before you start the story. It disappears once you click on it or if you're loading a local or remote bookmark. Will play media once closed. If you don't want a cover, set it to <em>null</em>. Set <em>image</em> to a background image or <em>null</em>; set <em>content</em> to containing content (with or without HTML) or <em>null</em>. Both default to <em>null</em>. Cover as a whole defaults to <em>null</em>"
 	,infiniteScroll:"Text and images only. Sets all content into a scrollable box and automatically adds content above and below as you scroll. Defaults to <em>false</em>"
+	,resourcesPath:"The path to resources like images and audio. Used by the multimedia engine. Remember the slash at the end! Defaults to '<em>resources/</em>'"
 };
 
 var type=/#[^$?]+/.exec(location.href);
