@@ -934,103 +934,15 @@ S.close=function(){
 }
 
 ///////////////////////////////////////
-/////////////////Audio/////////////////
+/////////////////MEDIA/////////////////
 ///////////////////////////////////////
 
-function makeAudio(){
+function makeMedia(type){
 	const P=this;
 	
 	P.currentTime=0;
 	
-	P.window=document.createElement('audio');
-	P.window.className='showpony-block';
-	
-	P.play=function(){
-		P.window.play();
-	}
-	
-	P.pause=function(){
-		P.window.pause();
-	}
-	
-	P.timeUpdate=function(input){
-		P.window.currentTime=input;
-	}
-	
-	P.src=function(input){
-		P.window.src=input;
-		
-		//If we're not paused, play
-		if(!S.window.classList.contains('showpony-paused')) P.play();
-	}
-
-	//Fix for Safari not going to the right time
-	P.window.addEventListener('loadeddata',function(){
-		this.currentTime=goToTime;
-		console.log(goToTime,this);
-	});
-
-	P.window.addEventListener('canplay',function(){
-		content.classList.remove('showpony-loading');
-		//Consider how much has already been loaded; this isn't run on first chunk loaded
-		this.dispatchEvent(new CustomEvent('progress'));
-	});
-
-
-	P.window.addEventListener('canplaythrough',function(){
-		//Consider how much has already been loaded; this isn't run on first chunk loaded
-		this.dispatchEvent(new CustomEvent('progress'));
-	});
-
-
-	//Buffering
-	P.window.addEventListener('progress',function(){
-		var bufferedValue=[];
-		var timeRanges=P.window.buffered;
-		
-		for(var i=0;i<timeRanges.length;i++){
-			//If it's the first value, and it's everything
-			if(i===0 && timeRanges.start(0)==0 && timeRanges.end(0)==P.window.duration){
-				bufferedValue=true;
-				break;
-			}
-			
-			bufferedValue.push([timeRanges.start(i),timeRanges.end(i)]);
-		}
-		
-		S.files[S.currentFile].buffered=bufferedValue;
-		
-		getTotalBuffered();
-	});
-	
-	//When we finish playing a video or audio file
-	P.window.addEventListener('ended',function(){
-		//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
-		if(!S.window.classList.contains('showpony-paused')) S.to({file:'+1'});
-	});
-
-	//On moving through time, update info and title
-	P.window.addEventListener('timeupdate',function(){
-		P.currentTime=P.window.currentTime;
-		
-		//Consider how much has already been loaded; this isn't run on first chunk loaded
-		this.dispatchEvent(new CustomEvent('progress'));
-		timeUpdate();
-	});
-};
-
-S.audio=new makeAudio();
-
-///////////////////////////////////////
-/////////////////VIDEO/////////////////
-///////////////////////////////////////
-
-function makeVideo(){
-	const P=this;
-	
-	P.currentTime=0;
-	
-	P.window=document.createElement('video');
+	P.window=document.createElement(type);
 	P.window.className='showpony-block';
 	
 	P.play=function(){
@@ -1110,7 +1022,8 @@ function makeVideo(){
 	});
 };
 
-S.video=new makeVideo();
+S.video=new makeMedia('video');
+S.audio=new makeMedia('audio');
 
 ///////////////////////////////////////
 ///////////PRIVATE VARIABLES///////////
