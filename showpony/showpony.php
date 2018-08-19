@@ -194,7 +194,6 @@ S.buffered=false;
 d('get'				,	'files/[lang]/'										);
 d('language'		,	'en'												);
 d('scrubLoad'		,	false												);
-d('info'			,	'[Current File] | [Files Left]'						);
 d('credits'			,	null												);
 d('data'			,	{}													);
 d('defaultDuration'	,	10													);
@@ -202,6 +201,7 @@ d('title'			,	false												);
 d('dateFormat'		,	{year:'numeric',month:'numeric',day:'numeric'}		);
 d('admin'			,	false												);
 
+S.info='[Current File] | [Files Left]';
 S.query='<?php
 	#Get the query from the paths
 	preg_match('/[^\/]+$/',$_GET['path'],$matches);
@@ -1474,18 +1474,6 @@ function getDate(input){
 
 //Make a POST call
 function POST(obj){
-	//Prepare the form data
-	var formData=new FormData();
-	formData.append('call',obj.call);
-	formData.append('path',S.get.replace(/\[lang[^\]]*\]/gi,S.language));
-	formData.append('rel-path',ShowponyRunPage);
-	
-	//Special values, if passed
-	obj.password && formData.append('password',obj.password);
-	obj.name && formData.append('name',obj.name);
-	obj.newName && formData.append('newName',obj.newName);
-	obj.files && formData.append('files',obj.files);
-	
 	return new Promise(function(resolve,reject){
 		var json=<?php echo json_encode($response); ?>;
 			
@@ -1497,29 +1485,6 @@ function POST(obj){
 		}
 		
 		resolve(json);
-		
-		/*
-		//Make the call
-		fetch(ShowponyFolder+'/ajax.php',{method:'post',body:formData,credentials:'include'})
-		.then(response=>{
-			return response.json();
-		})
-		//Work with the json
-		.then(json=>{
-		
-			if(json.success){
-				loggedIn=json.admin;
-				if(json.files){
-					saveAllFileInfo(json.files);
-				}
-			}
-				resolve(json);
-			}else reject(json.message);
-		})
-		.catch(response=>{
-			alert('913: '+response);
-		});
-		*/
 	});
 }
 
@@ -2945,19 +2910,16 @@ var getFiles=new Promise(function(resolve,reject){
 	//And fill it up again!
 	frag([styles,content,subtitles,overlay],S.window);
 	
-	//If getting, run a promise to check success
-	if(typeof(S.get)=='string'){
-		//resolve(<?php echo json_encode($response); ?>);
+	var json=<?php echo json_encode($response); ?>;
+	
+	if(json.success){
+		loggedIn=json.admin;
+		if(json.files){
+			saveAllFileInfo(json.files);
+		}
 		
-		POST({call:'getFiles'})
-			.then(response=>resolve())
-			.catch(response=>reject(response));
-	}else{
-		S.files=S.get;
-		//Skip to next then if an array was passed instead
-		saveAllFileInfo(S.files);
-		resolve();
-	}
+		resolve(json);
+	}else reject(json);
 });
 
 //Get Hey Bard account
