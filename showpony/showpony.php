@@ -2,9 +2,11 @@
 #POST VALUES FOR TESTING#
 $_POST['call']='getFiles';
 $_POST['rel-path']='..';
-$_POST['path']='examples/entreprenewb/en/';
 
-###PHP 7 required (and recommended, because it's MUST faster)###
+$language='en';
+$_POST['path']=$_GET['path'];
+
+###PHP 7 required (and recommended, because it's MUCH faster)###
 
 #You can disable this
 session_start();
@@ -71,7 +73,7 @@ if(!empty($_GET['get'])){
 			$response['success']=true;
 			
 			#Run through the files
-			foreach(scandir('.') as &$file){
+			foreach(scandir($language) as &$file){
 				#Ignore hidden files and folders
 				if($file[0]==='.' || $file[0]==='~' || is_dir($file)) continue;
 
@@ -92,7 +94,7 @@ if(!empty($_GET['get'])){
 				}
 				
 				#Add the file to the array
-				$response['files'][]=$_POST['path'].$file;
+				$response['files'][]=$_POST['path'].$language.'/'.$file;
 			}
 		}
 	}
@@ -206,7 +208,20 @@ d('localSave'		,	false												);
 d('remoteSave'		,	true												);
 d('preloadNext'		,	1													);
 d('showBuffer'		,	true												);
-d('subtitles'		,	null												);
+
+S.subtitles=<?php
+	#Get subtitles
+	$subtitles=[];
+	foreach(scandir('subtitles') as $file){
+		#Ignore hidden files and folders
+		if($file[0]==='.' || $file[0]==='~') continue;
+		
+		$subtitles[$file]=$_POST['path'].'subtitles/'.$file.'/';
+	}
+	
+	echo json_encode($subtitles);
+?>;
+
 d('currentSubtitles',	null												);
 d('cover'			,	null												);
 d('infiniteScroll'	,	false												);
