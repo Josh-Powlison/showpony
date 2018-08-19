@@ -4,7 +4,7 @@ $_POST['call']='getFiles';
 $_POST['rel-path']='..';
 
 $language='en';
-$_POST['path']=$_GET['path'];
+$_POST['path']=$_GET['path'].'/';
 
 ###PHP 7 required (and recommended, because it's MUCH faster)###
 
@@ -201,7 +201,13 @@ d('defaultDuration'	,	10													);
 d('title'			,	false												);
 d('dateFormat'		,	{year:'numeric',month:'numeric',day:'numeric'}		);
 d('admin'			,	false												);
-d('query'			,	'part'												);
+
+S.query='<?php
+	#Get the query from the paths
+	preg_match('/[^\/]+$/',$_GET['path'],$matches);
+	echo $matches[0] ?? false;
+?>';
+
 d('shortcuts'		,	'focus'												);
 d('saveId'			,	location.hostname.substring(0,20)					);
 d('localSave'		,	false												);
