@@ -10,6 +10,8 @@ $_POST['path']=$_GET['path'].'/';
 preg_match('/[^\/]+$/',$_GET['path'],$matches);
 $name=$matches[0] ?? 'story';
 
+$infiniteScroll=false;
+
 ###PHP 7 required (and recommended, because it's MUCH faster)###
 
 #You can disable this
@@ -99,18 +101,39 @@ if(!empty($_GET['get'])){
 					}
 				}
 				
-				#See if it's video or audio- if so, we want a timed setup
-				$finfo=finfo_open(FILEINFO_MIME_TYPE);
+				#There must be a better way to get some of this info...
+				$fileInfo=[
+					'buffered'		=>	false
+					,'date'			=>	'' ?? null
+					,'duration'		=>	10
+					,'medium'		=>	explode('/',mime_content_type($language.'/'.$file))[0]
+					,'name'			=>	$file
+					,'path'			=>	$_POST['path'].$language.'/'.$file
+					,'subtitles'	=>	false
+					,'title'		=>	null
+				];
 				
-				#If video or audio, show info in minutes and seconds
-				if(preg_match('/video\/|audio\//',finfo_file($finfo,$language.'/'.$file))){
-					$info='[Minutes PAD2]:[Seconds PAD2] | [Minutes Left PAD2]:[Seconds Left PAD2]';
+				switch($fileInfo['medium']){
+					case 'text':
+						$infiniteScroll=true;
+						break;
+					case 'audio':
+					case 'video':
+						$info='[Minutes PAD2]:[Seconds PAD2] | [Minutes Left PAD2]:[Seconds Left PAD2]';
+						break;
 				}
 				
-				finfo_close($finfo);
+				preg_match('/[^\s)]+(?=\.[^.]+$)/',$file,$matches);
+				$fileInfo['duration']=$matches[0] ?? 10;
+				
+				preg_match('/([^()])+(?=\))/',$file,$matches);
+				$fileInfo['title']=$matches[0] ?? null;
+				
+				preg_match('/\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?/',$file,$matches);
+				$fileInfo['date']=$matches[0] ?? null;
 				
 				#Add the file to the array
-				$response['files'][]=$_POST['path'].$language.'/'.$file;
+				$response['files'][]=$fileInfo;
 			}
 		}
 	}
@@ -135,9 +158,6 @@ if(!empty($_GET['get'])){
 	#Pass any echoed statements or errors to the response object
 	$response['message']=ob_get_clean();
 	$response['admin']=$_SESSION['showpony_admin'] ?? false;
-	
-	#echo json_encode($response);
-	#die(json_encode($response));
 }
 
 ###FUNCTIONS###
@@ -201,7 +221,7 @@ function Showpony(input={}){
 //If no window was passed, make one!
 if(!input.window){
 	document.currentScript.insertAdjacentElement('afterend',input.window=document.createElement('div'));
-	input.window.className='showpony-default showpony-paused';
+	input.window.className='showpony-default';
 }
 
 ///////////////////////////////////////
@@ -218,25 +238,9 @@ S.window=input.window;
 S.originalWindow=S.window.cloneNode(true);
 S.buffered=false;
 
-/*VARIABLE				DEFAULT VALUE										*/
-d('scrubLoad'		,	false												);
-d('credits'			,	null												);
-d('data'			,	{}													);
-d('defaultDuration'	,	10													);
-d('title'			,	false												);
-d('dateFormat'		,	{year:'numeric',month:'numeric',day:'numeric'}		);
-d('admin'			,	false												);
-
 S.info='<?=$info?>';
 S.query='<?=$name?>';
-
-d('shortcuts'		,	'focus'												);
-d('saveId'			,	location.hostname.substring(0,20)					);
-d('localSave'		,	false												);
-d('remoteSave'		,	true												);
-d('preloadNext'		,	1													);
-d('showBuffer'		,	true												);
-
+S.infiniteScroll='<?=$infiniteScroll?>';
 S.subtitles=<?php
 	#Get subtitles
 	$subtitles=[];
@@ -250,14 +254,25 @@ S.subtitles=<?php
 	echo json_encode($subtitles);
 ?>;
 
+/*VARIABLE				DEFAULT VALUE										*/
+d('scrubLoad'		,	false												);
+d('credits'			,	null												);
+d('data'			,	{}													);
+d('defaultDuration'	,	10													);
+d('title'			,	false												);
+d('dateFormat'		,	{year:'numeric',month:'numeric',day:'numeric'}		);
+d('admin'			,	false												);
+d('shortcuts'		,	'focus'												);
+d('saveId'			,	location.hostname.substring(0,20)					);
+d('localSave'		,	false												);
+d('remoteSave'		,	true												);
+d('preloadNext'		,	1													);
+d('showBuffer'		,	true												);
 d('currentSubtitles',	null												);
 d('cover'			,	null												);
-d('infiniteScroll'	,	false												);
 d('start'			,	'last'												);
 
 var HeyBardConnection;
-
-S.files=<?=json_encode($response['files']);?>
 
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
@@ -1484,102 +1499,6 @@ function useIcons(input){
 		credits.innerHTML=input;
 		credits.classList.remove('showpony-loading');
 	});
-}
-
-//Get a file's date
-function getDate(input){
-	return input.replace(/x|\s?(\(|\.).+/g,'').replace(/;/g,':');
-}
-
-//Make a POST call
-function POST(obj){
-	return new Promise(function(resolve,reject){
-		var json=<?php echo json_encode($response); ?>;
-			
-		if(json.success){
-			loggedIn=json.admin;
-			if(json.files){
-				saveAllFileInfo(json.files);
-			}
-		}
-		
-		resolve(json);
-	});
-}
-
-function saveFileInfo(path){
-	//Replace language tags for use
-	path=path.replace(/\[lang[^\]]*\]/gi,S.language);
-	
-	var file={
-		path:path
-		,name:/[^\/]+$/.exec(path)[0]
-		,date:null
-		,buffered:false
-		,subtitles:false
-	};
-	
-	var title=/([^()])+(?=\))/.exec(file.name);
-	file.title=safeFilename(title ? title[0] : /.+(?=\.[^.]+$)/.exec(file.name)[0],'from');
-	
-	var date=/\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?/.exec(file.name);
-	if(date) file.date=date[0];
-	
-	var medium='text';
-	
-	//Get the extension- fast!
-	switch(path.slice((path.lastIndexOf('.') - 1 >>> 0) + 2)){
-		case 'jpg':
-		case 'jpeg':
-		case 'png':
-		case 'gif':
-		case 'svg':
-			medium='image';
-			break;
-		case 'mp4':
-		case 'webm':
-			medium='video';
-			break;
-		case 'mp3':
-		case 'wav':
-			medium='audio';
-			break;
-		case 'mm':
-			medium='multimedia';
-			break;
-		//All else defaults to text
-		default:
-			break;
-	}
-	file.medium=medium;
-	
-	//Return the value in the file or the default duration
-	var duration=/[^\s)]+(?=\.[^.]+$)/.exec(file.name);
-	
-	//If the whole filename is a number (matches the title), it's likely not length, just an identifier. Ignore in that case.
-	if(duration==file.title || /(:-)/i.test(duration)){
-		duration=S.defaultDuration;
-	}else{
-		if(duration) duration=parseFloat(duration[0]);
-		if(!duration) duration=S.defaultDuration;
-	}
-	
-	file.duration=duration;
-	
-	return file;
-}
-
-//Get all the file info from an array of files
-function saveAllFileInfo(files){
-	S.files=[];
-	
-	//Get all the files' info and put it in
-	for(let i=0;i<files.length;i++){
-		S.files[i]=saveFileInfo(files[i]);
-	}
-	
-	//Combine total length of all parts
-	S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 }
 
 //Use documentFragment to append elements faster
@@ -2892,11 +2811,8 @@ function gamepadButton(gamepad,number,type){
 
 S.window.classList.add('showpony');
 
-//If the window is statically positioned, set it to relative! (so positions of children work)
-if(window.getComputedStyle(S.window).getPropertyValue('position')=='static') S.window.style.position='relative';
-
-//Set tabIndex so it's selectable (if it's not already set)
-if(S.window.tabIndex<0) S.window.tabIndex=0;
+//Set tabIndex so it's selectable
+S.window.tabIndex=0;
 
 //Make sure setup is made of multiple Promises that can run asyncronously- and that they do!
 
@@ -2929,14 +2845,12 @@ var getFiles=new Promise(function(resolve,reject){
 	//And fill it up again!
 	frag([styles,content,subtitles,overlay],S.window);
 	
-	var json=<?php echo json_encode($response); ?>;
+	var json=<?php echo json_encode($response,JSON_NUMERIC_CHECK); ?>;
+	S.files=json.files;
+	S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 	
 	if(json.success){
 		loggedIn=json.admin;
-		if(json.files){
-			saveAllFileInfo(json.files);
-		}
-		
 		resolve(json);
 	}else reject(json);
 });
@@ -3113,7 +3027,8 @@ Promise.all([getFiles,getHeyBard]).then(function(start){
 		}
 	}
 	
-	console.log(S.start,start);
+	//These are the defaults for passObj, but it can be overwritten if we're using a querystring
+	var passObj={time:start,scrollToTop:false};
 	
 	//If querystrings are in use, consider the querystring in the URL
 	if(S.query){
@@ -3137,7 +3052,7 @@ Promise.all([getFiles,getHeyBard]).then(function(start){
 		if(page) page=parseInt(page[0].split('=')[1]);
 		
 		//General pass object
-		var passObj={
+		passObj={
 			popstate:page ? true : false
 			,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
 			,scrollToTop:false
@@ -3147,11 +3062,13 @@ Promise.all([getFiles,getHeyBard]).then(function(start){
 		passObj.time=(page!==null) ? page : start;
 		
 		S.to(passObj);
-	//Start
-	}else{
-		//Use time or file to bookmark, whichever is requested
-		S.to({time:start,scrollToTop:false});
 	}
+	
+	//Pause the Showpony
+	S.menu(null,'pause');
+	
+	//Use time or file to bookmark, whichever is requested
+	S.to(passObj);
 	
 	//Set input to null in hopes that garbage collection will come pick it up
 	input=null;
