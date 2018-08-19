@@ -219,8 +219,6 @@ S.originalWindow=S.window.cloneNode(true);
 S.buffered=false;
 
 /*VARIABLE				DEFAULT VALUE										*/
-d('get'				,	'files/[lang]/'										);
-d('language'		,	'en'												);
 d('scrubLoad'		,	false												);
 d('credits'			,	null												);
 d('data'			,	{}													);
@@ -256,13 +254,10 @@ d('currentSubtitles',	null												);
 d('cover'			,	null												);
 d('infiniteScroll'	,	false												);
 d('start'			,	'last'												);
-d('resourcesPath'	,	'resources/'												);
 
 var HeyBardConnection;
 
-S.files=<?php
-	echo json_encode($response['files']);
-?>
+S.files=<?=json_encode($response['files']);?>
 
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
