@@ -6,6 +6,10 @@ $_POST['rel-path']='..';
 $language='en';
 $_POST['path']=$_GET['path'].'/';
 
+#Get the query from the paths
+preg_match('/[^\/]+$/',$_GET['path'],$matches);
+$name=$matches[0] ?? 'story';
+
 ###PHP 7 required (and recommended, because it's MUCH faster)###
 
 #You can disable this
@@ -136,6 +140,15 @@ if(!empty($_GET['get'])){
 	#die(json_encode($response));
 }
 
+###FUNCTIONS###
+function toCamelCase($input){
+	return lcfirst(
+		str_replace('-','',
+			ucwords($input,'-')
+		)
+	);
+}
+
 ?>'use strict';
 
 /*
@@ -188,7 +201,7 @@ function Showpony(input={}){
 //If no window was passed, make one!
 if(!input.window){
 	document.currentScript.insertAdjacentElement('afterend',input.window=document.createElement('div'));
-	input.window.className='showpony-default';
+	input.window.className='showpony-default showpony-paused';
 }
 
 ///////////////////////////////////////
@@ -217,11 +230,7 @@ d('dateFormat'		,	{year:'numeric',month:'numeric',day:'numeric'}		);
 d('admin'			,	false												);
 
 S.info='<?=$info?>';
-S.query='<?php
-	#Get the query from the paths
-	preg_match('/[^\/]+$/',$_GET['path'],$matches);
-	echo $matches[0] ?? false;
-?>';
+S.query='<?=$name?>';
 
 d('shortcuts'		,	'focus'												);
 d('saveId'			,	location.hostname.substring(0,20)					);
@@ -1756,7 +1765,7 @@ function runMM(inputNum=S.currentLine+1){
 		if(type==='audio'){
 			S.objects[object]=document.createElement('audio');
 			
-			S.objects[object].src=S.resourcesPath+'audio/'+object;
+			S.objects[object].src='url("<?=$_POST['path']?>resources/audio/'+object;
 			
 			//If an extension isn't specified, assume mp3
 			if(!/\./.test(object)) S.objects[object].src+='.mp3';
@@ -1875,7 +1884,7 @@ function runMM(inputNum=S.currentLine+1){
 							//If there's no period, add '.png' to the end- assume the extension
 							if(!/\./.test(imageNames[ii])) imageNames[ii]+='.png';
 							
-							var image='url("'+S.resourcesPath+'characters/'+name+'/'+imageNames[ii]+'")';
+							var image='url("<?=$_POST['path']?>resources/characters/'+name+'/'+imageNames[ii]+'")';
 							
 							//If the image already exists
 							var found=false;
@@ -1914,7 +1923,7 @@ function runMM(inputNum=S.currentLine+1){
 					runMM();
 					break;
 				case 'background':
-					S.objects[object].style.backgroundImage='url("'+S.resourcesPath+'backgrounds/'+name+'.jpg")';
+					S.objects[object].style.backgroundImage='url("<?=$_POST['path']?>resources/backgrounds/'+name+'.jpg")';
 					runMM();
 					break;
 				case 'audio':
@@ -3410,7 +3419,7 @@ if(S.admin){
 
 }
 
-var showponyPHP=new Showpony({
+var <?=toCamelCase($name)?>=new Showpony({
 	credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a href='https://www.webtoons.com/en/challenge/entreprenewb/list?title_no=58042' target='_blank'>LineWebtoon.logo</a><br>Entreprenewb by Josh Powlison, Public Domain"
 	,start:0
 	,scrubLoad:true
