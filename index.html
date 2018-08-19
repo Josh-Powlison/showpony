@@ -49,7 +49,7 @@
 <script>
 	showponyInputs.comic={
 		window:document.getElementById("comic")
-		,get:"examples/entreprenewb/" //The path to the story files. Remember the slash!
+		,get:"examples/entreprenewb/[lang]/" //The path to the story files. Remember the slash!
 		,info:"[Current File] | [File Left]"
 		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a href='https://www.webtoons.com/en/challenge/entreprenewb/list?title_no=58042' target='_blank'>LineWebtoon.logo</a><br>Entreprenewb by Josh Powlison, Public Domain"
 		,query:"entreprenewb"
@@ -58,7 +58,7 @@
 		,saveId:null
 		,remoteSave:false
 		,subtitles:{
-			English:'examples/entreprenewb/subtitles/'
+			English:'examples/entreprenewb/subtitles/en/'
 		}
 		,defaultDuration:1
 	};
@@ -79,7 +79,8 @@
 		,subtitles:{
 			English:'examples/sintel/'
 		}
-		,saveId:"showpony-site-sintel"
+		,saveId:null
+		,remoteSave:false
 		,cover:{
 			image:'examples/sintel/cover.jpg'
 			,content:'Sintel'
@@ -110,15 +111,17 @@
 <script>
 	showponyInputs.vn={
 		window:document.getElementById("vn")
-		,get:"examples/late-to-the-party/"
+		,get:"examples/late-to-the-party/[lang]/"
 		,info:"[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
+		,resourcesPath:"examples/late-to-the-party/resources/"
 		,query:"late-to-the-party"
 		,start:0
-		,saveId:"showpony-site-lttp"
+		,saveId:null
+		,remoteSave:false
 		,credits:"Josh Powlison"
 		,showBuffer:false
 		,cover:{
-			image:'resources/backgrounds/forest.jpg'
+			image:'examples/late-to-the-party/resources/backgrounds/forest.jpg'
 			,content:'Late to the Party'
 		}
 	};

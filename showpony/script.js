@@ -86,6 +86,7 @@ d('currentSubtitles',	null												);
 d('cover'			,	null												);
 d('infiniteScroll'	,	false												);
 d('start'			,	'last'												);
+d('resourcesPath'	,	'resources/'												);
 
 var HeyBardConnection;
 
@@ -1612,7 +1613,7 @@ function runMM(inputNum=S.currentLine+1){
 		if(type==='audio'){
 			S.objects[object]=document.createElement('audio');
 			
-			S.objects[object].src='resources/audio/'+object;
+			S.objects[object].src=S.resourcesPath+'audio/'+object;
 			
 			//If an extension isn't specified, assume mp3
 			if(!/\./.test(object)) S.objects[object].src+='.mp3';
@@ -1731,7 +1732,7 @@ function runMM(inputNum=S.currentLine+1){
 							//If there's no period, add '.png' to the end- assume the extension
 							if(!/\./.test(imageNames[ii])) imageNames[ii]+='.png';
 							
-							var image='url("resources/characters/'+name+'/'+imageNames[ii]+'")';
+							var image='url("'+S.resourcesPath+'characters/'+name+'/'+imageNames[ii]+'")';
 							
 							//If the image already exists
 							var found=false;
@@ -1770,7 +1771,7 @@ function runMM(inputNum=S.currentLine+1){
 					runMM();
 					break;
 				case 'background':
-					S.objects[object].style.backgroundImage='url("resources/backgrounds/'+name+'.jpg")';
+					S.objects[object].style.backgroundImage='url("'+S.resourcesPath+'backgrounds/'+name+'.jpg")';
 					runMM();
 					break;
 				case 'audio':
@@ -2275,23 +2276,26 @@ var shortcutKeys={
 
 //If shortcut keys are enabled
 if(S.shortcuts){
+	function shortcutPermission(){
+		//If shortcuts aren't always enabled, perform checks
+		if(S.shortcuts!=='always'){
+			//Exit if it isn't fullscreen
+			if(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.fullscreenElement){
+				//If needs to be focused
+				if(S.shortcuts!=='fullscreen' && S.window!==document.activeElement) return false;
+			}
+		}
+		
+		return true;
+	}
+	
 	//Keyboard presses
 	window.addEventListener(
 		'keydown'
 		,function(event){
-			//Don't use shortcut keys if we're writing into an input right now
-			if(event.key===' ' || event.key==='Enter' || event.key==='f'){
-				if(event.target.tagName==='INPUT') return;
-			}
-			
-			//If shortcuts aren't always enabled, perform checks
-			if(S.shortcuts!=='always'){
-				//Exit if it isn't fullscreen
-				if(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.fullscreenElement){
-					//If needs to be focused
-					if(S.shortcuts!=='fullscreen' && S.window!==document.activeElement) return;
-				}
-			}
+			//Don't use shortcut keys if we're writing into an input
+			if(event.target.tagName==='INPUT') return;
+			if(!shortcutPermission()) return;
 			
 			if(shortcutKeys[event.key]
 				&& !event.ctrlKey
@@ -2304,21 +2308,25 @@ if(S.shortcuts){
 			}
 		}
 	);
-}
-
-//Scrolling
-window.addEventListener('wheel',function(event){
-	if(event.ctrlKey) return;
 	
-	if(currentType==='multimedia'){
-		if(event.deltaY<0){
-			//Go back a keyframe's length, so we get to the previous keyframe
-			var keyframeLength=S.files[S.currentFile].duration/keyframes.length;
-			
-			S.to({time:'-'+keyframeLength});
+	//Scrolling
+	/*content.addEventListener('wheel',function(event){
+		if(event.ctrlKey) return;
+		if(!shortcutPermission()) return;
+		
+		//Check if the cursor if over the window
+		console.log(event.target);
+		
+		if(currentType==='multimedia'){
+			if(event.deltaY<0){
+				//Go back a keyframe's length, so we get to the previous keyframe
+				var keyframeLength=S.files[S.currentFile].duration/keyframes.length;
+				
+				S.to({time:'-'+keyframeLength});
+			}
 		}
-	}
-});
+	});*/
+}
 
 //We need to set this as a variable to remove it later on
 //This needs to be click- otherwise, you could click outside of Showpony, release inside, and the menu would toggle. This results in messy scenarios when you're using the UI.
