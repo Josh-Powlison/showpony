@@ -231,9 +231,6 @@ if(!input.window){
 //Engine settings
 const S=this;
 
-//Set default values
-function d(v,val){S[v]=(input[v]!==undefined ? input[v] : val);}
-
 S.window=input.window;
 S.originalWindow=S.window.cloneNode(true);
 S.buffered=false;
@@ -254,23 +251,19 @@ S.subtitles=<?php
 	echo json_encode($subtitles);
 ?>;
 
-/*VARIABLE				DEFAULT VALUE										*/
-d('scrubLoad'		,	false												);
-d('credits'			,	null												);
-d('data'			,	{}													);
-d('defaultDuration'	,	10													);
-d('title'			,	false												);
-d('dateFormat'		,	{year:'numeric',month:'numeric',day:'numeric'}		);
-d('admin'			,	false												);
-d('shortcuts'		,	'focus'												);
-d('saveId'			,	location.hostname.substring(0,20)					);
-d('localSave'		,	false												);
-d('remoteSave'		,	true												);
-d('preloadNext'		,	1													);
-d('showBuffer'		,	true												);
-d('currentSubtitles',	null												);
-d('cover'			,	null												);
-d('start'			,	'last'												);
+S.scrubLoad=false;
+S.data={};
+S.title=false;
+S.dateFormat={year:'numeric',month:'numeric',day:'numeric'};
+S.shortcuts='focus';
+S.saveId=location.hostname.substring(0,20);
+S.preloadNext=1;
+S.showBuffer=true;
+S.currentSubtitles=null;
+S.cover=null;
+S.credits="<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a href='https://www.webtoons.com/en/challenge/entreprenewb/list?title_no=58042' target='_blank'>LineWebtoon.logo</a><br>Entreprenewb by Josh Powlison, Public Domain";
+S.start='last';
+S.data={};
 
 var HeyBardConnection;
 
@@ -351,7 +344,7 @@ S.to=function(obj={}){
 		obj.file=S.files.length-1;
 		
 		//Go to near the end of the last file. If we go too far back, set time to 0.
-		obj.time=S.files[obj.file].duration-S.defaultDuration;
+		obj.time=S.files[obj.file].duration-10;
 		if(obj.time<0) obj.time=0;
 	}
 	
@@ -961,7 +954,6 @@ var waitForInput=false
 	,scrubbing=false
 	,waitTimer=new powerTimer(function(){},0)
 	,currentType=null
-	,loggedIn=false //Logged in as admin
 	//Elements
 	,overlayText=m('overlay-text','p')
 	,overlayBuffer=m('overlay-buffer','canvas')
@@ -2816,526 +2808,181 @@ S.window.tabIndex=0;
 
 //Make sure setup is made of multiple Promises that can run asyncronously- and that they do!
 
-//If the user's getting the files remotely, make the call
-var getFiles=new Promise(function(resolve,reject){
-	content.classList.add('showpony-loading');
+content.classList.add('showpony-loading');
 	
-	//currentFile is -1 before we load
-	S.currentFile=-1;
-	
-	//Empty the current window
-	S.window.innerHTML='';
-	
-	if(S.cover){
-		if(S.cover.image) cover.style.backgroundImage='url("'+S.cover.image+'")';
-		if(S.cover.content){
-			//Assume surrounding <p> tags if it doesn't include surrounding HTML tags
-			if(/^<[^>]+>.+<\/[^>]+>$/.test(S.cover.content)) cover.innerHTML=S.cover.content;
-			else cover.innerHTML='<p>'+S.cover.content+'</p>';
-		}
-		S.window.appendChild(cover);
-		
-		cover.addEventListener('click',function(){
-			this.remove();
-			cover=null;
-			S.menu(null,'play');
-		});
-	}
+//currentFile is -1 before we load
+S.currentFile=-1;
 
-	//And fill it up again!
-	frag([styles,content,subtitles,overlay],S.window);
-	
-	var json=<?php echo json_encode($response,JSON_NUMERIC_CHECK); ?>;
-	S.files=json.files;
-	S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
-	
-	if(json.success){
-		loggedIn=json.admin;
-		resolve(json);
-	}else reject(json);
-});
+//Empty the current window
+S.window.innerHTML='';
 
-//Get Hey Bard account
-var getHeyBard=new Promise((resolve,reject)=>{
-	function getBookmark(){
-		var bookmark=null;
-		
-		if(S.saveId===null){
-			if(S.remoteSave) alert('Cannot use remoteSave with saveId set to null! Set saveId or set remoteSave to false!');
-			
-			if(S.localSave) alert('Cannot use localSave with saveId set to null! Set saveId or set localSave to false!');
-			
-			return null;
-		}
-		
-		//If Hey Bard is enabled, try it first!
-		if(S.remoteSave){
-			//Make a button
-			var accountButton=m('button showpony-account-button','button');
-			overlay.appendChild(accountButton);
-			
-			accountButton.addEventListener(
-				'click'
-				,event=>{
-					event.stopPropagation();
-					
-					//Try saving a bookmark before you leave
-					if(typeof(S.saveBookmark)==='function'){
-						var sB=S.saveBookmark();
-						
-						//If something was returned (like a promise)
-						if(sB){
-							sB.then(()=>{
-								//Go to Hey Bard's web page to get your account
-								location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
-							})
-							//If it fails, let the user know
-							.catch((response)=>{
-								alert('1820: '+response);
-								console.log(response);
-							})
-							;
-						//Regardless of whether or not we got something back, go there
-						}else{
-							location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
-						}
-					//If we can't save a bookmark (the user's probably not logged in)
-					}else{
-						//Just use the link
-						location.href=HeyBardConnection.makeLink({url:location.href,query:S.query});
-					}
-					
-					
-				}
-			);
-			accountButton.alt='Hey Bard! Account';
-			
-			if(typeof HeyBard==='function'){
-				//Make a Hey Bard connection
-				HeyBardConnection=new HeyBard(S.saveId);
-				
-				HeyBardConnection.getAccount()
-				.then(response=>{
-					//If an account exists for the user
-					if(response.account!==null){
-						//Set the text for the Hey Bard button accordingly
-						accountButton.title='Hello, '+response.account+'! We\'ll save your bookmarks for you!';
-						accountButton.innerHTML=response.account;
-						
-						//Set a function to save bookmarks
-						S.saveBookmark=function(){
-							//Pass either the time or the current file, whichever is chosen by the client
-							return HeyBardConnection.saveBookmark(Math.floor(getCurrentTime()));
-						}
-					}else{
-					//If an account doesn't exist for the user
-						accountButton.innerHTML='Log in for bookmarks!';
-						//Set the text for the Hey Bard button accordingly
-						accountButton.title='Save a bookmark with a free Hey Bard! Account';
-					}
-					
-					//'False' can be read as 0, so if bookmark is returned as false don't pass the value.
-					if(typeof(response.bookmark)==='undefined') return null;
-					else return response.bookmark;
-				})
-				.catch(response=>{
-					accountButton.innerHTML='HEY BARD FAILED';
-					//Set the text for the Hey Bard button accordingly
-					accountButton.title='Failed to call Hey Bard\'s servers. Please try again later!';
-					
-					return null;
-				})
-				;
-			}else{
-				accountButton.innerHTML='SCRIPT MISSING';
-				//Set the text for the Hey Bard button accordingly
-				accountButton.title='Failed to load the necessary script to use Hey Bard accounts.';
-				
-				return null;
-			}
-		}
-
-		//Try local storage
-		if(bookmark===null && S.localSave){
-			//Set a function to save bookmarks
-			S.saveBookmark=function(){
-				var saveValue=Math.floor(getCurrentTime());
-				localStorage.setItem(S.saveId,saveValue);
-				
-				return saveValue;
-			}
-			
-			bookmark=parseInt(localStorage.getItem(S.saveId));
-		}
-		
-		if(typeof(S.saveBookmark)!=='undefined'){
-			var saveBookmark=S.saveBookmark;
-			
-			//Save user bookmarks when leaving the page
-			window.addEventListener('blur',saveBookmark);
-			window.addEventListener('beforeunload',saveBookmark);
-			
-			//Showpony deselection (to help with Firefox and Edge's lack of support for 'beforeunload')
-			S.window.addEventListener('focusout',saveBookmark);
-			S.window.addEventListener('blur',saveBookmark);
-		}
-		
-		//Pass whatever value we've gotten
-		return bookmark;
+if(S.cover){
+	if(S.cover.image) cover.style.backgroundImage='url("'+S.cover.image+'")';
+	if(S.cover.content){
+		//Assume surrounding <p> tags if it doesn't include surrounding HTML tags
+		if(/^<[^>]+>.+<\/[^>]+>$/.test(S.cover.content)) cover.innerHTML=S.cover.content;
+		else cover.innerHTML='<p>'+S.cover.content+'</p>';
 	}
+	S.window.appendChild(cover);
 	
-	var bookmark=getBookmark();
-	
-	if(bookmark!==null){
-		cover.remove();
-	}
-	
-	//If it's finished loading, we're good!
-	if(!S.remoteSave || typeof HeyBard==='function'){
-		resolve(bookmark);
-		return null;
-	}
-	
-	//Otherwise, if it doesn't exist add the element
-	if(!document.querySelector('[src="https://heybard.com/apis/accounts/script.js"]')){
-		var script=document.createElement('script');
-		script.src='https://heybard.com/apis/accounts/script.js';
-		document.head.appendChild(script);
-	}
-	
-	document.querySelector('[src="https://heybard.com/apis/accounts/script.js"]').addEventListener('load',function(){
-		resolve(bookmark);
+	cover.addEventListener('click',function(){
+		this.remove();
+		cover=null;
+		S.menu(null,'play');
 	});
-});
+}
 
-//Get bookmarks going
-Promise.all([getFiles,getHeyBard]).then(function(start){
-	//Start at the first legit number: start, input.start, or the last file
-	start=start[1];
+//And fill it up again!
+frag([styles,content,subtitles,overlay],S.window);
+
+var json=<?php echo json_encode($response,JSON_NUMERIC_CHECK); ?>;
+S.files=json.files;
+S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
+
+/////////////////////
+//Get Hey Bard account
+/////////////////////
+
+//User accounts and bookmarks always on
+
+//Local saving is simple- remote saving, we'll connect straight to the database with a special account (or come up with something else, but we'll get it in PHP)
+
+//Also- why not use local and remote in tandem? If disconnect, we'll save the value in local; and then upload it remotely. Rather than one, why not both so that we keep the info if we have trouble in one place?
+//We track Hey Bard time last visited; if we check that against the user's localStorage save time, we'll be golden!
+
+//Priority: Newest > Default Start
+
+var start=null;
+
+/*function getBookmark(){
+	var bookmark=null;
 	
-	if(start===null){
-		switch(S.start){
-			case 'first':
-				start=0;
-				break;
-			case 'last':
-				start=S.files.length-1;
-				break;
-			default:
-				start=parseInt(S.start);
-				break;
+		//Set a function to save bookmarks
+		S.saveBookmark=function(){
+			var saveValue=Math.floor(getCurrentTime());
+			localStorage.setItem(S.saveId,saveValue);
+			
+			return saveValue;
 		}
+		
+		bookmark=parseInt(localStorage.getItem(S.saveId));
 	}
-	
-	//These are the defaults for passObj, but it can be overwritten if we're using a querystring
-	var passObj={time:start,scrollToTop:false};
-	
-	//If querystrings are in use, consider the querystring in the URL
-	if(S.query){
-		window.addEventListener(
-			'popstate'
-			,function(){
-				var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i').exec(window.location.href));
+}*/
+
+S.saveBookmark=function(){};
+
+var saveBookmark=S.saveBookmark;
+
+//Save user bookmarks when leaving the page
+window.addEventListener('blur',saveBookmark);
+window.addEventListener('beforeunload',saveBookmark);
+
+//Showpony deselection (to help with Firefox and Edge's lack of support for 'beforeunload')
+S.window.addEventListener('focusout',saveBookmark);
+S.window.addEventListener('blur',saveBookmark);
+
+//Start at the first legit number: start, input.start, or the last file
+if(start===null){
+	switch(S.start){
+		case 'first':
+			start=0;
+			break;
+		case 'last':
+			start=S.files.length-1;
+			break;
+		default:
+			start=parseInt(S.start);
+			break;
+	}
+}
+
+//These are the defaults for passObj, but it can be overwritten if we're using a querystring
+var passObj={time:start,scrollToTop:false};
+
+//If querystrings are in use, consider the querystring in the URL
+if(S.query){
+	window.addEventListener(
+		'popstate'
+		,function(){
+			var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i').exec(window.location.href));
+			
+			//If we found a page
+			if(page){
+				page=parseInt(page[0].split('=')[1]);
 				
-				//If we found a page
-				if(page){
-					page=parseInt(page[0].split('=')[1]);
-					
-					if(page===getCurrentTime()) return;
-				
-					S.to({time:page,popstate:true,scrollToTop:false});
-				}
+				if(page===getCurrentTime()) return;
+			
+				S.to({time:page,popstate:true,scrollToTop:false});
 			}
-		);
-		
-		var page=window.location.href.match(new RegExp('(\\?|&)'+S.query+'[^&#]+','i'));
-		if(page) page=parseInt(page[0].split('=')[1]);
-		
-		//General pass object
-		passObj={
-			popstate:page ? true : false
-			,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
-			,scrollToTop:false
-			,reload:true
-		};
-		
-		passObj.time=(page!==null) ? page : start;
-		
-		S.to(passObj);
-	}
+		}
+	);
 	
-	//Pause the Showpony
-	S.menu(null,'pause');
+	var page=window.location.href.match(new RegExp('(\\?|&)'+S.query+'[^&#]+','i'));
+	if(page) page=parseInt(page[0].split('=')[1]);
 	
-	//Use time or file to bookmark, whichever is requested
+	//General pass object
+	passObj={
+		popstate:page ? true : false
+		,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
+		,scrollToTop:false
+		,reload:true
+	};
+	
+	passObj.time=(page!==null) ? page : start;
+	
 	S.to(passObj);
+}
+
+//Pause the Showpony
+S.menu(null,'pause');
+
+//Use time or file to bookmark, whichever is requested
+S.to(passObj);
+
+//Set input to null in hopes that garbage collection will come pick it up
+input=null;
+
+//We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
+
+if(S.subtitles){
+	var obj=Object.keys(S.subtitles);
 	
-	//Set input to null in hopes that garbage collection will come pick it up
-	input=null;
+	//Add captions to options
 	
-	//We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
+	var option=m('captions-option','option');
+	option.innerHTML='None';
+	option.value='None';
+	option.selected=true;
+	option.addEventListener('click',function(){
+		S.currentSubtitles=null;
+	});
+	captionsButton.appendChild(option);
 	
-	if(S.subtitles){
-		var obj=Object.keys(S.subtitles);
-		
-		//Add captions to options
-		
-		var option=m('captions-option','option');
-		option.innerHTML='None';
-		option.value='None';
-		option.selected=true;
+	for(let i=0;i<obj.length;i++){
+		let option=m('captions-option','option');
+		option.innerHTML=obj[i];
+		option.value=obj[i];
 		option.addEventListener('click',function(){
-			S.currentSubtitles=null;
+			S.currentSubtitles=this.value;
 		});
 		captionsButton.appendChild(option);
-		
-		for(let i=0;i<obj.length;i++){
-			let option=m('captions-option','option');
-			option.innerHTML=obj[i];
-			option.value=obj[i];
-			option.addEventListener('click',function(){
-				S.currentSubtitles=this.value;
-			});
-			captionsButton.appendChild(option);
-		}
 	}
-	
-	//Send an event to let the user know that Showpony has started up!
-	S.window.dispatchEvent(
-		new CustomEvent('setup'
-		,{detail:{
-			state:'success'
-		}})
-	);
-})
-//On failure (or not getting)
-.catch((response)=>{
-	alert('Failed to successfully load the Showpony object! '+response);
-	console.log(response);
-	
-	//Send an event to let the user know that Showpony has started up!
-	S.window.dispatchEvent(
-		new CustomEvent('setup'
-		,{detail:{
-			state:'failed'
-		}})
-	);
-});
+}
+
+//Send an event to let the user know that Showpony has started up!
+S.window.dispatchEvent(
+	new CustomEvent('setup'
+	,{detail:{
+		state:'success'
+	}})
+);
 
 ///////////////////////////////////////
 /////////////////ADMIN/////////////////
 ///////////////////////////////////////
 
-if(S.admin){
-	if(Array.isArray(S.get)){
-		alert('You can\'t use the admin panel with an array for "get"! Set "get" to a folder path instead!');
-	}else{
-		var editorUI=m('editor-ui')
-			,uploadFileButton=m('button showpony-upload-file','label')
-			,uploadFile=document.createElement('input')
-			,uploadDate=m('button showpony-editor-date','input')
-			,uploadName=m('button showpony-editor-name','input')
-			,deleteFile=m('button showpony-delete-file','button')
-			,newFile=m('button showpony-new-file','button')
-			,logoutButton=m('button showpony-logout','button')
-		;
-
-		uploadName.type=uploadDate.type='text';
-		uploadName.placeholder='File Title (optional)';
-		uploadDate.placeholder='YYYY-MM-DD HH:MM:SS';
-
-		uploadFile.type='file';
-		uploadFile.style.display='none';
-		uploadFile.accept='.jpg,.jpeg,.png,.gif,.svg,.mp3,.wav,.mp4,.webm,.txt,.mm,.html';
-		
-		uploadFileButton.appendChild(uploadFile);
-		
-		frag([uploadFileButton,uploadDate,uploadName,deleteFile,newFile,logoutButton],editorUI);
-		
-		S.window.appendChild(editorUI);
-		
-		//Edit/adjust file details
-		S.window.addEventListener(
-			'contextmenu'
-			,event=>{
-				event.preventDefault();
-				editor();
-			}
-		);
-		
-		function editor(){
-			//If logged in, toggle the editor
-			if(loggedIn) S.window.classList.toggle('showpony-editor');
-			//Otherwise, try to log in
-			else account('login');
-		}
-		
-		function updateEditor(){
-			//Remove extra values to get these ones
-			uploadName.value=S.files[S.currentFile].title;
-			uploadDate.value=S.files[S.currentFile].date;
-		}
-		
-		logoutButton.addEventListener('click',()=>account('logout'));
-		
-		//Must be set to a variable to be called outside the enclosing 'if' statement
-		var account=function(type){
-			var pass=null;
-			if(type==='login') if(!(pass=prompt('What\'s your password?'))) return;
-			
-			POST({call:type,password:pass})
-			.then(response=>{
-				S.window.classList[loggedIn ? 'add' : 'remove']('showpony-editor');
-					
-				S.to({
-					reload:true
-					,scrollToTop:false
-					,replaceState:true
-				});
-			})
-			.catch(response=>{
-				alert('501: '+response);
-				console.log(response);
-			});
-		}
-		
-		function renameFile(){
-			var thisFile=S.currentFile;
-			var date=uploadDate.value;
-			
-			//Test that the date is safe (must match setup)
-			if(!(/^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.test(date))){
-				alert('Date must be formatted as "YYYY-MM-DD" or "YYYY-MM-DD HH-MM-SS". You passed "'+date+'"');
-				return;
-			}
-			
-			var fileName=((S.files[thisFile].name[0]==='x') ? 'x': '')
-				+date.replace(/:/g,';') //date (replace : with ; so it's Windows safe)
-				+' ('+safeFilename(uploadName.value,'to')+')' //title
-				+S.files[thisFile].name.match(/\.\w+$/) //ext
-			;
-			
-			POST({
-				call:'renameFile'
-				,name:S.files[thisFile].name
-				,newName:fileName
-			})
-			.then(response=>{
-				S.files[thisFile]=saveFileInfo(S.get+response.file);
-				
-				//Sort the files by order 
-				S.files=S.files.sort(
-					//Return>0, 2nd is returned
-					function(a,b){
-						//If a is first, sort a before
-						if(([a.path,b.path].sort)[0]===a.path) -1;
-					}
-				);
-				
-				var goToFile=0;
-				
-				for(let i=0;i<S.files.length;i++){
-					if(S.files[i].name===response.file){
-						goToFile=i;
-						break;
-					}
-				}
-				
-				S.to({
-					file:goToFile
-					,scrollToTop:false
-					,replaceState:true
-				});
-				scrub();
-			});
-		}
-		
-		//EVENT LISTENERS//
-		//On time, update the editor
-		S.window.addEventListener('timeupdate',updateEditor);
-		uploadName.addEventListener('change',renameFile);
-		uploadDate.addEventListener('change',renameFile);
-		
-		uploadFile.addEventListener('change'
-			,function(){
-				var thisFile=S.currentFile;
-				
-				POST({
-					call:'uploadFile'
-					,name:S.files[thisFile].name
-					,files:uploadFile.files[0]
-				})
-				.then(response=>{
-					S.files[thisFile]=saveFileInfo(S.get+response.file);
-					
-					//If still on that file, refresh it
-					if(S.currentFile===thisFile){
-						S.to({
-							file:thisFile
-							,reload:true
-							,refresh:true
-							,scrollToTop:false
-							,replaceState:true
-						});
-					}
-				});
-			}
-		);
-		
-		deleteFile.addEventListener('click'
-			,()=>{
-				var thisFile=S.currentFile;
-				
-				POST({call:'deleteFile',name:S.files[thisFile].name})
-				.then(response=>{
-					//Remove the file from the array
-					S.files.splice(thisFile,1);
-					
-					//Combine total length of all parts
-					S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
-
-					//If still on the file we're deleting, reload the file
-					if(thisFile===S.currentFile){
-						console.log('its teh same!');
-						S.to({
-							file:thisFile
-							,refresh:true
-							,replaceState:true
-						});
-					}
-				});
-			}
-		);
-		
-		newFile.addEventListener('click'
-			,function(){
-				POST({call:'newFile'})
-				.then(response=>{
-					//Add the file to the array
-					S.files.push(saveFileInfo(S.get+response.file));
-					
-					//Combine total length of all parts
-					S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
-					
-					S.to({
-						file:'last'
-					});
-				})
-				.catch(
-					
-				);
-			}
-		);
-	}
-}
+/////With new admin panel, we just reload the entire Showpony- this avoids risk of any bugs with AJAX vs reality and the like
 
 }
 
-var <?=toCamelCase($name)?>=new Showpony({
-	credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a href='https://www.webtoons.com/en/challenge/entreprenewb/list?title_no=58042' target='_blank'>LineWebtoon.logo</a><br>Entreprenewb by Josh Powlison, Public Domain"
-	,start:0
-	,scrubLoad:true
-	,saveId:null
-	,remoteSave:false
-	,defaultDuration:1
-});
+var <?=toCamelCase($name)?>=new Showpony();
