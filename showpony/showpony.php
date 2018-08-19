@@ -261,11 +261,8 @@ S.preloadNext=1;
 S.showBuffer=true;
 S.currentSubtitles=null;
 S.cover=null;
-S.credits="<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a href='https://www.webtoons.com/en/challenge/entreprenewb/list?title_no=58042' target='_blank'>LineWebtoon.logo</a><br>Entreprenewb by Josh Powlison, Public Domain";
 S.start='last';
 S.data={};
-
-var HeyBardConnection;
 
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
@@ -286,7 +283,7 @@ S.to=function(obj={}){
 		//Add the times of previous videos to get the actual time in the piece
 		for(let i=0;i<S.currentFile;i++) getTime+=S.files[i].duration;
 		
-		getTime+=types[currentType] && types[currentType].currentTime || 0;
+		getTime+=S[currentType] && S[currentType].currentTime || 0;
 		
 		obj.time=getTime+(parseFloat(obj.time.substring(1))*(obj.time[0]==='-' ? -1 : 1));
 		
@@ -442,7 +439,7 @@ S.to=function(obj={}){
 			content.appendChild(pageTurn);
 		}else{
 			//General setup
-			content.appendChild(types[newType]);
+			content.appendChild(S[newType].window);
 		}
 	}
 	
@@ -647,10 +644,7 @@ S.to=function(obj={}){
 					
 				}
 			}else{
-				types[newType].src=src;
-				if((currentType==='video' || currentType==='audio') && !S.window.classList.contains('showpony-paused')){
-					types[newType].play();
-				}
+				S[newType].src(src);
 			}
 		}
 	}
@@ -673,7 +667,7 @@ S.to=function(obj={}){
 	
 	////MAY NEED TO PUT THIS ALL IN A "THEN" AFTER A PROMISE SETUP FOR THE DIFFERENT MEDIA (so timing is perfect)
 	goToTime=obj.time;
-	types[newType].currentTime=obj.time; //Update the time
+	S[newType].timeUpdate(obj.time); //Update the time
 	timeUpdate();
 }
 
@@ -707,10 +701,10 @@ S.menu=function(event=null,action=false){
 		//On toggling classes, returns 'true' if just added
 		if(S.window.classList.toggle('showpony-paused')){
 			//Pause media
-			if(types[currentType].play) types[currentType].pause();
+			S[currentType].pause();
 		}else{
 			//Play media
-			if(types[currentType].play) types[currentType].play();
+			S[currentType].play();
 		}
 	}
 	
@@ -866,66 +860,67 @@ S.input=function(){
 		return;
 	}
 	
-	if(S.infiniteScroll){
-		S.menu();
-		return;
-	}
-	
-	if(currentType==='image') S.to({file:'+1'});
-	else if(currentType==='audio' || currentType==='video') S.menu();
-	else if(currentType==='multimedia'){
-		//If a wait timer was going, stop it.
-		if(waitTimer.remaining>0){
-			//Run all animations, end all transitions
-			content.classList.add('showpony-loading');
-			content.offsetHeight; //Trigger reflow to flush CSS changes
-			content.classList.remove('showpony-loading');
+	switch(currentType){
+		case 'image':
+			S.to({file:'+1'});
+			break;
+		case 'multimedia':
+			//If a wait timer was going, stop it.
+			if(waitTimer.remaining>0){
+				//Run all animations, end all transitions
+				content.classList.add('showpony-loading');
+				content.offsetHeight; //Trigger reflow to flush CSS changes
+				content.classList.remove('showpony-loading');
+				
+				waitTimer.end();
+			}
 			
-			waitTimer.end();
-		}
-		
-		//Remove the continue notice
-		continueNotice.remove();
-		
-		//End object animations on going to the next frame
-		for(var key in S.objects) S.objects[key].dispatchEvent(new Event('animationend'));
-		
-		var choices=false;
-		
-		//If the player is making choices right now
-		if(S.objects[multimediaSettings.textbox] && S.objects[multimediaSettings.textbox].querySelector('input')) choices=true;
-		
-		//If all letters are displayed
-		if(!S.objects[multimediaSettings.textbox] || S.objects[multimediaSettings.textbox].children.length===0 || S.objects[multimediaSettings.textbox].lastChild.firstChild.style.visibility=='visible'){
-			multimediaSettings.input=false;
-			if(!choices) runMM();
-		}
-		else //If some S.objects have yet to be displayed
-		{
-			//Run all animations, end all transitions
-			content.classList.add('showpony-loading');
-			content.offsetHeight; //Trigger reflow to flush CSS changes
-			content.classList.remove('showpony-loading'); //Needs to happen before the latter; otherwise, it'll mess up stuff
+			//Remove the continue notice
+			continueNotice.remove();
 			
-			//Display all letters
-			content.querySelectorAll('.showpony-char').forEach(function(key){
-				//Skip creating animation, and display the letter
-				key.style.animationDelay=null;
-				var classes=key.className;
-				key.className=classes;
-				key.style.animation='initial';
-				key.firstChild.dispatchEvent(new CustomEvent('animationstart'));
-				key.style.visibility='visible';
-			});
+			//End object animations on going to the next frame
+			for(var key in S.objects) S.objects[key].dispatchEvent(new Event('animationend'));
 			
-			if(choices) return;
+			var choices=false;
 			
-			multimediaSettings.input=true;
+			//If the player is making choices right now
+			if(S.objects[multimediaSettings.textbox] && S.objects[multimediaSettings.textbox].querySelector('input')) choices=true;
 			
-			//Continue if not waiting
-			if(!multimediaSettings.wait) runMM();
-			else content.appendChild(continueNotice);
-		}
+			//If all letters are displayed
+			if(!S.objects[multimediaSettings.textbox] || S.objects[multimediaSettings.textbox].children.length===0 || S.objects[multimediaSettings.textbox].lastChild.firstChild.style.visibility=='visible'){
+				multimediaSettings.input=false;
+				if(!choices) runMM();
+			}
+			else //If some S.objects have yet to be displayed
+			{
+				//Run all animations, end all transitions
+				content.classList.add('showpony-loading');
+				content.offsetHeight; //Trigger reflow to flush CSS changes
+				content.classList.remove('showpony-loading'); //Needs to happen before the latter; otherwise, it'll mess up stuff
+				
+				//Display all letters
+				content.querySelectorAll('.showpony-char').forEach(function(key){
+					//Skip creating animation, and display the letter
+					key.style.animationDelay=null;
+					var classes=key.className;
+					key.className=classes;
+					key.style.animation='initial';
+					key.firstChild.dispatchEvent(new CustomEvent('animationstart'));
+					key.style.visibility='visible';
+				});
+				
+				if(choices) return;
+				
+				multimediaSettings.input=true;
+				
+				//Continue if not waiting
+				if(!multimediaSettings.wait) runMM();
+				else content.appendChild(continueNotice);
+			}
+			break;
+		default:
+			S.menu();
+			break;
 	}
 }
 
@@ -937,6 +932,185 @@ S.close=function(){
 	//Reset the window to what it was before
 	S.window.replaceWith(S.originalWindow);
 }
+
+///////////////////////////////////////
+/////////////////Audio/////////////////
+///////////////////////////////////////
+
+function makeAudio(){
+	const P=this;
+	
+	P.currentTime=0;
+	
+	P.window=document.createElement('audio');
+	P.window.className='showpony-block';
+	
+	P.play=function(){
+		P.window.play();
+	}
+	
+	P.pause=function(){
+		P.window.pause();
+	}
+	
+	P.timeUpdate=function(input){
+		P.window.currentTime=input;
+	}
+	
+	P.src=function(input){
+		P.window.src=input;
+		
+		//If we're not paused, play
+		if(!S.window.classList.contains('showpony-paused')) P.play();
+	}
+
+	//Fix for Safari not going to the right time
+	P.window.addEventListener('loadeddata',function(){
+		this.currentTime=goToTime;
+		console.log(goToTime,this);
+	});
+
+	P.window.addEventListener('canplay',function(){
+		content.classList.remove('showpony-loading');
+		//Consider how much has already been loaded; this isn't run on first chunk loaded
+		this.dispatchEvent(new CustomEvent('progress'));
+	});
+
+
+	P.window.addEventListener('canplaythrough',function(){
+		//Consider how much has already been loaded; this isn't run on first chunk loaded
+		this.dispatchEvent(new CustomEvent('progress'));
+	});
+
+
+	//Buffering
+	P.window.addEventListener('progress',function(){
+		var bufferedValue=[];
+		var timeRanges=P.window.buffered;
+		
+		for(var i=0;i<timeRanges.length;i++){
+			//If it's the first value, and it's everything
+			if(i===0 && timeRanges.start(0)==0 && timeRanges.end(0)==P.window.duration){
+				bufferedValue=true;
+				break;
+			}
+			
+			bufferedValue.push([timeRanges.start(i),timeRanges.end(i)]);
+		}
+		
+		S.files[S.currentFile].buffered=bufferedValue;
+		
+		getTotalBuffered();
+	});
+	
+	//When we finish playing a video or audio file
+	P.window.addEventListener('ended',function(){
+		//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
+		if(!S.window.classList.contains('showpony-paused')) S.to({file:'+1'});
+	});
+
+	//On moving through time, update info and title
+	P.window.addEventListener('timeupdate',function(){
+		P.currentTime=P.window.currentTime;
+		
+		//Consider how much has already been loaded; this isn't run on first chunk loaded
+		this.dispatchEvent(new CustomEvent('progress'));
+		timeUpdate();
+	});
+};
+
+S.audio=new makeAudio();
+
+///////////////////////////////////////
+/////////////////VIDEO/////////////////
+///////////////////////////////////////
+
+function makeVideo(){
+	const P=this;
+	
+	P.currentTime=0;
+	
+	P.window=document.createElement('video');
+	P.window.className='showpony-block';
+	
+	P.play=function(){
+		P.window.play();
+	}
+	
+	P.pause=function(){
+		P.window.pause();
+	}
+	
+	P.timeUpdate=function(input){
+		P.window.currentTime=input;
+	}
+	
+	P.src=function(input){
+		P.window.src=input;
+		
+		//If we're not paused, play
+		if(!S.window.classList.contains('showpony-paused')) P.play();
+	}
+	
+	//Allow playing videos using Showpony in iOS
+	P.window.setAttribute('playsinline','');
+
+	//Fix for Safari not going to the right time
+	P.window.addEventListener('loadeddata',function(){
+		this.currentTime=goToTime;
+		console.log(goToTime,this);
+	});
+
+	P.window.addEventListener('canplay',function(){
+		content.classList.remove('showpony-loading');
+		//Consider how much has already been loaded; this isn't run on first chunk loaded
+		this.dispatchEvent(new CustomEvent('progress'));
+	});
+
+
+	P.window.addEventListener('canplaythrough',function(){
+		//Consider how much has already been loaded; this isn't run on first chunk loaded
+		this.dispatchEvent(new CustomEvent('progress'));
+	});
+
+
+	//Buffering
+	P.window.addEventListener('progress',function(){
+		var bufferedValue=[];
+		var timeRanges=P.window.buffered;
+		
+		for(var i=0;i<timeRanges.length;i++){
+			//If it's the first value, and it's everything
+			if(i===0 && timeRanges.start(0)==0 && timeRanges.end(0)==P.window.duration){
+				bufferedValue=true;
+				break;
+			}
+			
+			bufferedValue.push([timeRanges.start(i),timeRanges.end(i)]);
+		}
+		
+		S.files[S.currentFile].buffered=bufferedValue;
+		
+		getTotalBuffered();
+	});
+	
+	//When we finish playing a video or audio file
+	P.window.addEventListener('ended',function(){
+		//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
+		if(!S.window.classList.contains('showpony-paused')) S.to({file:'+1'});
+	});
+
+	//On moving through time, update info and title
+	P.window.addEventListener('timeupdate',function(){
+		P.currentTime=P.window.currentTime;
+		
+		//Consider how much has already been loaded; this isn't run on first chunk loaded
+		this.dispatchEvent(new CustomEvent('progress'));
+		timeUpdate();
+	});
+};
+
+S.video=new makeVideo();
 
 ///////////////////////////////////////
 ///////////PRIVATE VARIABLES///////////
@@ -964,14 +1138,10 @@ var waitForInput=false
 	//Buttons
 	,fullscreenButton=m('button showpony-fullscreen-button','button')
 	,captionsButton=m('captions-button','select')
-	,showponyLogo=m('logo','a')
-	,credits=m('credits','small')
 	,overlay=m('overlay','div')
 	,cover=m('cover','div')
 	,types={
 		image:m('block','img')
-		,audio:m('block','audio')
-		,video:m('block','video')
 		,multimedia:m('multimedia')
 		,text:m('text')
 	}
@@ -987,10 +1157,6 @@ captionsButton.alt='Closed Captions/Subtitles';
 captionsButton.title='Closed Captions/Subtitles';
 
 styles.type='text/css';
-
-showponyLogo.href='https://showpony.heybard.com/';
-showponyLogo.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -197)"><path fill="none" stroke-width="9.5" d="M32.5 245.5v-40.1s-21.9-2.2-21.9 40m56.9.1v-40.1s21.9-2.2 21.9 40"/><circle cx="77.4" cy="275.5" r="9.4" fill="none" stroke-width="7.7"/><circle cx="22.6" cy="275.5" r="9.4" fill="none" stroke-width="7.7"/><path stroke-width=".3" d="M50.1 266.7c-2.4 3-19.1 0-11 8 6.1 5.8 29 2.5 15.2-17-16.4.6-44.4-12.6-15.3-25.7 39.2-17.7 42.5 44.5 23.6 55.6-44.7 26.3-53.5-49-12.5-20.9z"/></g></svg>';
-showponyLogo.target='_blank';
 
 S.window.addEventListener('animationend',function(){
 	var updateStyle=new RegExp('@keyframes window{100%{[^}]*}}','i').exec(styles.innerHTML);
@@ -1010,9 +1176,7 @@ content.addEventListener('animationend',function(){
 	this.style.animation=null;
 })
 
-if(S.credits) useIcons(S.credits);
-
-frag([overlayBuffer,progress,overlayText,fullscreenButton,captionsButton,showponyLogo,credits],overlay);
+frag([overlayBuffer,progress,overlayText,fullscreenButton,captionsButton],overlay);
 
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
@@ -1023,7 +1187,7 @@ function timeUpdate(time){
 		//Don't exceed the file's duration
 		var duration=S.files[S.currentFile].duration;
 		if(time>duration) time=duration;
-		types[currentType].currentTime=time;
+		S[currentType].currentTime=time;
 	}
 	
 	updateInfo();
@@ -1089,7 +1253,7 @@ function displaySubtitles(){
 			}
 		}else if(currentType==='video' || currentType==='audio'){
 			subtitles.style.cssText=null;
-			var currentTime=types[currentType].currentTime;
+			var currentTime=S[currentType].currentTime;
 			
 			var lines=S.files[S.currentFile].subtitles.match(/\b.+/ig);
 			
@@ -1243,7 +1407,7 @@ types.multimedia.pause=function(){
 
 function getCurrentTime(){
 	//Use the currentTime of the object, if it has one
-	var newTime=types[currentType] && types[currentType].currentTime || 0;
+	var newTime=S[currentType] && S[currentType].currentTime || 0;
 	
 	//Add the times of previous videos to get the actual time in the piece
 	for(let i=0;i<S.currentFile;i++) newTime+=S.files[i].duration;
@@ -1312,7 +1476,7 @@ function replaceInfoText(value,fileNum,current){
 		//var currentType=S.files[S.currentFile].medium;
 		
 		//Use the currentTime of the object, if it has one
-		var currentTime=types[currentType] && types[currentType].currentTime || 0;
+		var currentTime=S[currentType] && S[currentType].currentTime || 0;
 		
 		//Add the times of previous videos to get the actual time in the piece
 		for(let i=0;i<S.currentFile;i++) currentTime+=S.files[i].duration;
@@ -1449,48 +1613,6 @@ function replaceInfoText(value,fileNum,current){
 	}
 	
 	return value.replace(/\[[^\]]+\]/g,infoNaming);
-}
-
-//Use icons (social media, etc)
-function useIcons(input){
-	
-	var images=input.match(/[^><\s]+(\.logo)/ig);
-	
-	//If no images, return
-	if(!images){
-		credits.innerHTML=input;
-		return;
-	}
-	
-	credits.classList.add('showpony-loading');
-	
-	//Create promises for fetching the images
-	var promises=[];
-	
-	for(let i=0;i<images.length;i++){
-		var url='https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/'+images[i].toLowerCase().replace('.logo','.svg');
-		
-		promises[i]=fetch(url)
-			.then(response=>{
-				//On success
-				if(response.status>=200 && response.status<300) return response.text();
-				//On failure (404)
-				else throw Error('Couldn\'t retrieve file! '+response.status);
-			})
-			.then(svg=>{
-				input=input.replace(images[i],svg);
-			})
-			.catch(response=>{
-				input=input.replace(images[i],images[i].replace('.logo',''));
-			})
-		;
-	}
-	
-	//Once all SVGs are retrieved, continue
-	Promise.all(promises).then(response=>{
-		credits.innerHTML=input;
-		credits.classList.remove('showpony-loading');
-	});
 }
 
 //Use documentFragment to append elements faster
@@ -2539,95 +2661,6 @@ types.image.addEventListener('load',function(){
 	content.classList.remove('showpony-loading');
 	S.files[S.currentFile].buffered=true;
 	getTotalBuffered();
-});
-
-//Allow playing videos using Showpony in iOS
-types.video.setAttribute('playsinline','');
-
-//Fix for Safari not going to the right time
-types.video.addEventListener('loadeddata',function(){
-	this.currentTime=goToTime;
-	console.log(goToTime,this);
-});
-
-types.audio.addEventListener('loadeddata',function(){
-	this.currentTime=goToTime;
-	console.log(goToTime,this);
-});
-
-types.video.addEventListener('canplay',function(){
-	content.classList.remove('showpony-loading');
-	//Consider how much has already been loaded; this isn't run on first chunk loaded
-	this.dispatchEvent(new CustomEvent('progress'));
-});
-types.audio.addEventListener('canplay',function(){
-	content.classList.remove('showpony-loading');
-	//Consider how much has already been loaded; this isn't run on first chunk loaded
-	this.dispatchEvent(new CustomEvent('progress'));
-});
-
-types.video.addEventListener('canplaythrough',function(){
-	//Consider how much has already been loaded; this isn't run on first chunk loaded
-	this.dispatchEvent(new CustomEvent('progress'));
-});
-types.audio.addEventListener('canplaythrough',function(){
-	//Consider how much has already been loaded; this isn't run on first chunk loaded
-	this.dispatchEvent(new CustomEvent('progress'));
-});
-
-//Buffering
-types.video.addEventListener('progress',function(){
-	var bufferedValue=[];
-	var timeRanges=types.video.buffered;
-	
-	for(var i=0;i<timeRanges.length;i++){
-		//If it's the first value, and it's everything
-		if(i===0 && timeRanges.start(0)==0 && timeRanges.end(0)==types.video.duration){
-			bufferedValue=true;
-			break;
-		}
-		
-		bufferedValue.push([timeRanges.start(i),timeRanges.end(i)]);
-	}
-	
-	S.files[S.currentFile].buffered=bufferedValue;
-	
-	getTotalBuffered();
-});
-
-types.audio.addEventListener('progress',function(){
-	var bufferedValue=[];
-	var timeRanges=types.audio.buffered;
-	
-	for(var i=0;i<timeRanges.length;i++){
-		//If it's the first value, and it's everything
-		if(i===0 && timeRanges.start(0)==0 && timeRanges.end(0)==types.audio.duration){
-			bufferedValue=true;
-			break;
-		}
-		
-		bufferedValue.push([timeRanges.start(i),timeRanges.end(i)]);
-	}
-	
-	S.files[S.currentFile].buffered=bufferedValue;
-	
-	getTotalBuffered();
-});
-
-//When we finish playing a video or audio file
-types.video.addEventListener('ended',mediaEnd);
-types.audio.addEventListener('ended',mediaEnd);
-
-//On moving through time, update info and title
-types.video.addEventListener('timeupdate',function(){
-	//Consider how much has already been loaded; this isn't run on first chunk loaded
-	this.dispatchEvent(new CustomEvent('progress'));
-	timeUpdate();
-});
-types.audio.addEventListener('timeupdate',function(){
-	//Consider how much has already been loaded; this isn't run on first chunk loaded
-	this.dispatchEvent(new CustomEvent('progress'));
-	timeUpdate();
 });
 
 function updateInfo(pushState){
