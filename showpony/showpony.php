@@ -171,7 +171,7 @@ for(var i=0;i<splitStart.length;i++){
 	}
 }*/
 
-var ShowponyFolder='';
+var ShowponyFolder='showpony';
 var ShowponyRunPage='';
 
 //Load CSS if not loaded already
