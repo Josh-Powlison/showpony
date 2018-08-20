@@ -198,7 +198,6 @@ function Showpony(input={}){
 //If no window was passed, make one!
 if(!input.window){
 	document.currentScript.insertAdjacentElement('afterend',input.window=document.createElement('div'));
-	input.window.className='showpony-default';
 }
 
 ///////////////////////////////////////
@@ -209,7 +208,11 @@ if(!input.window){
 const S=this;
 
 S.window=input.window;
-S.originalWindow=S.window.cloneNode(true);
+S.window.className='showpony';
+
+//Set tabIndex so it's selectable
+S.window.tabIndex=0;
+
 S.buffered=false;
 
 S.info='<?=$info?>';
@@ -711,7 +714,7 @@ S.close=function(){
 	window.removeEventListener('click',windowClick);
 	
 	//Reset the window to what it was before
-	S.window.replaceWith(S.originalWindow);
+	S.window.remove();
 }
 
 ///////////////////////////////////////
@@ -2829,11 +2832,6 @@ function gamepadButton(gamepad,number,type){
 ///////////////////////////////////////
 /////////////////START/////////////////
 ///////////////////////////////////////
-
-S.window.classList.add('showpony');
-
-//Set tabIndex so it's selectable
-S.window.tabIndex=0;
 
 //Make sure setup is made of multiple Promises that can run asyncronously- and that they do!
 

@@ -3,7 +3,7 @@ document.getElementById("example-list").addEventListener("change",function(){
 });
 
 function chooseStory(id){
-	var stories=document.getElementsByClassName("story");
+	var stories=document.getElementsByClassName("showpony-default");
 	
 	//if(document.querySelector(".show-selected")) document.querySelector(".show-selected").classList.remove("show-selected");
 	//document.getElementById("show-"+id).classList.add("show-selected");
@@ -36,13 +36,13 @@ function chooseStory(id){
 	
 	var container=document.createElement("p");
 	
-	var objects=Object.keys(showponyInputs[id]);
+	var objects=Object.keys(showponies[id]);
 	
 	for(var i=0;i<objects.length;i++){
 		var line=document.createElement("span");
 		
 		line.innerHTML+='    <span class="obj-name">'+objects[i]+'</span>: ';
-		var value=showponyInputs[id][objects[i]];
+		var value=showponies[id][objects[i]];
 		
 		var print='';
 		var valuePrint=document.createElement("span");

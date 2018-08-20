@@ -28,8 +28,6 @@
 </header>
 <main>
 
-<!--<script src="showpony/script.js"></script>-->
-
 <h1><img class="svg-inline" src="design-files/logo.svg"> Showpony</h1>
 
 <p id="intro">The best way to share your <select id="example-list">
@@ -40,123 +38,21 @@
 	<option value="audio">audiobook</option>
 </select>!</p>
 
-<script src="showpony/showpony.php?path=examples/entreprenewb"></script>
-<script src="showpony/showpony.php?path=examples/sintel"></script>
-<script src="showpony/showpony.php?path=examples/ecocrystals"></script>
-<script src="showpony/showpony.php?path=examples/bob-and-susie"></script>
-<script src="showpony/showpony.php?path=examples/dishes"></script>
+<div class="story"><script src="showpony/showpony.php?path=examples/entreprenewb"></script></div>
+<div class="story"><script src="showpony/showpony.php?path=examples/sintel"></script></div>
+<div class="story"><script src="showpony/showpony.php?path=examples/ecocrystals"></script></div>
+<div class="story"><script src="showpony/showpony.php?path=examples/bob-and-susie"></script></div>
+<div class="story"><script src="showpony/showpony.php?path=examples/dishes"></script></div>
 
-<!--
 <script>
-	showponies={};
-	showponyInputs={};
-</script>
-
-<div class="story" id="comic"></div>
-<script>
-	showponyInputs.comic={
-		window:document.getElementById("comic")
-		,get:"examples/entreprenewb/[lang]/" //The path to the story files. Remember the slash!
-		,info:"[Current File] | [File Left]"
-		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a href='https://www.webtoons.com/en/challenge/entreprenewb/list?title_no=58042' target='_blank'>LineWebtoon.logo</a><br>Entreprenewb by Josh Powlison, Public Domain"
-		,query:"entreprenewb"
-		,start:0
-		,scrubLoad:true
-		,saveId:null
-		,remoteSave:false
-		,subtitles:{
-			English:'examples/entreprenewb/subtitles/en/'
-		}
-		,defaultDuration:1
+	showponies={
+		comic:entreprenewb
+		,video:sintel
+		,text:ecocrystals
+		,vn:dishes
+		,audio:bobAndSusie
 	};
-	showponies.comic=new Showpony(showponyInputs.comic);
 </script>
-
-<div class="story showpony-paused" id="video"></div>
-<script>
-	showponyInputs.video={
-		window:document.getElementById("video")
-		,get:["examples/sintel/(Sintel) 52.mp4"] //The path to the story files. Remember the slash!
-		,info:"[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
-		,title:"Sintel [Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
-		,credits:"<a href='https://blender.org/' target='_blank'>Blender.logo</a><br>© copyright Blender Foundation | www.sintel.org"
-		,query:"sintel"
-		,start:0
-		,language:"en"
-		,subtitles:{
-			English:'examples/sintel/'
-		}
-		,saveId:null
-		,remoteSave:false
-		,cover:{
-			image:'examples/sintel/cover.jpg'
-			,content:'Sintel'
-		}
-	};
-	showponies.video=new Showpony(showponyInputs.video);
-</script>
-
-<div class="story" id="text"></div>
-<script>
-	showponyInputs.text={
-		window:document.getElementById("text")
-		,get:"examples/ecocrystals/[lang]/" //The path to the story files. Remember the slash!
-		,info:"[Current File] | [File Left]"
-		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><br>by Josh Powlison"
-		,query:null
-		,scrubLoad:true
-		,start:0
-		,saveId:null
-		,remoteSave:false
-		,subtitles:null
-		,infiniteScroll:true
-	};
-	showponies.text=new Showpony(showponyInputs.text);
-</script>
-
-<div class="story showpony-paused" id="vn"></div>
-<script>
-	showponyInputs.vn={
-		window:document.getElementById("vn")
-		,get:"examples/late-to-the-party/[lang]/"
-		,info:"[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
-		,resourcesPath:"examples/late-to-the-party/resources/"
-		,query:"late-to-the-party"
-		,start:0
-		,saveId:null
-		,remoteSave:false
-		,credits:"Josh Powlison"
-		,showBuffer:false
-		,cover:{
-			image:'examples/late-to-the-party/resources/backgrounds/forest.jpg'
-			,content:'Late to the Party'
-		}
-	};
-	showponies.vn=new Showpony(showponyInputs.vn);
-</script>
-
-<div class="story showpony-paused" id="audio"></div>
-<script>
-	showponyInputs.audio={
-		window:document.getElementById("audio")
-		,get:"examples/bob-and-susie/" //The path to the story files. Remember the slash!
-		,info:"[Minutes]:[Seconds PAD2] | [Minutes Left]:[Seconds Left PAD2]"
-		,credits:"<a target='_blank' href='https://twitter.com/joshpowlison'>Twitter.logo</a><a target='_blank' href='https://joshpowlison.tumblr.com/'>Tumblr.logo</a><a href='https://soundcloud.com/joshuapowlison/sets/the-adventures-of-bob-and' target='_blank'>Soundcloud.logo</a><br>The Adventures of Bob and Susie by Josh Powlison, Public Domain"
-		,query:false
-		,start:0
-		,saveId:'showpony-site-aobas'
-		,remoteSave:false
-		,localSave:false
-		,subtitles:{
-			'English':'examples/bob-and-susie/subtitles/'
-		}
-		,preloadNext:0
-		,cover:{
-			content:'<span style="font-size:.75em;">The Adventures of</span><br>Bob and Susie'
-		}
-	};
-	showponies.audio=new Showpony(showponyInputs.audio);
-</script>-->
 
 <h2>Install in 5 minutes!</h2>
 
@@ -182,7 +78,7 @@ new Showpony({
 <div id="websites-using"><a href="http://gameplanmanga.com" target="_blank"><img src="images/gameplan-banner.jpg"></a></div>
 <p><small>Email me at <a href="mailto:joshuapowlison@gmail.com" target="_blank">joshuapowlison@gmail.com</a> if you want to be included in the list! I will not include NSFW stories.</small></p>
 
-<script src="script.js"></script>
+<!-- <script src="script.js"></script> -->
 
 </main>
 <footer><p>Showpony is Open Source under an MIT License. Version in Demo: DEV BRANCH</p></footer>
