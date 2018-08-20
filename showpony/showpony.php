@@ -181,39 +181,6 @@ function toCamelCase($input){
 
 ?>'use strict';
 
-/*
-//Get location of the Showpony folder
-const ShowponyFolder=document.currentScript.src.replace('/script.js','');
-
-//Find the relative path from ShowponyFolder to ShowponyRunPage
-var splitPath=ShowponyFolder.split('/');
-var splitStart=location.href.replace(/\/[^\/]+$/,'').split('/');
-
-//Get relative path from Showpony folder to current page (for the sake of PHP)
-var ShowponyRunPage='';
-for(var i=0;i<splitStart.length;i++){
-	//If the paths are the same
-	if(splitPath.length>i && splitPath[i]===splitStart[i]){
-		//We ignore them!
-	//If they differ- we've found the first shared folder!
-	}else{
-		//Go up as many levels as need to to get to the shared folder
-		for(var ii=i;ii<splitPath.length;ii++){
-			ShowponyRunPage+='../';
-		}
-		
-		//Now go down to the right folder
-		for(var ii=i;ii<splitStart.length;ii++){
-			ShowponyRunPage+=splitStart[ii];
-			
-			if(ii!==splitStart.length-1) ShowponyRunPage+='/'
-		}
-		
-		//Break out of the main for loop
-		break;
-	}
-}*/
-
 var ShowponyFolder='showpony';
 var ShowponyRunPage='';
 
@@ -329,17 +296,6 @@ S.to=function(obj={}){
 		,replaceState:obj.replaceState || false
 	});
 	
-	var sameFile=S.currentFile===obj.file;
-		
-		/*
-	//Don't continue if the file is the same and not refreshable
-	if(obj.file===S.currentFile && !types[S.files[S.currentFile].medium].hasOwnProperty('currentTime')){
-		return;
-	}*/
-	/*
-	
-	if(obj.file==S.currentFile && !obj.refresh) return;*/
-	
 	//Go to the beginning of the story
 	if(obj.time==='start'){
 		obj.file=0;
@@ -355,14 +311,9 @@ S.to=function(obj={}){
 		if(obj.time<0) obj.time=0;
 	}
 	
-	//Use different options
-	obj.file=
-		obj.file==='first' ? 0
-		: obj.file==='prev' ? S.currentFile-1
-		: obj.file==='next' ? S.currentFile+1
-		: obj.file==='last' ? S.files.length-1
-		: parseInt(obj.file || 0) //Get the file, or 0 if it's undefined
-	;
+	//Use 'last' for obj file
+	if(obj.file==='last') obj.file=S.files.length-1;
+	obj.file=obj.file || 0;
 	
 	//If we're at the end, run the readable event
 	if(obj.file>=S.files.length){
@@ -387,10 +338,11 @@ S.to=function(obj={}){
 		if(!obj.popstate){
 			//Only allow adding to history if we aren't scrubbing
 			
+			/*
 			//If the same file, and not a medium where time changes it (like images), replace history state instead
 			if(sameFile && currentType!=='video' && currentType!=='audio'){
 				obj.replaceState=true;
-			}
+			}*/
 			
 			var popstate=!obj.replaceState;
 			if(scrubbing===true) popstate=false; //Only replace history if we're scrubbing right now
@@ -413,32 +365,19 @@ S.to=function(obj={}){
 	var newType=S.files[obj.file].medium;
 	
 	//Multimedia engine resets
-	content.style.cssText=null;
 	styles.innerHTML='';
 	if(waitTimer.remaining>0){
 		waitTimer.end();
 	}
-		
-	S.charsHidden=0;
 	
 	//Remove the continue notice
 	continueNotice.remove();
 	
-	//Get rid of local styles
-	for(var key in S.objects){
-		//Except for the window and content, of course!
-		if(key==='window' || key==='content') continue;
-		S.objects[key].removeAttribute('style');
-		
-		//Empty out textboxes
-		if(S.objects[key].classList.contains('showpony-textbox')) S.objects[key].innerHTML='';
-	};
-	
 	//Save buffer to check later
-	objectBuffer={window:S.window,content:content};
+	objectBuffer={};
 	
 	//If switching types, do some cleanup
-	if(currentType!=newType){
+	if(currentType!==newType){
 		
 		content.innerHTML='';
 		S.objects={window:S.window,content:content};
@@ -453,120 +392,26 @@ S.to=function(obj={}){
 		}
 	}
 	
-	//How we get the file depends on whether or not it's private
-	var src=(S.files[obj.file].name[0]=='x' ? ShowponyFolder+'/ajax.php?rel-path'+encodeURIComponent(ShowponyRunPage)+'&get=' : '')+S.files[obj.file].path;
-	
-	//Refresh the file, if requested we do so, by adding a query
-	if(obj.refresh) src+=(S.files[obj.file].name[0]==='x' ? '&' : '?')+'refresh-'+Date.now();
-	
 	currentType=newType;
 	
-	//If it's the same file, check the type and see if special action needs to be taken!
-	if(sameFile){
-		//Special multimedia engine prep
-		if(currentType==='multimedia'){
-			runTo=Math.round(keyframes.length*(obj.time/S.files[obj.file].duration));
-			if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
-			else runTo=keyframes[runTo];
-			
-			runMM(0);
-		}else{
-			//Infinite scrolling
-			if(S.infiniteScroll){//Scroll to the right spot
-				var part=document.querySelector('[data-file="'+obj.file+'"]');
-			
-				pageTurn.scrollTop=part.offsetTop+part.offsetHeight*(obj.time/S.files[obj.file].duration);
-			}else{ //Page turn
-				if(currentType==='text')
-				pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[obj.file].duration);
-			}
-			
-			content.classList.remove('showpony-loading');
-		}
-	//If it's not the same file, load it!
-	}else{
-		if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
+	/*
+	//If it's the same and we're using infinite scrolling
+	if(S.infiniteScroll){//Scroll to the right spot
+		var part=document.querySelector('[data-file="'+obj.file+'"]');
+	
+		pageTurn.scrollTop=part.offsetTop+part.offsetHeight*(obj.time/S.files[obj.file].duration);
+	}else{ //Page turn
 		
-		//NEED A DIFFERENT SETUP FOR INFINITE SCROLL//
-		if(currentType==='text'){
-			fetch(src,{credentials:'include'})
-				.then(response=>{
-					return response.text();
-				})
-				.then(text=>{
-					//Use either page infinite or page turn, whichever is requested
-					if(S.infiniteScroll){
-						
-						//If file hasn't already been loaded, load it!
-						let part=content.querySelector('[data-file="'+obj.file+'"]');
-						
-						//Safety check; if we're sticking, and trying to load a part that doesn't have a div, something's off and we need to get outta here!
-						if(sticky!==false && !part) return;
-						
-						//If the part hasn't been created, it's not being automatically appended; so empty the div!
-						if(!part){
-							part=document.createElement('div');
-							part.dataset.file=obj.file;
-							pageTurn.innerHTML='';
-							pageTurn.appendChild(part);
-							
-							S.currentFile=obj.file;
-							
-							//Stick to the set file and time
-							sticky={file:S.currentFile,time:obj.time};
-							console.log(sticky);
-						}
-						
-						var currentPart=content.querySelector('[data-file="'+S.currentFile+'"]');
-						var addScroll=pageTurn.scrollTop-currentPart.offsetTop;
-						
-						if(!part.innerHTML){
-							//If adding a file in normally, just add it in
-							part.innerHTML=text;
-						
-							pageTurn.scrollTop=currentPart.offsetTop+addScroll;
-						}else{
-							//Scroll to spot for file
-							pageTurn.scrollTop=part.offsetTop+(obj.time/S.files[obj.file].duration)*part.offsetHeight;
-						}
-						
-						if(sticky!==false){
-							var stickyPart=content.querySelector('[data-file="'+sticky.file+'"]');
-							
-							pageTurn.scrollTop=stickyPart.offsetTop+(sticky.time/S.files[sticky.file].duration)*stickyPart.offsetHeight;
-							
-							pageTurn.dispatchEvent(new CustomEvent('scroll'));
-						}
-						
-						content.classList.remove('showpony-loading');
-						
-					}else{ //Page turning
-						//Put in the text
-						pageTurn.innerHTML=text;
-						
-						//Scroll to spot
-						pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[obj.file].duration);
-						
-						//Stop loading
-						content.classList.remove('showpony-loading');
-					}
-					
-					if(S.files[obj.file].buffered!==true){
-						S.files[obj.file].buffered=true;
-						getTotalBuffered();
-					}
-				})
-				.catch((error)=>{
-					alert('329: '+error);
-					console.log(error);
-				})
-			;
-		//Image/Audio/Video
-		}else{
-			S[newType].src(src);
-			S[newType].timeUpdate(obj.time);
-		}
 	}
+	
+	content.classList.remove('showpony-loading');
+	}*/
+	
+	if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
+	
+	//Image/Audio/Video
+	S[newType].timeUpdate(obj.time);
+	S[newType].src(obj.file);
 
 	//Preload next files, if allowed and/or needed
 	for(let i=obj.file+1;i<=obj.file+S.preloadNext;i++){
@@ -588,6 +433,85 @@ S.to=function(obj={}){
 	goToTime=obj.time;
 	timeUpdate(obj.time);
 }
+
+//NEED A DIFFERENT SETUP FOR INFINITE SCROLL//
+/*
+/*if(currentType==='text'){
+	fetch(src,{credentials:'include'})
+		.then(response=>{
+			return response.text();
+		})
+		.then(text=>{
+			//Use either page infinite or page turn, whichever is requested
+			if(S.infiniteScroll){
+				
+				//If file hasn't already been loaded, load it!
+				let part=content.querySelector('[data-file="'+obj.file+'"]');
+				
+				//Safety check; if we're sticking, and trying to load a part that doesn't have a div, something's off and we need to get outta here!
+				if(sticky!==false && !part) return;
+				
+				//If the part hasn't been created, it's not being automatically appended; so empty the div!
+				if(!part){
+					part=document.createElement('div');
+					part.dataset.file=obj.file;
+					pageTurn.innerHTML='';
+					pageTurn.appendChild(part);
+					
+					S.currentFile=obj.file;
+					
+					//Stick to the set file and time
+					sticky={file:S.currentFile,time:obj.time};
+					console.log(sticky);
+				}
+				
+				var currentPart=content.querySelector('[data-file="'+S.currentFile+'"]');
+				var addScroll=pageTurn.scrollTop-currentPart.offsetTop;
+				
+				if(!part.innerHTML){
+					//If adding a file in normally, just add it in
+					part.innerHTML=text;
+				
+					pageTurn.scrollTop=currentPart.offsetTop+addScroll;
+				}else{
+					//Scroll to spot for file
+					pageTurn.scrollTop=part.offsetTop+(obj.time/S.files[obj.file].duration)*part.offsetHeight;
+				}
+				
+				if(sticky!==false){
+					var stickyPart=content.querySelector('[data-file="'+sticky.file+'"]');
+					
+					pageTurn.scrollTop=stickyPart.offsetTop+(sticky.time/S.files[sticky.file].duration)*stickyPart.offsetHeight;
+					
+					pageTurn.dispatchEvent(new CustomEvent('scroll'));
+				}
+				
+				content.classList.remove('showpony-loading');
+				
+			}else{ //Page turning
+				//Put in the text
+				pageTurn.innerHTML=text;
+				
+				//Scroll to spot
+				pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[obj.file].duration);
+				
+				//Stop loading
+				content.classList.remove('showpony-loading');
+			}
+			
+			if(S.files[obj.file].buffered!==true){
+				S.files[obj.file].buffered=true;
+				getTotalBuffered();
+			}
+		})
+		.catch((error)=>{
+			alert('329: '+error);
+			console.log(error);
+		})
+	;
+}else{
+//}
+*/
 
 var goToTime=0;
 
@@ -791,13 +715,105 @@ S.close=function(){
 }
 
 ///////////////////////////////////////
+/////////////////TEXT//////////////////
+///////////////////////////////////////
+
+function makeText(){
+	const P=this;
+	
+	P.currentTime=-1;
+	P.currentFile=-1;
+	
+	P.window=document.createElement('div');
+	P.window.className='showpony-block';
+	
+	P.play=function(){}
+	
+	P.pause=function(){}
+	
+	P.input=function(){
+		//S.to({file:'+1'});
+	}
+	
+	P.timeUpdate=function(input){
+		P.currentTime=input;
+	}
+	
+	P.src=function(input){
+		var src=S.files[input].path;
+		
+		//If this is the current file
+		if(P.currentFile===input){
+			pageTurn.scrollTop=pageTurn.scrollHeight*(P.currentTime/S.files[P.currentFile].duration);
+			content.classList.remove('showpony-loading');
+			return;
+		}
+		
+		fetch(src,{credentials:'include'})
+		.then(response=>{
+			return response.text();
+		})
+		.then(text=>{
+			P.currentFile=input;
+			
+			//Put in the text
+			pageTurn.innerHTML=text;
+			
+			//Scroll to spot
+			pageTurn.scrollTop=pageTurn.scrollHeight*(P.currentTime/S.files[P.currentFile].duration);
+			
+			//Stop loading
+			content.classList.remove('showpony-loading');
+			
+			if(S.files[P.currentFile].buffered!==true){
+				S.files[P.currentFile].buffered=true;
+				getTotalBuffered();
+			}
+		})
+		.catch((error)=>{
+			alert('329: '+error);
+			console.log(error);
+		});
+	}
+	
+	P.displaySubtitles=function(){
+		if(S.currentSubtitles===null){
+			subtitles.innerHTML='';
+			return;
+		}
+		
+		if(S.files[P.currentFile].subtitles){
+			///NOT YET! OR PROBABLY EVER... this is text already, after all.
+		}else{
+			//If don't have the file
+			fetch(S.subtitles[S.currentSubtitles]+S.files[P.currentFile].title+'.vtt')
+			.then(response=>{return response.text();})
+			.then(text=>{
+				S.files[P.currentFile].subtitles=text;
+				S[currentType].displaySubtitles();
+			});
+		}
+	}
+	
+	///BUFFERING///
+	P.window.addEventListener('load',function(){
+		content.classList.remove('showpony-loading');
+		S.files[P.currentFile].buffered=true;
+		getTotalBuffered();
+	});
+};
+
+S.text=new makeText();
+
+///////////////////////////////////////
 /////////////////IMAGE/////////////////
 ///////////////////////////////////////
 
 function makeImage(){
 	const P=this;
 	
-	P.currentTime=0;
+	P.currentTime=-1;
+	P.currentFile=-1;
 	
 	P.window=document.createElement('img');
 	P.window.className='showpony-block';
@@ -819,10 +835,13 @@ function makeImage(){
 	}
 	
 	P.src=function(input){
-		P.window.src=input;
+		var src=S.files[input].path;
 		
-		//If we're not paused, play
-		if(!S.window.classList.contains('showpony-paused')) P.play();
+		//Change the file if it'd be a new one
+		if(P.currentFile!==input) P.window.src=src;
+		else content.classList.remove('showpony-loading');
+		
+		P.currentFile=input;
 	}
 	
 	P.displaySubtitles=function(){
@@ -831,7 +850,7 @@ function makeImage(){
 			return;
 		}
 		
-		if(S.files[S.currentFile].subtitles){
+		if(S.files[P.currentFile].subtitles){
 			subtitles.innerHTML='';
 			
 			subtitles.width=P.window.naturalWidth;
@@ -849,7 +868,7 @@ function makeImage(){
 			
 			subtitles.style.left=(width-newWidth)/2+'px';
 			
-			var lines=S.files[S.currentFile].subtitles.split(/\s{3,}/g);
+			var lines=S.files[P.currentFile].subtitles.split(/\s{3,}/g);
 			for(let i=0;i<lines.length;i++){
 				var block=m('sub','p');
 				
@@ -867,10 +886,10 @@ function makeImage(){
 			}
 		}else{
 			//If don't have the file
-			fetch(S.subtitles[S.currentSubtitles]+S.files[S.currentFile].title+'.vtt')
+			fetch(S.subtitles[S.currentSubtitles]+S.files[P.currentFile].title+'.vtt')
 			.then(response=>{return response.text();})
 			.then(text=>{
-				S.files[S.currentFile].subtitles=text;
+				S.files[P.currentFile].subtitles=text;
 				S[currentType].displaySubtitles();
 			});
 		}
@@ -879,7 +898,7 @@ function makeImage(){
 	///BUFFERING///
 	P.window.addEventListener('load',function(){
 		content.classList.remove('showpony-loading');
-		S.files[S.currentFile].buffered=true;
+		S.files[P.currentFile].buffered=true;
 		getTotalBuffered();
 	});
 };
@@ -893,7 +912,8 @@ S.image=new makeImage();
 function makeMedia(type='video'){
 	const P=this;
 	
-	P.currentTime=0;
+	P.currentTime=-1;
+	P.currentFile=-1;
 	
 	P.window=document.createElement(type);
 	P.window.className='showpony-block';
@@ -915,10 +935,15 @@ function makeMedia(type='video'){
 	}
 	
 	P.src=function(input){
-		P.window.src=input;
+		var src=S.files[input].path;
+		
+		//Change the file if it'd be a new one
+		if(P.currentFile!==input) P.window.src=src;
 		
 		//If we're not paused, play
 		if(!S.window.classList.contains('showpony-paused')) P.play();
+		
+		P.currentFile=input;
 	}
 	
 	P.displaySubtitles=function(){
@@ -927,11 +952,11 @@ function makeMedia(type='video'){
 			return;
 		}
 		
-		if(S.files[S.currentFile].subtitles){
+		if(S.files[P.currentFile].subtitles){
 			subtitles.style.cssText=null;
 			var currentTime=S[currentType].currentTime;
 			
-			var lines=S.files[S.currentFile].subtitles.match(/\b.+/ig);
+			var lines=S.files[P.currentFile].subtitles.match(/\b.+/ig);
 			
 			for(let i=0;i<lines.length;i++){
 				if(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[i])){
@@ -973,10 +998,10 @@ function makeMedia(type='video'){
 			}
 		}else{
 			//If don't have the file
-			fetch(S.subtitles[S.currentSubtitles]+S.files[S.currentFile].title+'.vtt')
+			fetch(S.subtitles[S.currentSubtitles]+S.files[P.currentFile].title+'.vtt')
 			.then(response=>{return response.text();})
 			.then(text=>{
-				S.files[S.currentFile].subtitles=text;
+				S.files[P.currentFile].subtitles=text;
 				S[currentType].displaySubtitles();
 			});
 		}
@@ -988,7 +1013,6 @@ function makeMedia(type='video'){
 	//Fix for Safari not going to the right time
 	P.window.addEventListener('loadeddata',function(){
 		P.currentTime=P.window.currentTime=goToTime;
-		console.log(goToTime,P.window);
 	});
 
 	P.window.addEventListener('canplay',function(){
@@ -1019,7 +1043,7 @@ function makeMedia(type='video'){
 			bufferedValue.push([timeRanges.start(i),timeRanges.end(i)]);
 		}
 		
-		S.files[S.currentFile].buffered=bufferedValue;
+		S.files[P.currentFile].buffered=bufferedValue;
 		
 		getTotalBuffered();
 	});
@@ -1050,7 +1074,8 @@ S.audio=new makeMedia('audio');
 function makeVisualNovel(){
 	const P=this;
 	
-	P.currentTime=0;
+	P.currentTime=-1;
+	P.currentFile=-1;
 	
 	P.window=document.createElement('div');
 	P.window.className='showpony-multimedia';
@@ -1143,18 +1168,38 @@ function makeVisualNovel(){
 	}
 	
 	P.src=function(input){
-		fetch(input,{credentials:'include'})
+		/////RESET THINGS//////
+		//Get rid of local styles
+		for(var key in S.objects){
+			S.objects[key].removeAttribute('style');
+			
+			//Empty out textboxes
+			if(S.objects[key].classList.contains('showpony-textbox')) S.objects[key].innerHTML='';
+		};
+		
+		/////END RESETTIN//////
+		
+		//If this is the current file
+		if(P.currentFile===input){
+			runTo=Math.round(keyframes.length*(P.currentTime/S.files[P.currentFile].duration));
+			if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
+			else runTo=keyframes[runTo];
+			
+			runMM(0);
+			return;
+		}
+		
+		var src=S.files[input].path;
+		
+		fetch(src,{credentials:'include'})
 		.then(response=>{
 			return response.text();
 		})
 		.then(text=>{
+			P.currentFile=input;
+			
 			//Remove multiline comments
 			text=text.replace(/\/\*[^]*?\*\//g,'');
-			
-			//Get all non-blank lines
-			S.lines=text.match(/.+(?=\S).+/g);
-			
-			console.log(S.lines);
 			
 			//Get all non-blank lines
 			S.lines=text.match(/.+(?=\S).+/g);
@@ -1173,14 +1218,14 @@ function makeVisualNovel(){
 				if(/^\t+(?!\t*\+)/i.test(S.lines[i])) keyframes.push(i);
 			}
 			
-			runTo=Math.round(keyframes.length*(P.currentTime/S.files[S.currentFile].duration));
+			runTo=Math.round(keyframes.length*(P.currentTime/S.files[input].duration));
 			if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
 			else runTo=keyframes[runTo];
 			
 			runMM(0);
 			
-			if(S.files[S.currentFile].buffered!==true){
-				S.files[S.currentFile].buffered=true;
+			if(S.files[input].buffered!==true){
+				S.files[input].buffered=true;
 				getTotalBuffered();
 			}
 		})
@@ -1196,14 +1241,14 @@ function makeVisualNovel(){
 			return;
 		}
 		
-		if(S.files[S.currentFile].subtitles){
+		if(S.files[P.currentFile].subtitles){
 			///NOTHING YET!
 		}else{
 			//If don't have the file
-			fetch(S.subtitles[S.currentSubtitles]+S.files[S.currentFile].title+'.vtt')
+			fetch(S.subtitles[S.currentSubtitles]+S.files[P.currentFile].title+'.vtt')
 			.then(response=>{return response.text();})
 			.then(text=>{
-				S.files[S.currentFile].subtitles=text;
+				S.files[P.currentFile].subtitles=text;
 				S[currentType].displaySubtitles();
 			});
 		}
@@ -1682,8 +1727,6 @@ function runMM(inputNum=S.currentLine+1){
 			,'>='	:(a,b)=>	a>=b
 			,'!'	:(a,b)=>	a!=b
 		};
-		
-		console.log(type,vals);
 		
 		switch(type){
 			//Operations
