@@ -30,7 +30,7 @@ ini_set('display_errors',1);
 if(!$password) unset($_SESSION['showpony_admin']);
 
 #Start with it based on current file
-$info='[Current File] | [Files Left]';
+$info='file';
 
 #Get a private file
 if(!empty($_GET['get'])){
@@ -120,7 +120,7 @@ if(!empty($_GET['get'])){
 						switch(pathinfo($language.'/'.$file,PATHINFO_EXTENSION)){
 							case 'vn':
 								$fileInfo['medium']='multimedia';
-								$info='[Minutes PAD2]:[Seconds PAD2] | [Minutes Left PAD2]:[Seconds Left PAD2]';
+								$info='time';
 								break;
 							default:
 								$infiniteScroll=true;
@@ -129,7 +129,7 @@ if(!empty($_GET['get'])){
 						break;
 					case 'audio':
 					case 'video':
-						$info='[Minutes PAD2]:[Seconds PAD2] | [Minutes Left PAD2]:[Seconds Left PAD2]';
+						$info='time';
 						break;
 				}
 				
@@ -215,7 +215,6 @@ S.window.tabIndex=0;
 
 S.buffered=false;
 
-S.info='<?=$info?>';
 S.query='<?=$name?>';
 S.infiniteScroll='<?=$infiniteScroll?>';
 S.subtitles=<?php
@@ -1466,7 +1465,7 @@ function scrub(inputPercent){
 	
 	//Set the overlay text
 	var newHTML=replaceInfoText(
-		S.info
+		null
 		,newPart
 		,Math.floor(timeInTotal)
 	);
@@ -1474,12 +1473,12 @@ function scrub(inputPercent){
 	
 	//Update the title, if set up for it
 	if(S.title){
-		var newTitle=replaceInfoText(S.title,S.currentFile);
+		var newTitle=replaceInfoText(null,S.currentFile);
 		if(newTitle!==document.title) document.title=newTitle;
 	}
 }
 
-function replaceInfoText(value,fileNum,current){
+function replaceInfoText(value=null,fileNum,current){
 	if(current===undefined){
 		//var currentType=S.files[S.currentFile].medium;
 		
@@ -1489,8 +1488,6 @@ function replaceInfoText(value,fileNum,current){
 		//Add the times of previous videos to get the actual time in the piece
 		for(let i=0;i<S.currentFile;i++) currentTime+=S.files[i].duration;
 		
-		var inputPercent=currentTime / S.duration;
-			
 		var current=Math.floor(inputPercent*S.duration)
 			,left=S.duration-Math.floor(inputPercent*S.duration)
 		;
@@ -1498,7 +1495,6 @@ function replaceInfoText(value,fileNum,current){
 		fileNum=S.currentFile;
 	}else{
 		var left=S.duration-current;
-		var inputPercent=current/S.duration;
 	}
 	
 	var fileMedium=S.files[fileNum].medium;
@@ -1509,118 +1505,34 @@ function replaceInfoText(value,fileNum,current){
 			
 			var currentThis=current-time;
 			var leftThis=S.files[i].duration-currentThis;
-			var inputPercentThis=currentThis/S.files[i].duration;
 			break;
 		}
 		
 		time+=S.files[i].duration;
 	}
 	
-	//Save all the values to instantly pass them through
-	var values={
-		title:{
-			currentAll:		S.files[fileNum].title
-		}
-		,date:{
-			currentAll:		'Undated'
-		}
-		,medium:{
-			currentAll:		'<span class="showpony-info-media showpony-info-'+fileMedium+'"></span>'
-		}
-		,file:{
-			currentAll:		fileNum+1
-			,leftAll:		S.files.length-(fileNum+1)
-			,totalAll:		S.files.length
-		}
-		,percent:{
-			currentAll:		(inputPercent*100)|0
-			,leftAll:		((1-inputPercent)*100)|0
-			,totalAll:		100
-			,currentThis:	(inputPercentThis*100)|0
-			,leftThis:		((1-inputPercentThis)*100)|0
-			,totalThis:		100
-		}
-		,hours:{
-			currentAll:		(current / 3600)|0
-			,leftAll:		(left / 3600)|0
-			,totalAll:		(S.duration / 3600)|0
-			,currentThis:	(currentThis / 3600)|0
-			,leftThis:		(leftThis / 3600)|0
-			,totalThis:		(S.files[fileNum].duration / 3600)|0
-		}
-		,minutes:{
-			currentAll:		((current % 3600) / 60)|0
-			,leftAll:		((left % 3600) / 60)|0
-			,totalAll:		((S.duration % 3600) / 60)|0
-			,currentThis:	((currentThis % 3600) / 60)|0
-			,leftThis:		((leftThis % 3600) / 60)|0
-			,totalThis:		((S.files[fileNum].duration % 3600) / 60)|0
-		}
-		,seconds:{
-			currentAll:		(current % 60)|0
-			,leftAll:		(left % 60)|0
-			,totalAll:		(S.duration % 60)|0
-			,currentThis:	(currentThis % 60)|0
-			,leftThis:		(leftThis % 60)|0
-			,totalThis:		(S.files[fileNum].duration % 60)|0
-		}
-	}
+	<? if($info==='time'){ ?>
+		var padLength=String((S.duration / 60)|0).length;
+		console.log(padLength);
 	
-	//Get the name, remove the parentheses (skip over 'x')
-	var date=S.files[fileNum].date; // /^\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?$/.exec(files[i])
-
-	//If there's a date, return it; otherwise, return blank space
-	if(date){
-		date=date[0].split(/[\s-:;]+/);
-		
-		date=new Date(Date.UTC(
-			date[0]			//Year
-			,date[1]-1 || 0	//Month
-			,date[2] || 0	//Date
-			,date[3] || 0	//Hours
-			,date[4] || 0	//Minutes
-			,date[5] || 0	//Seconds
-			,date[6] || 0	//Milliseconds
-		));
-		
-		values.date.current=new Intl.DateTimeFormat(
-			undefined //Uses the default locale
-			,S.dateFormat
-		).format(date);
-	}
+		//Time
+		return String((current / 60)|0).padStart(padLength,'0')
+			+':'
+			+String((current % 60)|0).padStart(2,'0')
+			+' | '
+			+String((left / 60)|0).padStart(padLength,'0')
+			+':'
+			+String((left % 60)|0).padStart(2,'0')
+		;
+	<? }else{ ?>
+		var padLength=String(S.files.length).length;
 	
-	//Use special naming convention to replace values correctly
-	function infoNaming(input){
-		//Choose the right type
-		
-		//Defaults (we don't bother searching for these)
-		var type='file', value='current';
-		
-		//Get the type
-		if(/title/i.test(input)) type='title';
-		else if(/date|release/i.test(input)) type='date';
-		else if(/%|percent/i.test(input)) type='percent';
-		else if(/hour/i.test(input)) type='hours';
-		else if(/min/i.test(input)) type='minutes';
-		else if(/sec/i.test(input)) type='seconds';
-		else if(/medi/i.test(input)) type='medium';
-		
-		//Get the value type
-		if(/left|remain/i.test(input)) value='left';
-		else if(/total/i.test(input)) value='total';
-		
-		//Get the modifier
-		if(/this/i.test(input)) value+='This';
-		else value+='All';
-		
-		//Return the value
-		return String(values[type][value]).padStart(
-			/\d+/.exec(input) || 0
-			,'0'
-		);
-	}
-	
-	return value.replace(/\[[^\]]+\]/g,infoNaming);
+		//Files
+		return String(fileNum+1).padStart(padLength,'0')
+			+' | '
+			+String(S.files.length-(fileNum+1)).padStart(padLength,'0')
+		;
+	<? } ?>
 }
 
 //Use documentFragment to append elements faster
