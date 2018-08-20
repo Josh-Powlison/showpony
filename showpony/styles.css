@@ -614,23 +614,6 @@ button.showpony-account-button{
 	100% {visibility:visible;opacity:1;}
 }
 
-.showpony-char-blur>.showpony-char{
-	animation:kn-blur 1s linear forwards;
-}
-
-@keyframes kn-blur {
-  0% {
-	  visibility:visible;
-	opacity:0;
-	filter:blur(.5em);
-  }
-  to {
-	  visibility:visible;
-	opacity:1;
-	filter:blur(0em);
-  }
-}
-
 .showpony-char-sing .showpony-char-anim{
 	animation:kn-sing 1.5s ease-in-out infinite;
 }
