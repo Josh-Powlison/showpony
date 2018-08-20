@@ -113,9 +113,19 @@ if(!empty($_GET['get'])){
 					,'title'		=>	null
 				];
 				
+				#Adjust actions based on the medium
 				switch($fileInfo['medium']){
 					case 'text':
-						$infiniteScroll=true;
+						#See if it's a VN file
+						switch(pathinfo($language.'/'.$file,PATHINFO_EXTENSION)){
+							case 'vn':
+								$fileInfo['medium']='multimedia';
+								$info='[Minutes PAD2]:[Seconds PAD2] | [Minutes Left PAD2]:[Seconds Left PAD2]';
+								break;
+							default:
+								$infiniteScroll=true;
+								break;
+						}
 						break;
 					case 'audio':
 					case 'video':
@@ -479,7 +489,7 @@ S.to=function(obj={}){
 		
 		//Display the medium based on the file extension
 		//Multimedia Engine/Text/Copy
-		if(currentType==='multimedia' || currentType==='text'){
+		if(currentType==='text'){
 			fetch(src,{credentials:'include'})
 				.then(response=>{
 					return response.text();
@@ -590,7 +600,7 @@ S.to=function(obj={}){
 			;
 		//Image/Audio/Video
 		}else{
-			if(S.infiniteScroll){
+			/*if(S.infiniteScroll){
 				if(currentType==='image'){
 					//If file hasn't already been loaded, load it!
 					let part=content.querySelector('[data-file="'+obj.file+'"]');
@@ -643,9 +653,9 @@ S.to=function(obj={}){
 					}
 					
 				}
-			}else{
-				S[newType].src(src);
-			}
+			}*/
+			
+			S[newType].src(src);
 		}
 	}
 
@@ -860,68 +870,7 @@ S.input=function(){
 		return;
 	}
 	
-	switch(currentType){
-		case 'image':
-			S.to({file:'+1'});
-			break;
-		case 'multimedia':
-			//If a wait timer was going, stop it.
-			if(waitTimer.remaining>0){
-				//Run all animations, end all transitions
-				content.classList.add('showpony-loading');
-				content.offsetHeight; //Trigger reflow to flush CSS changes
-				content.classList.remove('showpony-loading');
-				
-				waitTimer.end();
-			}
-			
-			//Remove the continue notice
-			continueNotice.remove();
-			
-			//End object animations on going to the next frame
-			for(var key in S.objects) S.objects[key].dispatchEvent(new Event('animationend'));
-			
-			var choices=false;
-			
-			//If the player is making choices right now
-			if(S.objects[multimediaSettings.textbox] && S.objects[multimediaSettings.textbox].querySelector('input')) choices=true;
-			
-			//If all letters are displayed
-			if(!S.objects[multimediaSettings.textbox] || S.objects[multimediaSettings.textbox].children.length===0 || S.objects[multimediaSettings.textbox].lastChild.firstChild.style.visibility=='visible'){
-				multimediaSettings.input=false;
-				if(!choices) runMM();
-			}
-			else //If some S.objects have yet to be displayed
-			{
-				//Run all animations, end all transitions
-				content.classList.add('showpony-loading');
-				content.offsetHeight; //Trigger reflow to flush CSS changes
-				content.classList.remove('showpony-loading'); //Needs to happen before the latter; otherwise, it'll mess up stuff
-				
-				//Display all letters
-				content.querySelectorAll('.showpony-char').forEach(function(key){
-					//Skip creating animation, and display the letter
-					key.style.animationDelay=null;
-					var classes=key.className;
-					key.className=classes;
-					key.style.animation='initial';
-					key.firstChild.dispatchEvent(new CustomEvent('animationstart'));
-					key.style.visibility='visible';
-				});
-				
-				if(choices) return;
-				
-				multimediaSettings.input=true;
-				
-				//Continue if not waiting
-				if(!multimediaSettings.wait) runMM();
-				else content.appendChild(continueNotice);
-			}
-			break;
-		default:
-			S.menu();
-			break;
-	}
+	S[currentType].input();
 }
 
 //Close ShowPony
@@ -934,10 +883,55 @@ S.close=function(){
 }
 
 ///////////////////////////////////////
+/////////////////IMAGE/////////////////
+///////////////////////////////////////
+
+function makeImage(){
+	const P=this;
+	
+	P.currentTime=0;
+	
+	P.window=document.createElement('img');
+	P.window.className='showpony-block';
+	
+	P.play=function(){
+		
+	}
+	
+	P.pause=function(){
+		
+	}
+	
+	P.input=function(){
+		S.to({file:'+1'});
+	}
+	
+	P.timeUpdate=function(input){
+		P.currentTime=input;
+	}
+	
+	P.src=function(input){
+		P.window.src=input;
+		
+		//If we're not paused, play
+		if(!S.window.classList.contains('showpony-paused')) P.play();
+	}
+	
+	///BUFFERING///
+	P.window.addEventListener('load',function(){
+		content.classList.remove('showpony-loading');
+		S.files[S.currentFile].buffered=true;
+		getTotalBuffered();
+	});
+};
+
+S.image=new makeImage();
+
+///////////////////////////////////////
 /////////////////MEDIA/////////////////
 ///////////////////////////////////////
 
-function makeMedia(type){
+function makeMedia(type='video'){
 	const P=this;
 	
 	P.currentTime=0;
@@ -953,8 +947,12 @@ function makeMedia(type){
 		P.window.pause();
 	}
 	
+	P.input=function(){
+		S.menu();
+	}
+	
 	P.timeUpdate=function(input){
-		P.window.currentTime=input;
+		P.currentTime=P.window.currentTime=input;
 	}
 	
 	P.src=function(input){
@@ -969,20 +967,20 @@ function makeMedia(type){
 
 	//Fix for Safari not going to the right time
 	P.window.addEventListener('loadeddata',function(){
-		this.currentTime=goToTime;
-		console.log(goToTime,this);
+		P.currentTime=P.window.currentTime=goToTime;
+		console.log(goToTime,P.window);
 	});
 
 	P.window.addEventListener('canplay',function(){
 		content.classList.remove('showpony-loading');
 		//Consider how much has already been loaded; this isn't run on first chunk loaded
-		this.dispatchEvent(new CustomEvent('progress'));
+		P.window.dispatchEvent(new CustomEvent('progress'));
 	});
 
 
 	P.window.addEventListener('canplaythrough',function(){
 		//Consider how much has already been loaded; this isn't run on first chunk loaded
-		this.dispatchEvent(new CustomEvent('progress'));
+		P.window.dispatchEvent(new CustomEvent('progress'));
 	});
 
 
@@ -1026,6 +1024,156 @@ S.video=new makeMedia('video');
 S.audio=new makeMedia('audio');
 
 ///////////////////////////////////////
+/////////////VISUAL NOVEL//////////////
+///////////////////////////////////////
+
+function makeVisualNovel(){
+	const P=this;
+	
+	P.currentTime=0;
+	
+	P.window=document.createElement('div');
+	P.window.className='showpony-multimedia';
+	
+	P.play=function(){
+		//Go through objects that were playing- unpause them
+		for(var key in S.objects){
+			if(S.objects[key].wasPlaying){
+				S.objects[key].play();
+			}
+		}
+		
+		//Resume waitTimer
+		waitTimer.resume();
+	}
+	
+	P.pause=function(){
+		//Go through objects that can be played- pause them, and track that
+		for(var key in S.objects){
+			//If it can play, and it is playing
+			if(S.objects[key].play && S.objects[key].paused===false){
+				S.objects[key].wasPlaying=true;
+				S.objects[key].pause();
+			}else{
+				S.objects[key].wasPlaying=false;
+			}
+		}
+		
+		//Pause waitTimer
+		waitTimer.pause();
+	}
+	
+	P.input=function(){
+		//If a wait timer was going, stop it.
+		if(waitTimer.remaining>0){
+			//Run all animations, end all transitions
+			content.classList.add('showpony-loading');
+			S.multimedia.window.offsetHeight; //Trigger reflow to flush CSS changes
+			content.classList.remove('showpony-loading');
+			
+			waitTimer.end();
+		}
+		
+		//Remove the continue notice
+		continueNotice.remove();
+		
+		//End object animations on going to the next frame
+		for(var key in S.objects) S.objects[key].dispatchEvent(new Event('animationend'));
+		
+		var choices=false;
+		
+		//If the player is making choices right now
+		if(S.objects[multimediaSettings.textbox] && S.objects[multimediaSettings.textbox].querySelector('input')) choices=true;
+		
+		//If all letters are displayed
+		if(!S.objects[multimediaSettings.textbox] || S.objects[multimediaSettings.textbox].children.length===0 || S.objects[multimediaSettings.textbox].lastChild.firstChild.style.visibility=='visible'){
+			multimediaSettings.input=false;
+			if(!choices) runMM();
+		}
+		else //If some S.objects have yet to be displayed
+		{
+			//Run all animations, end all transitions
+			content.classList.add('showpony-loading');
+			S.multimedia.window.offsetHeight; //Trigger reflow to flush CSS changes
+			content.classList.remove('showpony-loading'); //Needs to happen before the latter; otherwise, it'll mess up stuff
+			
+			//Display all letters
+			S.multimedia.window.querySelectorAll('.showpony-char').forEach(function(key){
+				//Skip creating animation, and display the letter
+				key.style.animationDelay=null;
+				var classes=key.className;
+				key.className=classes;
+				key.style.animation='initial';
+				key.firstChild.dispatchEvent(new CustomEvent('animationstart'));
+				key.style.visibility='visible';
+			});
+			
+			if(choices) return;
+			
+			multimediaSettings.input=true;
+			
+			//Continue if not waiting
+			if(!multimediaSettings.wait) runMM();
+			else S.multimedia.window.appendChild(continueNotice);
+		}
+	}
+
+	P.timeUpdate=function(input){
+		P.currentTime=input;
+	}
+	
+	P.src=function(input){
+		fetch(input,{credentials:'include'})
+		.then(response=>{
+			return response.text();
+		})
+		.then(text=>{
+			//Remove multiline comments
+			text=text.replace(/\/\*[^]*?\*\//g,'');
+			
+			//Get all non-blank lines
+			S.lines=text.match(/.+(?=\S).+/g);
+			
+			console.log(S.lines);
+			
+			//Get all non-blank lines
+			S.lines=text.match(/.+(?=\S).+/g);
+			
+			//Get keyframes from the text- beginning, end, (? ->)and waiting points
+			keyframes=[0];
+			
+			for(let i=1;i<S.lines.length;i++){
+				//If it's a user input spot, add the point immediately after the last keyframe- things let up to this, let it all happen
+				if(S.lines[i]==='engine.wait'){
+					keyframes.push(keyframes[keyframes.length-1]+1);
+					continue;
+				}
+				
+				//Regular text lines (not continuing) can be keyframes
+				if(/^\t+(?!\t*\+)/i.test(S.lines[i])) keyframes.push(i);
+			}
+			
+			runTo=Math.round(keyframes.length*(obj.time/S.files[obj.file].duration));
+			if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
+			else runTo=keyframes[runTo];
+			
+			runMM(0);
+			
+			if(S.files[obj.file].buffered!==true){
+				S.files[obj.file].buffered=true;
+				getTotalBuffered();
+			}
+		})
+		.catch((error)=>{
+			alert('329: '+error);
+			console.log(error);
+		});
+	}
+};
+
+S.multimedia=new makeVisualNovel();
+
+///////////////////////////////////////
 ///////////PRIVATE VARIABLES///////////
 ///////////////////////////////////////
 
@@ -1054,9 +1202,7 @@ var waitForInput=false
 	,overlay=m('overlay','div')
 	,cover=m('cover','div')
 	,types={
-		image:m('block','img')
-		,multimedia:m('multimedia')
-		,text:m('text')
+		text:m('text')
 	}
 	//Page turning
 	,pageTurn=m('page-turn')
@@ -1285,37 +1431,6 @@ function getTotalBuffered(){
 			);
 		}
 	}
-}
-
-//Play and pause multimedia
-types.multimedia.play=function(){
-	
-	//Go through objects that were playing- unpause them
-	for(var key in S.objects){
-		if(S.objects[key].wasPlaying){
-			S.objects[key].play();
-		}
-	}
-	
-	//Resume waitTimer
-	waitTimer.resume();
-}
-
-types.multimedia.pause=function(){
-	
-	//Go through objects that can be played- pause them, and track that
-	for(var key in S.objects){
-		//If it can play, and it is playing
-		if(S.objects[key].play && S.objects[key].paused===false){
-			S.objects[key].wasPlaying=true;
-			S.objects[key].pause();
-		}else{
-			S.objects[key].wasPlaying=false;
-		}
-	}
-	
-	//Pause waitTimer
-	waitTimer.pause();
 }
 
 function getCurrentTime(){
@@ -1580,7 +1695,7 @@ function runMM(inputNum=S.currentLine+1){
 			}
 		};
 		
-		content.offsetHeight; //Trigger reflow to flush CSS changes
+		S.multimedia.window.offsetHeight; //Trigger reflow to flush CSS changes
 		content.classList.remove('showpony-loading');
 	}
 	
@@ -1712,13 +1827,13 @@ function runMM(inputNum=S.currentLine+1){
 			if(!/\./.test(object)) S.objects[object].src+='.mp3';
 			S.objects[object].preload=true;
 			
-			content.appendChild(S.objects[object]);
+			S.multimedia.window.appendChild(S.objects[object]);
 		}else{
 			if(type==='textbox'){
-				content.appendChild(S.objects[object]=m(type,'form'));
+				S.multimedia.window.appendChild(S.objects[object]=m(type,'form'));
 				S.objects[object].addEventListener('submit',function(event){event.preventDefault();});
 			}
-			else content.appendChild(S.objects[object]=m(type));
+			else S.multimedia.window.appendChild(S.objects[object]=m(type));
 
 			S.objects[object].addEventListener('animationend',function(event){
 				if(this!==event.target) return;
@@ -1775,7 +1890,7 @@ function runMM(inputNum=S.currentLine+1){
 			//If a value was included, wait for the set time
 			if(vals[1]) waitTimer=new powerTimer(runMM,parseFloat(vals[1])*1000);
 			//Otherwise, let the user know to continue it
-			else content.appendChild(continueNotice);
+			else S.multimedia.window.appendChild(continueNotice);
 			
 			//If we're paused, pause the timer
 			if(S.window.classList.contains('showpony-paused')) waitTimer.pause();
@@ -1916,7 +2031,7 @@ function runMM(inputNum=S.currentLine+1){
 					if(text[0]!=='+'){
 						S.objects[multimediaSettings.textbox].innerHTML='';
 						
-						if(!S.objects.name) content.appendChild(S.objects.name=m('name'));
+						if(!S.objects.name) S.multimedia.window.appendChild(S.objects.name=m('name'));
 						
 						//Split up the text so we can have names automatically written
 						var nameText=text.split('::');
@@ -2237,7 +2352,7 @@ function runMM(inputNum=S.currentLine+1){
 							}else{
 								//If we need players to click to continue (and they have no inputs to fill out or anything), notify them:
 								if(!S.objects[multimediaSettings.textbox].querySelector('input')){
-									content.appendChild(continueNotice);
+									S.multimedia.window.appendChild(continueNotice);
 								}
 							}
 						});
@@ -2567,13 +2682,6 @@ pageTurn.addEventListener('scroll',function(event){
 			S.to({file:'+1'});
 		}
 	}
-});
-
-///FINISHED LOADING///
-types.image.addEventListener('load',function(){
-	content.classList.remove('showpony-loading');
-	S.files[S.currentFile].buffered=true;
-	getTotalBuffered();
 });
 
 function updateInfo(pushState){
