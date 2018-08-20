@@ -487,105 +487,68 @@ S.to=function(obj={}){
 	}else{
 		if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
 		
-		//Display the medium based on the file extension
-		//Multimedia Engine/Text/Copy
+		//NEED A DIFFERENT SETUP FOR INFINITE SCROLL//
 		if(currentType==='text'){
 			fetch(src,{credentials:'include'})
 				.then(response=>{
 					return response.text();
 				})
 				.then(text=>{
-					if(currentType==='multimedia'){
-						//Remove multiline comments
-						text=text.replace(/\/\*[^]*?\*\//g,'');
+					//Use either page infinite or page turn, whichever is requested
+					if(S.infiniteScroll){
 						
-						//Get all non-blank lines
-						S.lines=text.match(/.+(?=\S).+/g);
+						//If file hasn't already been loaded, load it!
+						let part=content.querySelector('[data-file="'+obj.file+'"]');
 						
-						console.log(S.lines);
+						//Safety check; if we're sticking, and trying to load a part that doesn't have a div, something's off and we need to get outta here!
+						if(sticky!==false && !part) return;
 						
-						//Get all non-blank lines
-						S.lines=text.match(/.+(?=\S).+/g);
-						
-						//Get keyframes from the text- beginning, end, (? ->)and waiting points
-						keyframes=[0];
-						
-						for(let i=1;i<S.lines.length;i++){
-							//If it's a user input spot, add the point immediately after the last keyframe- things let up to this, let it all happen
-							if(S.lines[i]==='engine.wait'){
-								keyframes.push(keyframes[keyframes.length-1]+1);
-								continue;
-							}
+						//If the part hasn't been created, it's not being automatically appended; so empty the div!
+						if(!part){
+							part=document.createElement('div');
+							part.dataset.file=obj.file;
+							pageTurn.innerHTML='';
+							pageTurn.appendChild(part);
 							
-							//Regular text lines (not continuing) can be keyframes
-							if(/^\t+(?!\t*\+)/i.test(S.lines[i])) keyframes.push(i);
+							S.currentFile=obj.file;
+							
+							//Stick to the set file and time
+							sticky={file:S.currentFile,time:obj.time};
+							console.log(sticky);
 						}
 						
-						runTo=Math.round(keyframes.length*(obj.time/S.files[obj.file].duration));
-						if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
-						else runTo=keyframes[runTo];
+						var currentPart=content.querySelector('[data-file="'+S.currentFile+'"]');
+						var addScroll=pageTurn.scrollTop-currentPart.offsetTop;
 						
-						console.log(keyframes);
+						if(!part.innerHTML){
+							//If adding a file in normally, just add it in
+							part.innerHTML=text;
 						
-						runMM(0);
-					//Regular text
-					}else{
-						//Use either page infinite or page turn, whichever is requested
-						if(S.infiniteScroll){
-							
-							//If file hasn't already been loaded, load it!
-							let part=content.querySelector('[data-file="'+obj.file+'"]');
-							
-							//Safety check; if we're sticking, and trying to load a part that doesn't have a div, something's off and we need to get outta here!
-							if(sticky!==false && !part) return;
-							
-							//If the part hasn't been created, it's not being automatically appended; so empty the div!
-							if(!part){
-								part=document.createElement('div');
-								part.dataset.file=obj.file;
-								pageTurn.innerHTML='';
-								pageTurn.appendChild(part);
-								
-								S.currentFile=obj.file;
-								
-								//Stick to the set file and time
-								sticky={file:S.currentFile,time:obj.time};
-								console.log(sticky);
-							}
-							
-							var currentPart=content.querySelector('[data-file="'+S.currentFile+'"]');
-							var addScroll=pageTurn.scrollTop-currentPart.offsetTop;
-							
-							if(!part.innerHTML){
-								//If adding a file in normally, just add it in
-								part.innerHTML=text;
-							
-								pageTurn.scrollTop=currentPart.offsetTop+addScroll;
-							}else{
-								//Scroll to spot for file
-								pageTurn.scrollTop=part.offsetTop+(obj.time/S.files[obj.file].duration)*part.offsetHeight;
-							}
-							
-							if(sticky!==false){
-								var stickyPart=content.querySelector('[data-file="'+sticky.file+'"]');
-								
-								pageTurn.scrollTop=stickyPart.offsetTop+(sticky.time/S.files[sticky.file].duration)*stickyPart.offsetHeight;
-								
-								pageTurn.dispatchEvent(new CustomEvent('scroll'));
-							}
-							
-							content.classList.remove('showpony-loading');
-							
-						}else{ //Page turning
-							//Put in the text
-							pageTurn.innerHTML=text;
-							
-							//Scroll to spot
-							pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[obj.file].duration);
-							
-							//Stop loading
-							content.classList.remove('showpony-loading');
+							pageTurn.scrollTop=currentPart.offsetTop+addScroll;
+						}else{
+							//Scroll to spot for file
+							pageTurn.scrollTop=part.offsetTop+(obj.time/S.files[obj.file].duration)*part.offsetHeight;
 						}
+						
+						if(sticky!==false){
+							var stickyPart=content.querySelector('[data-file="'+sticky.file+'"]');
+							
+							pageTurn.scrollTop=stickyPart.offsetTop+(sticky.time/S.files[sticky.file].duration)*stickyPart.offsetHeight;
+							
+							pageTurn.dispatchEvent(new CustomEvent('scroll'));
+						}
+						
+						content.classList.remove('showpony-loading');
+						
+					}else{ //Page turning
+						//Put in the text
+						pageTurn.innerHTML=text;
+						
+						//Scroll to spot
+						pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[obj.file].duration);
+						
+						//Stop loading
+						content.classList.remove('showpony-loading');
 					}
 					
 					if(S.files[obj.file].buffered!==true){
@@ -600,62 +563,8 @@ S.to=function(obj={}){
 			;
 		//Image/Audio/Video
 		}else{
-			/*if(S.infiniteScroll){
-				if(currentType==='image'){
-					//If file hasn't already been loaded, load it!
-					let part=content.querySelector('[data-file="'+obj.file+'"]');
-					
-					//Safety check; if we're sticking, and trying to load a part that doesn't have a div, something's off and we need to get outta here!
-					if(sticky!==false && !part) return;
-					
-					//If the part hasn't been created, it's not being automatically appended; so empty the div!
-					if(!part){
-						part=document.createElement('div');
-						part.dataset.file=obj.file;
-						pageTurn.innerHTML='';
-						pageTurn.appendChild(part);
-						
-						S.currentFile=obj.file;
-						
-						//Stick to the set file and time
-						sticky={file:S.currentFile,time:obj.time};
-						console.log(sticky);
-					}
-					
-					var currentPart=content.querySelector('[data-file="'+S.currentFile+'"]');
-					var addScroll=pageTurn.scrollTop-currentPart.offsetTop;
-					
-					if(!part.innerHTML){
-						var img=document.createElement('img');
-						img.src=src;
-						part.appendChild(img);
-						
-						img.addEventListener('load',function(){
-							content.classList.remove('showpony-loading');
-							
-							S.files[obj.file].buffered=true;
-							getTotalBuffered();
-							
-							pageTurn.scrollTop=currentPart.offsetTop+addScroll;
-							
-							if(sticky!==false){
-								var stickyPart=content.querySelector('[data-file="'+sticky.file+'"]');
-								
-								pageTurn.scrollTop=stickyPart.offsetTop+(sticky.time/S.files[sticky.file].duration)*stickyPart.offsetHeight;
-								
-								pageTurn.dispatchEvent(new CustomEvent('scroll'));
-							}
-						});
-					}else{
-						//Scroll to spot for file
-						pageTurn.scrollTop=part.offsetTop+(obj.time/S.files[obj.file].duration)*part.offsetHeight;
-						content.classList.remove('showpony-loading');
-					}
-					
-				}
-			}*/
-			
 			S[newType].src(src);
+			S[newType].timeUpdate(obj.time);
 		}
 	}
 
@@ -677,8 +586,7 @@ S.to=function(obj={}){
 	
 	////MAY NEED TO PUT THIS ALL IN A "THEN" AFTER A PROMISE SETUP FOR THE DIFFERENT MEDIA (so timing is perfect)
 	goToTime=obj.time;
-	S[newType].timeUpdate(obj.time); //Update the time
-	timeUpdate();
+	timeUpdate(obj.time);
 }
 
 var goToTime=0;
@@ -917,6 +825,57 @@ function makeImage(){
 		if(!S.window.classList.contains('showpony-paused')) P.play();
 	}
 	
+	P.displaySubtitles=function(){
+		if(S.currentSubtitles===null){
+			subtitles.innerHTML='';
+			return;
+		}
+		
+		if(S.files[S.currentFile].subtitles){
+			subtitles.innerHTML='';
+			
+			subtitles.width=P.window.naturalWidth;
+			subtitles.height=P.window.naturalHeight;
+			
+			var height=content.getBoundingClientRect().height;
+			var width=content.getBoundingClientRect().width;
+			var shrinkPercent=height/P.window.naturalHeight;
+			
+			var newHeight=P.window.naturalHeight*shrinkPercent;
+			var newWidth=P.window.naturalHeight*shrinkPercent;
+
+			subtitles.style.height=newHeight+'px';
+			subtitles.style.width=newWidth+'px';
+			
+			subtitles.style.left=(width-newWidth)/2+'px';
+			
+			var lines=S.files[S.currentFile].subtitles.split(/\s{3,}/g);
+			for(let i=0;i<lines.length;i++){
+				var block=m('sub','p');
+				
+				var input=lines[i].split(/\n/);
+				block.innerHTML=input[1];
+				
+				input=input[0].match(/(\d|\.)+/g);
+				
+				block.style.left=input[0]+'%';
+				block.style.width=input[2]-input[0]+'%';
+				block.style.top=input[1]+'%';
+				block.style.height=input[3]-input[1]+'%';
+				
+				subtitles.appendChild(block);
+			}
+		}else{
+			//If don't have the file
+			fetch(S.subtitles[S.currentSubtitles]+S.files[S.currentFile].title+'.vtt')
+			.then(response=>{return response.text();})
+			.then(text=>{
+				S.files[S.currentFile].subtitles=text;
+				S[currentType].displaySubtitles();
+			});
+		}
+	}
+	
 	///BUFFERING///
 	P.window.addEventListener('load',function(){
 		content.classList.remove('showpony-loading');
@@ -960,6 +919,67 @@ function makeMedia(type='video'){
 		
 		//If we're not paused, play
 		if(!S.window.classList.contains('showpony-paused')) P.play();
+	}
+	
+	P.displaySubtitles=function(){
+		if(S.currentSubtitles===null){
+			subtitles.innerHTML='';
+			return;
+		}
+		
+		if(S.files[S.currentFile].subtitles){
+			subtitles.style.cssText=null;
+			var currentTime=S[currentType].currentTime;
+			
+			var lines=S.files[S.currentFile].subtitles.match(/\b.+/ig);
+			
+			for(let i=0;i<lines.length;i++){
+				if(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[i])){
+					var times=lines[i].split(/\s*-->\s*/);
+					//If between both times
+					if(
+						currentTime>=times[0].split(/:/)[1]
+						&& currentTime<=times[1].split(/:/)[1]
+					){
+						var newSubtitle='';
+						
+						var ii=i+1;
+						while(!(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[ii])) && ii<lines.length){
+							if(newSubtitle.length) newSubtitle+='<br>';
+							newSubtitle+=lines[ii];
+							
+							ii++;
+						}
+						
+						if(subtitles.children.length===0 || subtitles.children[0].innerHTML!==newSubtitle){
+							subtitles.innerHTML='';
+						
+							var block=m('sub','p');
+							block.innerHTML=newSubtitle;
+							
+							subtitles.appendChild(block);
+						}
+						
+						break;
+					}
+					
+					if(currentTime<times[0].split(/:/)[0] || i==lines.length-1){
+						subtitles.innerHTML='';
+						break;
+					}
+				}
+				
+				if(i==lines.length-1) subtitles.innerHTML='';
+			}
+		}else{
+			//If don't have the file
+			fetch(S.subtitles[S.currentSubtitles]+S.files[S.currentFile].title+'.vtt')
+			.then(response=>{return response.text();})
+			.then(text=>{
+				S.files[S.currentFile].subtitles=text;
+				S[currentType].displaySubtitles();
+			});
+		}
 	}
 	
 	//Allow playing videos using Showpony in iOS
@@ -1153,14 +1173,14 @@ function makeVisualNovel(){
 				if(/^\t+(?!\t*\+)/i.test(S.lines[i])) keyframes.push(i);
 			}
 			
-			runTo=Math.round(keyframes.length*(obj.time/S.files[obj.file].duration));
+			runTo=Math.round(keyframes.length*(P.currentTime/S.files[S.currentFile].duration));
 			if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
 			else runTo=keyframes[runTo];
 			
 			runMM(0);
 			
-			if(S.files[obj.file].buffered!==true){
-				S.files[obj.file].buffered=true;
+			if(S.files[S.currentFile].buffered!==true){
+				S.files[S.currentFile].buffered=true;
 				getTotalBuffered();
 			}
 		})
@@ -1168,6 +1188,25 @@ function makeVisualNovel(){
 			alert('329: '+error);
 			console.log(error);
 		});
+	}
+	
+	P.displaySubtitles=function(){
+		if(S.currentSubtitles===null){
+			subtitles.innerHTML='';
+			return;
+		}
+		
+		if(S.files[S.currentFile].subtitles){
+			///NOTHING YET!
+		}else{
+			//If don't have the file
+			fetch(S.subtitles[S.currentSubtitles]+S.files[S.currentFile].title+'.vtt')
+			.then(response=>{return response.text();})
+			.then(text=>{
+				S.files[S.currentFile].subtitles=text;
+				S[currentType].displaySubtitles();
+			});
+		}
 	}
 };
 
@@ -1201,9 +1240,6 @@ var waitForInput=false
 	,captionsButton=m('captions-button','select')
 	,overlay=m('overlay','div')
 	,cover=m('cover','div')
-	,types={
-		text:m('text')
-	}
 	//Page turning
 	,pageTurn=m('page-turn')
 	//Multimedia
@@ -1246,11 +1282,11 @@ function timeUpdate(time){
 		//Don't exceed the file's duration
 		var duration=S.files[S.currentFile].duration;
 		if(time>duration) time=duration;
-		S[currentType].currentTime=time;
+		S[currentType].timeUpdate(time);
 	}
 	
 	updateInfo();
-	displaySubtitles();
+	S[currentType].displaySubtitles();
 	
 	//Run custom event for checking time
 	S.window.dispatchEvent(
@@ -1264,110 +1300,6 @@ function timeUpdate(time){
 			}
 		)
 	);
-}
-
-function displaySubtitles(){
-	if(S.currentSubtitles===null){
-		subtitles.innerHTML='';
-		return;
-	}
-	
-	if(S.files[S.currentFile].subtitles){
-		if(currentType==='text'){
-			return;
-		}
-		else if(currentType==='image'){
-			subtitles.innerHTML='';
-			
-			subtitles.width=types.image.naturalWidth;
-			subtitles.height=types.image.naturalHeight;
-			
-			var height=content.getBoundingClientRect().height;
-			var width=content.getBoundingClientRect().width;
-			var shrinkPercent=height/types.image.naturalHeight;
-			
-			var newHeight=types.image.naturalHeight*shrinkPercent;
-			var newWidth=types.image.naturalHeight*shrinkPercent;
-
-			subtitles.style.height=newHeight+'px';
-			subtitles.style.width=newWidth+'px';
-			
-			subtitles.style.left=(width-newWidth)/2+'px';
-			
-			var lines=S.files[S.currentFile].subtitles.split(/\s{3,}/g);
-			for(let i=0;i<lines.length;i++){
-				var block=m('sub','p');
-				
-				var input=lines[i].split(/\n/);
-				block.innerHTML=input[1];
-				
-				input=input[0].match(/(\d|\.)+/g);
-				
-				block.style.left=input[0]+'%';
-				block.style.width=input[2]-input[0]+'%';
-				block.style.top=input[1]+'%';
-				block.style.height=input[3]-input[1]+'%';
-				
-				subtitles.appendChild(block);
-			}
-		}else if(currentType==='video' || currentType==='audio'){
-			subtitles.style.cssText=null;
-			var currentTime=S[currentType].currentTime;
-			
-			var lines=S.files[S.currentFile].subtitles.match(/\b.+/ig);
-			
-			for(let i=0;i<lines.length;i++){
-				if(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[i])){
-					var times=lines[i].split(/\s*-->\s*/);
-					//If between both times
-					if(
-						currentTime>=times[0].split(/:/)[1]
-						&& currentTime<=times[1].split(/:/)[1]
-					){
-						var newSubtitle='';
-						
-						var ii=i+1;
-						while(!(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[ii])) && ii<lines.length){
-							if(newSubtitle.length) newSubtitle+='<br>';
-							newSubtitle+=lines[ii];
-							
-							ii++;
-						}
-						
-						if(subtitles.children.length===0 || subtitles.children[0].innerHTML!==newSubtitle){
-							subtitles.innerHTML='';
-						
-							var block=m('sub','p');
-							block.innerHTML=newSubtitle;
-							
-							subtitles.appendChild(block);
-						}
-						
-						break;
-					}
-					
-					if(currentTime<times[0].split(/:/)[0] || i==lines.length-1){
-						subtitles.innerHTML='';
-						break;
-					}
-				}
-				
-				if(i==lines.length-1) subtitles.innerHTML='';
-			}
-		}else if(currentType==='multimedia'){
-			//We only add subtitles for unexplained audio
-			//Add support later
-			return;
-		}
-	}else{
-		//If don't have the file
-		fetch(S.subtitles[S.currentSubtitles]+S.files[S.currentFile].title+'.vtt')
-		.then(response=>{return response.text();})
-		.then(text=>{
-			S.files[S.currentFile].subtitles=text;
-			displaySubtitles();
-		});
-	}
 }
 
 function getTotalBuffered(){
@@ -2593,7 +2525,7 @@ if(S.subtitles){
 		'change'
 		,function(){
 			S.currentSubtitles=this.options[this.selectedIndex].value==='None' ? null : this.value;
-			displaySubtitles();
+			S[currentType].displaySubtitles();
 		}
 	);
 }else captionsButton.remove();
