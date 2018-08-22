@@ -1,4 +1,7 @@
-/*The container*/
+/*/////////////////////////////////////
+////////////////GENERAL////////////////
+/////////////////////////////////////*/
+
 .showpony{
 	background-color:#000;
 	overflow:hidden;
@@ -12,33 +15,18 @@
 	content:" ";
 	display:block;
 	position:absolute;
-	border:inset white .5em;
 	border-radius:100%;
 	top:50%;
 	left:50%;
-	width:4em;
-	height:4em;
-	box-sizing:border-box;
+	width:2em;
+	height:2em;
 	pointer-events:none;
-	animation:spin 3s linear infinite .5s;
-	visibility:hidden;
 }
 
 /*Automatic loading with these, and disable animations*/
 .showpony-loading,.showpony-loading *
 ,.showpony-paused .showpony-content, .showpony-paused  .showpony-content *{
 	animation-play-state:paused !important; /*Disables general animations and text animations, so we freeze while loading*/
-}
-
-@keyframes spin{
-	0%{
-		visibility:visible;
-		transform:translate(-2em,-2em) rotate(0deg);
-	}
-	100%{
-		visibility:visible;
-		transform:translate(-2em,-2em) rotate(360deg);
-	}
 }
 
 .showpony-cover{
@@ -69,6 +57,34 @@
 	transform:scale(1.1);
 }
 
+/*/////////////////////////////////////
+/////////////////MENU//////////////////
+/////////////////////////////////////*/
+
+.showpony-overlay{
+	position:absolute;
+	top:0;
+	left:0;
+	right:0;
+	bottom:0;
+	opacity:0;
+	color:#000;
+	background-color:rgba(255,255,255,.5);
+	
+	-ms-user-select:none;
+	-moz-user-select:none;
+	-webkit-user-select:none;
+	user-select:none;
+}
+
+.showpony-paused .showpony-overlay{
+	opacity:1;
+}
+
+.showpony-paused .showpony-overlay{
+	background-color:rgba(255,255,255,.5);
+}
+
 .showpony-overlay-text{
 	position:absolute;
 	width:100%;
@@ -81,56 +97,12 @@
 	padding:.25em;
 }
 
-.showpony-overlay{
-	position:absolute;
-	top:0;
-	left:0;
-	right:0;
-	bottom:85%;
-	color:#fff;
-	z-index:1;
-	opacity:0;
-	cursor:none;
-	transition:opacity .2s,background-color .1s;
-	background-color:rgba(0,0,0,.25);
-	
-	-ms-user-select:none;
-	-moz-user-select:none;
-	-webkit-user-select:none;
-	user-select:none;
-}
-
-.showpony-overlay:hover
-,.showpony-paused .showpony-overlay{
-	opacity:1;
-	cursor:auto;
-}
-
-@media (hover:none), -moz-touch-enabled{
-	.showpony:not(.showpony-paused) .showpony-overlay:hover{
-		opacity:0;
-		cursor:initial;
-	}
-	
-	.showpony:not(.showpony-paused) .showpony-overlay:hover button
-	,.showpony:not(.showpony-paused) .showpony-overlay:hover select{
-		pointer-events:none;
-	}
-}
-
-.showpony-paused .showpony-overlay{
-	background-color:rgba(0,0,0,.5);
-	bottom:0;
-}
-
 .showpony-overlay button{
 	border:none;
 	width:3rem;
 	height:3rem;
 	pointer-events:auto;
 	cursor:pointer;
-	background-size:cover;
-	transition:opacity .1s;
 }
 
 .showpony-overlay-buffer{
@@ -146,58 +118,13 @@
 /*Menu scrub bar*/
 .showpony-progress{
 	position:absolute;
-	top:2.825em;
-	transform:translate(-.25em,0);
+	top:3.25em;
 	
-	border:solid white .5em;
+	width:1em;
+	height:.25em;
 	background-color:#fff;
-	border-radius:100%;
 	transform:translate(-.5em,0);
-	box-sizing:border-box;
 	pointer-events:none;
-	
-	pointer-events:none;
-}
-
-.showpony-fullscreen-button{
-	background-position:0% 10%;
-	float:right;
-}
-
-button.showpony-account-button{
-	background-color:blue;
-	float:left;
-	
-	font-size:1em;
-	width:9rem;
-	font-weight:bold;
-	background-size:33%;
-	background-position-x:100%;
-	background-repeat:no-repeat;
-	overflow-wrap:break-word;
-}
-
-.showpony-captions-button{
-	background-position:0% 20%;
-	background-color:black;
-	float:right;
-	border:none;
-	width:5rem;
-	height:3rem;
-	pointer-events:auto;
-	cursor:pointer;
-	background-size:cover;
-	background-color:none;
-	transition:opacity .1s;
-	color:white;
-}
-
-.showpony-captions-button option{
-	color:white;
-}
-
-.showpony-overlay button:hover{
-	opacity:.75;
 }
 
 .showpony-content{
@@ -221,20 +148,6 @@ button.showpony-account-button{
 	height:100%;
 	cursor:pointer;
 	object-fit:contain;
-}
-
-.showpony-overlay button, .showpony-overlay a{
-	pointer-events:auto;
-}
-
-.showpony-overlay a{
-	color:#fff;
-}
-
-.showpony-overlay svg{
-	fill:currentColor;
-	height:2em;
-	margin:.25em;
 }
 
 /*Fullscreen display*/
@@ -269,16 +182,9 @@ button.showpony-account-button{
 	outline:none;
 }
 
-/*Subtitles*/
-.showpony-captions-options{
-	color:white;
-	display:flex;
-	flex-direction:column;
-}
-
-.showpony-captions-option{
-	color:white;
-}
+/*/////////////////////////////////////
+///////////////SUBTITLES///////////////
+/////////////////////////////////////*/
 
 .showpony-subtitles{
 	position:absolute;
@@ -292,10 +198,10 @@ button.showpony-account-button{
 	background-color:rgba(0,0,0,0.64);
 	color:white;
 	overflow:auto;
+	font-size:1.5em;
+	padding:.5em;
 	box-sizing:border-box;
 	margin:0;
-	padding:.5em;
-	font-size:1.5em;
 	pointer-events:auto;
 	
 	left:10%;
@@ -304,7 +210,10 @@ button.showpony-account-button{
 	height:20%;
 }
 
-/***TEXT***/
+/*/////////////////////////////////////
+/////////////////TEXT//////////////////
+/////////////////////////////////////*/
+
 .showpony-page-turn{
 	overflow:auto;
 	height:100%;
@@ -316,45 +225,9 @@ button.showpony-account-button{
 	word-break:break-word;
 }
 
-.showpony-page-turn img{
-	width:40em;
-	max-width:100%;
-	display:block;
-	margin:auto;
-	margin-bottom:10em;
-}
-
-.showpony-page-prev:hover
-,.showpony-page-next:hover{
-	opacity:.7;
-}
-	
-.showpony-page-prev
-,.showpony-page-next{
-	position:relative;
-	height:14em;
-	max-height:40%;
-	width:100%;
-	left:0;
-	opacity:.1;
-	transition:opacity .2s;
-	pointer-events:auto;
-	cursor:pointer;
-	margin:auto;
-	display:block;
-	border:none;
-	margin:0;
-}
-
-.showpony-page-prev{
-	background:linear-gradient(black,white);
-}
-
-.showpony-page-next{
-	background:linear-gradient(white,black);
-}
-
-/***MULTIMEDIA***/
+/*/////////////////////////////////////
+/////////////VISUAL NOVEL//////////////
+/////////////////////////////////////*/
 
 .showpony-textbox{
 	width:100%;
@@ -486,7 +359,6 @@ button.showpony-account-button{
 	}
 }
 
-/*Text*/
 .showpony-char-container{
 	visibility:hidden;
 	font-size:1em;

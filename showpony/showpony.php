@@ -253,86 +253,73 @@ var objectBuffer, keyframes;
 S.to=function(obj={}){
 	content.classList.add('showpony-loading');
 	
-	//Relative file
-	if(obj.file && (obj.file[0]==='+' || obj.file[0]==='-')) obj.file=S.currentFile+(parseInt(obj.file.substring(1))*(obj.file[0]==='-' ? -1 : 1));
+	obj.time=obj.time || 0;
+	obj.file=obj.file || null;
 	
-	//Relative time
-	if(obj.time && (obj.time[0]==='+' || obj.time[0]==='-')){
-		var getTime=0;
-		//Add the times of previous videos to get the actual time in the piece
-		for(let i=0;i<S.currentFile;i++) getTime+=S.files[i].duration;
+	switch(obj.time){
+		case 'end':
+			obj.file=S.files.length-1;
+			obj.time=Math.max(0,S.files[obj.file].duration-10);
+			break;
+		default:
+			//Relative time
+			if(/\+|\-/.test(obj.time[0])){
+				obj.time=S[currentType].currentTime+parseFloat(obj.time);
+				//Add the durations of previous files
+				for(let i=0;i<S.currentFile;i++) getTime+=S.files[i].duration;
+			}
 		
-		getTime+=S[currentType] && S[currentType].currentTime || 0;
-		
-		obj.time=getTime+(parseFloat(obj.time.substring(1))*(obj.time[0]==='-' ? -1 : 1));
-		
-		//Don't go below 0
-		if(obj.time<0) obj.time=0;
+			//If a numerical time is passed but no file, get file and time based on the place in the total
+			if(obj.file===null){
+				obj.file=0;
+				
+				//Look through the files for the right one
+				for(let i=0;i<S.files.length;i++){
+					var length=S.files[i].duration;
+					
+					//If we've reached the file, exit
+					if(obj.time<length) break;
+					
+					obj.file++;
+					obj.time-=length;
+					
+					//If the time passed is greater than the total time, the story will end
+				}
+			}
+			
+			obj.time=Math.max(0,obj.time);
+			break;
 	}
-	
-	//If a numerical time is passed but no file, get file and time based on the place in the total
-	if(obj.time!==undefined && !isNaN(obj.time) && obj.file===undefined){
-		obj.file=0;
 		
-		//Look through the videos for the right one
-		var l=S.files.length;
-		for(let i=0;i<l;i++){
-			var length=S.files[i].duration;
+	switch(obj.file){
+		case 'last':
+			obj.file=S.files.length-1;
+			break;
+		default:
+			//Relative file
+			if(/\+|\-/.test(obj.file[0])) obj.file=S.currentFile+parseInt(obj.file);
 			
-			//If we've reached the file, exit
-			if(obj.time<length) break;
-			//Otherwise go to the next file
-			else obj.file++, obj.time-=length;
+			//If we're at the end, run the readable event
+			if(obj.file>=S.files.length){
+				obj.file=S.files.length-1;
+				obj.time=S.files[S.files.length-1].duration;
+				
+				//Run the event that users can read
+				S.window.dispatchEvent(new CustomEvent('end'));
+				return;
+			}
 			
-			//If the time passed is greater than the total time, the story will end
-		}
+			obj.file=Math.max(0,obj.file);
+			break;
 	}
 	
 	Object.assign(obj,{
-		file:obj.file!==undefined ? obj.file : S.currentFile
-		,time:obj.time || 0
-		,refresh:obj.refresh || false
-		,reload:obj.reload || false
+		reload:obj.reload || false
 		,scrollToTop:obj.scrollToTop===undefined ? true : obj.scrollToTop
 		,popstate:obj.popstate || false
 		,replaceState:obj.replaceState || false
 	});
 	
-	//Go to the beginning of the story
-	if(obj.time==='start'){
-		obj.file=0;
-		obj.time=0;
-	}
-	
-	//Go to the end of the story
-	if(obj.time==='end'){
-		obj.file=S.files.length-1;
-		
-		//Go to near the end of the last file. If we go too far back, set time to 0.
-		obj.time=S.files[obj.file].duration-10;
-		if(obj.time<0) obj.time=0;
-	}
-	
-	//Use 'last' for obj file
-	if(obj.file==='last') obj.file=S.files.length-1;
-	obj.file=obj.file || 0;
-	
-	//If we're at the end, run the readable event
-	if(obj.file>=S.files.length){
-		obj.file=S.files.length-1;
-		obj.time=S.files[S.files.length-1].duration;
-		if(obj.time<0) obj.time=0;
-		
-		//If we aren't just trying to reload a file, end; otherwise, get to that last file
-		if(!obj || !obj.reload){
-			//Run the event that users can read
-			S.window.dispatchEvent(new CustomEvent('end'));
-			content.classList.remove('showpony-loading');
-			return;
-		}
-	}
-	
-	if(obj.file<0) obj.file=0;
 	if(!S.infiniteScroll){
 		S.currentFile=obj.file;
 		
@@ -391,6 +378,7 @@ S.to=function(obj={}){
 		}else{
 			//General setup
 			content.appendChild(S[newType].window);
+			console.log(newType,S[newType].window);
 		}
 	}
 	
@@ -412,9 +400,8 @@ S.to=function(obj={}){
 	if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
 	
 	//Image/Audio/Video
-	S[newType].timeUpdate(obj.time);
-	S[newType].src(obj.file);
-
+	S[newType].src(obj.file,obj.time);
+	
 	//Preload next files, if allowed and/or needed
 	for(let i=obj.file+1;i<=obj.file+S.preloadNext;i++){
 		if(i>=S.files.length) break;
@@ -430,10 +417,6 @@ S.to=function(obj={}){
 			getTotalBuffered();
 		});
 	}
-	
-	////MAY NEED TO PUT THIS ALL IN A "THEN" AFTER A PROMISE SETUP FOR THE DIFFERENT MEDIA (so timing is perfect)
-	goToTime=obj.time;
-	timeUpdate(obj.time);
 }
 
 //NEED A DIFFERENT SETUP FOR INFINITE SCROLL//
@@ -514,8 +497,6 @@ S.to=function(obj={}){
 }else{
 //}
 */
-
-var goToTime=0;
 
 //Toggle the menu
 S.menu=function(event=null,action=false){
@@ -737,15 +718,15 @@ function makeText(){
 		//S.to({file:'+1'});
 	}
 	
-	P.timeUpdate=function(input){
-		P.currentTime=input;
+	P.timeUpdate=function(time=0){
+		P.currentTime=time;
 	}
 	
-	P.src=function(input){
-		var src=S.files[input].path;
+	P.src=function(file=0,time=0){
+		var src=S.files[file].path;
 		
 		//If this is the current file
-		if(P.currentFile===input){
+		if(P.currentFile===file){
 			pageTurn.scrollTop=pageTurn.scrollHeight*(P.currentTime/S.files[P.currentFile].duration);
 			content.classList.remove('showpony-loading');
 			return;
@@ -756,7 +737,7 @@ function makeText(){
 			return response.text();
 		})
 		.then(text=>{
-			P.currentFile=input;
+			P.currentFile=file;
 			
 			//Put in the text
 			pageTurn.innerHTML=text;
@@ -771,6 +752,9 @@ function makeText(){
 				S.files[P.currentFile].buffered=true;
 				getTotalBuffered();
 			}
+			
+			P.timeUpdate(time);
+			timeUpdate(time);
 		})
 		.catch((error)=>{
 			alert('329: '+error);
@@ -832,18 +816,22 @@ function makeImage(){
 		S.to({file:'+1'});
 	}
 	
-	P.timeUpdate=function(input){
-		P.currentTime=input;
+	P.timeUpdate=function(time=0){
+		P.currentTime=time;
 	}
 	
-	P.src=function(input){
-		var src=S.files[input].path;
+	P.src=function(file=0,time=0){
+		P.timeUpdate(time);
+		
+		var src=S.files[file].path;
 		
 		//Change the file if it'd be a new one
-		if(P.currentFile!==input) P.window.src=src;
+		if(P.currentFile!==file) P.window.src=src;
 		else content.classList.remove('showpony-loading');
 		
-		P.currentFile=input;
+		P.currentFile=file;
+		
+		timeUpdate(time);
 	}
 	
 	P.displaySubtitles=function(){
@@ -932,20 +920,26 @@ function makeMedia(type='video'){
 		S.menu();
 	}
 	
-	P.timeUpdate=function(input){
-		P.currentTime=P.window.currentTime=input;
+	P.timeUpdate=function(time=0){
+		P.currentTime=P.window.currentTime=time;
 	}
 	
-	P.src=function(input){
-		var src=S.files[input].path;
+	P.goToTime=0;
+	
+	P.src=function(file=0,time=0){
+		var src=S.files[file].path;
 		
 		//Change the file if it'd be a new one
-		if(P.currentFile!==input) P.window.src=src;
+		if(P.currentFile!==file) P.window.src=src;
 		
 		//If we're not paused, play
 		if(!S.window.classList.contains('showpony-paused')) P.play();
 		
-		P.currentFile=input;
+		P.currentFile=file;
+		
+		P.timeUpdate(time);
+		P.goToTime=time;
+		timeUpdate(time);
 	}
 	
 	P.displaySubtitles=function(){
@@ -1014,7 +1008,7 @@ function makeMedia(type='video'){
 
 	//Fix for Safari not going to the right time
 	P.window.addEventListener('loadeddata',function(){
-		P.currentTime=P.window.currentTime=goToTime;
+		P.currentTime=P.window.currentTime=P.goToTime;
 	});
 
 	P.window.addEventListener('canplay',function(){
@@ -1165,11 +1159,11 @@ function makeVisualNovel(){
 		}
 	}
 
-	P.timeUpdate=function(input){
-		P.currentTime=input;
+	P.timeUpdate=function(time=0){
+		P.currentTime=time;
 	}
 	
-	P.src=function(input){
+	P.src=function(file=0,time=0){
 		/////RESET THINGS//////
 		//Get rid of local styles
 		for(var key in S.objects){
@@ -1182,7 +1176,7 @@ function makeVisualNovel(){
 		/////END RESETTIN//////
 		
 		//If this is the current file
-		if(P.currentFile===input){
+		if(P.currentFile===file){
 			runTo=Math.round(keyframes.length*(P.currentTime/S.files[P.currentFile].duration));
 			if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
 			else runTo=keyframes[runTo];
@@ -1191,14 +1185,14 @@ function makeVisualNovel(){
 			return;
 		}
 		
-		var src=S.files[input].path;
+		var src=S.files[file].path;
 		
 		fetch(src,{credentials:'include'})
 		.then(response=>{
 			return response.text();
 		})
 		.then(text=>{
-			P.currentFile=input;
+			P.currentFile=file;
 			
 			//Remove multiline comments
 			text=text.replace(/\/\*[^]*?\*\//g,'');
@@ -1210,7 +1204,7 @@ function makeVisualNovel(){
 			keyframes=[0];
 			
 			for(let i=1;i<S.lines.length;i++){
-				//If it's a user input spot, add the point immediately after the last keyframe- things let up to this, let it all happen
+				//If it's a user file spot, add the point immediately after the last keyframe- things let up to this, let it all happen
 				if(S.lines[i]==='engine.wait'){
 					keyframes.push(keyframes[keyframes.length-1]+1);
 					continue;
@@ -1220,16 +1214,21 @@ function makeVisualNovel(){
 				if(/^\t+(?!\t*\+)/i.test(S.lines[i])) keyframes.push(i);
 			}
 			
-			runTo=Math.round(keyframes.length*(P.currentTime/S.files[input].duration));
+			runTo=Math.round(keyframes.length*(P.currentTime/S.files[file].duration));
 			if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
 			else runTo=keyframes[runTo];
 			
 			runMM(0);
 			
-			if(S.files[input].buffered!==true){
-				S.files[input].buffered=true;
+			if(S.files[file].buffered!==true){
+				S.files[file].buffered=true;
 				getTotalBuffered();
 			}
+			
+			console.log('MULTIMEDIA ENGINE RAN');
+			
+			P.timeUpdate(time);
+			timeUpdate(time);
 		})
 		.catch((error)=>{
 			alert('329: '+error);
@@ -2873,7 +2872,7 @@ if(S.query){
 }
 
 //Pause the Showpony
-S.menu(null,'pause');
+//S.menu(null,'pause');
 
 //Use time or file to bookmark, whichever is requested
 S.to(passObj);
