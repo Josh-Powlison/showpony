@@ -276,7 +276,6 @@ S.to=function(obj={}){
 		obj.time-=S.files[obj.file].duration;
 	}
 	
-	
 	//Relative file
 	if(/\+|\-/.test(obj.file[0])) obj.file=S.currentFile+parseInt(obj.file);
 	obj.file=Math.max(0,obj.file);
@@ -308,38 +307,24 @@ S.to=function(obj={}){
 		//Update info on file load
 		if(!obj.popstate){
 			//Only allow adding to history if we aren't scrubbing
-			
-			/*
-			//If the same file, and not a medium where time changes it (like images), replace history state instead
-			if(sameFile && currentType!=='video' && currentType!=='audio'){
-				obj.replaceState=true;
-			}*/
-			
 			var popstate=!obj.replaceState;
 			if(scrubbing===true) popstate=false; //Only replace history if we're scrubbing right now
 			
 			updateInfo(popstate);
 		}
 		
-		//If we aren't moving the bar, update the overlay
-		if(scrubbing===false){
-			//Go to the top of the page (if we didn't come here by autoloading)
-			if(obj.scrollToTop){
-				//Check that it's not below the viewport top already
-				if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
-			}
+		//Go to the top of the page (if we didn't come here by autoloading)
+		if(obj.scrollToTop){
+			//Check that it's not below the viewport top already
+			if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
 		}
 	}else if(!content.querySelector('[data-file]')){
 		S.currentFile=obj.file;
 	}
 	
-	var newType=S.files[obj.file].medium;
-	
 	//Multimedia engine resets
 	styles.innerHTML='';
-	if(waitTimer.remaining>0){
-		waitTimer.end();
-	}
+	waitTimer.end();
 	
 	//Remove the continue notice
 	continueNotice.remove();
@@ -348,23 +333,22 @@ S.to=function(obj={}){
 	objectBuffer={};
 	
 	//If switching types, do some cleanup
-	if(currentType!==newType){
+	if(currentType!==S.files[obj.file].medium){
 		
 		content.innerHTML='';
-		S.objects={window:S.window,content:content};
+		S.objects={};
 		S.lines=[];
 		
 		//Use either infinite text or page turn, whichever is requested
-		if(S.infiniteScroll || newType==='text'){
+		if(S.infiniteScroll || S.files[obj.file].medium==='text'){
 			content.appendChild(pageTurn);
 		}else{
 			//General setup
-			content.appendChild(S[newType].window);
-			console.log(newType,S[newType].window);
+			content.appendChild(S[S.files[obj.file].medium].window);
 		}
 	}
 	
-	currentType=newType;
+	currentType=S.files[obj.file].medium;
 	
 	/*
 	//If it's the same and we're using infinite scrolling
@@ -379,25 +363,20 @@ S.to=function(obj={}){
 	content.classList.remove('showpony-loading');
 	}*/
 	
+	//Load the file
 	if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
+	S[currentType].src(obj.file,obj.time);
 	
-	//Image/Audio/Video
-	S[newType].src(obj.file,obj.time);
-	
-	//Preload next files, if allowed and/or needed
-	for(let i=obj.file+1;i<=obj.file+S.preloadNext;i++){
-		if(i>=S.files.length) break;
-		if(S.files[i].buffered!==false) continue;
-		
-		//How we get the file depends on whether or not it's private
-		var src=(S.files[i].name[0]=='x' ? ShowponyFolder+'/ajax.php?rel-path'+encodeURIComponent(ShowponyRunPage)+'&get=' : '')+S.files[i].path;
-		
-		S.files[i].buffered='buffering';
-		
-		fetch(src).then(()=>{
-			S.files[i].buffered=true;
-			getTotalBuffered();
-		});
+	//Preload upcoming files
+	for(let i=obj.file;i<obj.file+S.preloadNext;i++){
+		if(S.files[i].buffered===false){
+			S.files[i].buffered='buffering';
+			
+			fetch(S.files[i].path).then(()=>{
+				S.files[i].buffered=true;
+				getTotalBuffered();
+			});
+		}
 	}
 }
 
@@ -2305,7 +2284,7 @@ function powerTimer(callback,delay){
     };
 
 	pT.end=function(){
-		window.clearTimeout(timerId);
+		if(pT.remaining>0) window.clearTimeout(timerId);
 		pT.remaining=0;
 	}
 	
