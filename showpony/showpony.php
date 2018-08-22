@@ -744,7 +744,7 @@ S.to=function(obj={}){
 	
 	//Based on time, get the right file
 	for(obj.file;obj.file<S.files.length;obj.file++){
-		if(obj.time<=S.files[obj.file].duration) break; //We've reached the file
+		if(obj.time<S.files[obj.file].duration) break; //We've reached the file
 		
 		obj.time-=S.files[obj.file].duration;
 	}
@@ -752,11 +752,13 @@ S.to=function(obj={}){
 	//If we're at the end, pause and run an event
 	if(obj.file>=S.files.length){
 		obj.file=S.files.length-1;
-		obj.time=S.files[S.files.length-1].duration;
 		
 		//Run the event that users can read
 		S.window.dispatchEvent(new CustomEvent('end'));
 	}
+	
+	//Only start images at beginning; you can't go into the "middle" of image
+	if(S.files[obj.file].medium==='image') obj.time=0;
 	
 	///LOAD RIGHT MEDIUM AND SOURCE///
 	
@@ -771,7 +773,7 @@ S.to=function(obj={}){
 		var popstate=!obj.replaceState;
 		if(scrubbing===true) popstate=false; //Only replace history if we're scrubbing right now
 		
-		updateInfo(popstate);
+		//updateInfo(popstate);
 	}
 	
 	//If switching types, do some cleanup
@@ -2484,9 +2486,9 @@ function timeUpdate(time){
 		S[currentType].timeUpdate(time);
 	}
 	
-	updateInfo();
 	S.currentTime=getCurrentTime();
 	S[currentType].displaySubtitles();
+	updateInfo();
 	
 	//Run custom event for checking time
 	S.window.dispatchEvent(
@@ -2585,18 +2587,7 @@ function scrub(inputPercent=null,loadFile=false){
 	if(inputPercent<0) inputPercent=0;
 	if(inputPercent>1) inputPercent=1;
 	
-	//Go to the time
-	var timeInTotal=S.duration*inputPercent
-		,newTime=S.duration*inputPercent
-		,newPart=0
-	;
-	
-	//Look through the media for the right one
-	for(newPart;newPart<S.files.length;newPart++){
-		if(newPart===S.files.length-1 || newTime<S.files[newPart].duration){
-			break;
-		}else newTime-=S.files[newPart].duration;
-	}
+	var timeInTotal=S.duration*inputPercent;
 	
 	///LOADING THE SELECTED FILE///
 	if(loadFile){
@@ -2606,11 +2597,11 @@ function scrub(inputPercent=null,loadFile=false){
 	//Move the progress bar
 	progress.style.left=(inputPercent*100)+'%';
 	
-	///INFO TEXT///
 	<? if($info==='time'){ ?>
+	///INFO TEXT WITH TIME///
 	var padLength=String((S.duration / 60)|0).length;
 
-	//Time
+	//|0 is a shorter way to floor floats.
 	var info=String((timeInTotal / 60)|0).padStart(padLength,'0')
 		+':'
 		+String((timeInTotal % 60)|0).padStart(2,'0')
@@ -2620,9 +2611,12 @@ function scrub(inputPercent=null,loadFile=false){
 		+String(((S.duration-timeInTotal) % 60)|0).padStart(2,'0')
 	;
 	<? }else{ ?>
+	///INFO TEXT WITH FILE///
 	var padLength=String(S.files.length).length;
 
-	//Files
+	var newPart=0;
+	for(var i=timeInTotal;i>S.files[newPart].duration;i-=S.files[newPart].duration) newPart++;
+	
 	var info=String(newPart+1).padStart(padLength,'0')
 		+' | '
 		+String(S.files.length-(newPart+1)).padStart(padLength,'0')
