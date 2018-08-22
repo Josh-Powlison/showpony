@@ -475,6 +475,14 @@ if(!$password) unset($_SESSION['showpony_admin']);
 #Start with it based on current file
 $info='file';
 
+$media=[
+	'text'			=>false
+	,'image'		=>false
+	,'audio'		=>false
+	,'video'		=>false
+	,'multimedia'	=>false
+];
+
 #Get a private file
 if(!empty($_GET['get'])){
 	#If we aren't logged in, block the effort
@@ -570,11 +578,15 @@ if(!empty($_GET['get'])){
 								break;
 						}
 						break;
+					case 'image':
+						break;
 					case 'audio':
 					case 'video':
 						$info='time';
 						break;
 				}
+				
+				$media[$fileInfo['medium']]=true;
 				
 				preg_match('/[^\s)]+(?=\.[^.]+$)/',$file,$matches);
 				$fileInfo['duration']=$matches[0] ?? 10;
@@ -628,36 +640,57 @@ var ShowponyFolder='showpony';
 var ShowponyRunPage='';
 
 //Load CSS if not loaded already
-if(!document.querySelector('[href$="showpony.php?call=css"]')){
-	var styles=document.createElement('link');
-	styles.rel='stylesheet';
-	styles.type='text/css';
-	styles.href=ShowponyFolder+'/showpony.php?call=css';
-	document.head.appendChild(styles);
-}
+if(!document.querySelector('[href$="showpony.php?call=css"]')) document.head.insertAdjacentHTML('beforeend','<link type="text/css" rel="stylesheet" href="'+ShowponyFolder+'/showpony.php?call=css">');
 
 function Showpony(input={}){
 
-//If no window was passed, make one!
-if(!input.window){
-	document.currentScript.insertAdjacentElement('afterend',input.window=document.createElement('div'));
-}
+//Engine settings
+const S=this;
+
+S.window=document.createElement('div');
+S.window.className='showpony';
+S.window.tabindex='0';
+
+S.name='<?=toCamelCase($name)?>';
+
+S.window.innerHTML=`
+	<style class="showpony-style" type="text/css"></style>
+	<div class="showpony-content"></div>
+	<div class="showpony-subtitles"></div>
+	<div class="showpony-overlay">
+		<canvas class="showpony-overlay-buffer" width="1000" height="1"></canvas>
+		<div class="showpony-progress" style="left: 14.5688%;"></div>
+		<p class="showpony-overlay-text">1 | 3</p>
+		<button class="showpony-button showpony-fullscreen-button" alt="Fullscreen" title="Fullscreen Toggle"></button>
+		<select class="showpony-captions-button" title="Closed Captions/Subtitles" alt="Closed Captions/Subtitles">
+			<option class="showpony-captions-option" value="None">None</option>
+			<option class="showpony-captions-option" value="en">en</option>
+		</select>
+	</div>
+`;
+
+var styles=				S.window.getElementsByClassName('showpony-style')[0];
+var content=			S.window.getElementsByClassName('showpony-content')[0];
+var subtitles=			S.window.getElementsByClassName('showpony-subtitles')[0];
+var overlay=			S.window.getElementsByClassName('showpony-overlay')[0];
+var overlayBuffer=		S.window.getElementsByClassName('showpony-overlay-buffer')[0];
+var progress=			S.window.getElementsByClassName('showpony-progress')[0];
+var overlayText=		S.window.getElementsByClassName('showpony-overlay-text')[0];
+var fullscreenButton=	S.window.getElementsByClassName('showpony-fullscreen-button')[0];
+var captionsButton=		S.window.getElementsByClassName('showpony-captions-button')[0];
+var captionsButton=		S.window.getElementsByClassName('showpony-captions-button')[0];
+
+document.currentScript.insertAdjacentElement('afterend',S.window);
 
 ///////////////////////////////////////
 ///////////PUBLIC VARIABLES////////////
 ///////////////////////////////////////
 
-//Engine settings
-const S=this;
-
-S.window=input.window;
-S.window.className='showpony';
 
 //Set tabIndex so it's selectable
 S.window.tabIndex=0;
 
 S.buffered=false;
-
 S.query='<?=$name?>';
 S.infiniteScroll='<?=$infiniteScroll?>';
 S.subtitles=<?php
@@ -675,16 +708,11 @@ S.subtitles=<?php
 
 S.scrubLoad=false;
 S.data={};
-S.title=false;
-S.dateFormat={year:'numeric',month:'numeric',day:'numeric'};
 S.shortcuts='focus';
 S.saveId=location.hostname.substring(0,20);
 S.preloadNext=1;
-S.showBuffer=true;
 S.currentSubtitles=null;
 S.cover=null;
-S.start='last';
-S.data={};
 
 //-1 before we load
 S.currentFile=-1;
@@ -939,6 +967,8 @@ function userScrub(event=null,start=false){
 		pos=progress.getBoundingClientRect().left+progress.getBoundingClientRect().width/2+event*5;
 	}
 	
+	var scrubPercent=(pos-S.window.getBoundingClientRect().left)/(S.window.getBoundingClientRect().width);
+	
 	if(start){
 		if(scrubbing===false){
 			if(input==='touch') scrubbing=pos;
@@ -962,11 +992,7 @@ function userScrub(event=null,start=false){
 		//Don't want the users to accidentally swipe to another page!
 		if(input==='touch') event.preventDefault();
 		
-		scrub(
-			(pos-S.window.getBoundingClientRect().left)
-			/
-			(S.window.getBoundingClientRect().width)
-		);
+		scrub(scrubPercent,true);
 	}else{
 		//Drag on the menu to go to any part
 		
@@ -976,11 +1002,7 @@ function userScrub(event=null,start=false){
 			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
 			if(S.scrubLoad===false){
 				//Load the file our pointer's on
-				scrub(
-					(pos-S.window.getBoundingClientRect().left)
-					/
-					(S.window.getBoundingClientRect().width)
-				);
+				scrub(scrubPercent,true);
 				
 			}
 			
@@ -1073,6 +1095,8 @@ S.close=function(){
 	//Reset the window to what it was before
 	S.window.remove();
 }
+
+<?php if($media['text']){ ?>
 
 ///////////////////////////////////////
 /////////////////TEXT//////////////////
@@ -1169,6 +1193,12 @@ function makeText(){
 };
 
 S.text=new makeText();
+
+<?php }
+
+if($media['image']){
+	
+?>
 
 ///////////////////////////////////////
 /////////////////IMAGE/////////////////
@@ -1275,6 +1305,12 @@ function makeImage(){
 };
 
 S.image=new makeImage();
+
+<?php }
+
+if($media['audio'] or $media['video']){
+
+?>
 
 ///////////////////////////////////////
 /////////////////MEDIA/////////////////
@@ -1441,6 +1477,12 @@ function makeMedia(type='video'){
 
 S.video=new makeMedia('video');
 S.audio=new makeMedia('audio');
+
+<?php }
+
+if($media['multimedia']){
+
+?>
 
 ///////////////////////////////////////
 /////////////VISUAL NOVEL//////////////
@@ -2397,6 +2439,8 @@ function makeVisualNovel(){
 
 S.multimedia=new makeVisualNovel();
 
+<? } ?>
+
 ///////////////////////////////////////
 ///////////PRIVATE VARIABLES///////////
 ///////////////////////////////////////
@@ -2411,37 +2455,11 @@ var multimediaSettings={
 var scrubbing=false
 	,waitTimer=new powerTimer(function(){},0)
 	,currentType=null
-	//Elements
-	,overlayText=m('overlay-text','p')
-	,overlayBuffer=m('overlay-buffer','canvas')
-	,progress=m('progress')
-	,content=m('content')
-	,subtitles=m('subtitles','div')
-	,styles=document.createElement('style')
 	//Buttons
-	,fullscreenButton=m('button showpony-fullscreen-button','button')
-	,captionsButton=m('captions-button','select')
-	,overlay=m('overlay','div')
 	,cover=m('cover','div')
 	//Page turning
 	,pageTurn=m('page-turn')
 ;
-
-fullscreenButton.alt='Fullscreen';
-fullscreenButton.title='Fullscreen Toggle';
-captionsButton.alt='Closed Captions/Subtitles';
-captionsButton.title='Closed Captions/Subtitles';
-
-styles.type='text/css';
-
-S.window.addEventListener('animationend',function(){
-	var updateStyle=new RegExp('@keyframes window{100%{[^}]*}}','i').exec(styles.innerHTML);
-	
-	var styleAdd=/[^{]+;/.exec(updateStyle);
-	
-	if(styleAdd) this.style.cssText+=styleAdd[0];
-	this.style.animation=null;
-})
 
 content.addEventListener('animationend',function(){
 	var updateStyle=new RegExp('@keyframes content{100%{[^}]*}}','i').exec(styles.innerHTML);
@@ -2523,8 +2541,7 @@ function getTotalBuffered(){
 	
 	S.buffered=buffered;
 	
-	if(S.showBuffer===false) return;
-	
+	//Show buffer//
 	var rectRes=1000;
 	overlayBuffer.width=rectRes;
 	overlayBuffer.height=1;
@@ -2558,116 +2575,64 @@ function getCurrentTime(){
 }
 
 //Update the scrubber's position
-function scrub(inputPercent){
+function scrub(inputPercent=null,loadFile=false){
+	//"sticky" is an infinite scroll-related variable
 	//if(sticky!==false) return;
 	
-	//If no inputPercent was passed, estimate it
-	if(typeof(inputPercent)==='undefined'){
-		var timeInTotal=getCurrentTime();
-		
-		var inputPercent=timeInTotal / S.duration
-			,newPart=S.currentFile;
-	}else{ //if inputPercent WAS passed
+	//If no inputPercent was set, get it!
+	if(inputPercent===null) inputPercent=S.currentTime/S.duration;
 	
-		//Clamp inputPercent between 0 and 1
-		inputPercent= inputPercent <= 0 ? 0 : inputPercent >= 1 ? 1 : inputPercent;
-		
-		//Go to the time
-		var timeInTotal=S.duration*inputPercent
-			,newTime=S.duration*inputPercent
-			,newPart=0
-		;
-		
-		//Look through the media for the right one
-		var l=S.files.length;
-		for(let i=0;i<l;i++){
-			//If the duration's within this one, stop at this one
-			if(i==l-1 || newTime<S.files[i].duration){
-			//If this is the media!
-				//If we allow scrubbing or we're not moving the bar, we can load the file
-				if(S.scrubLoad || scrubbing===false) S.to({file:i,time:newTime,scrollToTop:false});
-				
-				newPart=i;
-				
-				break;
-			//Otherwise, go to the next one (and subtract the duration from the total duration)
-			}else newTime-=S.files[i].duration;
-		}
+	if(inputPercent<0) inputPercent=0;
+	if(inputPercent>1) inputPercent=1;
+	
+	//Go to the time
+	var timeInTotal=S.duration*inputPercent
+		,newTime=S.duration*inputPercent
+		,newPart=0
+	;
+	
+	//Look through the media for the right one
+	for(newPart;newPart<S.files.length;newPart++){
+		if(newPart===S.files.length-1 || newTime<S.files[newPart].duration){
+			break;
+		}else newTime-=S.files[newPart].duration;
+	}
+	
+	///LOADING THE SELECTED FILE///
+	if(loadFile){
+		if(S.scrubLoad || scrubbing===false) S.to({time:timeInTotal});
 	}
 	
 	//Move the progress bar
 	progress.style.left=(inputPercent*100)+'%';
 	
-	//Set the overlay text
-	var newHTML=replaceInfoText(
-		null
-		,newPart
-		,Math.floor(timeInTotal)
-	);
-	if(newHTML!==overlayText.innerHTML) overlayText.innerHTML=newHTML;
-	
-	//Update the title, if set up for it
-	if(S.title){
-		var newTitle=replaceInfoText(null,S.currentFile);
-		if(newTitle!==document.title) document.title=newTitle;
-	}
-}
-
-function replaceInfoText(value=null,fileNum,current){
-	if(current===undefined){
-		//var currentType=S.files[S.currentFile].medium;
-		
-		//Use the currentTime of the object, if it has one
-		var currentTime=S[currentType] && S[currentType].currentTime || 0;
-		
-		//Add the times of previous videos to get the actual time in the piece
-		for(let i=0;i<S.currentFile;i++) currentTime+=S.files[i].duration;
-		
-		var current=Math.floor(inputPercent*S.duration)
-			,left=S.duration-Math.floor(inputPercent*S.duration)
-		;
-		
-		fileNum=S.currentFile;
-	}else{
-		var left=S.duration-current;
-	}
-	
-	var fileMedium=S.files[fileNum].medium;
-	
-	var time=0;
-	for(var i=0;i<S.files.length;i++){
-		if(current<time+S.files[i].duration){
-			
-			var currentThis=current-time;
-			var leftThis=S.files[i].duration-currentThis;
-			break;
-		}
-		
-		time+=S.files[i].duration;
-	}
-	
+	///INFO TEXT///
 	<? if($info==='time'){ ?>
-		var padLength=String((S.duration / 60)|0).length;
-		console.log(padLength);
-	
-		//Time
-		return String((current / 60)|0).padStart(padLength,'0')
-			+':'
-			+String((current % 60)|0).padStart(2,'0')
-			+' | '
-			+String((left / 60)|0).padStart(padLength,'0')
-			+':'
-			+String((left % 60)|0).padStart(2,'0')
-		;
+	var padLength=String((S.duration / 60)|0).length;
+
+	//Time
+	var info=String((timeInTotal / 60)|0).padStart(padLength,'0')
+		+':'
+		+String((timeInTotal % 60)|0).padStart(2,'0')
+		+' | '
+		+String(((S.duration-timeInTotal) / 60)|0).padStart(padLength,'0')
+		+':'
+		+String(((S.duration-timeInTotal) % 60)|0).padStart(2,'0')
+	;
 	<? }else{ ?>
-		var padLength=String(S.files.length).length;
-	
-		//Files
-		return String(fileNum+1).padStart(padLength,'0')
-			+' | '
-			+String(S.files.length-(fileNum+1)).padStart(padLength,'0')
-		;
+	var padLength=String(S.files.length).length;
+
+	//Files
+	var info=String(newPart+1).padStart(padLength,'0')
+		+' | '
+		+String(S.files.length-(newPart+1)).padStart(padLength,'0')
+	;
 	<? } ?>
+	
+	if(info!==overlayText.innerHTML) overlayText.innerHTML=info;
+	
+	//We don't want to over-update the title, so we stick with when we're not scrubbing.
+	if(info!==document.title && scrubbing===false) document.title=info;
 }
 
 //Use documentFragment to append elements faster
@@ -2940,7 +2905,7 @@ pageTurn.addEventListener('scroll',function(event){
 
 function updateInfo(pushState){
 	//Update the scrub bar
-	if(scrubbing!==true) scrub();
+	if(scrubbing!==true) scrub(null,false);
 	
 	//If using queries with time, adjust query on time update
 	if(S.query){
@@ -3113,9 +3078,6 @@ function gamepadButton(gamepad,number,type){
 
 content.classList.add('showpony-loading');
 
-//Empty the current window
-S.window.innerHTML='';
-
 if(S.cover){
 	if(S.cover.image) cover.style.backgroundImage='url("'+S.cover.image+'")';
 	if(S.cover.content){
@@ -3183,17 +3145,10 @@ S.window.addEventListener('blur',saveBookmark);
 
 //Start at the first legit number: start, input.start, or the last file
 if(start===null){
-	switch(S.start){
-		case 'first':
-			start=0;
-			break;
-		case 'last':
-			start=S.files.length-1;
-			break;
-		default:
-			start=parseInt(S.start);
-			break;
-	}
+	start=<?php
+		#Start from the last file
+		echo 'S.files.length-1';
+	?>;
 }
 
 //These are the defaults for passObj, but it can be overwritten if we're using a querystring
