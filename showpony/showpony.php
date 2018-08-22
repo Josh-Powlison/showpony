@@ -257,28 +257,26 @@ var objectBuffer, keyframes;
 S.to=function(obj={}){
 	content.classList.add('showpony-loading');
 	
-	//Does not work with relative time and relative file; must be absolute one, absolute both, or relative one
+	///GET TIME AND FILE///
 	
-	obj.time=obj.time || 0;
-	obj.file=obj.file || 0;
+	//Relative adjustments if the values have - or +. If both are relative, file will be relative and time will instead be absolute to avoid strange behavior.
+	if(/-|\+/.test(obj.file)) obj.file=S.currentFile+parseInt(obj.file);
+	else if(/-|\+/.test(obj.time)) obj.time=S.currentTime+parseFloat(obj.time);
 	
-	if(obj.time==='end') obj.time=S.duration-10;
+	//Special values
 	if(obj.file==='last') obj.file=S.files.length-1;
+	if(obj.time==='end') obj.time=S.duration-10;
 	
-	//Relative time
-	if(/\+|\-/.test(obj.time[0])) obj.time=S.currentTime+parseFloat(obj.time);
-	obj.time=Math.max(0,obj.time);
-
-	//Look through the files for the right one
+	//Minimal time and file values are 0
+	obj.file=Math.max(0,obj.file || 0);
+	obj.time=Math.max(0,parseFloat(obj.time) || 0);
+	
+	//Based on time, get the right file
 	for(obj.file;obj.file<S.files.length;obj.file++){
 		if(obj.time<=S.files[obj.file].duration) break; //We've reached the file
 		
 		obj.time-=S.files[obj.file].duration;
 	}
-	
-	//Relative file
-	if(/\+|\-/.test(obj.file[0])) obj.file=S.currentFile+parseInt(obj.file);
-	obj.file=Math.max(0,obj.file);
 	
 	//If we're at the end, run the readable event
 	if(obj.file>=S.files.length){
@@ -293,75 +291,29 @@ S.to=function(obj={}){
 		return;
 	}
 	
+	///LOAD RIGHT MEDIUM AND SOURCE///
 	
-	Object.assign(obj,{
-		reload:obj.reload || false
-		,scrollToTop:obj.scrollToTop===undefined ? true : obj.scrollToTop
-		,popstate:obj.popstate || false
-		,replaceState:obj.replaceState || false
-	});
+	S.currentFile=obj.file;
 	
-	if(!S.infiniteScroll){
-		S.currentFile=obj.file;
+	obj.popstate=obj.popstate || false;
+	obj.replaceSTate=obj.replaceState || false;
+	
+	//Update info on file load
+	if(!obj.popstate){
+		//Only allow adding to history if we aren't scrubbing
+		var popstate=!obj.replaceState;
+		if(scrubbing===true) popstate=false; //Only replace history if we're scrubbing right now
 		
-		//Update info on file load
-		if(!obj.popstate){
-			//Only allow adding to history if we aren't scrubbing
-			var popstate=!obj.replaceState;
-			if(scrubbing===true) popstate=false; //Only replace history if we're scrubbing right now
-			
-			updateInfo(popstate);
-		}
-		
-		//Go to the top of the page (if we didn't come here by autoloading)
-		if(obj.scrollToTop){
-			//Check that it's not below the viewport top already
-			if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
-		}
-	}else if(!content.querySelector('[data-file]')){
-		S.currentFile=obj.file;
+		updateInfo(popstate);
 	}
-	
-	//Multimedia engine resets
-	styles.innerHTML='';
-	waitTimer.end();
-	
-	//Remove the continue notice
-	continueNotice.remove();
-	
-	//Save buffer to check later
-	objectBuffer={};
 	
 	//If switching types, do some cleanup
 	if(currentType!==S.files[obj.file].medium){
-		
 		content.innerHTML='';
-		S.objects={};
-		S.lines=[];
-		
-		//Use either infinite text or page turn, whichever is requested
-		if(S.infiniteScroll || S.files[obj.file].medium==='text'){
-			content.appendChild(pageTurn);
-		}else{
-			//General setup
-			content.appendChild(S[S.files[obj.file].medium].window);
-		}
+		content.appendChild(S[S.files[obj.file].medium].window);
 	}
 	
 	currentType=S.files[obj.file].medium;
-	
-	/*
-	//If it's the same and we're using infinite scrolling
-	if(S.infiniteScroll){//Scroll to the right spot
-		var part=document.querySelector('[data-file="'+obj.file+'"]');
-	
-		pageTurn.scrollTop=part.offsetTop+part.offsetHeight*(obj.time/S.files[obj.file].duration);
-	}else{ //Page turn
-		
-	}
-	
-	content.classList.remove('showpony-loading');
-	}*/
 	
 	//Load the file
 	if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
@@ -379,6 +331,31 @@ S.to=function(obj={}){
 		}
 	}
 }
+
+/*
+Updating file with infinite scroll
+
+}else if(!content.querySelector('[data-file]')){
+	S.currentFile=obj.file;
+}*/
+
+/*
+//If it's the same and we're using infinite scrolling
+if(S.infiniteScroll){//Scroll to the right spot
+	var part=document.querySelector('[data-file="'+obj.file+'"]');
+
+	pageTurn.scrollTop=part.offsetTop+part.offsetHeight*(obj.time/S.files[obj.file].duration);
+}else{ //Page turn
+	
+}*/
+
+/*//Use either infinite text or page turn, whichever is requested
+if(S.infiniteScroll || S.files[obj.file].medium==='text'){
+	content.appendChild(pageTurn);
+}else{
+	content.classList.remove('showpony-loading');
+}
+*/
 
 //NEED A DIFFERENT SETUP FOR INFINITE SCROLL//
 /*
@@ -716,6 +693,8 @@ function makeText(){
 			
 			P.timeUpdate(time);
 			timeUpdate(time);
+			
+			if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
 		})
 		.catch((error)=>{
 			alert('329: '+error);
@@ -851,6 +830,8 @@ function makeImage(){
 		content.classList.remove('showpony-loading');
 		S.files[P.currentFile].buffered=true;
 		getTotalBuffered();
+		
+		if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
 	});
 };
 
@@ -978,12 +959,10 @@ function makeMedia(type='video'){
 		P.window.dispatchEvent(new CustomEvent('progress'));
 	});
 
-
 	P.window.addEventListener('canplaythrough',function(){
 		//Consider how much has already been loaded; this isn't run on first chunk loaded
 		P.window.dispatchEvent(new CustomEvent('progress'));
 	});
-
 
 	//Buffering
 	P.window.addEventListener('progress',function(){
@@ -1027,7 +1006,6 @@ S.audio=new makeMedia('audio');
 ///////////////////////////////////////
 /////////////VISUAL NOVEL//////////////
 ///////////////////////////////////////
-
 function makeVisualNovel(){
 	const P=this;
 	
@@ -1036,6 +1014,9 @@ function makeVisualNovel(){
 	
 	P.window=document.createElement('div');
 	P.window.className='showpony-multimedia';
+	
+	var runTo=false;
+	var continueNotice=m('continue')
 	
 	P.play=function(){
 		//Go through objects that were playing- unpause them
@@ -1134,17 +1115,28 @@ function makeVisualNovel(){
 			if(S.objects[key].classList.contains('showpony-textbox')) S.objects[key].innerHTML='';
 		};
 		
+		//Multimedia engine resets
+		styles.innerHTML='';
+		waitTimer.end();
+		
 		/////END RESETTIN//////
 		
 		//If this is the current file
 		if(P.currentFile===file){
-			runTo=Math.round(keyframes.length*(P.currentTime/S.files[P.currentFile].duration));
+			runTo=Math.round(keyframes.length*(time/S.files[P.currentFile].duration));
 			if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
 			else runTo=keyframes[runTo];
+			
+			console.log(runTo);
 			
 			runMM(0);
 			return;
 		}
+		
+		//Save buffer to check later
+		objectBuffer={};
+		S.objects={};
+		S.lines=[];
 		
 		var src=S.files[file].path;
 		
@@ -1215,7 +1207,754 @@ function makeVisualNovel(){
 			});
 		}
 	}
-};
+	
+	//Run multimedia (interactive fiction, visual novels, etc)
+	function runMM(inputNum=S.currentLine+1){
+		//Go to either the specified line or the next one
+		S.currentLine=inputNum;
+		
+		//Run through if we're running to a point; if we're there or beyond though, stop running through
+		if(runTo!==false && S.currentLine>=runTo){
+			runTo=false;
+			multimediaSettings.input=false;
+		}
+		
+		//We've run through!
+		if(runTo===false && content.classList.contains('showpony-loading')){
+			if(waitTimer.remaining>0){
+				waitTimer.end();
+			}
+			
+			//Get rid of unused, uncreated objects
+			for(var key in S.objects){
+				//Get rid of the object if it doesn't exist
+				if(!objectBuffer[key]){
+					S.objects[key].remove();
+					delete S.objects[key];
+				}
+			};
+			
+			S.multimedia.window.offsetHeight; //Trigger reflow to flush CSS changes
+			content.classList.remove('showpony-loading');
+		}
+		
+		//Update the scrubbar if the frame we're on is a keyframe
+		if(runTo===false && keyframes.includes(S.currentLine)){
+			//Set the time of the element
+			timeUpdate((keyframes.indexOf(S.currentLine)/keyframes.length)*S.files[S.currentFile].duration);
+		}
+		
+		//If we've ended manually or reached the end, stop running immediately and end it all
+		if(S.currentLine>=S.lines.length){
+			S.to({file:'+1'});
+			return;
+		}
+		
+		var text=S.lines[S.currentLine];
+		
+		//Replace all variables (including variables inside variables) with the right name
+		var match;
+		while(match=/[^\[]+(?=\])/g.exec(text)) text=text.replace('['+match[0]+']',S.data[match[0]]);
+		
+		//Skip comments
+		if(/^\/\//.test(text)){
+			runMM();
+			return;
+		}
+		
+		var vals=text.split(/(?:\s{3,}|\t+)/);
+		
+		var type;
+		
+		//Data
+		if(type=/[+=\-<>!]+$/.exec(vals[0])){
+			type=type[0];
+			//Remove type from variable name
+			vals[0]=vals[0].replace(type,'');
+			
+			//If a value's a number, return it as one
+			function ifParse(input){
+				return isNaN(input) ? input : parseFloat(input);
+			}
+			
+			//Check values inline
+			var operators={
+				'='		:(a,b)=>	b
+				,'+='	:(a,b)=>	a+b
+				,'-='	:(a,b)=>	a-b
+				,'=='	:(a,b)=>	a==b
+				,'<'	:(a,b)=>	a<b
+				,'>'	:(a,b)=>	a>b
+				,'<='	:(a,b)=>	a<=b
+				,'>='	:(a,b)=>	a>=b
+				,'!'	:(a,b)=>	a!=b
+			};
+			
+			switch(type){
+				//Operations
+				case '=':
+				case '+=':
+				case '-=':
+					S.data[vals[0]]=operators[type](
+						ifParse(S.data[vals[0]])
+						,ifParse(vals[1])
+					);
+					
+					/*
+					//Run an event that the user can track for updated user info
+					S.window.dispatchEvent(
+						new CustomEvent(
+							'data'
+							,{
+								detail:{
+									name:vals[1]
+									,value:S.data[vals[1]]
+								}
+							}
+						)
+					);*/
+					
+					runMM();
+					break;
+				//Comparisons
+				default:
+					if(operators[type](
+						ifParse(S.data[vals[0]])
+						,ifParse(vals[1])
+					)) runMM(S.lines.indexOf(vals[2]));
+					else runMM();
+					break;
+			}
+			return;
+		}
+		
+		type='character';
+		if(vals.length===1){
+			type='background';
+		}
+		
+		var object=/^[^\.\t]+/.exec(vals[0]);
+		if(!object){
+			object='main';
+			type='textbox';
+		}
+		else object=object[0];
+		
+		var command=/\..+/.exec(vals[0]);
+		if(!command) command='content';
+		else command=command[0].replace('.','');
+		
+		//Check if audio
+		if(/play|pause|stop|loop/.test(command)){
+			type='audio';
+		}
+		
+		//Check for images for this character; go through future lines
+		if(type==='character') var lines=[vals[1]];		
+		
+		//If an object with the name doesn't exist, make it!
+		if(object!=='engine' && !S.objects[object]){
+			//Audio has special requirements
+			if(type==='audio'){
+				S.objects[object]=document.createElement('audio');
+				
+				S.objects[object].src='url("<?=$_POST['path']?>resources/audio/'+object;
+				
+				//If an extension isn't specified, assume mp3
+				if(!/\./.test(object)) S.objects[object].src+='.mp3';
+				S.objects[object].preload=true;
+				
+				S.multimedia.window.appendChild(S.objects[object]);
+			}else{
+				if(type==='textbox'){
+					S.multimedia.window.appendChild(S.objects[object]=m(type,'form'));
+					S.objects[object].addEventListener('submit',function(event){event.preventDefault();});
+				}
+				else S.multimedia.window.appendChild(S.objects[object]=m(type));
+
+				S.objects[object].addEventListener('animationend',function(event){
+					if(this!==event.target) return;
+					
+					var objectName=object.replace(/#/g,'id');
+					
+					var updateStyle=new RegExp('@keyframes '+objectName+'{100%{[^}]*}}','i').exec(styles.innerHTML);
+					
+					var styleAdd=/[^{]+;/.exec(updateStyle);
+					
+					if(styleAdd) this.style.cssText+=styleAdd[0];
+					this.style.animationName=null;
+					this.style.animationDuration=null;
+					this.style.animationFillMode=null;
+				})
+				
+				if(type==='character'){
+					//Go through the rest of the lines, looking for images to preload
+					for(let i=S.currentLine;i<S.lines.length;i++){
+						
+						//If this character is listed on this line
+						if(S.lines[i].indexOf(object+'\t')===0){
+							//Add the image names to the images to load
+							lines.push(S.lines[i].split(/\s{3,}|\t+/)[1]);
+						}
+					}
+				}
+			}
+		}
+		
+		//If we're buffering, add it to the buffer so it's not deleted later
+		if(runTo) objectBuffer[object]=S.objects[object];
+
+		//Get the name, which is the file's name (or for characters, the character's name). Anything after a hash is an id; it's not a part of the name.
+		var name=/^[^#]+/.exec(object)[0];
+		
+		switch(command){
+			case 'go':
+				runMM(S.lines.indexOf(vals[1]));
+				//Don't automatically go to the next line, we're going correctly above
+				break;
+			case 'end':
+				S.to({file:'+1'});
+				break;
+			case 'event':
+				S.window.dispatchEvent(new CustomEvent(vals[1]));
+				break;
+			case 'textbox':
+				//Set the current textbox
+				multimediaSettings.textbox=vals[1];
+				break;
+			case 'wait':
+				//If there's a waitTimer, clear it out
+				if(waitTimer.remaining>0){
+					waitTimer.end();
+				}
+				
+				//Skip waiting if we're running through
+				if(runTo){
+					runMM();
+					return;
+				}
+				
+				//If a value was included, wait for the set time
+				if(vals[1]) waitTimer=new powerTimer(runMM,parseFloat(vals[1])*1000);
+				//Otherwise, let the user know to continue it
+				else S.multimedia.window.appendChild(continueNotice);
+				
+				//If we're paused, pause the timer
+				if(S.window.classList.contains('showpony-paused')) waitTimer.pause();
+				
+				//Don't automatically go to the next line
+				break;
+			case 'style':
+				var animationSpeed=/time:[^s]+s/i.exec(vals[1]);
+			
+				//If running to or not requesting animation, add styles without implementing animation
+				if(animationSpeed===null || S.currentLine<runTo){
+					S.objects[object].style.cssText+=vals[1];
+				}else{
+					var objectName=object.replace(/#/g,'id');
+					
+					animationSpeed=animationSpeed[0].split(':')[1];
+					
+					var animation='@keyframes '+objectName+'{100%{'+vals[1]+'}}';
+				
+					//Either replace existing keyframes or append to the end
+					styles.innerHTML=styles.innerHTML.replace(new RegExp('(@keyframes '+objectName+'{100%{[^}]*}})|$'),animation);
+					S.objects[object].style.animationName=objectName;
+					S.objects[object].style.animationFillMode='forwards';
+					S.objects[object].style.animationDuration=animationSpeed;
+				}
+				
+				runMM();
+				break;
+			case 'async':
+				S.objects[object].dataset.async=vals[1];
+				runMM();
+				break;
+			case 'content':
+				switch(type){
+					case 'character':
+						var cha=S.objects[vals[0]];
+						
+						//Character level
+						for(let i=0,len=lines.length;i<len;i++){
+							
+							//Get the image names passed (commas separate layers)
+							var imageNames=lines[i].split(',');
+						
+							//Layer level
+							//Go through each passed image and see if it exists
+							for(let ii=0,len=imageNames.length;ii<len;ii++){
+								//If there's no period, add '.png' to the end- assume the extension
+								if(!/\./.test(imageNames[ii])) imageNames[ii]+='.png';
+								
+								var image='url("<?=$_POST['path']?>resources/characters/'+name+'/'+imageNames[ii]+'")';
+								
+								//If the image already exists
+								var found=false;
+								
+								//If the layer exists, search it
+								if(cha.children[ii]){
+									//Search the layer!
+									var search=cha.children[ii].children;
+									
+									//Set the opacity right, and if it's 1, we found the image!
+									for(let iii=0,len=search.length;iii<len;iii++){
+										var match=search[iii].style.backgroundImage.replace(/'/g,'"')==image.replace(/'/g,'"');
+										
+										//If this is the first image, it's the one we asked for; we don't want to make preloads visible, after all!
+										if(i===0) search[iii].style.opacity=match ? 1 : 0;
+										
+										if(match==true) found=true;
+									}
+								//If the layer doesn't exist, make it!
+								}else cha.appendChild(document.createElement('div'));
+								
+								//Image level
+								//If the image doesn't exist in the layer, we add it!
+								if(!found){
+									//Add a backgroundImage
+									var thisImg=m('character-image');
+									thisImg.style.backgroundImage=image;
+									
+									//If this isn't the first image, hide it immediately (it's being preloaded, we don't want to see it yet!)
+									if(i!==0) thisImg.style.opacity=0;
+									
+									cha.children[ii].appendChild(thisImg);
+								}
+							}
+						}
+						runMM();
+						break;
+					case 'background':
+						S.objects[object].style.backgroundImage='url("<?=$_POST['path']?>resources/backgrounds/'+name+'.jpg")';
+						runMM();
+						break;
+					case 'audio':
+						S.objects[object].src=vals[0];
+						/*
+						//Go through the passed parameters and apply them
+						let l=vals.length;
+						for(let i=2;i<l;i++){
+							switch(vals[i]){
+								case 'unloop':
+									S.objects[object].loop=false;
+									break;
+								case 'stop':
+									S.objects[object].currentTime=0;
+									S.objects[object].wasPlaying=false;
+									S.objects[object].pause();
+									break;
+								default: //Other features
+									var value=parseFloat(vals[i].substr(1));
+									//Current volume
+									if(vals[i][0]==='v') S.objects[object].volume=value;
+									//Current time
+									else if(vals[i][0]==='t') S.objects[object].currentTime=value;
+									//Speed
+									else if(vals[i][0]==='s') S.objects[object].playbackRate=value;
+									break;
+							}
+						}*/
+						runMM();
+						break;
+					case 'textbox':
+						//var keepGoing=multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals);
+		
+						//var keepGoing=false;
+						//if(!keepGoing) runMM();
+						
+						//If we're running through, skip displaying text until we get to the right point
+						if(runTo){
+							objectBuffer[multimediaSettings.textbox]=S.objects[multimediaSettings.textbox];
+							runMM(undefined);
+							return;
+						}
+						
+						multimediaSettings.wait=true; //Assume we're waiting at the end time
+						
+						text=text.replace(/^\t+/,'');
+						
+						//If the line doesn't start with +, replace the text
+						if(text[0]!=='+'){
+							S.objects[multimediaSettings.textbox].innerHTML='';
+							
+							if(!S.objects.name) S.multimedia.window.appendChild(S.objects.name=m('name'));
+							
+							//Split up the text so we can have names automatically written
+							var nameText=text.split('::');
+							if(nameText.length>1){
+								text=nameText[1];
+								S.objects.name.innerHTML=nameText[0];
+								S.objects.name.style.visibility='visible';
+							}else{
+								S.objects.name.style.visibility='hidden';
+							}
+							
+							multimediaSettings.input=false;
+						}
+						else text=text.substr(1);
+						
+						//STEP 2: Design the text//
+						
+						//Design defaults
+						var charElementDefault=m('char-container','span')
+							,charElement
+							,baseWaitTime
+							,constant
+						;
+						
+						//Reset the defaults with this function, or set them inside here!
+						function charDefaults(){
+							//Use the default element for starting off
+							charElement=charElementDefault.cloneNode(true);
+							baseWaitTime=.03; //The default wait time
+							constant=false; //Default punctuation pauses
+						}
+						
+						//Use the defaults
+						charDefaults();
+
+						//The total time we're waiting until x happens
+						var totalWait=0;
+						var fragment=document.createDocumentFragment();
+						var currentParent=fragment;
+						
+						var letters=''; //Have to save actual letters separately; special tags and such can mess with our calculations
+						
+						var lastLetter=null;
+						
+						var l=text.length;
+						//We check beyond the length of the text because that lets us place characters that allow text wrapping in Firefox
+						for(let i=0;i<=l;i++){
+							var waitTime=baseWaitTime;
+							
+							//If a > is at the end of a text line, continue automatically.
+							//Won't interfere with tags, no worries!
+							if(i==l-1 && text[i]==='>'){
+								multimediaSettings.wait=false;
+								continue;
+							}
+							
+							//Check the current character//
+							switch(text[i]){
+								//HTML
+								case '<':
+									//Skip over the opening bracket
+									i++;
+								
+									var values='';
+									
+									//Wait until a closing bracket (or the end of the text)
+									while(text[i]!='>' && i<text.length){
+										values+=text[i];
+										i++;
+									}
+									
+									//We're closing the element
+									if(values[0]=='/'){
+										switch(values){
+											case '/shout':
+												charElement.classList.remove('showpony-char-shout');
+												break;
+											case '/sing':
+												charElement.classList.remove('showpony-char-sing');
+												break;
+											case '/shake':
+												charElement.classList.remove('showpony-char-shake');
+												break;
+											case '/fade':
+												charElement.classList.remove('showpony-char-fade');
+												break;
+											case '/speed':
+												//Adjust by the default wait set up for it
+												baseWaitTime=.03;
+												constant=false;
+												break;
+											default:
+												//If the parent doesn't have a parent (it's top-level)
+												if(currentParent.parentElement==null){
+													fragment.appendChild(currentParent);
+													currentParent=fragment;
+												//If a parent element exists, it's the new parent
+												}else{
+													currentParent=currentParent.parentElement;
+												}
+												break;
+										}
+									//We're creating the element
+									}else{
+										values=values.split(' ');
+										
+										switch(values[0]){
+											case 'shout':
+												charElement.classList.add('showpony-char-shout');
+												break;
+											case 'sing':
+												charElement.classList.add('showpony-char-sing');
+												break;
+											case 'shake':
+												charElement.classList.add('showpony-char-shake');
+												break;
+											case 'fade':
+												charElement.classList.add('showpony-char-fade');
+												break;
+											case 'speed':
+												//Check the attributes
+												for(let i=1;i<values.length;i++){
+													if(values[i]==='constant'){
+														constant=true;
+													//It must be speed if not other
+													}else baseWaitTime*=parseFloat(/[\d\.]+/.exec(values[i])[0]);
+												}
+												break;
+											case 'br':
+												var lineBreak=document.createElement('span');
+												lineBreak.style.whiteSpace='pre-line';
+												lineBreak.innerHTML=' <wbr>';
+												currentParent.appendChild(lineBreak); //wbr fixes missing lines breaks in Firefox
+												currentParent.appendChild(document.createElement('br'));
+												break;
+											case 'wbr':
+											case 'img':
+											case 'embed':
+											case 'hr':
+											case 'input':
+												var newParent=document.createElement(values[0]);
+												
+												//Set attributes, if any were passed
+												for(let ii=1;ii<values.length;ii++){
+													
+													if(values[ii].indexOf('=')>-1){
+														var attValues=values[ii].substr().split('=');
+														
+														//Remove surrounding quotes
+														if(/['"]/.test(attValues[1])){
+															attValues[1]=attValues[1].substr(1,attValues[1].length-2);
+														}
+														
+														newParent.setAttribute(attValues[0],attValues[1]);
+													}else{
+														newParent.setAttribute(attValues[0],'true');
+													}
+												}
+												
+												currentParent.appendChild(newParent);
+												
+												//If an input type, wait until input is set and stuff
+												if(values[0]=='input'){
+													//Update data based on this
+													if(newParent.type==='button' || newParent.type==='submit'){
+														newParent.addEventListener('click',function(event){
+															//This might just be a continue button, so we need to check
+															if(this.dataset.var) S.data[this.dataset.var]=this.dataset.val;
+															
+															if(this.dataset.go) runMM(S.lines.indexOf(this.dataset.go));
+															else runMM();
+															
+															//We don't want to run S.input here
+															event.stopPropagation();
+														});
+													}else{
+														//Set data to the defaults of these, in case the user just clicks through
+														if(newParent.dataset.var) S.data[newParent.dataset.var]=newParent.value;
+														
+														newParent.addEventListener('change',function(){
+															S.data[this.dataset.var]=this.value;
+															console.log(this.value);
+														});
+													}
+												}
+												break;
+											default:
+												var newParent=document.createElement(values[0]);
+												
+												//Set attributes, if any were passed
+												for(let ii=1;ii<values.length;ii++){
+													
+													if(values[ii].indexOf('=')>-1){
+														var attValues=values[ii].substr().split('=');
+														
+														//Remove surrounding quotes
+														if(/['"]/.test(attValues[1])){
+															attValues[1]=attValues[1].substr(1,attValues[1].length-2);
+														}
+														
+														newParent.setAttribute(attValues[0],attValues[1]);
+													}else{
+														newParent.setAttribute(attValues[0],'true');
+													}
+												}
+												
+												currentParent.appendChild(newParent);
+												currentParent=newParent;
+											break;
+										}
+										
+									}
+									
+									//Pass over the closing bracket
+									continue;
+								default:
+									//Handle punctuation
+									if(i!=text.length && (text[i]==' ')){
+										/*Pause at:
+											. ! ? : ; -
+											but if there's a " or ' after it, wait until that's set.
+										*/
+										
+										var start=letters.length-3;
+										if(start<0) start=0;
+										
+										if(!constant){
+											//Long pause
+											if(/[.!?:;-]["']*$/.test(letters.substr(start,3))) waitTime*=20;
+											
+											//Short pause
+											if(/[,]["']*$/.test(letters.substr(start,3))) waitTime*=10;
+										}
+									}
+									
+									letters+=text[i];
+
+									//Make the char based on charElement
+									var thisChar=charElement.cloneNode(false);
+									
+									let showChar=m('char','span');				//Display char (appear, shout, etc), parent to animChar
+									let animChar=m('char-anim','span');			//Constant animation character (singing, shaking...)
+									let hideChar=m('char-placeholder','span');	//Hidden char for positioning
+									
+									//Spaces
+									//and Ending! (needs this to wrap lines correctly on Firefox)
+									if(text[i]==' ' || i==l){
+										thisChar.style.whiteSpace='pre-line';
+										hideChar.innerHTML=animChar.innerHTML=' <wbr>';
+										
+										showChar.addEventListener('animationstart',function(event){
+											//If the animation ended on a child, don't continue! (animations are applied to children for text effects)
+											if(this!=event.target) return;
+											
+											//If the element's currently hidden (the animation that ended is for unhiding)
+											if(this.style.visibility!=='visible'){
+												this.style.visibility='visible';
+												
+												var textbox=this.closest('.showpony-textbox');
+												
+												//If the letter's below the textbox
+												if(this.parentNode.getBoundingClientRect().bottom>textbox.getBoundingClientRect().bottom){
+													textbox.scrollTop=this.parentNode.offsetTop+this.parentNode.offsetHeight-textbox.offsetHeight;
+												}
+												
+												//If the letter's above the textbox
+												if(this.parentNode.getBoundingClientRect().top<textbox.getBoundingClientRect().top){
+													textbox.scrollTop=this.parentNode.offsetTop;
+												}
+												
+											}
+										});
+									}
+									else{
+										hideChar.innerHTML=animChar.innerHTML=text[i];
+									}
+									
+									frag([animChar],showChar);
+									frag([showChar,hideChar],thisChar);
+									
+									//Set the display time here- but if we're paused, no delay!
+									if(!S.window.classList.contains('showpony-paused') && !multimediaSettings.input) showChar.style.animationDelay=totalWait+'s';
+									
+									//Set animation timing for animChar, based on the type of animation
+									if(thisChar.classList.contains('showpony-char-sing')){
+										animChar.style.animationDelay=-(letters.length*.1)+'s';
+									}
+									
+									if(thisChar.classList.contains('showpony-char-shake')){
+										animChar.style.animationDelay=-(Math.random()*3)+'s';
+									}
+									
+									//Add the char to the document fragment
+									currentParent.appendChild(thisChar);
+									totalWait+=waitTime;
+									
+									lastLetter=showChar;
+									
+									break;
+							}
+						}
+						
+						//If the user's trying to skip text, let them
+						if(multimediaSettings.input && text[text.length-1]=='>'){
+							console.log('Hey! skip this!');
+						}else{
+							multimediaSettings.input=false;
+						}
+						
+						if(S.objects[multimediaSettings.textbox].dataset.async!=true){
+						
+							lastLetter.addEventListener('animationstart',function(event){
+								if(this!==event.target) return;
+								
+								//If we aren't waiting to continue, continue
+								if(!multimediaSettings.wait){
+									runMM();
+								}else{
+									//If we need players to click to continue (and they have no inputs to fill out or anything), notify them:
+									if(!S.objects[multimediaSettings.textbox].querySelector('input')){
+										S.multimedia.window.appendChild(continueNotice);
+									}
+								}
+							});
+						}
+						
+						//Add the chars to the textbox
+						S.objects[multimediaSettings.textbox].appendChild(fragment);
+						
+						//Continue if async textbox
+						if(S.objects[multimediaSettings.textbox].dataset.async==true) runMM();
+						break;
+				}
+				break;
+			case 'play':
+			case 'pause':
+				
+				//Pause the audio if we're paused; it can start playing later
+				if(S.window.classList.contains('showpony-paused')){
+					if(command==='play') S.objects[object].wasPlaying=true;
+					else{
+						S.objects[object].wasPlaying=false;
+						S.objects[object].pause();
+					}
+				}else S.objects[object][command]();
+				
+				runMM();
+				break;
+			case 'stop':
+				S.objects[object].wasPlaying=false;
+				S.objects[object].pause();
+				S.objects[object].currentTime=0;
+				
+				runMM();
+				break;
+			case 'volume':
+				S.objects[object].volume=parseFloat(vals[1]);
+				runMM();
+				break;
+			case 'time':
+				S.objects[object].currentTime=parseFloat(vals[1]);
+				runMM();
+				break;
+			case 'speed':
+				S.objects[object].playbackRate=parseFloat(vals[1]);
+				runMM();
+				break;
+			case 'loop':
+				S.objects[object].loop=true;
+				runMM();
+				break;
+			default:
+				break;
+		}
+	}
+}
 
 S.multimedia=new makeVisualNovel();
 
@@ -1230,9 +1969,7 @@ var multimediaSettings={
 	,input:false
 };
 
-//Waiting for user input
-var waitForInput=false
-	,scrubbing=false
+var scrubbing=false
 	,waitTimer=new powerTimer(function(){},0)
 	,currentType=null
 	//Elements
@@ -1249,8 +1986,6 @@ var waitForInput=false
 	,cover=m('cover','div')
 	//Page turning
 	,pageTurn=m('page-turn')
-	//Multimedia
-	,continueNotice=m('continue')
 ;
 
 fullscreenButton.alt='Fullscreen';
@@ -1513,752 +2248,6 @@ function m(c,el){
 	return a;
 }
 
-//When video or audio ends
-function mediaEnd(){
-	//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
-	if(!S.window.classList.contains('showpony-paused')) S.to({file:'+1'});
-}
-
-var runTo=false;
-
-//Run multimedia (interactive fiction, visual novels, etc)
-function runMM(inputNum=S.currentLine+1){
-	
-	//Go to either the specified line or the next one
-	S.currentLine=inputNum;
-	
-	//Run through if we're running to a point; if we're there or beyond though, stop running through
-	if(runTo!==false && S.currentLine>=runTo){
-		runTo=false;
-		multimediaSettings.input=false;
-	}
-	
-	//We've run through!
-	if(runTo===false && content.classList.contains('showpony-loading')){
-		if(waitTimer.remaining>0){
-			waitTimer.end();
-		}
-		
-		//Get rid of unused, uncreated objects
-		for(var key in S.objects){
-			//Get rid of the object if it doesn't exist
-			if(!objectBuffer[key]){
-				S.objects[key].remove();
-				delete S.objects[key];
-			}
-		};
-		
-		S.multimedia.window.offsetHeight; //Trigger reflow to flush CSS changes
-		content.classList.remove('showpony-loading');
-	}
-	
-	//Update the scrubbar if the frame we're on is a keyframe
-	if(runTo===false && keyframes.includes(S.currentLine)){
-		//Set the time of the element
-		timeUpdate((keyframes.indexOf(S.currentLine)/keyframes.length)*S.files[S.currentFile].duration);
-	}
-	
-	//If we've ended manually or reached the end, stop running immediately and end it all
-	if(S.currentLine>=S.lines.length){
-		S.to({file:'+1'});
-		return;
-	}
-	
-	var text=S.lines[S.currentLine];
-	
-	//Replace all variables (including variables inside variables) with the right name
-	var match;
-	while(match=/[^\[]+(?=\])/g.exec(text)) text=text.replace('['+match[0]+']',S.data[match[0]]);
-	
-	//Skip comments
-	if(/^\/\//.test(text)){
-		runMM();
-		return;
-	}
-	
-	var vals=text.split(/(?:\s{3,}|\t+)/);
-	
-	var type;
-	
-	//Data
-	if(type=/[+=\-<>!]+$/.exec(vals[0])){
-		type=type[0];
-		//Remove type from variable name
-		vals[0]=vals[0].replace(type,'');
-		
-		//If a value's a number, return it as one
-		function ifParse(input){
-			return isNaN(input) ? input : parseFloat(input);
-		}
-		
-		//Check values inline
-		var operators={
-			'='		:(a,b)=>	b
-			,'+='	:(a,b)=>	a+b
-			,'-='	:(a,b)=>	a-b
-			,'=='	:(a,b)=>	a==b
-			,'<'	:(a,b)=>	a<b
-			,'>'	:(a,b)=>	a>b
-			,'<='	:(a,b)=>	a<=b
-			,'>='	:(a,b)=>	a>=b
-			,'!'	:(a,b)=>	a!=b
-		};
-		
-		switch(type){
-			//Operations
-			case '=':
-			case '+=':
-			case '-=':
-				S.data[vals[0]]=operators[type](
-					ifParse(S.data[vals[0]])
-					,ifParse(vals[1])
-				);
-				
-				/*
-				//Run an event that the user can track for updated user info
-				S.window.dispatchEvent(
-					new CustomEvent(
-						'data'
-						,{
-							detail:{
-								name:vals[1]
-								,value:S.data[vals[1]]
-							}
-						}
-					)
-				);*/
-				
-				runMM();
-				break;
-			//Comparisons
-			default:
-				if(operators[type](
-					ifParse(S.data[vals[0]])
-					,ifParse(vals[1])
-				)) runMM(S.lines.indexOf(vals[2]));
-				else runMM();
-				break;
-		}
-		return;
-	}
-	
-	type='character';
-	if(vals.length===1){
-		type='background';
-	}
-	
-	var object=/^[^\.\t]+/.exec(vals[0]);
-	if(!object){
-		object='main';
-		type='textbox';
-	}
-	else object=object[0];
-	
-	var command=/\..+/.exec(vals[0]);
-	if(!command) command='content';
-	else command=command[0].replace('.','');
-	
-	//Check if audio
-	if(/play|pause|stop|loop/.test(command)){
-		type='audio';
-	}
-	
-	//Check for images for this character; go through future lines
-	if(type==='character') var lines=[vals[1]];		
-	
-	//If an object with the name doesn't exist, make it!
-	if(object!=='engine' && !S.objects[object]){
-		//Audio has special requirements
-		if(type==='audio'){
-			S.objects[object]=document.createElement('audio');
-			
-			S.objects[object].src='url("<?=$_POST['path']?>resources/audio/'+object;
-			
-			//If an extension isn't specified, assume mp3
-			if(!/\./.test(object)) S.objects[object].src+='.mp3';
-			S.objects[object].preload=true;
-			
-			S.multimedia.window.appendChild(S.objects[object]);
-		}else{
-			if(type==='textbox'){
-				S.multimedia.window.appendChild(S.objects[object]=m(type,'form'));
-				S.objects[object].addEventListener('submit',function(event){event.preventDefault();});
-			}
-			else S.multimedia.window.appendChild(S.objects[object]=m(type));
-
-			S.objects[object].addEventListener('animationend',function(event){
-				if(this!==event.target) return;
-				
-				var objectName=object.replace(/#/g,'id');
-				
-				var updateStyle=new RegExp('@keyframes '+objectName+'{100%{[^}]*}}','i').exec(styles.innerHTML);
-				
-				var styleAdd=/[^{]+;/.exec(updateStyle);
-				
-				if(styleAdd) this.style.cssText+=styleAdd[0];
-				this.style.animationName=null;
-				this.style.animationDuration=null;
-				this.style.animationFillMode=null;
-			})
-			
-			if(type==='character'){
-				//Go through the rest of the lines, looking for images to preload
-				for(let i=S.currentLine;i<S.lines.length;i++){
-					
-					//If this character is listed on this line
-					if(S.lines[i].indexOf(object+'\t')===0){
-						//Add the image names to the images to load
-						lines.push(S.lines[i].split(/\s{3,}|\t+/)[1]);
-					}
-				}
-			}
-		}
-	}
-	
-	//If we're buffering, add it to the buffer so it's not deleted later
-	if(runTo) objectBuffer[object]=S.objects[object];
-
-	//Get the name, which is the file's name (or for characters, the character's name). Anything after a hash is an id; it's not a part of the name.
-	var name=/^[^#]+/.exec(object)[0];
-	
-	switch(command){
-		case 'go':
-			runMM(S.lines.indexOf(vals[1]));
-			//Don't automatically go to the next line, we're going correctly above
-			break;
-		case 'wait':
-			//If there's a waitTimer, clear it out
-			if(waitTimer.remaining>0){
-				waitTimer.end();
-			}
-			
-			//Skip waiting if we're running through
-			if(runTo){
-				runMM();
-				return;
-			}
-			
-			//If a value was included, wait for the set time
-			if(vals[1]) waitTimer=new powerTimer(runMM,parseFloat(vals[1])*1000);
-			//Otherwise, let the user know to continue it
-			else S.multimedia.window.appendChild(continueNotice);
-			
-			//If we're paused, pause the timer
-			if(S.window.classList.contains('showpony-paused')) waitTimer.pause();
-			
-			//Don't automatically go to the next line
-			break;
-		case 'style':
-			var animationSpeed=/time:[^s]+s/i.exec(vals[1]);
-		
-			//If running to or not requesting animation, add styles without implementing animation
-			if(animationSpeed===null || S.currentLine<runTo){
-				S.objects[object].style.cssText+=vals[1];
-			}else{
-				var objectName=object.replace(/#/g,'id');
-				
-				animationSpeed=animationSpeed[0].split(':')[1];
-				
-				var animation='@keyframes '+objectName+'{100%{'+vals[1]+'}}';
-			
-				//Either replace existing keyframes or append to the end
-				styles.innerHTML=styles.innerHTML.replace(new RegExp('(@keyframes '+objectName+'{100%{[^}]*}})|$'),animation);
-				S.objects[object].style.animationName=objectName;
-				S.objects[object].style.animationFillMode='forwards';
-				S.objects[object].style.animationDuration=animationSpeed;
-			}
-			
-			runMM();
-			break;
-		case 'async':
-			S.objects[object].dataset.async=vals[1];
-			runMM();
-			break;
-		case 'content':
-			switch(type){
-				case 'character':
-					var cha=S.objects[vals[0]];
-					
-					//Character level
-					for(let i=0,len=lines.length;i<len;i++){
-						
-						//Get the image names passed (commas separate layers)
-						var imageNames=lines[i].split(',');
-					
-						//Layer level
-						//Go through each passed image and see if it exists
-						for(let ii=0,len=imageNames.length;ii<len;ii++){
-							//If there's no period, add '.png' to the end- assume the extension
-							if(!/\./.test(imageNames[ii])) imageNames[ii]+='.png';
-							
-							var image='url("<?=$_POST['path']?>resources/characters/'+name+'/'+imageNames[ii]+'")';
-							
-							//If the image already exists
-							var found=false;
-							
-							//If the layer exists, search it
-							if(cha.children[ii]){
-								//Search the layer!
-								var search=cha.children[ii].children;
-								
-								//Set the opacity right, and if it's 1, we found the image!
-								for(let iii=0,len=search.length;iii<len;iii++){
-									var match=search[iii].style.backgroundImage.replace(/'/g,'"')==image.replace(/'/g,'"');
-									
-									//If this is the first image, it's the one we asked for; we don't want to make preloads visible, after all!
-									if(i===0) search[iii].style.opacity=match ? 1 : 0;
-									
-									if(match==true) found=true;
-								}
-							//If the layer doesn't exist, make it!
-							}else cha.appendChild(document.createElement('div'));
-							
-							//Image level
-							//If the image doesn't exist in the layer, we add it!
-							if(!found){
-								//Add a backgroundImage
-								var thisImg=m('character-image');
-								thisImg.style.backgroundImage=image;
-								
-								//If this isn't the first image, hide it immediately (it's being preloaded, we don't want to see it yet!)
-								if(i!==0) thisImg.style.opacity=0;
-								
-								cha.children[ii].appendChild(thisImg);
-							}
-						}
-					}
-					runMM();
-					break;
-				case 'background':
-					S.objects[object].style.backgroundImage='url("<?=$_POST['path']?>resources/backgrounds/'+name+'.jpg")';
-					runMM();
-					break;
-				case 'audio':
-					S.objects[object].src=vals[0];
-					/*
-					//Go through the passed parameters and apply them
-					let l=vals.length;
-					for(let i=2;i<l;i++){
-						switch(vals[i]){
-							case 'unloop':
-								S.objects[object].loop=false;
-								break;
-							case 'stop':
-								S.objects[object].currentTime=0;
-								S.objects[object].wasPlaying=false;
-								S.objects[object].pause();
-								break;
-							default: //Other features
-								var value=parseFloat(vals[i].substr(1));
-								//Current volume
-								if(vals[i][0]==='v') S.objects[object].volume=value;
-								//Current time
-								else if(vals[i][0]==='t') S.objects[object].currentTime=value;
-								//Speed
-								else if(vals[i][0]==='s') S.objects[object].playbackRate=value;
-								break;
-						}
-					}*/
-					runMM();
-					break;
-				case 'textbox':
-					//var keepGoing=multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals);
-	
-					//var keepGoing=false;
-					//if(!keepGoing) runMM();
-					
-					//If we're running through, skip displaying text until we get to the right point
-					if(runTo){
-						objectBuffer[multimediaSettings.textbox]=S.objects[multimediaSettings.textbox];
-						runMM(undefined);
-						return;
-					}
-					
-					multimediaSettings.wait=true; //Assume we're waiting at the end time
-					
-					text=text.replace(/^\t+/,'');
-					
-					//If the line doesn't start with +, replace the text
-					if(text[0]!=='+'){
-						S.objects[multimediaSettings.textbox].innerHTML='';
-						
-						if(!S.objects.name) S.multimedia.window.appendChild(S.objects.name=m('name'));
-						
-						//Split up the text so we can have names automatically written
-						var nameText=text.split('::');
-						if(nameText.length>1){
-							text=nameText[1];
-							S.objects.name.innerHTML=nameText[0];
-							S.objects.name.style.visibility='visible';
-						}else{
-							S.objects.name.style.visibility='hidden';
-						}
-						
-						multimediaSettings.input=false;
-					}
-					else text=text.substr(1);
-					
-					//STEP 2: Design the text//
-					
-					//Design defaults
-					var charElementDefault=m('char-container','span')
-						,charElement
-						,baseWaitTime
-						,constant
-					;
-					
-					//Reset the defaults with this function, or set them inside here!
-					function charDefaults(){
-						//Use the default element for starting off
-						charElement=charElementDefault.cloneNode(true);
-						baseWaitTime=.03; //The default wait time
-						constant=false; //Default punctuation pauses
-					}
-					
-					//Use the defaults
-					charDefaults();
-
-					//The total time we're waiting until x happens
-					var totalWait=0;
-					var fragment=document.createDocumentFragment();
-					var currentParent=fragment;
-					
-					var letters=''; //Have to save actual letters separately; special tags and such can mess with our calculations
-					
-					var lastLetter=null;
-					
-					var l=text.length;
-					//We check beyond the length of the text because that lets us place characters that allow text wrapping in Firefox
-					for(let i=0;i<=l;i++){
-						var waitTime=baseWaitTime;
-						
-						//If a > is at the end of a text line, continue automatically.
-						//Won't interfere with tags, no worries!
-						if(i==l-1 && text[i]==='>'){
-							multimediaSettings.wait=false;
-							continue;
-						}
-						
-						//Check the current character//
-						switch(text[i]){
-							//HTML
-							case '<':
-								//Skip over the opening bracket
-								i++;
-							
-								var values='';
-								
-								//Wait until a closing bracket (or the end of the text)
-								while(text[i]!='>' && i<text.length){
-									values+=text[i];
-									i++;
-								}
-								
-								//We're closing the element
-								if(values[0]=='/'){
-									switch(values){
-										case '/shout':
-											charElement.classList.remove('showpony-char-shout');
-											break;
-										case '/sing':
-											charElement.classList.remove('showpony-char-sing');
-											break;
-										case '/shake':
-											charElement.classList.remove('showpony-char-shake');
-											break;
-										case '/fade':
-											charElement.classList.remove('showpony-char-fade');
-											break;
-										case '/speed':
-											//Adjust by the default wait set up for it
-											baseWaitTime=.03;
-											constant=false;
-											break;
-										default:
-											//If the parent doesn't have a parent (it's top-level)
-											if(currentParent.parentElement==null){
-												fragment.appendChild(currentParent);
-												currentParent=fragment;
-											//If a parent element exists, it's the new parent
-											}else{
-												currentParent=currentParent.parentElement;
-											}
-											break;
-									}
-								//We're creating the element
-								}else{
-									values=values.split(' ');
-									
-									switch(values[0]){
-										case 'shout':
-											charElement.classList.add('showpony-char-shout');
-											break;
-										case 'sing':
-											charElement.classList.add('showpony-char-sing');
-											break;
-										case 'shake':
-											charElement.classList.add('showpony-char-shake');
-											break;
-										case 'fade':
-											charElement.classList.add('showpony-char-fade');
-											break;
-										case 'speed':
-											//Check the attributes
-											for(let i=1;i<values.length;i++){
-												if(values[i]==='constant'){
-													constant=true;
-												//It must be speed if not other
-												}else baseWaitTime*=parseFloat(/[\d\.]+/.exec(values[i])[0]);
-											}
-											break;
-										case 'br':
-											var lineBreak=document.createElement('span');
-											lineBreak.style.whiteSpace='pre-line';
-											lineBreak.innerHTML=' <wbr>';
-											currentParent.appendChild(lineBreak); //wbr fixes missing lines breaks in Firefox
-											currentParent.appendChild(document.createElement('br'));
-											break;
-										case 'wbr':
-										case 'img':
-										case 'embed':
-										case 'hr':
-										case 'input':
-											var newParent=document.createElement(values[0]);
-											
-											//Set attributes, if any were passed
-											for(let ii=1;ii<values.length;ii++){
-												
-												if(values[ii].indexOf('=')>-1){
-													var attValues=values[ii].substr().split('=');
-													
-													//Remove surrounding quotes
-													if(/['"]/.test(attValues[1])){
-														attValues[1]=attValues[1].substr(1,attValues[1].length-2);
-													}
-													
-													newParent.setAttribute(attValues[0],attValues[1]);
-												}else{
-													newParent.setAttribute(attValues[0],'true');
-												}
-											}
-											
-											currentParent.appendChild(newParent);
-											
-											//If an input type, wait until input is set and stuff
-											if(values[0]=='input'){
-												//Update data based on this
-												if(newParent.type==='button' || newParent.type==='submit'){
-													newParent.addEventListener('click',function(event){
-														//This might just be a continue button, so we need to check
-														if(this.dataset.var) S.data[this.dataset.var]=this.dataset.val;
-														
-														if(this.dataset.go) runMM(S.lines.indexOf(this.dataset.go));
-														else runMM();
-														
-														//We don't want to run S.input here
-														event.stopPropagation();
-													});
-												}else{
-													//Set data to the defaults of these, in case the user just clicks through
-													if(newParent.dataset.var) S.data[newParent.dataset.var]=newParent.value;
-													
-													newParent.addEventListener('change',function(){
-														S.data[this.dataset.var]=this.value;
-														console.log(this.value);
-													});
-												}
-											}
-											break;
-										default:
-											var newParent=document.createElement(values[0]);
-											
-											//Set attributes, if any were passed
-											for(let ii=1;ii<values.length;ii++){
-												
-												if(values[ii].indexOf('=')>-1){
-													var attValues=values[ii].substr().split('=');
-													
-													//Remove surrounding quotes
-													if(/['"]/.test(attValues[1])){
-														attValues[1]=attValues[1].substr(1,attValues[1].length-2);
-													}
-													
-													newParent.setAttribute(attValues[0],attValues[1]);
-												}else{
-													newParent.setAttribute(attValues[0],'true');
-												}
-											}
-											
-											currentParent.appendChild(newParent);
-											currentParent=newParent;
-										break;
-									}
-									
-								}
-								
-								//Pass over the closing bracket
-								continue;
-							default:
-								//Handle punctuation
-								if(i!=text.length && (text[i]==' ')){
-									/*Pause at:
-										. ! ? : ; -
-										but if there's a " or ' after it, wait until that's set.
-									*/
-									
-									var start=letters.length-3;
-									if(start<0) start=0;
-									
-									if(!constant){
-										//Long pause
-										if(/[.!?:;-]["']*$/.test(letters.substr(start,3))) waitTime*=20;
-										
-										//Short pause
-										if(/[,]["']*$/.test(letters.substr(start,3))) waitTime*=10;
-									}
-								}
-								
-								letters+=text[i];
-
-								//Make the char based on charElement
-								var thisChar=charElement.cloneNode(false);
-								
-								let showChar=m('char','span');				//Display char (appear, shout, etc), parent to animChar
-								let animChar=m('char-anim','span');			//Constant animation character (singing, shaking...)
-								let hideChar=m('char-placeholder','span');	//Hidden char for positioning
-								
-								//Spaces
-								//and Ending! (needs this to wrap lines correctly on Firefox)
-								if(text[i]==' ' || i==l){
-									thisChar.style.whiteSpace='pre-line';
-									hideChar.innerHTML=animChar.innerHTML=' <wbr>';
-									
-									showChar.addEventListener('animationstart',function(event){
-										//If the animation ended on a child, don't continue! (animations are applied to children for text effects)
-										if(this!=event.target) return;
-										
-										//If the element's currently hidden (the animation that ended is for unhiding)
-										if(this.style.visibility!=='visible'){
-											this.style.visibility='visible';
-											
-											var textbox=this.closest('.showpony-textbox');
-											
-											//If the letter's below the textbox
-											if(this.parentNode.getBoundingClientRect().bottom>textbox.getBoundingClientRect().bottom){
-												textbox.scrollTop=this.parentNode.offsetTop+this.parentNode.offsetHeight-textbox.offsetHeight;
-											}
-											
-											//If the letter's above the textbox
-											if(this.parentNode.getBoundingClientRect().top<textbox.getBoundingClientRect().top){
-												textbox.scrollTop=this.parentNode.offsetTop;
-											}
-											
-										}
-									});
-								}
-								else{
-									hideChar.innerHTML=animChar.innerHTML=text[i];
-								}
-								
-								frag([animChar],showChar);
-								frag([showChar,hideChar],thisChar);
-								
-								//Set the display time here- but if we're paused, no delay!
-								if(!S.window.classList.contains('showpony-paused') && !multimediaSettings.input) showChar.style.animationDelay=totalWait+'s';
-								
-								//Set animation timing for animChar, based on the type of animation
-								if(thisChar.classList.contains('showpony-char-sing')){
-									animChar.style.animationDelay=-(letters.length*.1)+'s';
-								}
-								
-								if(thisChar.classList.contains('showpony-char-shake')){
-									animChar.style.animationDelay=-(Math.random()*3)+'s';
-								}
-								
-								//Add the char to the document fragment
-								currentParent.appendChild(thisChar);
-								totalWait+=waitTime;
-								
-								lastLetter=showChar;
-								
-								break;
-						}
-					}
-					
-					//If the user's trying to skip text, let them
-					if(multimediaSettings.input && text[text.length-1]=='>'){
-						console.log('Hey! skip this!');
-					}else{
-						multimediaSettings.input=false;
-					}
-					
-					if(S.objects[multimediaSettings.textbox].dataset.async!=true){
-					
-						lastLetter.addEventListener('animationstart',function(event){
-							if(this!==event.target) return;
-							
-							//If we aren't waiting to continue, continue
-							if(!multimediaSettings.wait){
-								runMM();
-							}else{
-								//If we need players to click to continue (and they have no inputs to fill out or anything), notify them:
-								if(!S.objects[multimediaSettings.textbox].querySelector('input')){
-									S.multimedia.window.appendChild(continueNotice);
-								}
-							}
-						});
-					}
-					
-					//Add the chars to the textbox
-					S.objects[multimediaSettings.textbox].appendChild(fragment);
-					
-					//Continue if async textbox
-					if(S.objects[multimediaSettings.textbox].dataset.async==true) runMM();
-					break;
-			}
-			break;
-		case 'play':
-		case 'pause':
-			
-			//Pause the audio if we're paused; it can start playing later
-			if(S.window.classList.contains('showpony-paused')){
-				if(command==='play') S.objects[object].wasPlaying=true;
-				else{
-					S.objects[object].wasPlaying=false;
-					S.objects[object].pause();
-				}
-			}else S.objects[object][command]();
-			
-			runMM();
-			break;
-		case 'stop':
-			S.objects[object].wasPlaying=false;
-			S.objects[object].pause();
-			S.objects[object].currentTime=0;
-			
-			runMM();
-			break;
-		case 'volume':
-			S.objects[object].volume=parseFloat(vals[1]);
-			runMM();
-			break;
-		case 'time':
-			S.objects[object].currentTime=parseFloat(vals[1]);
-			runMM();
-			break;
-		case 'speed':
-			S.objects[object].playbackRate=parseFloat(vals[1]);
-			runMM();
-			break;
-		case 'loop':
-			S.objects[object].loop=true;
-			runMM();
-			break;
-		default:
-			break;
-	}
-}
-
 function powerTimer(callback,delay){
 	//Thanks to https://stackoverflow.com/questions/3969475/javascript-pause-settimeout
 
@@ -2289,31 +2278,6 @@ function powerTimer(callback,delay){
 	}
 	
     pT.resume();
-}
-
-var multimediaFunction={
-	/*'en':()=> S.to({file:'+1'})*/
-	//EV	event
-	'ev':vals=>{
-		//Dispatch the event the user requested to
-		S.window.dispatchEvent(new CustomEvent(vals[1]));
-	}
-	,'tb':(vals)=>{
-		//Set the current textbox
-		multimediaSettings.textbox=vals[1];
-	}
-}
-
-//Replace unsafe characters for filenames with safe ones, and vice-versa
-function safeFilename(string,type){
-	var a=['[fs]','[bs]','[gt]','[lt]','[c]','[a]','[q]','[qm]','[b]'];
-	var b=['/','\\','>','<',':','*','\'','?','|'];
-
-	//Swap values if changing TO a filename instead of FROM a filename
-	if(type!=='from') [a,b]=[b,a];
-	
-	for(let i=0,len=a.length;i<len;i++) string=string.replace(a[i],b[i]);
-	return string;
 }
 
 ///////////////////////////////////////
@@ -2831,7 +2795,7 @@ if(S.query){
 }
 
 //Pause the Showpony
-//S.menu(null,'pause');
+S.menu(null,'pause');
 
 //Use time or file to bookmark, whichever is requested
 S.to(passObj);
