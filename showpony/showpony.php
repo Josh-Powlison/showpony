@@ -243,6 +243,10 @@ S.cover=null;
 S.start='last';
 S.data={};
 
+//-1 before we load
+S.currentFile=-1;
+S.currentTime=-1;
+
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
 ///////////////////////////////////////
@@ -253,65 +257,43 @@ var objectBuffer, keyframes;
 S.to=function(obj={}){
 	content.classList.add('showpony-loading');
 	
-	obj.time=obj.time || 0;
-	obj.file=obj.file || null;
+	//Does not work with relative time and relative file; must be absolute one, absolute both, or relative one
 	
-	switch(obj.time){
-		case 'end':
-			obj.file=S.files.length-1;
-			obj.time=Math.max(0,S.files[obj.file].duration-10);
-			break;
-		default:
-			//Relative time
-			if(/\+|\-/.test(obj.time[0])){
-				obj.time=S[currentType].currentTime+parseFloat(obj.time);
-				//Add the durations of previous files
-				for(let i=0;i<S.currentFile;i++) getTime+=S.files[i].duration;
-			}
+	obj.time=obj.time || 0;
+	obj.file=obj.file || 0;
+	
+	if(obj.time==='end') obj.time=S.duration-10;
+	if(obj.file==='last') obj.file=S.files.length-1;
+	
+	//Relative time
+	if(/\+|\-/.test(obj.time[0])) obj.time=S.currentTime+parseFloat(obj.time);
+	obj.time=Math.max(0,obj.time);
+
+	//Look through the files for the right one
+	for(obj.file;obj.file<S.files.length;obj.file++){
+		if(obj.time<=S.files[obj.file].duration) break; //We've reached the file
 		
-			//If a numerical time is passed but no file, get file and time based on the place in the total
-			if(obj.file===null){
-				obj.file=0;
-				
-				//Look through the files for the right one
-				for(let i=0;i<S.files.length;i++){
-					var length=S.files[i].duration;
-					
-					//If we've reached the file, exit
-					if(obj.time<length) break;
-					
-					obj.file++;
-					obj.time-=length;
-					
-					//If the time passed is greater than the total time, the story will end
-				}
-			}
-			
-			obj.time=Math.max(0,obj.time);
-			break;
+		obj.time-=S.files[obj.file].duration;
 	}
+	
+	
+	//Relative file
+	if(/\+|\-/.test(obj.file[0])) obj.file=S.currentFile+parseInt(obj.file);
+	obj.file=Math.max(0,obj.file);
+	
+	//If we're at the end, run the readable event
+	if(obj.file>=S.files.length){
+		obj.file=S.files.length-1;
+		obj.time=S.files[S.files.length-1].duration;
 		
-	switch(obj.file){
-		case 'last':
-			obj.file=S.files.length-1;
-			break;
-		default:
-			//Relative file
-			if(/\+|\-/.test(obj.file[0])) obj.file=S.currentFile+parseInt(obj.file);
-			
-			//If we're at the end, run the readable event
-			if(obj.file>=S.files.length){
-				obj.file=S.files.length-1;
-				obj.time=S.files[S.files.length-1].duration;
-				
-				//Run the event that users can read
-				S.window.dispatchEvent(new CustomEvent('end'));
-				return;
-			}
-			
-			obj.file=Math.max(0,obj.file);
-			break;
+		//Run the event that users can read
+		S.window.dispatchEvent(new CustomEvent('end'));
+		
+		S[currentType].src(obj.file,obj.time);
+		S[currentType].pause();
+		return;
 	}
+	
 	
 	Object.assign(obj,{
 		reload:obj.reload || false
@@ -1332,6 +1314,7 @@ function timeUpdate(time){
 	}
 	
 	updateInfo();
+	S.currentTime=getCurrentTime();
 	S[currentType].displaySubtitles();
 	
 	//Run custom event for checking time
@@ -1341,7 +1324,7 @@ function timeUpdate(time){
 			,{
 				detail:{
 					file:(S.currentFile+1)
-					,time:getCurrentTime()
+					,time:S.currentTime
 				}
 			}
 		)
@@ -2747,9 +2730,6 @@ function gamepadButton(gamepad,number,type){
 //Make sure setup is made of multiple Promises that can run asyncronously- and that they do!
 
 content.classList.add('showpony-loading');
-	
-//currentFile is -1 before we load
-S.currentFile=-1;
 
 //Empty the current window
 S.window.innerHTML='';
