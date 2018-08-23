@@ -924,7 +924,7 @@ S.toggle=function(){
 	S[S.paused ? 'play' : 'pause']();
 }
 
-//Toggle fullscreen
+//Toggle fullscreen, basing the functions on the browser's abilities
 if(S.window.requestFullscreen){
 	S.fullscreenEnter=function(){
 		if(document.fullscreenElement) return;
