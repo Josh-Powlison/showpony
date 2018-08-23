@@ -2,34 +2,48 @@ document.getElementById("example-list").addEventListener("change",function(){
 	chooseStory(this.value);
 });
 
+//Choose the right input value
 function chooseStory(id){
-	var stories=document.getElementsByClassName("showpony-default");
-	
-	//if(document.querySelector(".show-selected")) document.querySelector(".show-selected").classList.remove("show-selected");
-	//document.getElementById("show-"+id).classList.add("show-selected");
-	
+	var stories=document.getElementsByClassName("showpony");
+/*
+	if(document.querySelector(".show-selected")) document.querySelector(".show-selected").classList.remove("show-selected");
+	showponies[id].window.classList.add("show-selected");
+	*/
+	//Set the dropdown's value
 	if(document.getElementById("example-list").value!==id){ 
 		document.getElementById("example-list").value=id;
 	}
+	/*
+	for(var obj in showponies[id]){
+		if(Object.key(obj)!==id) showponies[id].window.classList.add("show-selected");
+		else showponies[id].window.classList.remove("show-selected");
+	}
+	*/
 	
-	for(var i=0;i<stories.length;i++){
-		if(stories.item(i).id==id){
-			if(stories.item(i).classList.contains("hidden")){
-				stories.item(i).classList.remove("hidden");
+	var keys=Object.keys(showponies);
+	for(var i=0;i<keys.length;i++){
+		if(keys[i]==id){
+			if(document.getElementById(keys[i]).classList.contains("hidden")){
+				document.getElementById(keys[i]).classList.remove("hidden");
 				
-				if(stories.item(i).dataset.wasPaused){
-					if(showponies[stories.item(i).id].currentFile>-1) showponies[stories.item(i).id].menu(null,stories.item(i).dataset.wasPaused=="true" ? "pause" : "play");
+				console.log(document.getElementById(keys[i]).dataset.wasPaused=='false');
+				
+				if(document.getElementById(keys[i]).dataset.wasPaused=='false'){
+					showponies[keys[i]].menu(null,'play');
+				}else{
+					showponies[keys[i]].menu(null,'pause');
 				}
 			}
 			
 			//Update URL and history
-			history.replaceState(null,null,location.href.replace(/#[^$?]+/,'')+"#"+id);
+			history.replaceState(null,null,location.href.replace(/#[^$?]+/,'')+"#"+keys[i]);
 		}else{
-			if(!stories.item(i).classList.contains("hidden")){
-				stories.item(i).dataset.wasPaused=stories.item(i).classList.contains("showpony-paused");
-				stories.item(i).classList.add("hidden");
+			if(!document.getElementById(keys[i]).classList.contains("hidden")){
+				document.getElementById(keys[i]).classList.add("hidden");
 				
-				if(showponies[stories.item(i).id].currentFile>-1) showponies[stories.item(i).id].menu(null,"pause");
+				document.getElementById(keys[i]).dataset.wasPaused=showponies[keys[i]].window.classList.contains("showpony-paused");
+				
+				if(showponies[keys[i]].currentFile>-1) showponies[keys[i]].menu(null,"pause");
 			}
 		}
 	}
