@@ -650,6 +650,7 @@ const S=this;
 S.window=document.createElement('div');
 S.window.className='showpony';
 S.window.tabindex='0';
+S.paused=false;
 
 S.name='<?=toCamelCase($name)?>';
 
@@ -662,10 +663,7 @@ S.window.innerHTML=`
 		<div class="showpony-progress" style="left: 14.5688%;"></div>
 		<p class="showpony-overlay-text">1 | 3</p>
 		<button class="showpony-button showpony-fullscreen-button" alt="Fullscreen" title="Fullscreen Toggle"></button>
-		<select class="showpony-captions-button" title="Closed Captions/Subtitles" alt="Closed Captions/Subtitles">
-			<option class="showpony-captions-option" value="None">None</option>
-			<option class="showpony-captions-option" value="en">en</option>
-		</select>
+		<select class="showpony-captions-button" title="Closed Captions/Subtitles" alt="Closed Captions/Subtitles"></select>
 	</div>
 `;
 
@@ -685,7 +683,6 @@ document.currentScript.insertAdjacentElement('afterend',S.window);
 ///////////////////////////////////////
 ///////////PUBLIC VARIABLES////////////
 ///////////////////////////////////////
-
 
 //Set tabIndex so it's selectable
 S.window.tabIndex=0;
@@ -909,23 +906,24 @@ if(S.infiniteScroll || S.files[obj.file].medium==='text'){
 S.menu=function(event=null,action=false){
 	//We can cancel moving the bar outside of the overlay, but we can't do anything else.
 	//Exit if we're not targeting the overlay.
-	if(event && event.target!==overlay) return;
+	if(event!==null && event.target!==overlay) return;
 	
 	//If a cover exists, hide it rather than playing/pausing
-	if(typeof(action)==='undefined' || action==='play'){
-		console.log(cover);
+	/*if(action==='play'){
 		if(cover){
 			cover.dispatchEvent(new CustomEvent('click'));
 			return;
 		}
-	}
+	}*/
 	
 	//Allow playing and pausing, but return if either's already done
 	if(
 		action &&
-		((S.window.classList.contains('showpony-paused') && action=='pause')
-		||
-		(!S.window.classList.contains('showpony-paused') && action=='play'))
+		(
+			(S.paused && action==='pause')
+			||
+			(!S.paused && action==='play')
+		)
 	) return;
 	
 	else if(currentType!==null) //If we aren't moving the bar
@@ -933,9 +931,11 @@ S.menu=function(event=null,action=false){
 		//On toggling classes, returns 'true' if just added
 		if(S.window.classList.toggle('showpony-paused')){
 			//Pause media
+			S.paused=true;
 			S[currentType].pause();
 		}else{
 			//Play media
+			S.paused=false;
 			S[currentType].play();
 		}
 	}
@@ -944,10 +944,7 @@ S.menu=function(event=null,action=false){
 	S.window.dispatchEvent(
 		new CustomEvent('menu'
 		,{detail:{
-			open:(
-				S.window.classList.contains('showpony-paused') ? true
-				: false
-			)
+			open:S.paused
 		}})
 	);
 };
@@ -1081,21 +1078,12 @@ S.fullscreen=function(type='toggle'){
 
 //When the viewer inputs to Showpony (click, space, general action)
 S.input=function(){
-	if(S.window.classList.contains('showpony-paused')){
+	if(S.paused){
 		S.menu(null,'play');
 		return;
 	}
 	
 	S[currentType].input();
-}
-
-//Close ShowPony
-S.close=function(){
-	//Remove the window event listener
-	window.removeEventListener('click',windowClick);
-	
-	//Reset the window to what it was before
-	S.window.remove();
 }
 
 <?php if($media['text']){ ?>
@@ -1352,7 +1340,7 @@ function makeMedia(type='video'){
 		if(P.currentFile!==file) P.window.src=src;
 		
 		//If we're not paused, play
-		if(!S.window.classList.contains('showpony-paused')) P.play();
+		if(!S.paused) P.play();
 		
 		P.currentFile=file;
 		
@@ -1464,7 +1452,7 @@ function makeMedia(type='video'){
 	//When we finish playing a video or audio file
 	P.window.addEventListener('ended',function(){
 		//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
-		if(!S.window.classList.contains('showpony-paused')) S.to({file:'+1'});
+		if(!S.paused) S.to({file:'+1'});
 	});
 
 	//On moving through time, update info and title
@@ -1923,7 +1911,7 @@ function makeVisualNovel(){
 				else S.multimedia.window.appendChild(continueNotice);
 				
 				//If we're paused, pause the timer
-				if(S.window.classList.contains('showpony-paused')) waitTimer.pause();
+				if(S.paused) waitTimer.pause();
 				
 				//Don't automatically go to the next line
 				break;
@@ -2343,7 +2331,7 @@ function makeVisualNovel(){
 									frag([showChar,hideChar],thisChar);
 									
 									//Set the display time here- but if we're paused, no delay!
-									if(!S.window.classList.contains('showpony-paused') && !multimediaSettings.input) showChar.style.animationDelay=totalWait+'s';
+									if(!S.paused && !multimediaSettings.input) showChar.style.animationDelay=totalWait+'s';
 									
 									//Set animation timing for animChar, based on the type of animation
 									if(thisChar.classList.contains('showpony-char-sing')){
@@ -2400,7 +2388,7 @@ function makeVisualNovel(){
 			case 'pause':
 				
 				//Pause the audio if we're paused; it can start playing later
-				if(S.window.classList.contains('showpony-paused')){
+				if(S.paused){
 					if(command==='play') S.objects[object].wasPlaying=true;
 					else{
 						S.objects[object].wasPlaying=false;
@@ -3217,14 +3205,6 @@ if(S.subtitles){
 		captionsButton.appendChild(option);
 	}
 }
-
-//Send an event to let the user know that Showpony has started up!
-S.window.dispatchEvent(
-	new CustomEvent('setup'
-	,{detail:{
-		state:'success'
-	}})
-);
 
 ///////////////////////////////////////
 /////////////////ADMIN/////////////////
