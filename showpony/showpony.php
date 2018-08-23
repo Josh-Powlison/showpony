@@ -925,66 +925,102 @@ S.toggle=function(){
 }
 
 //Toggle fullscreen
-S.fullscreen=function(type='toggle'){
-	//Get fullscreen type
-	var browser=S.window.requestFullscreen ?
-			{
-				element:'fullscreenElement'
-				,request:'requestFullscreen'
-				,exit:'exitFullscreen'
-			}
-		: S.window.webkitRequestFullscreen ?
-			{
-				element:'webkitFullscreenElement'
-				,request:'webkitRequestFullscreen'
-				,exit:'webkitExitFullscreen'
-			}
-		: S.window.mozRequestFullScreen ?
-			{
-				element:'mozFullScreenElement'
-				,request:'mozRequestFullScreen'
-				,exit:'mozCancelFullScreen'
-			}
-		: false
-	;
-	
-	//If a fullscreen-supporting browser wasn't found, use our rigged version
-	if(!browser){
-		if(!type || type=='toggle'){
-			if(S.window.classList.contains('showpony-fullscreen-alt')) type='exit';
-			else type='request';
-		}
+if(S.window.requestFullscreen){
+	S.fullscreenEnter=function(){
+		if(document.fullscreenElement) return;
 		
-		if(type=='request'){
-			S.window.classList.add('showpony-fullscreen-alt');
-			document.getElementsByTagName('html')[0].classList.add('showpony-fullscreen-control');
-			
-			S.window.dataset.prevz=S.window.style.zIndex || 'initial';
-			
-			//From: https://stackoverflow.com/questions/1118198/how-can-you-figure-out-the-highest-z-index-in-your-document
-			S.window.style.zIndex=Array.from(document.querySelectorAll('body *'))
-			   .map(a => parseFloat(window.getComputedStyle(a).zIndex))
-			   .filter(a => !isNaN(a))
-			   .sort((a,b)=>a-b)
-			   .pop()+1;
-		}else{
-			S.window.classList.remove('showpony-fullscreen-alt');
-			document.getElementsByTagName('html')[0].classList.remove('showpony-fullscreen-control');
-			
-			//Get the original z-index value
-			S.window.style.zIndex=S.window.dataset.prevz;
-			S.window.removeAttribute('data-prevz');
-		}
-		
-		return;
+		S.window.requestFullscreen();
+		S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
 	}
 	
-	//If fullscreen and not requesting, exit
-	if(document[browser.element]){
-		if(type!=='request') document[browser.exit]();
+	S.fullscreenExit=function(){
+		if(!document.fullscreenElement) return;
+		
+		document.fullscreenExit();
+		S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
 	}
-	//If not fullscreen and not exiting, request
-	else if(type!=='exit') S.window[browser.request]();
+	
+	S.fullscreenToggle=function(){
+		if(document.fullscreenElement) S.fullscreenExit();
+		else S.fullscreenEnter();
+	}
+}
+else if(S.window.webkitRequestFullscreen){
+	S.fullscreenEnter=function(){
+		if(document.webkitFullscreenElement) return;
+		
+		S.window.webkitRequestFullscreen();
+		S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
+	}
+	
+	S.fullscreenExit=function(){
+		if(!document.webkitFullscreenElement) return;
+		
+		document.webkitExitFullscreen();
+		S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
+	}
+	
+	S.fullscreenToggle=function(){
+		if(document.webkitFullscreenElement) S.fullscreenExit();
+		else S.fullscreenEnter();
+	}
+}
+else if(S.window.mozRequestFullScreen){
+	S.fullscreenEnter=function(){
+		if(document.mozFullScreenElement) return;
+		
+		S.window.mozRequestFullScreen();
+		S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
+	}
+	
+	S.fullscreenExit=function(){
+		if(!document.mozFullScreenElement) return;
+		
+		document.mozCancelFullScreen();
+		S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
+	}
+	
+	S.fullscreenToggle=function(){
+		if(document.mozFullScreenElement) S.fullscreenExit();
+		else S.fullscreenEnter();
+	}
+}
+else{
+	S.fullscreenEnter=function(){
+		if(S.window.classList.contains('showpony-fullscreen-alt')) return;
+		
+		S.window.classList.add('showpony-fullscreen-alt');
+		document.getElementsByTagName('html')[0].classList.add('showpony-fullscreen-control');
+		
+		S.window.dataset.prevz=S.window.style.zIndex || 'initial';
+		
+		//From: https://stackoverflow.com/questions/1118198/how-can-you-figure-out-the-highest-z-index-in-your-document
+		S.window.style.zIndex=Array.from(document.querySelectorAll('body *'))
+		   .map(a => parseFloat(window.getComputedStyle(a).zIndex))
+		   .filter(a => !isNaN(a))
+		   .sort((a,b)=>a-b)
+		   .pop()+1;
+		   
+		S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
+	}
+	
+	S.fullscreenExit=function(){
+		if(!S.window.classList.contains('showpony-fullscreen-alt')) return;
+		
+		S.window.classList.remove('showpony-fullscreen-alt');
+		document.getElementsByTagName('html')[0].classList.remove('showpony-fullscreen-control');
+		
+		//Get the original z-index value
+		S.window.style.zIndex=S.window.dataset.prevz;
+		S.window.removeAttribute('data-prevz');
+		
+		S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
+	}
+	
+	S.fullscreenToggle=function(){
+		if(S.window.classList.contains('showpony-fullscreen-alt')) S.fullscreenExit();
+		else S.fullscreenEnter();
+	}
 }
 
 //When the viewer inputs to Showpony (click, space, general action)
@@ -2644,7 +2680,7 @@ var shortcutKeys={
 	,'MediaPrevious':	()=>S.to({file:'-1'})
 	,'MediaNext':		()=>S.to({file:'+1'})
 	,'MediaPlayPause':	()=>S.toggle()
-	,'f':				()=>S.fullscreen()
+	,'f':				()=>S.fullscreenToggle()
 };
 
 //If shortcut keys are enabled
@@ -2747,12 +2783,7 @@ window.addEventListener('mousemove',function(event){userScrub(event,true);});
 overlay.addEventListener('touchmove',function(event){userScrub(event,true);});
 
 //Menu buttons
-fullscreenButton.addEventListener(
-	'click'
-	,event=>{
-		S.fullscreen();
-	}
-);
+fullscreenButton.addEventListener('click',S.fullscreenToggle);
 
 if(S.subtitles){
 	captionsButton.addEventListener(
@@ -2956,7 +2987,7 @@ function gamepadControls(){
 		if(S.gamepad.dpadR==2) S.to({file:'+1'});
 		if(S.gamepad.end==2) S.to({time:'end'});
 		if(S.gamepad.home==2) S.to({time:'start'});
-		if(S.gamepad.fullscreen==2) S.fullscreen();
+		if(S.gamepad.fullscreen==2) S.fullscreenToggle();
 		
 		//Scrubbing with the analogue stick
 		if(S.gamepad.analogLPress===2){
