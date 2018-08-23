@@ -949,6 +949,9 @@ S.menu=function(event=null,action=false){
 	);
 };
 
+S.play=()=>S.menu(null,'play');
+S.pause=()=>S.menu(null,'pause');
+
 var pos=0;
 
 //Handles starting, running, and ending scrubbing
@@ -1078,12 +1081,8 @@ S.fullscreen=function(type='toggle'){
 
 //When the viewer inputs to Showpony (click, space, general action)
 S.input=function(){
-	if(S.paused){
-		S.menu(null,'play');
-		return;
-	}
-	
-	S[currentType].input();
+	if(S.paused) S.play();
+	else S[currentType].input();
 }
 
 <?php if($media['text']){ ?>
@@ -3072,7 +3071,7 @@ if(S.cover){
 	cover.addEventListener('click',function(){
 		this.remove();
 		cover=null;
-		S.menu(null,'play');
+		S.play();
 	});
 }
 
@@ -3171,7 +3170,7 @@ if(S.query){
 }
 
 //Pause the Showpony
-S.menu(null,'pause');
+S.pause();
 
 //Use time or file to bookmark, whichever is requested
 S.to(passObj);

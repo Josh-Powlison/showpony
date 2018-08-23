@@ -29,9 +29,9 @@ function chooseStory(id){
 				console.log(document.getElementById(keys[i]).dataset.wasPaused=='false');
 				
 				if(document.getElementById(keys[i]).dataset.wasPaused=='false'){
-					showponies[keys[i]].menu(null,'play');
+					showponies[keys[i]].play();
 				}else{
-					showponies[keys[i]].menu(null,'pause');
+					showponies[keys[i]].pause();
 				}
 			}
 			
@@ -43,7 +43,7 @@ function chooseStory(id){
 				
 				document.getElementById(keys[i]).dataset.wasPaused=showponies[keys[i]].window.classList.contains("showpony-paused");
 				
-				if(showponies[keys[i]].currentFile>-1) showponies[keys[i]].menu(null,"pause");
+				if(showponies[keys[i]].currentFile>-1) showponies[keys[i]].pause();
 			}
 		}
 	}
