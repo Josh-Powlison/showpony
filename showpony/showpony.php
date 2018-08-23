@@ -902,118 +902,26 @@ if(S.infiniteScroll || S.files[obj.file].medium==='text'){
 //}
 */
 
-//Toggle the menu
-S.menu=function(event=null,action=false){
-	//We can cancel moving the bar outside of the overlay, but we can't do anything else.
-	//Exit if we're not targeting the overlay.
-	if(event!==null && event.target!==overlay) return;
+S.play=function(){
+	if(S.paused===false) return;
 	
-	//If a cover exists, hide it rather than playing/pausing
-	/*if(action==='play'){
-		if(cover){
-			cover.dispatchEvent(new CustomEvent('click'));
-			return;
-		}
-	}*/
-	
-	//Allow playing and pausing, but return if either's already done
-	if(
-		action &&
-		(
-			(S.paused && action==='pause')
-			||
-			(!S.paused && action==='play')
-		)
-	) return;
-	
-	else if(currentType!==null) //If we aren't moving the bar
-	{
-		//On toggling classes, returns 'true' if just added
-		if(S.window.classList.toggle('showpony-paused')){
-			//Pause media
-			S.paused=true;
-			S[currentType].pause();
-		}else{
-			//Play media
-			S.paused=false;
-			S[currentType].play();
-		}
-	}
-	
-	//Send an event when toggling the menu
-	S.window.dispatchEvent(
-		new CustomEvent('menu'
-		,{detail:{
-			open:S.paused
-		}})
-	);
-};
+	S.window.classList.remove('showpony-paused');
+	S.paused=false;
+	S[currentType].play();
+	S.window.dispatchEvent(new CustomEvent('play'));
+}
 
-S.play=()=>S.menu(null,'play');
-S.pause=()=>S.menu(null,'pause');
+S.pause=function(){
+	if(S.paused===true) return;
+	
+	S.window.classList.add('showpony-paused');
+	S.paused=true;
+	S[currentType].pause();
+	S.window.dispatchEvent(new CustomEvent('pause'));
+}
 
-var pos=0;
-
-//Handles starting, running, and ending scrubbing
-function userScrub(event=null,start=false){
-	var input;
-	
-	//General events
-	if(isNaN(event)){
-		//Mouse and touch work slightly differently
-		input=event.changedTouches ? 'touch' : 'cursor';
-		pos=input==='touch' ? event.changedTouches[0].clientX : event.clientX;
-	//Relative scrubbing
-	}else{
-		input='joystick';
-		pos=progress.getBoundingClientRect().left+progress.getBoundingClientRect().width/2+event*5;
-	}
-	
-	var scrubPercent=(pos-S.window.getBoundingClientRect().left)/(S.window.getBoundingClientRect().width);
-	
-	if(start){
-		if(scrubbing===false){
-			if(input==='touch') scrubbing=pos;
-			else return;
-		}
-			
-		//You have to swipe farther than you move the cursor to adjust the position
-		if(scrubbing!==true){
-			if(input==='joystick' || Math.abs(scrubbing-pos)>screen.width/(input==='touch' ? 20 : 100)){ 
-				scrubbing=true;
-				
-				//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
-				if(S.scrubLoad){
-					//Add a new state on releasing
-					updateInfo(true);
-				}
-			}
-			else return;
-		}
-		
-		//Don't want the users to accidentally swipe to another page!
-		if(input==='touch') event.preventDefault();
-		
-		scrub(scrubPercent,true);
-	}else{
-		//Drag on the menu to go to any part
-		
-		if(scrubbing===true){
-			scrubbing=false;
-		
-			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
-			if(S.scrubLoad===false){
-				//Load the file our pointer's on
-				scrub(scrubPercent,true);
-				
-			}
-			
-			return true; //Exit the function
-		}
-		
-		//scrubbing needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
-		scrubbing=false;
-	}
+S.toggle=function(){
+	S[S.paused ? 'play' : 'pause']();
 }
 
 //Toggle fullscreen
@@ -1083,6 +991,298 @@ S.fullscreen=function(type='toggle'){
 S.input=function(){
 	if(S.paused) S.play();
 	else S[currentType].input();
+}
+
+///////////////////////////////////////
+///////////PRIVATE VARIABLES///////////
+///////////////////////////////////////
+
+var multimediaSettings={
+	textbox:'main'
+	,text:null
+	,go:false
+	,input:false
+};
+
+var scrubbing=false
+	,waitTimer=new powerTimer(function(){},0)
+	,currentType=null
+	//Buttons
+	,cover=m('cover','div')
+	//Page turning
+	,pageTurn=m('page-turn')
+;
+
+content.addEventListener('animationend',function(){
+	var updateStyle=new RegExp('@keyframes content{100%{[^}]*}}','i').exec(styles.innerHTML);
+	
+	var styleAdd=/[^{]+;/.exec(updateStyle);
+	
+	if(styleAdd) this.style.cssText+=styleAdd[0];
+	this.style.animation=null;
+})
+
+frag([overlayBuffer,progress,overlayText,fullscreenButton,captionsButton],overlay);
+
+///////////////////////////////////////
+///////////PRIVATE FUNCTIONS///////////
+///////////////////////////////////////
+
+var pos=0;
+
+//Handles starting, running, and ending scrubbing
+function userScrub(event=null,start=false){
+	var input;
+	
+	//General events
+	if(isNaN(event)){
+		//Mouse and touch work slightly differently
+		input=event.changedTouches ? 'touch' : 'cursor';
+		pos=input==='touch' ? event.changedTouches[0].clientX : event.clientX;
+	//Relative scrubbing
+	}else{
+		input='joystick';
+		pos=progress.getBoundingClientRect().left+progress.getBoundingClientRect().width/2+event*5;
+	}
+	
+	var scrubPercent=(pos-S.window.getBoundingClientRect().left)/(S.window.getBoundingClientRect().width);
+	
+	if(start){
+		if(scrubbing===false){
+			if(input==='touch') scrubbing=pos;
+			else return;
+		}
+			
+		//You have to swipe farther than you move the cursor to adjust the position
+		if(scrubbing!==true){
+			if(input==='joystick' || Math.abs(scrubbing-pos)>screen.width/(input==='touch' ? 20 : 100)){ 
+				scrubbing=true;
+				
+				//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
+				if(S.scrubLoad){
+					//Add a new state on releasing
+					updateInfo(true);
+				}
+			}
+			else return;
+		}
+		
+		//Don't want the users to accidentally swipe to another page!
+		if(input==='touch') event.preventDefault();
+		
+		scrub(scrubPercent,true);
+	}else{
+		//Drag on the menu to go to any part
+		
+		if(scrubbing===true){
+			scrubbing=false;
+		
+			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
+			if(S.scrubLoad===false){
+				//Load the file our pointer's on
+				scrub(scrubPercent,true);
+				
+			}
+			
+			return true; //Exit the function
+		}
+		
+		//scrubbing needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
+		scrubbing=false;
+	}
+}
+
+function timeUpdate(time){
+	if(!isNaN(time)){
+		//Don't exceed the file's duration
+		var duration=S.files[S.currentFile].duration;
+		if(time>duration) time=duration;
+		S[currentType].timeUpdate(time);
+	}
+	
+	//Get the current time in the midst of the entire Showpony
+	S.currentTime=S[currentType].currentTime
+	for(let i=0;i<S.currentFile;i++) S.currentTime+=S.files[i].duration;
+	
+	S[currentType].displaySubtitles();
+	updateInfo();
+	
+	//Run custom event for checking time
+	S.window.dispatchEvent(
+		new CustomEvent(
+			'timeupdate'
+			,{
+				detail:{
+					file:(S.currentFile+1)
+					,time:S.currentTime
+				}
+			}
+		)
+	);
+}
+
+function getTotalBuffered(){
+	var time=0;
+	var buffered=[];
+	
+	//Update amount buffered total
+	for(let i=0;i<S.files.length;i++){
+		var buffer=false;
+		
+		if(S.files[i].buffered===true){
+			buffer=[time,time+S.files[i].duration];
+			
+			if(buffer){
+				//Combine buffered arrays, if we're moving forward
+				if(buffered.length>0 && buffer[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=buffer[1];
+				else buffered.push(buffer);
+			}
+		}
+		else if(Array.isArray(S.files[i].buffered)){
+			//Get working for multiple contained buffers
+			for(let ii=0;ii<S.files[i].buffered.length;ii++){
+				buffer=[
+					time+S.files[i].buffered[ii][0]
+					,time+S.files[i].buffered[ii][1]
+				];
+				
+				//Combine buffered arrays, if we're moving forward
+				if(buffered.length>0 && buffer[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=buffer[1];
+				else buffered.push(buffer);
+			}
+		}
+		
+		time+=S.files[i].duration;
+	}
+	
+	if(buffered.length===1 && buffered[0][0]===0 && buffered[0][1]>=S.duration) buffered=true;
+	if(buffered.length===0) buffered=false;
+	
+	S.buffered=buffered;
+	
+	//Show buffer//
+	var rectRes=1000;
+	overlayBuffer.width=rectRes;
+	overlayBuffer.height=1;
+	var ctx=overlayBuffer.getContext('2d');
+	ctx.clearRect(0,0,rectRes,1);
+	ctx.fillStyle='#95f442';
+	
+	//Update info on dropdown
+	if(S.buffered===true){
+		ctx.fillRect(0,0,rectRes,1);
+	}else if(Array.isArray(S.buffered)){
+		for(let i=0;i<S.buffered.length;i++){
+			ctx.fillRect(
+				Math.floor(S.buffered[i][0]/S.duration*rectRes)
+				,0
+				,Math.floor((S.buffered[i][1]-S.buffered[i][0])/S.duration*rectRes)
+				,1
+			);
+		}
+	}
+}
+
+//Update the scrubber's position
+function scrub(inputPercent=null,loadFile=false){
+	//"sticky" is an infinite scroll-related variable
+	//if(sticky!==false) return;
+	
+	//If no inputPercent was set, get it!
+	if(inputPercent===null) inputPercent=S.currentTime/S.duration;
+	
+	if(inputPercent<0) inputPercent=0;
+	if(inputPercent>1) inputPercent=1;
+	
+	var timeInTotal=S.duration*inputPercent;
+	
+	///LOADING THE SELECTED FILE///
+	if(loadFile){
+		if(S.scrubLoad || scrubbing===false) S.to({time:timeInTotal});
+	}
+	
+	//Move the progress bar
+	progress.style.left=(inputPercent*100)+'%';
+	
+	<? if($info==='time'){ ?>
+	///INFO TEXT WITH TIME///
+	var padLength=String((S.duration / 60)|0).length;
+
+	//|0 is a shorter way to floor floats.
+	var info=String((timeInTotal / 60)|0).padStart(padLength,'0')
+		+':'
+		+String((timeInTotal % 60)|0).padStart(2,'0')
+		+' | '
+		+String(((S.duration-timeInTotal) / 60)|0).padStart(padLength,'0')
+		+':'
+		+String(((S.duration-timeInTotal) % 60)|0).padStart(2,'0')
+	;
+	<? }else{ ?>
+	///INFO TEXT WITH FILE///
+	var padLength=String(S.files.length).length;
+
+	var newPart=0;
+	for(var i=timeInTotal;i>S.files[newPart].duration;i-=S.files[newPart].duration) newPart++;
+	
+	var info=String(newPart+1).padStart(padLength,'0')
+		+' | '
+		+String(S.files.length-(newPart+1)).padStart(padLength,'0')
+	;
+	<? } ?>
+	
+	if(info!==overlayText.innerHTML) overlayText.innerHTML=info;
+	
+	//We don't want to over-update the title, so we stick with when we're not scrubbing.
+	if(info!==document.title && scrubbing===false) document.title=info;
+}
+
+//Use documentFragment to append elements faster
+function frag(inputArray,inputParent){
+	var fragment=document.createDocumentFragment();
+	
+	for(let i=0, len=inputArray.length;i<len;i++) fragment.appendChild(inputArray[i]);
+	
+	inputParent.appendChild(fragment);
+}
+
+//Create an element with a class
+function m(c,el){
+	var a=document.createElement(el || 'div');
+	a.className='showpony-'+c;
+	
+	return a;
+}
+
+function powerTimer(callback,delay){
+	//Thanks to https://stackoverflow.com/questions/3969475/javascript-pause-settimeout
+
+	const pT=this;
+	
+    var timerId,start;
+	pT.remaining=delay;
+
+    pT.pause=function(){
+        window.clearTimeout(timerId);
+        pT.remaining-=new Date()-start;
+    };
+
+    pT.resume=function(){
+		if(pT.remaining<=0) return;
+		
+        start=new Date();
+        window.clearTimeout(timerId);
+        timerId=window.setTimeout(function(){
+			callback();
+			pT.end();
+		},pT.remaining);
+    };
+
+	pT.end=function(){
+		if(pT.remaining>0) window.clearTimeout(timerId);
+		pT.remaining=0;
+	}
+	
+    pT.resume();
 }
 
 <?php if($media['text']){ ?>
@@ -1323,7 +1523,7 @@ function makeMedia(type='video'){
 	}
 	
 	P.input=function(){
-		S.menu();
+		S.toggle();
 	}
 	
 	P.timeUpdate=function(time=0){
@@ -2431,241 +2631,6 @@ S.multimedia=new makeVisualNovel();
 <? } ?>
 
 ///////////////////////////////////////
-///////////PRIVATE VARIABLES///////////
-///////////////////////////////////////
-
-var multimediaSettings={
-	textbox:'main'
-	,text:null
-	,go:false
-	,input:false
-};
-
-var scrubbing=false
-	,waitTimer=new powerTimer(function(){},0)
-	,currentType=null
-	//Buttons
-	,cover=m('cover','div')
-	//Page turning
-	,pageTurn=m('page-turn')
-;
-
-content.addEventListener('animationend',function(){
-	var updateStyle=new RegExp('@keyframes content{100%{[^}]*}}','i').exec(styles.innerHTML);
-	
-	var styleAdd=/[^{]+;/.exec(updateStyle);
-	
-	if(styleAdd) this.style.cssText+=styleAdd[0];
-	this.style.animation=null;
-})
-
-frag([overlayBuffer,progress,overlayText,fullscreenButton,captionsButton],overlay);
-
-///////////////////////////////////////
-///////////PRIVATE FUNCTIONS///////////
-///////////////////////////////////////
-
-function timeUpdate(time){
-	if(!isNaN(time)){
-		//Don't exceed the file's duration
-		var duration=S.files[S.currentFile].duration;
-		if(time>duration) time=duration;
-		S[currentType].timeUpdate(time);
-	}
-	
-	S.currentTime=getCurrentTime();
-	S[currentType].displaySubtitles();
-	updateInfo();
-	
-	//Run custom event for checking time
-	S.window.dispatchEvent(
-		new CustomEvent(
-			'timeupdate'
-			,{
-				detail:{
-					file:(S.currentFile+1)
-					,time:S.currentTime
-				}
-			}
-		)
-	);
-}
-
-function getTotalBuffered(){
-	var time=0;
-	var buffered=[];
-	
-	//Update amount buffered total
-	for(let i=0;i<S.files.length;i++){
-		var buffer=false;
-		
-		if(S.files[i].buffered===true){
-			buffer=[time,time+S.files[i].duration];
-			
-			if(buffer){
-				//Combine buffered arrays, if we're moving forward
-				if(buffered.length>0 && buffer[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=buffer[1];
-				else buffered.push(buffer);
-			}
-		}
-		else if(Array.isArray(S.files[i].buffered)){
-			//Get working for multiple contained buffers
-			for(let ii=0;ii<S.files[i].buffered.length;ii++){
-				buffer=[
-					time+S.files[i].buffered[ii][0]
-					,time+S.files[i].buffered[ii][1]
-				];
-				
-				//Combine buffered arrays, if we're moving forward
-				if(buffered.length>0 && buffer[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=buffer[1];
-				else buffered.push(buffer);
-			}
-		}
-		
-		time+=S.files[i].duration;
-	}
-	
-	if(buffered.length===1 && buffered[0][0]===0 && buffered[0][1]>=S.duration) buffered=true;
-	if(buffered.length===0) buffered=false;
-	
-	S.buffered=buffered;
-	
-	//Show buffer//
-	var rectRes=1000;
-	overlayBuffer.width=rectRes;
-	overlayBuffer.height=1;
-	var ctx=overlayBuffer.getContext('2d');
-	ctx.clearRect(0,0,rectRes,1);
-	ctx.fillStyle='#95f442';
-	
-	//Update info on dropdown
-	if(S.buffered===true){
-		ctx.fillRect(0,0,rectRes,1);
-	}else if(Array.isArray(S.buffered)){
-		for(let i=0;i<S.buffered.length;i++){
-			ctx.fillRect(
-				Math.floor(S.buffered[i][0]/S.duration*rectRes)
-				,0
-				,Math.floor((S.buffered[i][1]-S.buffered[i][0])/S.duration*rectRes)
-				,1
-			);
-		}
-	}
-}
-
-function getCurrentTime(){
-	//Use the currentTime of the object, if it has one
-	var newTime=S[currentType] && S[currentType].currentTime || 0;
-	
-	//Add the times of previous videos to get the actual time in the piece
-	for(let i=0;i<S.currentFile;i++) newTime+=S.files[i].duration;
-	
-	return newTime;
-}
-
-//Update the scrubber's position
-function scrub(inputPercent=null,loadFile=false){
-	//"sticky" is an infinite scroll-related variable
-	//if(sticky!==false) return;
-	
-	//If no inputPercent was set, get it!
-	if(inputPercent===null) inputPercent=S.currentTime/S.duration;
-	
-	if(inputPercent<0) inputPercent=0;
-	if(inputPercent>1) inputPercent=1;
-	
-	var timeInTotal=S.duration*inputPercent;
-	
-	///LOADING THE SELECTED FILE///
-	if(loadFile){
-		if(S.scrubLoad || scrubbing===false) S.to({time:timeInTotal});
-	}
-	
-	//Move the progress bar
-	progress.style.left=(inputPercent*100)+'%';
-	
-	<? if($info==='time'){ ?>
-	///INFO TEXT WITH TIME///
-	var padLength=String((S.duration / 60)|0).length;
-
-	//|0 is a shorter way to floor floats.
-	var info=String((timeInTotal / 60)|0).padStart(padLength,'0')
-		+':'
-		+String((timeInTotal % 60)|0).padStart(2,'0')
-		+' | '
-		+String(((S.duration-timeInTotal) / 60)|0).padStart(padLength,'0')
-		+':'
-		+String(((S.duration-timeInTotal) % 60)|0).padStart(2,'0')
-	;
-	<? }else{ ?>
-	///INFO TEXT WITH FILE///
-	var padLength=String(S.files.length).length;
-
-	var newPart=0;
-	for(var i=timeInTotal;i>S.files[newPart].duration;i-=S.files[newPart].duration) newPart++;
-	
-	var info=String(newPart+1).padStart(padLength,'0')
-		+' | '
-		+String(S.files.length-(newPart+1)).padStart(padLength,'0')
-	;
-	<? } ?>
-	
-	if(info!==overlayText.innerHTML) overlayText.innerHTML=info;
-	
-	//We don't want to over-update the title, so we stick with when we're not scrubbing.
-	if(info!==document.title && scrubbing===false) document.title=info;
-}
-
-//Use documentFragment to append elements faster
-function frag(inputArray,inputParent){
-	var fragment=document.createDocumentFragment();
-	
-	for(let i=0, len=inputArray.length;i<len;i++) fragment.appendChild(inputArray[i]);
-	
-	inputParent.appendChild(fragment);
-}
-
-//Create an element with a class
-function m(c,el){
-	var a=document.createElement(el || 'div');
-	a.className='showpony-'+c;
-	
-	return a;
-}
-
-function powerTimer(callback,delay){
-	//Thanks to https://stackoverflow.com/questions/3969475/javascript-pause-settimeout
-
-	const pT=this;
-	
-    var timerId,start;
-	pT.remaining=delay;
-
-    pT.pause=function(){
-        window.clearTimeout(timerId);
-        pT.remaining-=new Date()-start;
-    };
-
-    pT.resume=function(){
-		if(pT.remaining<=0) return;
-		
-        start=new Date();
-        window.clearTimeout(timerId);
-        timerId=window.setTimeout(function(){
-			callback();
-			pT.end();
-		},pT.remaining);
-    };
-
-	pT.end=function(){
-		if(pT.remaining>0) window.clearTimeout(timerId);
-		pT.remaining=0;
-	}
-	
-    pT.resume();
-}
-
-///////////////////////////////////////
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
 
@@ -2678,7 +2643,7 @@ var shortcutKeys={
 	,'End':				()=>S.to({time:'end'})
 	,'MediaPrevious':	()=>S.to({file:'-1'})
 	,'MediaNext':		()=>S.to({file:'+1'})
-	,'MediaPlayPause':	()=>S.menu()
+	,'MediaPlayPause':	()=>S.toggle()
 	,'f':				()=>S.fullscreen()
 };
 
@@ -2746,7 +2711,8 @@ var windowClick=function(event){
 	}
 	
 	event.stopPropagation();
-	S.menu(event);
+	
+	if(event.target===overlay) S.toggle();
 };
 
 //On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
@@ -2898,7 +2864,7 @@ function updateInfo(pushState){
 		//Choose a ? if one doesn't exist or it exists behind the query
 		newQuery=(newURL.indexOf('?')===-1 || new RegExp('\\?(?='+S.query+'=)').test(newURL)) ? '?' : '&';
 		
-		newQuery+=S.query+'='+(Math.floor(getCurrentTime()));
+		newQuery+=S.query+'='+(Math.floor(S.currentTime));
 		
 		//Replace either the case or the end
 		newURL=newURL.replace(new RegExp('(((\\?|&)'+S.query+')=?[^&#]+)|(?=#)|$'),newQuery);
@@ -2984,7 +2950,7 @@ function gamepadControls(){
 		}
 		
 		//Register inputs
-		if(S.gamepad.menu==2) S.menu();
+		if(S.gamepad.menu==2) S.toggle();
 		if(S.gamepad.input==2) S.input();
 		if(S.gamepad.dpadL==2) S.to({file:'-1'});
 		if(S.gamepad.dpadR==2) S.to({file:'+1'});
@@ -3102,7 +3068,7 @@ var start=null;
 	
 		//Set a function to save bookmarks
 		S.saveBookmark=function(){
-			var saveValue=Math.floor(getCurrentTime());
+			var saveValue=Math.floor(S.currentTime);
 			localStorage.setItem(S.saveId,saveValue);
 			
 			return saveValue;
@@ -3146,7 +3112,7 @@ if(S.query){
 			if(page){
 				page=parseInt(page[0].split('=')[1]);
 				
-				if(page===getCurrentTime()) return;
+				if(page===S.currentTime) return;
 			
 				S.to({time:page,popstate:true,scrollToTop:false});
 			}
