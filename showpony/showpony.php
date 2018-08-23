@@ -472,9 +472,6 @@ ini_set('display_errors',1);
 #Log out if there's no password
 if(!$password) unset($_SESSION['showpony_admin']);
 
-#Start with it based on current file
-$info='file';
-
 $media=[
 	'text'			=>false
 	,'image'		=>false
@@ -571,7 +568,6 @@ if(!empty($_GET['get'])){
 						switch(pathinfo($language.'/'.$file,PATHINFO_EXTENSION)){
 							case 'vn':
 								$fileInfo['medium']='multimedia';
-								$info='time';
 								break;
 							default:
 								$infiniteScroll=true;
@@ -582,7 +578,6 @@ if(!empty($_GET['get'])){
 						break;
 					case 'audio':
 					case 'video':
-						$info='time';
 						break;
 				}
 				
@@ -1049,15 +1044,6 @@ var scrubbing=false
 	,pageTurn=m('page-turn')
 ;
 
-content.addEventListener('animationend',function(){
-	var updateStyle=new RegExp('@keyframes content{100%{[^}]*}}','i').exec(styles.innerHTML);
-	
-	var styleAdd=/[^{]+;/.exec(updateStyle);
-	
-	if(styleAdd) this.style.cssText+=styleAdd[0];
-	this.style.animation=null;
-})
-
 frag([overlayBuffer,progress,overlayText,fullscreenButton,captionsButton],overlay);
 
 ///////////////////////////////////////
@@ -1240,29 +1226,25 @@ function scrub(inputPercent=null,loadFile=false){
 	//Move the progress bar
 	progress.style.left=(inputPercent*100)+'%';
 	
-	<? if($info==='time'){ ?>
+	<? if($media['audio'] || $media['video'] || $media['multimedia']){ ?>
 	///INFO TEXT WITH TIME///
-	var padLength=String((S.duration / 60)|0).length;
-
-	//|0 is a shorter way to floor floats.
-	var info=String((timeInTotal / 60)|0).padStart(padLength,'0')
-		+':'
-		+String((timeInTotal % 60)|0).padStart(2,'0')
-		+' | '
-		+String(((S.duration-timeInTotal) / 60)|0).padStart(padLength,'0')
-		+':'
-		+String(((S.duration-timeInTotal) % 60)|0).padStart(2,'0')
+	function infoMake(input,pad=(String((S.duration / 60)|0).length)){
+		//|0 is a shorter way to floor floats.
+		return String((input)|0).padStart(pad,'0');
+	}
+	
+	var info=infoMake(timeInTotal / 60)+':'+infoMake(timeInTotal % 60,2)+' | '+infoMake((S.duration-timeInTotal) / 60)+':'+infoMake((S.duration-timeInTotal) % 60,2)
 	;
 	<? }else{ ?>
 	///INFO TEXT WITH FILE///
-	var padLength=String(S.files.length).length;
-
+	function infoMake(input){
+		return String(input).padStart((String(S.files.length).length),'0');
+	}
+	
 	var newPart=0;
 	for(var i=timeInTotal;i>S.files[newPart].duration;i-=S.files[newPart].duration) newPart++;
 	
-	var info=String(newPart+1).padStart(padLength,'0')
-		+' | '
-		+String(S.files.length-(newPart+1)).padStart(padLength,'0')
+	var info=infoMake(newPart+1)+' | '+infoMake(S.files.length-(newPart+1))
 	;
 	<? } ?>
 	
