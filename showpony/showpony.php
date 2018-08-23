@@ -700,7 +700,6 @@ S.subtitles=<?php
 
 S.scrubLoad=false;
 S.data={};
-S.shortcuts='focus';
 S.saveId=location.hostname.substring(0,20);
 S.preloadNext=1;
 S.currentSubtitles=null;
@@ -919,11 +918,14 @@ S.toggle=function(){
 	S[S.paused ? 'play' : 'pause']();
 }
 
+S.fullscreen=false;
+
 //Toggle fullscreen, basing the functions on the browser's abilities
 if(S.window.requestFullscreen){
 	S.fullscreenEnter=function(){
 		if(document.fullscreenElement) return;
 		
+		S.fullscreen=true;
 		S.window.requestFullscreen();
 		S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
 	}
@@ -939,6 +941,11 @@ if(S.window.requestFullscreen){
 		if(document.fullscreenElement) S.fullscreenExit();
 		else S.fullscreenEnter();
 	}
+	
+	document.addEventListener('fullscreenchange',function(){
+		if(document.fullscreenElement===S.window) S.fullscreen=true;
+		else S.fullscreen=false;
+	});
 }
 else if(S.window.webkitRequestFullscreen){
 	S.fullscreenEnter=function(){
@@ -959,6 +966,11 @@ else if(S.window.webkitRequestFullscreen){
 		if(document.webkitFullscreenElement) S.fullscreenExit();
 		else S.fullscreenEnter();
 	}
+	
+	document.addEventListener('webkitfullscreenchange',function(){
+		if(document.webkitFullscreenElement===S.window) S.fullscreen=true;
+		else S.fullscreen=false;
+	});
 }
 else if(S.window.mozRequestFullScreen){
 	S.fullscreenEnter=function(){
@@ -979,6 +991,11 @@ else if(S.window.mozRequestFullScreen){
 		if(document.mozFullScreenElement) S.fullscreenExit();
 		else S.fullscreenEnter();
 	}
+	
+	document.addEventListener('mozfullscreenchange',function(){
+		if(document.mozFullScreenElement===S.window) S.fullscreen=true;
+		else S.fullscreen=false;
+	});
 }
 else{
 	S.fullscreenEnter=function(){
@@ -996,6 +1013,7 @@ else{
 		   .sort((a,b)=>a-b)
 		   .pop()+1;
 		   
+		S.fullscreen=true;
 		S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
 	}
 	
@@ -1009,6 +1027,7 @@ else{
 		S.window.style.zIndex=S.window.dataset.prevz;
 		S.window.removeAttribute('data-prevz');
 		
+		S.fullscreen=false;
 		S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
 	}
 	
@@ -2652,62 +2671,38 @@ S.multimedia=new makeVisualNovel();
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
 
-var shortcutKeys={
-	' ': 				()=>S.input()
-	,'Enter': 			()=>S.input()
-	,'ArrowLeft':		()=>S.to({time:'-10'})
-	,'ArrowRight':		()=>S.to({time:'+10'})
-	,'Home':			()=>S.to({time:'start'})
-	,'End':				()=>S.to({time:'end'})
-	,'MediaPrevious':	()=>S.to({file:'-1'})
-	,'MediaNext':		()=>S.to({file:'+1'})
-	,'MediaPlayPause':	()=>S.toggle()
-	,'f':				()=>S.fullscreenToggle()
-};
-
-//If shortcut keys are enabled
-if(S.shortcuts){
-	function shortcutPermission(){
-		//If shortcuts aren't always enabled, perform checks
-		if(S.shortcuts!=='always'){
-			//Exit if it isn't fullscreen
-			if(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.fullscreenElement){
-				//If needs to be focused
-				if(S.shortcuts!=='fullscreen' && S.window!==document.activeElement) return false;
-			}
+//Shortcut keys
+S.window.addEventListener(
+	'keydown'
+	,function(event){
+		if(document.activeElement.tagName==='INPUT' || event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) return;
+		
+		switch(event.key){
+			case ' ':				S.input();				break;
+			case 'Enter':			S.input();				break;
+			case 'ArrowLeft':		S.to({time:'-10'});		break;
+			case 'ArrowRight':		S.to({time:'+10'});		break;
+			case 'Home':			S.to({time:'start'});	break;
+			case 'End':				S.to({time:'end'});		break;
+			case 'MediaPrevious':	S.to({file:'-1'});		break;
+			case 'MediaNext':		S.to({file:'+1'});		break;
+			case 'MediaPlayPause':	S.toggle();				break;
+			case 'f':				S.fullscreenToggle();	break;
+			default:				return;					break;
 		}
 		
-		return true;
+		event.preventDefault();
 	}
+);
+
+//Scrolling only works on fullscreen
+S.window.addEventListener('wheel',function(event){
+	if(event.ctrlKey || !S.fullscreen) return;
 	
-	//Keyboard presses
-	window.addEventListener(
-		'keydown'
-		,function(event){
-			//Don't use shortcut keys if we're writing into an input
-			if(event.target.tagName==='INPUT') return;
-			if(!shortcutPermission()) return;
-			
-			if(shortcutKeys[event.key]
-				&& !event.ctrlKey
-				&& !event.altKey
-				&& !event.shiftKey
-				&& !event.metaKey
-			){
-				event.preventDefault();
-				shortcutKeys[event.key]();
-			}
-		}
-	);
-	
-	//Scrolling
-	/*content.addEventListener('wheel',function(event){
-		if(event.ctrlKey) return;
-		if(!shortcutPermission()) return;
-		
-		//Check if the cursor if over the window
-		console.log(event.target);
-		
+	if(S.paused){
+		if(event.deltaY>0) S.to({time:'+10'});
+		if(event.deltaY<0) S.to({time:'-10'});
+	}else{
 		if(currentType==='multimedia'){
 			if(event.deltaY<0){
 				//Go back a keyframe's length, so we get to the previous keyframe
@@ -2716,8 +2711,8 @@ if(S.shortcuts){
 				S.to({time:'-'+keyframeLength});
 			}
 		}
-	});*/
-}
+	}
+});
 
 //We need to set this as a variable to remove it later on
 //This needs to be click- otherwise, you could click outside of Showpony, release inside, and the menu would toggle. This results in messy scenarios when you're using the UI.
