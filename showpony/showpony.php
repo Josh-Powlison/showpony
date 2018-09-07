@@ -753,20 +753,6 @@ S.to=function(obj={}){
 	
 	///LOAD RIGHT MEDIUM AND SOURCE///
 	
-	S.currentFile=obj.file;
-	
-	obj.popstate=obj.popstate || false;
-	obj.replaceState=obj.replaceState || false;
-	
-	//Update info on file load
-	if(!obj.popstate){
-		//Only allow adding to history if we aren't scrubbing
-		var popstate=!obj.replaceState;
-		if(scrubbing===true) popstate=false; //Only replace history if we're scrubbing right now
-		
-		//updateInfo(popstate);
-	}
-	
 	//If switching types, do some cleanup
 	if(currentType!==S.files[obj.file].medium){
 		content.innerHTML='';
@@ -777,19 +763,27 @@ S.to=function(obj={}){
 	
 	//Load the file
 	if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
-	S[currentType].src(obj.file,obj.time);
 	
-	//Preload upcoming files
-	for(let i=obj.file;i<obj.file+S.preloadNext;i++){
-		if(S.files[i].buffered===false){
-			S.files[i].buffered='buffering';
-			
-			fetch(S.files[i].path).then(()=>{
-				S.files[i].buffered=true;
-				getTotalBuffered();
-			});
+	S[currentType].src(obj.file,obj.time).then(()=>{
+		S.currentFile=S[currentType].currentFile=obj.file;
+		S[currentType].timeUpdate(obj.time);
+		S[currentType].goToTime=obj.time;
+		timeUpdate(obj.time);
+		
+		//Preload upcoming files
+		for(let i=obj.file;i<obj.file+S.preloadNext;i++){
+			if(S.files[i].buffered===false){
+				S.files[i].buffered='buffering';
+				
+				fetch(S.files[i].path).then(()=>{
+					S.files[i].buffered=true;
+					getTotalBuffered();
+				});
+			}
 		}
-	}
+		
+		updateHistory(obj.history);
+	});
 }
 
 /*
@@ -1102,7 +1096,7 @@ function userScrub(event=null,start=false){
 				//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
 				if(S.scrubLoad){
 					//Add a new state on releasing
-					updateInfo(true);
+					updateHistory('add');
 				}
 			}
 			else return;
@@ -1146,7 +1140,10 @@ function timeUpdate(time){
 	for(let i=0;i<S.currentFile;i++) S.currentTime+=S.files[i].duration;
 	
 	S[currentType].displaySubtitles();
-	updateInfo();
+	
+	if(scrubbing!==true) scrub(null,false);
+	
+	updateHistory('replace');
 	
 	//Run custom event for checking time
 	S.window.dispatchEvent(
@@ -1350,44 +1347,40 @@ function makeText(){
 	}
 	
 	P.src=function(file=0,time=0){
-		var src=S.files[file].path;
-		
-		//If this is the current file
-		if(P.currentFile===file){
-			pageTurn.scrollTop=pageTurn.scrollHeight*(P.currentTime/S.files[P.currentFile].duration);
-			content.classList.remove('showpony-loading');
-			return;
-		}
-		
-		fetch(src,{credentials:'include'})
-		.then(response=>{
-			return response.text();
-		})
-		.then(text=>{
-			P.currentFile=file;
+		return new Promise(function(resolve,reject){
+			var src=S.files[file].path;
 			
-			//Put in the text
-			pageTurn.innerHTML=text;
-			
-			//Scroll to spot
-			pageTurn.scrollTop=pageTurn.scrollHeight*(P.currentTime/S.files[P.currentFile].duration);
-			
-			//Stop loading
-			content.classList.remove('showpony-loading');
-			
-			if(S.files[P.currentFile].buffered!==true){
-				S.files[P.currentFile].buffered=true;
-				getTotalBuffered();
+			//If this is the current file
+			if(P.currentFile===file){
+				pageTurn.scrollTop=pageTurn.scrollHeight*(P.currentTime/S.files[P.currentFile].duration);
+				content.classList.remove('showpony-loading');
+				resolve();
 			}
 			
-			P.timeUpdate(time);
-			timeUpdate(time);
-			
-			if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
-		})
-		.catch((error)=>{
-			alert('329: '+error);
-			console.log(error);
+			fetch(src,{credentials:'include'})
+			.then(response=>{
+				return response.text();
+			})
+			.then(text=>{
+				
+				//Put in the text
+				pageTurn.innerHTML=text;
+				
+				//Scroll to spot
+				pageTurn.scrollTop=pageTurn.scrollHeight*(P.currentTime/S.files[file].duration);
+				
+				//Stop loading
+				content.classList.remove('showpony-loading');
+				
+				if(S.files[file].buffered!==true){
+					S.files[file].buffered=true;
+					getTotalBuffered();
+				}
+				
+				if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
+				
+				resolve();
+			});
 		});
 	}
 	
@@ -1456,17 +1449,12 @@ function makeImage(){
 	}
 	
 	P.src=function(file=0,time=0){
-		P.timeUpdate(time);
-		
-		var src=S.files[file].path;
-		
-		//Change the file if it'd be a new one
-		if(P.currentFile!==file) P.window.src=src;
-		else content.classList.remove('showpony-loading');
-		
-		P.currentFile=file;
-		
-		timeUpdate(time);
+		return new Promise(function(resolve,reject){
+			if(P.currentFile!==file) P.window.src=S.files[file].path;
+			else content.classList.remove('showpony-loading');
+			
+			resolve();
+		});
 	}
 	
 	P.displaySubtitles=function(){
@@ -1570,19 +1558,15 @@ function makeMedia(type='video'){
 	P.goToTime=0;
 	
 	P.src=function(file=0,time=0){
-		var src=S.files[file].path;
-		
-		//Change the file if it'd be a new one
-		if(P.currentFile!==file) P.window.src=src;
-		
-		//If we're not paused, play
-		if(!S.paused) P.play();
-		
-		P.currentFile=file;
-		
-		P.timeUpdate(time);
-		P.goToTime=time;
-		timeUpdate(time);
+		return new Promise(function(resolve,reject){
+			//Change the file if it'd be a new one
+			if(P.currentFile!==file) P.window.src=S.files[file].path;
+			
+			//If we're not paused, play
+			if(!S.paused) P.play();
+			
+			resolve();
+		});
 	}
 	
 	P.displaySubtitles=function(){
@@ -1813,86 +1797,82 @@ function makeVisualNovel(){
 	}
 	
 	P.src=function(file=0,time=0){
-		/////RESET THINGS//////
-		//Get rid of local styles
-		for(var key in S.objects){
-			S.objects[key].removeAttribute('style');
+		return new Promise(function(resolve,reject){
+			/////RESET THINGS//////
+			//Get rid of local styles
+			for(var key in S.objects){
+				S.objects[key].removeAttribute('style');
+				
+				//Empty out textboxes
+				if(S.objects[key].classList.contains('showpony-textbox')) S.objects[key].innerHTML='';
+			};
 			
-			//Empty out textboxes
-			if(S.objects[key].classList.contains('showpony-textbox')) S.objects[key].innerHTML='';
-		};
-		
-		//Multimedia engine resets
-		styles.innerHTML='';
-		waitTimer.end();
-		
-		/////END RESETTIN//////
-		
-		//If this is the current file
-		if(P.currentFile===file){
-			runTo=Math.round(keyframes.length*(time/S.files[P.currentFile].duration));
-			if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
-			else runTo=keyframes[runTo];
+			//Multimedia engine resets
+			styles.innerHTML='';
+			waitTimer.end();
 			
-			console.log(runTo);
+			/////END RESETTIN//////
 			
-			runMM(0);
-			return;
-		}
-		
-		//Save buffer to check later
-		objectBuffer={};
-		S.objects={};
-		S.lines=[];
-		
-		var src=S.files[file].path;
-		
-		fetch(src,{credentials:'include'})
-		.then(response=>{
-			return response.text();
-		})
-		.then(text=>{
-			P.currentFile=file;
+			//If this is the current file
+			if(P.currentFile===file){
+				runTo=Math.round(keyframes.length*(time/S.files[P.currentFile].duration));
+				if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
+				else runTo=keyframes[runTo];
+				
+				console.log(runTo);
+				
+				runMM(0);
+				resolve();
+			}
 			
-			//Remove multiline comments
-			text=text.replace(/\/\*[^]*?\*\//g,'');
+			//Save buffer to check later
+			objectBuffer={};
+			S.objects={};
+			S.lines=[];
 			
-			//Get all non-blank lines
-			S.lines=text.match(/.+(?=\S).+/g);
+			var src=S.files[file].path;
 			
-			//Get keyframes from the text- beginning, end, (? ->)and waiting points
-			keyframes=[0];
-			
-			for(let i=1;i<S.lines.length;i++){
-				//If it's a user file spot, add the point immediately after the last keyframe- things let up to this, let it all happen
-				if(S.lines[i]==='engine.wait'){
-					keyframes.push(keyframes[keyframes.length-1]+1);
-					continue;
+			fetch(src,{credentials:'include'})
+			.then(response=>{
+				return response.text();
+			})
+			.then(text=>{
+				//Remove multiline comments
+				text=text.replace(/\/\*[^]*?\*\//g,'');
+				
+				//Get all non-blank lines
+				S.lines=text.match(/.+(?=\S).+/g);
+				
+				//Get keyframes from the text- beginning, end, (? ->)and waiting points
+				keyframes=[0];
+				
+				for(let i=1;i<S.lines.length;i++){
+					//If it's a user file spot, add the point immediately after the last keyframe- things let up to this, let it all happen
+					if(S.lines[i]==='engine.wait'){
+						keyframes.push(keyframes[keyframes.length-1]+1);
+						continue;
+					}
+					
+					//Regular text lines (not continuing) can be keyframes
+					if(/^\t+(?!\t*\+)/i.test(S.lines[i])) keyframes.push(i);
 				}
 				
-				//Regular text lines (not continuing) can be keyframes
-				if(/^\t+(?!\t*\+)/i.test(S.lines[i])) keyframes.push(i);
-			}
-			
-			runTo=Math.round(keyframes.length*(P.currentTime/S.files[file].duration));
-			if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
-			else runTo=keyframes[runTo];
-			
-			runMM(0);
-			
-			if(S.files[file].buffered!==true){
-				S.files[file].buffered=true;
-				getTotalBuffered();
-			}
-			
-			console.log('MULTIMEDIA ENGINE RAN');
-			
-			P.timeUpdate(time);
-			timeUpdate(time);
-		})
-		.catch((error)=>{
-			alert('329: '+error);
-			console.log(error);
+				runTo=Math.round(keyframes.length*(P.currentTime/S.files[file].duration));
+				if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
+				else runTo=keyframes[runTo];
+				
+				P.currentFile=S.currentFile=file;
+				runMM(0);
+				
+				if(S.files[file].buffered!==true){
+					S.files[file].buffered=true;
+					getTotalBuffered();
+				}
+				
+				console.log('MULTIMEDIA ENGINE RAN');
+				
+				resolve();
+			});
 		});
 	}
 	
@@ -1915,13 +1895,15 @@ function makeVisualNovel(){
 		}
 	}
 	
+	P.currentLine=0;
+	
 	//Run multimedia (interactive fiction, visual novels, etc)
-	function runMM(inputNum=S.currentLine+1){
+	function runMM(inputNum=P.currentLine+1){
 		//Go to either the specified line or the next one
-		S.currentLine=inputNum;
+		P.currentLine=inputNum;
 		
 		//Run through if we're running to a point; if we're there or beyond though, stop running through
-		if(runTo!==false && S.currentLine>=runTo){
+		if(runTo!==false && P.currentLine>=runTo){
 			runTo=false;
 			multimediaSettings.input=false;
 		}
@@ -1946,18 +1928,18 @@ function makeVisualNovel(){
 		}
 		
 		//Update the scrubbar if the frame we're on is a keyframe
-		if(runTo===false && keyframes.includes(S.currentLine)){
+		if(runTo===false && keyframes.includes(P.currentLine)){
 			//Set the time of the element
-			timeUpdate((keyframes.indexOf(S.currentLine)/keyframes.length)*S.files[S.currentFile].duration);
+			timeUpdate((keyframes.indexOf(P.currentLine)/keyframes.length)*S.files[P.currentFile].duration);
 		}
 		
 		//If we've ended manually or reached the end, stop running immediately and end it all
-		if(S.currentLine>=S.lines.length){
+		if(P.currentLine>=S.lines.length){
 			S.to({file:'+1'});
 			return;
 		}
 		
-		var text=S.lines[S.currentLine];
+		var text=S.lines[P.currentLine];
 		
 		//Replace all variables (including variables inside variables) with the right name
 		var match;
@@ -2096,7 +2078,7 @@ function makeVisualNovel(){
 				
 				if(type==='character'){
 					//Go through the rest of the lines, looking for images to preload
-					for(let i=S.currentLine;i<S.lines.length;i++){
+					for(let i=P.currentLine;i<S.lines.length;i++){
 						
 						//If this character is listed on this line
 						if(S.lines[i].indexOf(object+'\t')===0){
@@ -2155,7 +2137,7 @@ function makeVisualNovel(){
 				var animationSpeed=/time:[^s]+s/i.exec(vals[1]);
 			
 				//If running to or not requesting animation, add styles without implementing animation
-				if(animationSpeed===null || S.currentLine<runTo){
+				if(animationSpeed===null || P.currentLine<runTo){
 					S.objects[object].style.cssText+=vals[1];
 				}else{
 					var objectName=object.replace(/#/g,'id');
@@ -2858,26 +2840,36 @@ pageTurn.addEventListener('scroll',function(event){
 	}
 });
 
-function updateInfo(pushState){
-	//Update the scrub bar
-	if(scrubbing!==true) scrub(null,false);
-	
+function updateHistory(action='add'){
 	//If using queries with time, adjust query on time update
-	if(S.query){
-		var newURL=document.location.href
-			,newQuery=''
-		;
-		
-		//Choose whether to add an ampersand or ?
-		//Choose a ? if one doesn't exist or it exists behind the query
-		newQuery=(newURL.indexOf('?')===-1 || new RegExp('\\?(?='+S.query+'=)').test(newURL)) ? '?' : '&';
-		
-		newQuery+=S.query+'='+(Math.floor(S.currentTime));
-		
-		//Replace either the case or the end
-		newURL=newURL.replace(new RegExp('(((\\?|&)'+S.query+')=?[^&#]+)|(?=#)|$'),newQuery);
-		
-		if(location.href!==newURL) history[pushState ? 'pushState' : 'replaceState']({},'',newURL);
+	var newURL=document.location.href;
+	var newQuery='';
+	
+	//Choose whether to add an ampersand or ?
+	//Choose a ? if one doesn't exist or it exists behind the query
+	newQuery=(newURL.indexOf('?')===-1 || new RegExp('\\?(?='+S.query+'=)').test(newURL)) ? '?' : '&';
+	
+	newQuery+=S.query+'='+(Math.floor(S.currentTime));
+	
+	//Replace either the case or the end
+	newURL=newURL.replace(new RegExp('(((\\?|&)'+S.query+')=?[^&#]+)|(?=#)|$'),newQuery);
+	
+	//console.log('updating',obj.history,location.href,newURL);
+	
+	if(location.href!==newURL){
+		//console.log('We are gonna ',action);
+		switch(action){
+			case 'replace':
+				history.replaceState({},'',newURL);
+				break;
+			case 'revisit':
+				//Nothing needs to be done
+				break;
+			case 'add':
+			default:
+				history.pushState({},'',newURL);
+				break;
+		}
 	}
 }
 
@@ -3098,56 +3090,40 @@ window.addEventListener('beforeunload',saveBookmark);
 S.window.addEventListener('focusout',saveBookmark);
 S.window.addEventListener('blur',saveBookmark);
 
-//Start at the first legit number: start, input.start, or the last file
-if(start===null){
-	start=<?php
-		#Start from the last file
-		echo 'S.files.length-1';
-	?>;
-}
-
 //These are the defaults for passObj, but it can be overwritten if we're using a querystring
-var passObj={time:start,scrollToTop:false};
+var start=<?php
+	#Get Hey Bard start
+	
+	##########
+	
+	#Start from the last file
+	echo 'S.files.length-1';
+?>;
 
 //If querystrings are in use, consider the querystring in the URL
-if(S.query){
-	window.addEventListener(
-		'popstate'
-		,function(){
-			var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i').exec(window.location.href));
+window.addEventListener(
+	'popstate'
+	,function(){
+		var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i').exec(window.location.href));
+		
+		//If we found a page
+		if(page){
+			page=parseInt(page[0].split('=')[1]);
 			
-			//If we found a page
-			if(page){
-				page=parseInt(page[0].split('=')[1]);
-				
-				if(page===S.currentTime) return;
-			
-				S.to({time:page,popstate:true,scrollToTop:false});
-			}
+			if(page===S.currentTime) return;
+		
+			S.to({time:page,history:'revisit'});
 		}
-	);
-	
-	var page=window.location.href.match(new RegExp('(\\?|&)'+S.query+'[^&#]+','i'));
-	if(page) page=parseInt(page[0].split('=')[1]);
-	
-	//General pass object
-	passObj={
-		popstate:page ? true : false
-		,replaceState:page ? false : true //We replace the current state in some instances (like on initial page load) rather than adding a new one
-		,scrollToTop:false
-		,reload:true
-	};
-	
-	passObj.time=(page!==null) ? page : start;
-	
-	S.to(passObj);
-}
+	}
+);
+
+var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i')).exec(window.location.href);
+if(page) start=parseInt(page[0].split('=')[1]);
+
+S.to({time:start,history:'replace'});
 
 //Pause the Showpony
 S.pause();
-
-//Use time or file to bookmark, whichever is requested
-S.to(passObj);
 
 //Set input to null in hopes that garbage collection will come pick it up
 input=null;
