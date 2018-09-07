@@ -1702,6 +1702,7 @@ function makeVisualNovel(){
 	
 	P.currentTime=-1;
 	P.currentFile=-1;
+	P.currentLine=-1;
 	
 	P.window=document.createElement('div');
 	P.window.className='showpony-multimedia';
@@ -1752,7 +1753,13 @@ function makeVisualNovel(){
 		continueNotice.remove();
 		
 		//End object animations on going to the next frame
-		for(var key in S.objects) S.objects[key].dispatchEvent(new Event('animationend'));
+		for(var key in S.objects){
+			if(S.objects[key].tagName) S.objects[key].dispatchEvent(new Event('animationend'));
+			else{
+				console.log(S.objects[key]);
+				S.objects[key].el.dispatchEvent(new Event('animationend'));
+			}
+		}
 		
 		var choices=false;
 		
@@ -1801,10 +1808,12 @@ function makeVisualNovel(){
 			/////RESET THINGS//////
 			//Get rid of local styles
 			for(var key in S.objects){
-				S.objects[key].removeAttribute('style');
-				
-				//Empty out textboxes
-				if(S.objects[key].classList.contains('showpony-textbox')) S.objects[key].innerHTML='';
+				if(S.objects[key].tagName){
+					S.objects[key].removeAttribute('style');
+					//Empty out textboxes
+					if(S.objects[key].classList.contains('showpony-textbox')) S.objects[key].innerHTML='';
+				}
+				else S.objects[key].el.removeAttribute('style');
 			};
 			
 			//Multimedia engine resets
@@ -1894,8 +1903,6 @@ function makeVisualNovel(){
 			});
 		}
 	}
-	
-	P.currentLine=0;
 	
 	//Run multimedia (interactive fiction, visual novels, etc)
 	function runMM(inputNum=P.currentLine+1){
@@ -2017,6 +2024,7 @@ function makeVisualNovel(){
 			return;
 		}
 		
+		//OBJECTS//
 		type='character';
 		if(vals.length===1){
 			type='background';
@@ -2038,54 +2046,44 @@ function makeVisualNovel(){
 			type='audio';
 		}
 		
-		//Check for images for this character; go through future lines
-		if(type==='character') var lines=[vals[1]];		
-		
 		//If an object with the name doesn't exist, make it!
 		if(object!=='engine' && !S.objects[object]){
-			//Audio has special requirements
-			if(type==='audio'){
-				S.objects[object]=document.createElement('audio');
-				
-				S.objects[object].src='url("<?=$_POST['path']?>resources/audio/'+object;
-				
-				//If an extension isn't specified, assume mp3
-				if(!/\./.test(object)) S.objects[object].src+='.mp3';
-				S.objects[object].preload=true;
-				
-				S.multimedia.window.appendChild(S.objects[object]);
+			if(type==='character'){
+				S.objects[object]=new character(object);
 			}else{
-				if(type==='textbox'){
-					S.multimedia.window.appendChild(S.objects[object]=m(type,'form'));
-					S.objects[object].addEventListener('submit',function(event){event.preventDefault();});
-				}
-				else S.multimedia.window.appendChild(S.objects[object]=m(type));
-
-				S.objects[object].addEventListener('animationend',function(event){
-					if(this!==event.target) return;
+			
+				//Audio has special requirements
+				if(type==='audio'){
+					S.objects[object]=document.createElement('audio');
 					
-					var objectName=object.replace(/#/g,'id');
+					S.objects[object].src='url("<?=$_POST['path']?>resources/audio/'+object;
 					
-					var updateStyle=new RegExp('@keyframes '+objectName+'{100%{[^}]*}}','i').exec(styles.innerHTML);
+					//If an extension isn't specified, assume mp3
+					if(!/\./.test(object)) S.objects[object].src+='.mp3';
+					S.objects[object].preload=true;
 					
-					var styleAdd=/[^{]+;/.exec(updateStyle);
-					
-					if(styleAdd) this.style.cssText+=styleAdd[0];
-					this.style.animationName=null;
-					this.style.animationDuration=null;
-					this.style.animationFillMode=null;
-				})
-				
-				if(type==='character'){
-					//Go through the rest of the lines, looking for images to preload
-					for(let i=P.currentLine;i<S.lines.length;i++){
-						
-						//If this character is listed on this line
-						if(S.lines[i].indexOf(object+'\t')===0){
-							//Add the image names to the images to load
-							lines.push(S.lines[i].split(/\s{3,}|\t+/)[1]);
-						}
+					S.multimedia.window.appendChild(S.objects[object]);
+				}else{
+					if(type==='textbox'){
+						S.multimedia.window.appendChild(S.objects[object]=m(type,'form'));
+						S.objects[object].addEventListener('submit',function(event){event.preventDefault();});
 					}
+					else S.multimedia.window.appendChild(S.objects[object]=m(type));
+
+					S.objects[object].addEventListener('animationend',function(event){
+						if(this!==event.target) return;
+						
+						var objectName=object.replace(/#/g,'id');
+						
+						var updateStyle=new RegExp('@keyframes '+objectName+'{100%{[^}]*}}','i').exec(styles.innerHTML);
+						
+						var styleAdd=/[^{]+;/.exec(updateStyle);
+						
+						if(styleAdd) this.style.cssText+=styleAdd[0];
+						this.style.animationName=null;
+						this.style.animationDuration=null;
+						this.style.animationFillMode=null;
+					});
 				}
 			}
 		}
@@ -2134,6 +2132,13 @@ function makeVisualNovel(){
 				//Don't automatically go to the next line
 				break;
 			case 'style':
+				if(!S.objects[object].tagName){
+					console.log(type,S.objects[object]);
+					S.objects[object].style(vals[1]);
+					runMM();
+					break;
+				}
+			
 				var animationSpeed=/time:[^s]+s/i.exec(vals[1]);
 			
 				//If running to or not requesting animation, add styles without implementing animation
@@ -2162,56 +2167,8 @@ function makeVisualNovel(){
 			case 'content':
 				switch(type){
 					case 'character':
-						var cha=S.objects[vals[0]];
-						
-						//Character level
-						for(let i=0,len=lines.length;i<len;i++){
-							
-							//Get the image names passed (commas separate layers)
-							var imageNames=lines[i].split(',');
-						
-							//Layer level
-							//Go through each passed image and see if it exists
-							for(let ii=0,len=imageNames.length;ii<len;ii++){
-								//If there's no period, add '.png' to the end- assume the extension
-								if(!/\./.test(imageNames[ii])) imageNames[ii]+='.png';
-								
-								var image='url("<?=$_POST['path']?>resources/characters/'+name+'/'+imageNames[ii]+'")';
-								
-								//If the image already exists
-								var found=false;
-								
-								//If the layer exists, search it
-								if(cha.children[ii]){
-									//Search the layer!
-									var search=cha.children[ii].children;
-									
-									//Set the opacity right, and if it's 1, we found the image!
-									for(let iii=0,len=search.length;iii<len;iii++){
-										var match=search[iii].style.backgroundImage.replace(/'/g,'"')==image.replace(/'/g,'"');
-										
-										//If this is the first image, it's the one we asked for; we don't want to make preloads visible, after all!
-										if(i===0) search[iii].style.opacity=match ? 1 : 0;
-										
-										if(match==true) found=true;
-									}
-								//If the layer doesn't exist, make it!
-								}else cha.appendChild(document.createElement('div'));
-								
-								//Image level
-								//If the image doesn't exist in the layer, we add it!
-								if(!found){
-									//Add a backgroundImage
-									var thisImg=m('character-image');
-									thisImg.style.backgroundImage=image;
-									
-									//If this isn't the first image, hide it immediately (it's being preloaded, we don't want to see it yet!)
-									if(i!==0) thisImg.style.opacity=0;
-									
-									cha.children[ii].appendChild(thisImg);
-								}
-							}
-						}
+						console.log(S.objects[object],vals[0]);
+						S.objects[object].content(vals[1]);
 						runMM();
 						break;
 					case 'background':
@@ -2643,6 +2600,149 @@ function makeVisualNovel(){
 				break;
 		}
 	}
+	
+	/*
+	textbox
+		content
+		style
+	name
+		content
+		style
+	character
+		content
+		style
+	background
+		content
+		style
+	audio
+		content
+		play
+		pause
+		speed
+		loop
+		volume
+	*/
+	
+	function character(input){
+		const C=this;
+		C.el=m('character');
+		const name=input;
+		
+		P.window.appendChild(C.el);
+
+		C.el.addEventListener('animationend',function(event){
+			if(this!==event.target) return;
+			
+			var objectName=name.replace(/#/g,'id');
+			
+			var updateStyle=new RegExp('@keyframes '+objectName+'{100%{[^}]*}}','i').exec(styles.innerHTML);
+			
+			var styleAdd=/[^{]+;/.exec(updateStyle);
+			
+			if(styleAdd) this.style.cssText+=styleAdd[0];
+			this.style.animationName=null;
+			this.style.animationDuration=null;
+			this.style.animationFillMode=null;
+		})
+		
+		/*
+		var lines=input;
+		
+		//Go through the rest of the lines, looking for images to preload
+		for(let i=P.currentLine;i<S.lines.length;i++){
+			
+			//If this character is listed on this line
+			if(S.lines[i].indexOf(object+'\t')===0){
+				//Add the image names to the images to load
+				lines.push(S.lines[i].split(/\s{3,}|\t+/)[1]);
+			}
+		}*/
+		
+		C.remove=function(){
+			C.el.remove();
+		}
+		
+		C.content=function(input){
+			if(!Array.isArray(input)) input=[input];
+			
+			//Character level
+			for(let i=0,len=input.length;i<len;i++){
+				
+				//Get the image names passed (commas separate layers)
+				var imageNames=input[i].split(',');
+			
+				//Layer level
+				//Go through each passed image and see if it exists
+				for(let ii=0,len=imageNames.length;ii<len;ii++){
+					//If there's no period, add '.png' to the end- assume the extension
+					if(!/\./.test(imageNames[ii])) imageNames[ii]+='.png';
+					
+					var image='url("<?=$_POST['path']?>resources/characters/'+name+'/'+imageNames[ii]+'")';
+					
+					//If the image already exists
+					var found=false;
+					
+					//If the layer exists, search it
+					if(C.el.children[ii]){
+						//Search the layer!
+						var search=C.el.children[ii].children;
+						
+						//Set the opacity right, and if it's 1, we found the image!
+						for(let iii=0,len=search.length;iii<len;iii++){
+							var match=search[iii].style.backgroundImage.replace(/'/g,'"')==image.replace(/'/g,'"');
+							
+							//If this is the first image, it's the one we asked for; we don't want to make preloads visible, after all!
+							if(i===0) search[iii].style.opacity=match ? 1 : 0;
+							
+							if(match==true) found=true;
+						}
+					//If the layer doesn't exist, make it!
+					}else C.el.appendChild(document.createElement('div'));
+					
+					//Image level
+					//If the image doesn't exist in the layer, we add it!
+					if(!found){
+						//Add a backgroundImage
+						var thisImg=m('character-image');
+						thisImg.style.backgroundImage=image;
+						
+						//If this isn't the first image, hide it immediately (it's being preloaded, we don't want to see it yet!)
+						if(i!==0) thisImg.style.opacity=0;
+						
+						C.el.children[ii].appendChild(thisImg);
+					}
+				}
+			}
+		}
+		
+		C.style=function(input){
+			console.log(input);
+			
+			var animationSpeed=/time:[^s]+s/i.exec(input);
+			
+			//If running to or not requesting animation, add styles without implementing animation
+			if(animationSpeed===null || P.currentLine<runTo){
+				C.el.style.cssText+=input;
+			}else{
+				//var name=name.replace(/#/g,'id'); //Add back in to support multiple characters sharing the same image set
+				
+				animationSpeed=animationSpeed[0].split(':')[1];
+				
+				var animation='@keyframes '+name+'{100%{'+input+'}}';
+			
+				//Either replace existing keyframes or append to the end
+				styles.innerHTML=styles.innerHTML.replace(new RegExp('(@keyframes '+name+'{100%{[^}]*}})|$'),animation);
+				C.el.style.animationName=name;
+				C.el.style.animationFillMode='forwards';
+				C.el.style.animationDuration=animationSpeed;
+			}
+		}
+		
+		//if(input) C.content();
+	}
+	
+	new character();
+	
 }
 
 S.multimedia=new makeVisualNovel();
