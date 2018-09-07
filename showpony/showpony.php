@@ -2716,33 +2716,27 @@ function makeVisualNovel(){
 		}
 		
 		C.style=function(input){
-			console.log(input);
-			
 			var animationSpeed=/time:[^s]+s/i.exec(input);
 			
 			//If running to or not requesting animation, add styles without implementing animation
 			if(animationSpeed===null || P.currentLine<runTo){
 				C.el.style.cssText+=input;
 			}else{
-				//var name=name.replace(/#/g,'id'); //Add back in to support multiple characters sharing the same image set
+				//Add back in to support multiple characters sharing the same image set
+				//var name=name.replace(/#/g,'id');
 				
-				animationSpeed=animationSpeed[0].split(':')[1];
-				
-				var animation='@keyframes '+name+'{100%{'+input+'}}';
-			
 				//Either replace existing keyframes or append to the end
-				styles.innerHTML=styles.innerHTML.replace(new RegExp('(@keyframes '+name+'{100%{[^}]*}})|$'),animation);
-				C.el.style.animationName=name;
-				C.el.style.animationFillMode='forwards';
-				C.el.style.animationDuration=animationSpeed;
+				styles.innerHTML=styles.innerHTML.replace(
+					new RegExp('(@keyframes '+name+'{100%{[^}]*}})|$')
+					,'@keyframes '+name+'{100%{'+input+'}}'
+				);
+				
+				C.el.style.animation=animationSpeed[0].split(':')[1]+' forwards '+name;
 			}
 		}
 		
 		//if(input) C.content();
 	}
-	
-	new character();
-	
 }
 
 S.multimedia=new makeVisualNovel();
