@@ -1044,11 +1044,12 @@ S.input=function(){
 var scrubbing=false
 	,waitTimer=new powerTimer(function(){},0)
 	,currentType=null
-	//Buttons
-	,cover=m('cover','div')
-	//Page turning
-	,pageTurn=m('page-turn')
 ;
+
+var cover=document.createElement('div');
+cover.className='showpony-cover';
+var pageTurn=document.createElement('div');
+pageTurn.className='showpony-page-turn';
 
 frag([overlayBuffer,progress,overlayText,fullscreenButton,captionsButton],overlay);
 
@@ -1272,14 +1273,6 @@ function frag(inputArray,inputParent){
 	inputParent.appendChild(fragment);
 }
 
-//Create an element with a class
-function m(c,el){
-	var a=document.createElement(el || 'div');
-	a.className='showpony-'+c;
-	
-	return a;
-}
-
 function powerTimer(callback,delay){
 	//Thanks to https://stackoverflow.com/questions/3969475/javascript-pause-settimeout
 
@@ -1476,7 +1469,8 @@ function makeImage(){
 			
 			var lines=S.files[P.currentFile].subtitles.split(/\s{3,}/g);
 			for(let i=0;i<lines.length;i++){
-				var block=m('sub','p');
+				var block=document.createElement('p');
+				block.className='showpony-sub';
 				
 				var input=lines[i].split(/\n/);
 				block.innerHTML=input[1];
@@ -1595,7 +1589,8 @@ function makeMedia(type='video'){
 						if(subtitles.children.length===0 || subtitles.children[0].innerHTML!==newSubtitle){
 							subtitles.innerHTML='';
 						
-							var block=m('sub','p');
+							var block=document.createElement('p');
+							block.className='showpony-sub';
 							block.innerHTML=newSubtitle;
 							
 							subtitles.appendChild(block);
@@ -1701,7 +1696,8 @@ function makeVisualNovel(){
 	P.window.className='showpony-multimedia';
 	
 	var runTo=false;
-	var continueNotice=m('continue')
+	var continueNotice=document.createElement('div');
+	continueNotice.className='showpony-continue';
 	var inputting=false;
 	var wait=false;
 	
@@ -2182,7 +2178,8 @@ X		volume
 	
 	function background(input){
 		const C=this;
-		C.el=m('background');
+		C.el=document.createElement('div');
+		C.el.className='showpony-background';
 		const name=input;
 		
 		P.window.appendChild(C.el);
@@ -2241,7 +2238,8 @@ X		volume
 		const C=this;
 		const name=input;
 		
-		C.el=m('textbox','form');
+		C.el=document.createElement('form');
+		C.el.className='showpony-textbox';
 		C.el.addEventListener('submit',function(event){
 			event.preventDefault();
 		});
@@ -2287,7 +2285,9 @@ X		volume
 			if(input[0]!=='+'){
 				C.el.innerHTML='';
 				/*
-				if(!S.objects.name) S.multimedia.window.appendChild(S.objects.name=m('name'));
+				if(!S.objects.name) S.multimedia.window.appendChild(S.objects.name=document.createElement('div'));
+				
+				S.objects.name.className='showpony-name';
 				
 				//Split up the text so we can have names automatically written
 				var nameText=input.split('::');
@@ -2306,11 +2306,11 @@ X		volume
 			//STEP 2: Design the text//
 			
 			//Design defaults
-			var charElementDefault=m('char-container','span')
-				,charElement
-				,baseWaitTime
-				,constant
-			;
+			var charElementDefault=document.createElement('span');
+			charElementDefault.className='showpony-char-container';
+			var charElement;
+			var baseWaitTime;
+			var constant;
 			
 			//Reset the defaults with this function, or set them inside here!
 			function charDefaults(){
@@ -2528,9 +2528,12 @@ X		volume
 						//Make the char based on charElement
 						var thisChar=charElement.cloneNode(false);
 						
-						let showChar=m('char','span');				//Display char (appear, shout, etc), parent to animChar
-						let animChar=m('char-anim','span');			//Constant animation character (singing, shaking...)
-						let hideChar=m('char-placeholder','span');	//Hidden char for positioning
+						let showChar=document.createElement('span')				//Display char (appear, shout, etc), parent to animChar
+						showChar.className='showpony-char';
+						let animChar=document.createElement('span')			//Constant animation character (singing, shaking...)
+						animChar.className='showpony-char-anim';
+						let hideChar=document.createElement('span');	//Hidden char for positioning
+						hideChar.className='showpony-char-placeholder';
 						
 						//Spaces
 						//and Ending! (needs this to wrap lines correctly on Firefox)
@@ -2641,7 +2644,8 @@ X		volume
 	
 	function character(input){
 		const C=this;
-		C.el=m('character');
+		C.el=document.createElement('div');
+		C.el.className='showpony-character';
 		const name=input;
 		
 		P.window.appendChild(C.el);
@@ -2719,7 +2723,8 @@ X		volume
 					//If the image doesn't exist in the layer, we add it!
 					if(!found){
 						//Add a backgroundImage
-						var thisImg=m('character-image');
+						var thisImg=document.createElement('div');
+						thisImg.className='showpony-character-image';
 						thisImg.style.backgroundImage=image;
 						
 						//If this isn't the first image, hide it immediately (it's being preloaded, we don't want to see it yet!)
@@ -3245,7 +3250,8 @@ if(S.subtitles){
 	
 	//Add captions to options
 	
-	var option=m('captions-option','option');
+	var option=document.createElement('option');
+	option.className='showpony-captions-option';
 	option.innerHTML='None';
 	option.value='None';
 	option.selected=true;
@@ -3255,7 +3261,8 @@ if(S.subtitles){
 	captionsButton.appendChild(option);
 	
 	for(let i=0;i<obj.length;i++){
-		let option=m('captions-option','option');
+		let option=document.createElement('option');
+		option.className='showpony-captions-option';
 		option.innerHTML=obj[i];
 		option.value=obj[i];
 		option.addEventListener('click',function(){
