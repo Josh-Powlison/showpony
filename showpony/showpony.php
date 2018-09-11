@@ -1700,6 +1700,7 @@ function makeVisualNovel(){
 	continueNotice.className='showpony-continue';
 	var inputting=false;
 	var wait=false;
+	var currentTextbox='main';
 	
 	P.play=function(){
 		//Go through objects that were playing- unpause them
@@ -2124,138 +2125,194 @@ X		volume
 	//var name=/^[^#]+/.exec(object)[0];
 	
 	//Pass new objects to this function to add common sub-functions
-	function objectAddCommonFunctions(input){
+	function objectAddCommonFunctions(O){
 		//Remove element
-		input.remove=function(){
-			input.el.remove();
+		O.remove=function(){
+			O.el.remove();
 		}
 		
+		var localStyle=document.createElement('style');
+		O.el.appendChild(localStyle);
+		var cssName=O.el.dataset.name.replace(/#/g,'id');
+		
 		//Adjust the styles, and add animations
-		input.style=function(style){
-			var animationSpeed=/time:[^s]+s/i.exec(style);
+		O.style=function(style){
+			var animationSpeed=/time:[^s;$]+/i.exec(style);
+			
+			//Add back in to support multiple objects sharing the same file set
 			
 			//If running to or not requesting animation, add styles without implementing animation
 			if(animationSpeed===null || P.currentLine<runTo){
-				input.el.style.cssText+=style;
+				O.el.style.cssText+=style;
 			}else{
-				//Add back in to support multiple characters sharing the same image set
-				let cssName=input.el.dataset.name.replace(/#/g,'id');
+				localStyle.innerHTML='@keyframes '+cssName+'{100%{'+style+'}}';
 				
-				//Either replace existing keyframes or append to the end
-				styles.innerHTML=styles.innerHTML.replace(
-					new RegExp('(@keyframes '+cssName+'{100%{[^}]*}})|$')
-					,'@keyframes '+cssName+'{100%{'+style+'}}'
-				);
-				
-				input.el.style.animation=animationSpeed[0].split(':')[1]+' forwards '+cssName;
+				O.el.style.animation=animationSpeed[0].split(':')[1]+'s forwards '+cssName;
 			}
 		}
 		
 		//Add the animation end function
-		input.el.addEventListener('animationend',function(event){
+		O.el.addEventListener('animationend',function(event){
 			if(this!==event.target) return;
 			
-			var objectName=this.dataset.name.replace(/#/g,'-id-');
-			
-			var updateStyle=new RegExp('@keyframes '+objectName+'{100%{[^}]*}}','i').exec(styles.innerHTML);
-			
-			var styleAdd=/[^{]+;/.exec(updateStyle);
+			var styleAdd=/[^{]+;/.exec(new RegExp('@keyframes '+cssName+'{100%{[^}]*}}','i').exec(localStyle.innerHTML));
 			
 			if(styleAdd) this.style.cssText+=styleAdd[0];
-			this.style.animationName=null;
-			this.style.animationDuration=null;
-			this.style.animationFillMode=null;
+			this.style.animation=null;
 		});
 	}
 	
 	function audio(input){
-		const C=this;
+		const O=this;
 		const name=input;
 		
-		C.el=document.createElement('audio');
-		C.el.src='<?=$_POST['path']?>resources/audio/'+name+'.mp3';
-		C.el.preload=true;
-		C.el.dataset.name=input;
-		P.window.appendChild(C.el);
+		O.el=document.createElement('audio');
+		O.el.src='<?=$_POST['path']?>resources/audio/'+name+'.mp3';
+		O.el.preload=true;
+		O.el.dataset.name=input;
+		P.window.appendChild(O.el);
 		
 		//Checks if was playing outside of pausing the Showpony
-		C.wasPlaying=false;
+		O.wasPlaying=false;
 		
-		C.content=function(input){
+		O.content=function(input){
 			if(Array.isArray(input)) input=input[0];
 			
-			C.el.src=input;
+			O.el.src=input;
 		}
 		
-		C.play=function(){
-			if(S.paused) C.wasPlaying=true;
-			if(!S.paused) C.el.play();
+		O.play=function(){
+			if(S.paused) O.wasPlaying=true;
+			if(!S.paused) O.el.play();
 		}
 		
-		C.pause=function(){
-			if(S.paused) C.wasPlaying=false;
-			C.el.pause();
+		O.pause=function(){
+			if(S.paused) O.wasPlaying=false;
+			O.el.pause();
 		}
 		
-		C.stop=function(){
-			if(S.paused) C.wasPlaying=false;
-			C.el.pause();
-			C.el.currentTime=0;
+		O.stop=function(){
+			if(S.paused) O.wasPlaying=false;
+			O.el.pause();
+			O.el.currentTime=0;
 		}
 		
-		C.loop=function(input){
-			C.el.loop=input;
+		O.loop=function(input){
+			O.el.loop=input;
 		}
 		
-		C.volume=function(input){
-			C.el.volume=input;
+		O.volume=function(input){
+			O.el.volume=input;
 		}
 		
-		C.speed=function(input){
-			C.el.playbackRate=input;
+		O.speed=function(input){
+			O.el.playbackRate=input;
 		}
 		
-		C.time=function(input){
-			C.el.currentTime=input;
+		O.time=function(input){
+			O.el.currentTime=input;
 		}
 		
-		objectAddCommonFunctions(C);
+		objectAddCommonFunctions(O);
 	}
 	
 	function background(input){
-		const C=this;
-		C.el=document.createElement('div');
-		C.el.className='showpony-background';
-		C.el.dataset.name=input;
+		const O=this;
+		O.el=document.createElement('div');
+		O.el.className='showpony-background';
+		O.el.dataset.name=input;
 		const name=input;
 		
-		P.window.appendChild(C.el);
+		P.window.appendChild(O.el);
 
-		
-		C.content=function(input){
-			if(Array.isArray(input)) input=input[0];
-			
-			C.el.style.backgroundImage='url("<?=$_POST['path']?>resources/backgrounds/'+name+'.jpg")';
+		O.content=function(input=name){
+			O.el.style.backgroundImage='url("<?=$_POST['path']?>resources/backgrounds/'+input+'.jpg")';
 		}
 		
-		objectAddCommonFunctions(C);
+		objectAddCommonFunctions(O);
 	}
 	
-	var currentTextbox='main';
-	
-	function textbox(input){
-		const C=this;
+	function character(input){
+		const O=this;
+		O.el=document.createElement('div');
+		O.el.className='showpony-character';
+		O.el.dataset.name=input;
 		const name=input;
 		
-		C.el=document.createElement('form');
-		C.el.className='showpony-textbox';
-		C.el.dataset.name=input;
-		C.el.addEventListener('submit',function(event){
+		P.window.appendChild(O.el);
+		
+		/*
+		var lines=input;
+		
+		//Go through the rest of the lines, looking for images to preload
+		for(let i=P.currentLine;i<P.lines.length;i++){
+			
+			//If this character is listed on this line
+			if(P.lines[i].indexOf(object+'\t')===0){
+				//Add the image names to the images to load
+				lines.push(P.lines[i].split(/\s{3,}|\t+/)[1]);
+			}
+		}*/
+		
+		O.content=function(input,hide=false){
+			//Character level
+			//Get the image names passed (commas separate layers)
+			var imageNames=input.split(',');
+		
+			//Layer level
+			//Go through each passed image and see if it exists
+			for(var i=0;i<imageNames.length;i++){
+				let layer=i+1;
+				
+				//Assume .png
+				var image=imageNames[i]+='.png';
+				
+				//If the layer doesn't exist, add it!
+				if(!O.el.children[layer]){
+					O.el.appendChild(document.createElement('div'));
+				}
+				
+				//If the image doesn't exist, add it!
+				if(!O.el.children[layer].querySelector('div[data-image="'+image+'"]')){
+					//Add a layer image
+					var thisImg=document.createElement('div');
+					thisImg.className='showpony-character-image';
+					thisImg.dataset.image=image;
+					thisImg.style.backgroundImage='url("<?=$_POST['path']?>resources/characters/'+name+'/'+image+'")';
+					
+					O.el.children[layer].appendChild(thisImg);
+				}
+				
+				//Set the matching images' opacity to 1, and all the others to 0
+				var images=O.el.children[layer].children;
+				for(let ii=0;ii<images.length;ii++){
+					if(images[ii].dataset.image===image){
+						 images[ii].style.opacity=1;
+					}else{
+						images[ii].style.opacity=0;
+					}
+				}
+			}
+		}
+		
+		objectAddCommonFunctions(O);
+		
+		//if(input) O.content();
+	}
+	
+	function textbox(input){
+		const O=this;
+		const name=input;
+		
+		O.el=document.createElement('form');
+		O.el.className='showpony-textbox';
+		O.el.dataset.name=input;
+		O.el.addEventListener('submit',function(event){
 			event.preventDefault();
 		});
-		P.window.appendChild(C.el);
+		P.window.appendChild(O.el);
 		
-		C.content=function(input){
+		O.content=function(input){
 			//var keepGoing=multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals);
 		
 			//var keepGoing=false;
@@ -2274,7 +2331,7 @@ X		volume
 			
 			//If the line doesn't start with +, replace the text
 			if(input[0]!=='+'){
-				C.el.innerHTML='';
+				O.el.innerHTML='';
 				/*
 				if(!S.objects.name) S.multimedia.window.appendChild(S.objects.name=document.createElement('div'));
 				
@@ -2540,13 +2597,13 @@ X		volume
 								if(this.style.visibility!=='visible'){
 									this.style.visibility='visible';
 									//If the letter's below the textbox
-									if(this.parentNode.getBoundingClientRect().bottom>C.el.getBoundingClientRect().bottom){
-										C.el.scrollTop=this.parentNode.offsetTop+this.parentNode.offsetHeight-C.el.offsetHeight;
+									if(this.parentNode.getBoundingClientRect().bottom>O.el.getBoundingClientRect().bottom){
+										O.el.scrollTop=this.parentNode.offsetTop+this.parentNode.offsetHeight-O.el.offsetHeight;
 									}
 									
 									//If the letter's above the textbox
-									if(this.parentNode.getBoundingClientRect().top<C.el.getBoundingClientRect().top){
-										C.el.scrollTop=this.parentNode.offsetTop;
+									if(this.parentNode.getBoundingClientRect().top<O.el.getBoundingClientRect().top){
+										O.el.scrollTop=this.parentNode.offsetTop;
 									}
 									
 								}
@@ -2598,7 +2655,7 @@ X		volume
 						P.progress();
 					}else{
 						//If we need players to click to continue (and they have no inputs to fill out or anything), notify them:
-						if(!C.el.querySelector('input')){
+						if(!O.el.querySelector('input')){
 							S.multimedia.window.appendChild(continueNotice);
 						}
 					}
@@ -2606,94 +2663,13 @@ X		volume
 			//}
 			
 			//Add the chars to the textbox
-			C.el.appendChild(fragment);
+			O.el.appendChild(fragment);
 			
 			//Continue if async textbox
 			//if(S.objects[currentTextbox].dataset.async==true) P.progress();
 		}
 		
-		objectAddCommonFunctions(C);
-	}
-	
-	function character(input){
-		const C=this;
-		C.el=document.createElement('div');
-		C.el.className='showpony-character';
-		C.el.dataset.name=input;
-		const name=input;
-		
-		P.window.appendChild(C.el);
-		
-		/*
-		var lines=input;
-		
-		//Go through the rest of the lines, looking for images to preload
-		for(let i=P.currentLine;i<P.lines.length;i++){
-			
-			//If this character is listed on this line
-			if(P.lines[i].indexOf(object+'\t')===0){
-				//Add the image names to the images to load
-				lines.push(P.lines[i].split(/\s{3,}|\t+/)[1]);
-			}
-		}*/
-		
-		C.content=function(input){
-			if(!Array.isArray(input)) input=[input];
-			
-			//Character level
-			for(let i=0,len=input.length;i<len;i++){
-				
-				//Get the image names passed (commas separate layers)
-				var imageNames=input[i].split(',');
-			
-				//Layer level
-				//Go through each passed image and see if it exists
-				for(let ii=0,len=imageNames.length;ii<len;ii++){
-					//If there's no period, add '.png' to the end- assume the extension
-					if(!/\./.test(imageNames[ii])) imageNames[ii]+='.png';
-					
-					var image='url("<?=$_POST['path']?>resources/characters/'+name+'/'+imageNames[ii]+'")';
-					
-					//If the image already exists
-					var found=false;
-					
-					//If the layer exists, search it
-					if(C.el.children[ii]){
-						//Search the layer!
-						var search=C.el.children[ii].children;
-						
-						//Set the opacity right, and if it's 1, we found the image!
-						for(let iii=0,len=search.length;iii<len;iii++){
-							var match=search[iii].style.backgroundImage.replace(/'/g,'"')==image.replace(/'/g,'"');
-							
-							//If this is the first image, it's the one we asked for; we don't want to make preloads visible, after all!
-							if(i===0) search[iii].style.opacity=match ? 1 : 0;
-							
-							if(match==true) found=true;
-						}
-					//If the layer doesn't exist, make it!
-					}else C.el.appendChild(document.createElement('div'));
-					
-					//Image level
-					//If the image doesn't exist in the layer, we add it!
-					if(!found){
-						//Add a backgroundImage
-						var thisImg=document.createElement('div');
-						thisImg.className='showpony-character-image';
-						thisImg.style.backgroundImage=image;
-						
-						//If this isn't the first image, hide it immediately (it's being preloaded, we don't want to see it yet!)
-						if(i!==0) thisImg.style.opacity=0;
-						
-						C.el.children[ii].appendChild(thisImg);
-					}
-				}
-			}
-		}
-		
-		objectAddCommonFunctions(C);
-		
-		//if(input) C.content();
+		objectAddCommonFunctions(O);
 	}
 }
 
