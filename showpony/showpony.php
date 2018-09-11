@@ -2118,8 +2118,55 @@ X		loop
 X		volume
 	*/
 
+	//STYLE and REMOVE are the same for every instance.
+	
 	//RELEVANT FOR USING MULTIPLE FILES: add in this support later
 	//var name=/^[^#]+/.exec(object)[0];
+	
+	//Pass new objects to this function to add common sub-functions
+	function objectAddCommonFunctions(input){
+		//Remove element
+		input.remove=function(){
+			input.el.remove();
+		}
+		
+		//Adjust the styles, and add animations
+		input.style=function(style){
+			var animationSpeed=/time:[^s]+s/i.exec(style);
+			
+			//If running to or not requesting animation, add styles without implementing animation
+			if(animationSpeed===null || P.currentLine<runTo){
+				input.el.style.cssText+=style;
+			}else{
+				//Add back in to support multiple characters sharing the same image set
+				let cssName=input.el.dataset.name.replace(/#/g,'id');
+				
+				//Either replace existing keyframes or append to the end
+				styles.innerHTML=styles.innerHTML.replace(
+					new RegExp('(@keyframes '+cssName+'{100%{[^}]*}})|$')
+					,'@keyframes '+cssName+'{100%{'+style+'}}'
+				);
+				
+				input.el.style.animation=animationSpeed[0].split(':')[1]+' forwards '+cssName;
+			}
+		}
+		
+		//Add the animation end function
+		input.el.addEventListener('animationend',function(event){
+			if(this!==event.target) return;
+			
+			var objectName=this.dataset.name.replace(/#/g,'-id-');
+			
+			var updateStyle=new RegExp('@keyframes '+objectName+'{100%{[^}]*}}','i').exec(styles.innerHTML);
+			
+			var styleAdd=/[^{]+;/.exec(updateStyle);
+			
+			if(styleAdd) this.style.cssText+=styleAdd[0];
+			this.style.animationName=null;
+			this.style.animationDuration=null;
+			this.style.animationFillMode=null;
+		});
+	}
 	
 	function audio(input){
 		const C=this;
@@ -2128,14 +2175,11 @@ X		volume
 		C.el=document.createElement('audio');
 		C.el.src='<?=$_POST['path']?>resources/audio/'+name+'.mp3';
 		C.el.preload=true;
+		C.el.dataset.name=input;
 		P.window.appendChild(C.el);
 		
 		//Checks if was playing outside of pausing the Showpony
 		C.wasPlaying=false;
-		
-		C.remove=function(){
-			C.el.remove();
-		}
 		
 		C.content=function(input){
 			if(Array.isArray(input)) input=input[0];
@@ -2174,34 +2218,19 @@ X		volume
 		C.time=function(input){
 			C.el.currentTime=input;
 		}
+		
+		objectAddCommonFunctions(C);
 	}
 	
 	function background(input){
 		const C=this;
 		C.el=document.createElement('div');
 		C.el.className='showpony-background';
+		C.el.dataset.name=input;
 		const name=input;
 		
 		P.window.appendChild(C.el);
 
-		C.el.addEventListener('animationend',function(event){
-			if(this!==event.target) return;
-			
-			var objectName=name.replace(/#/g,'id');
-			
-			var updateStyle=new RegExp('@keyframes '+objectName+'{100%{[^}]*}}','i').exec(styles.innerHTML);
-			
-			var styleAdd=/[^{]+;/.exec(updateStyle);
-			
-			if(styleAdd) this.style.cssText+=styleAdd[0];
-			this.style.animationName=null;
-			this.style.animationDuration=null;
-			this.style.animationFillMode=null;
-		})
-		
-		C.remove=function(){
-			C.el.remove();
-		}
 		
 		C.content=function(input){
 			if(Array.isArray(input)) input=input[0];
@@ -2209,27 +2238,7 @@ X		volume
 			C.el.style.backgroundImage='url("<?=$_POST['path']?>resources/backgrounds/'+name+'.jpg")';
 		}
 		
-		C.style=function(input){
-			var animationSpeed=/time:[^s]+s/i.exec(input);
-			
-			//If running to or not requesting animation, add styles without implementing animation
-			if(animationSpeed===null || P.currentLine<runTo){
-				C.el.style.cssText+=input;
-			}else{
-				//Add back in to support multiple characters sharing the same image set
-				//var name=name.replace(/#/g,'id');
-				
-				//Either replace existing keyframes or append to the end
-				styles.innerHTML=styles.innerHTML.replace(
-					new RegExp('(@keyframes '+name+'{100%{[^}]*}})|$')
-					,'@keyframes '+name+'{100%{'+input+'}}'
-				);
-				
-				C.el.style.animation=animationSpeed[0].split(':')[1]+' forwards '+name;
-			}
-		}
-		
-		//if(input) C.content();
+		objectAddCommonFunctions(C);
 	}
 	
 	var currentTextbox='main';
@@ -2240,29 +2249,11 @@ X		volume
 		
 		C.el=document.createElement('form');
 		C.el.className='showpony-textbox';
+		C.el.dataset.name=input;
 		C.el.addEventListener('submit',function(event){
 			event.preventDefault();
 		});
 		P.window.appendChild(C.el);
-
-		C.el.addEventListener('animationend',function(event){
-			if(this!==event.target) return;
-			
-			var objectName=name.replace(/#/g,'id');
-			
-			var updateStyle=new RegExp('@keyframes '+objectName+'{100%{[^}]*}}','i').exec(styles.innerHTML);
-			
-			var styleAdd=/[^{]+;/.exec(updateStyle);
-			
-			if(styleAdd) this.style.cssText+=styleAdd[0];
-			this.style.animationName=null;
-			this.style.animationDuration=null;
-			this.style.animationFillMode=null;
-		})
-		
-		C.remove=function(){
-			C.el.remove();
-		}
 		
 		C.content=function(input){
 			//var keepGoing=multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals);
@@ -2621,49 +2612,17 @@ X		volume
 			//if(S.objects[currentTextbox].dataset.async==true) P.progress();
 		}
 		
-		C.style=function(input){
-			var animationSpeed=/time:[^s]+s/i.exec(input);
-			
-			//If running to or not requesting animation, add styles without implementing animation
-			if(animationSpeed===null || P.currentLine<runTo){
-				C.el.style.cssText+=input;
-			}else{
-				//Add back in to support multiple characters sharing the same image set
-				//var name=name.replace(/#/g,'id');
-				
-				//Either replace existing keyframes or append to the end
-				styles.innerHTML=styles.innerHTML.replace(
-					new RegExp('(@keyframes '+name+'{100%{[^}]*}})|$')
-					,'@keyframes '+name+'{100%{'+input+'}}'
-				);
-				
-				C.el.style.animation=animationSpeed[0].split(':')[1]+' forwards '+name;
-			}
-		}
+		objectAddCommonFunctions(C);
 	}
 	
 	function character(input){
 		const C=this;
 		C.el=document.createElement('div');
 		C.el.className='showpony-character';
+		C.el.dataset.name=input;
 		const name=input;
 		
 		P.window.appendChild(C.el);
-
-		C.el.addEventListener('animationend',function(event){
-			if(this!==event.target) return;
-			
-			var objectName=name.replace(/#/g,'id');
-			
-			var updateStyle=new RegExp('@keyframes '+objectName+'{100%{[^}]*}}','i').exec(styles.innerHTML);
-			
-			var styleAdd=/[^{]+;/.exec(updateStyle);
-			
-			if(styleAdd) this.style.cssText+=styleAdd[0];
-			this.style.animationName=null;
-			this.style.animationDuration=null;
-			this.style.animationFillMode=null;
-		})
 		
 		/*
 		var lines=input;
@@ -2677,10 +2636,6 @@ X		volume
 				lines.push(P.lines[i].split(/\s{3,}|\t+/)[1]);
 			}
 		}*/
-		
-		C.remove=function(){
-			C.el.remove();
-		}
 		
 		C.content=function(input){
 			if(!Array.isArray(input)) input=[input];
@@ -2736,25 +2691,7 @@ X		volume
 			}
 		}
 		
-		C.style=function(input){
-			var animationSpeed=/time:[^s]+s/i.exec(input);
-			
-			//If running to or not requesting animation, add styles without implementing animation
-			if(animationSpeed===null || P.currentLine<runTo){
-				C.el.style.cssText+=input;
-			}else{
-				//Add back in to support multiple characters sharing the same image set
-				//var name=name.replace(/#/g,'id');
-				
-				//Either replace existing keyframes or append to the end
-				styles.innerHTML=styles.innerHTML.replace(
-					new RegExp('(@keyframes '+name+'{100%{[^}]*}})|$')
-					,'@keyframes '+name+'{100%{'+input+'}}'
-				);
-				
-				C.el.style.animation=animationSpeed[0].split(':')[1]+' forwards '+name;
-			}
-		}
+		objectAddCommonFunctions(C);
 		
 		//if(input) C.content();
 	}
