@@ -2409,20 +2409,17 @@ X		volume
 						
 						//We're closing the element
 						if(values[0]=='/'){
+							values=values.substr(1);
+							
 							switch(values){
-								case '/shout':
-									charElement.classList.remove('showpony-char-shout');
+								case 'shout':
+								case 'shake':
+								case 'sing':
+								case 'fade':
+									charElement.classList.remove('showpony-char-'+values);
 									break;
-								case '/sing':
-									charElement.classList.remove('showpony-char-sing');
-									break;
-								case '/shake':
-									charElement.classList.remove('showpony-char-shake');
-									break;
-								case '/fade':
-									charElement.classList.remove('showpony-char-fade');
-									break;
-								case '/speed':
+								case 'speed':
+									///TODO: allow nested <speed> tags, so it'll go back to the speed of the parent element
 									//Adjust by the default wait set up for it
 									baseWaitTime=.03;
 									constant=false;
@@ -2444,16 +2441,10 @@ X		volume
 							
 							switch(values[0]){
 								case 'shout':
-									charElement.classList.add('showpony-char-shout');
-									break;
 								case 'sing':
-									charElement.classList.add('showpony-char-sing');
-									break;
 								case 'shake':
-									charElement.classList.add('showpony-char-shake');
-									break;
 								case 'fade':
-									charElement.classList.add('showpony-char-fade');
+									charElement.classList.add('showpony-char-'+values);
 									break;
 								case 'speed':
 									//Check the attributes
@@ -2552,26 +2543,35 @@ X		volume
 						//Pass over the closing bracket
 						continue;
 					default:
-						//Handle punctuation
-						if(i!=input.length && (input[i]==' ')){
-							/*Pause at:
-								. ! ? : ; -
-								but if there's a " or ' after it, wait until that's set.
+						letters+=input[i];
+					
+						//Handle punctuation- at spaces we check, if constant isn't true
+						if(i!==input.length && (input[i]===' ') && !constant){
+							var testLetter=letters.length-2;
+							
+							/*
+								Go back before the following:
+									" ' ~
+								That way sentences can end with those and still have a beat for the punctuation.
 							*/
+							while(/["'~]/.test(letters[testLetter])){
+								testLetter--;
+							}
 							
-							var start=letters.length-3;
-							if(start<0) start=0;
-							
-							if(!constant){
-								//Long pause
-								if(/[.!?:;-]["']*$/.test(letters.substr(start,3))) waitTime*=20;
-								
-								//Short pause
-								if(/[,]["']*$/.test(letters.substr(start,3))) waitTime*=10;
+							switch(letters[testLetter]){
+								case '.':
+								case '!':
+								case '?':
+								case ':':
+								case ';':
+								case '-':
+									waitTime*=20;
+									break;
+								case ',':
+									waitTime*=10;
+									break;
 							}
 						}
-						
-						letters+=input[i];
 
 						//Make the char based on charElement
 						var thisChar=charElement.cloneNode(false);
