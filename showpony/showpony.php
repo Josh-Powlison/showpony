@@ -673,8 +673,6 @@ var fullscreenButton=	S.window.getElementsByClassName('showpony-fullscreen-butto
 var captionsButton=		S.window.getElementsByClassName('showpony-captions-button')[0];
 var captionsButton=		S.window.getElementsByClassName('showpony-captions-button')[0];
 
-document.currentScript.insertAdjacentElement('afterend',S.window);
-
 ///////////////////////////////////////
 ///////////PUBLIC VARIABLES////////////
 ///////////////////////////////////////
@@ -1051,7 +1049,11 @@ cover.className='showpony-cover';
 var pageTurn=document.createElement('div');
 pageTurn.className='showpony-page-turn';
 
-frag([overlayBuffer,progress,overlayText,fullscreenButton,captionsButton],overlay);
+overlay.appendChild(overlayBuffer);
+overlay.appendChild(progress);
+overlay.appendChild(overlayText);
+overlay.appendChild(fullscreenButton);
+overlay.appendChild(captionsButton);
 
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
@@ -1262,15 +1264,6 @@ function scrub(inputPercent=null,loadFile=false){
 	
 	//We don't want to over-update the title, so we stick with when we're not scrubbing.
 	if(info!==document.title && scrubbing===false) document.title=info;
-}
-
-//Use documentFragment to append elements faster
-function frag(inputArray,inputParent){
-	var fragment=document.createDocumentFragment();
-	
-	for(let i=0, len=inputArray.length;i<len;i++) fragment.appendChild(inputArray[i]);
-	
-	inputParent.appendChild(fragment);
 }
 
 function powerTimer(callback,delay){
@@ -2392,249 +2385,246 @@ X		volume
 					continue;
 				}
 				
-				//Check the current character//
-				switch(input[i]){
-					//HTML
-					case '<':
-						//Skip over the opening bracket
+				//If HTML
+				if(input[i]==='<'){
+					//Skip over the opening bracket
+					i++;
+				
+					var values='';
+					
+					//Wait until a closing bracket (or the end of the text)
+					while(input[i]!='>' && i<input.length){
+						values+=input[i];
 						i++;
+					}
 					
-						var values='';
+					//We're closing the element
+					if(values[0]=='/'){
+						values=values.substr(1);
 						
-						//Wait until a closing bracket (or the end of the text)
-						while(input[i]!='>' && i<input.length){
-							values+=input[i];
-							i++;
-						}
-						
-						//We're closing the element
-						if(values[0]=='/'){
-							values=values.substr(1);
-							
-							switch(values){
-								case 'shout':
-								case 'shake':
-								case 'sing':
-								case 'fade':
-									charElement.classList.remove('showpony-char-'+values);
-									break;
-								case 'speed':
-									///TODO: allow nested <speed> tags, so it'll go back to the speed of the parent element
-									//Adjust by the default wait set up for it
-									baseWaitTime=.03;
-									constant=false;
-									break;
-								default:
-									//If the parent doesn't have a parent (it's top-level)
-									if(currentParent.parentElement==null){
-										fragment.appendChild(currentParent);
-										currentParent=fragment;
-									//If a parent element exists, it's the new parent
-									}else{
-										currentParent=currentParent.parentElement;
-									}
-									break;
-							}
-						//We're creating the element
-						}else{
-							values=values.split(' ');
-							
-							switch(values[0]){
-								case 'shout':
-								case 'sing':
-								case 'shake':
-								case 'fade':
-									charElement.classList.add('showpony-char-'+values);
-									break;
-								case 'speed':
-									//Check the attributes
-									for(let i=1;i<values.length;i++){
-										if(values[i]==='constant'){
-											constant=true;
-										//It must be speed if not other
-										}else baseWaitTime*=parseFloat(/[\d\.]+/.exec(values[i])[0]);
-									}
-									break;
-								case 'br':
-									var lineBreak=document.createElement('span');
-									lineBreak.style.whiteSpace='pre-line';
-									lineBreak.innerHTML=' <wbr>';
-									currentParent.appendChild(lineBreak); //wbr fixes missing lines breaks in Firefox
-									currentParent.appendChild(document.createElement('br'));
-									break;
-								case 'wbr':
-								case 'img':
-								case 'embed':
-								case 'hr':
-								case 'input':
-									var newParent=document.createElement(values[0]);
-									
-									//Set attributes, if any were passed
-									for(let ii=1;ii<values.length;ii++){
-										
-										if(values[ii].indexOf('=')>-1){
-											var attValues=values[ii].substr().split('=');
-											
-											//Remove surrounding quotes
-											if(/['"]/.test(attValues[1])){
-												attValues[1]=attValues[1].substr(1,attValues[1].length-2);
-											}
-											
-											newParent.setAttribute(attValues[0],attValues[1]);
-										}else{
-											newParent.setAttribute(attValues[0],'true');
-										}
-									}
-									
-									currentParent.appendChild(newParent);
-									
-									//If an input type, wait until input is set and stuff
-									if(values[0]=='input'){
-										//Update data based on this
-										if(newParent.type==='button' || newParent.type==='submit'){
-											newParent.addEventListener('click',function(event){
-												//This might just be a continue button, so we need to check
-												if(this.dataset.var) S.data[this.dataset.var]=this.dataset.val;
-												
-												if(this.dataset.go) P.progress(P.lines.indexOf(this.dataset.go));
-												else P.progress();
-												
-												//We don't want to run S.input here
-												event.stopPropagation();
-											});
-										}else{
-											//Set data to the defaults of these, in case the user just clicks through
-											if(newParent.dataset.var) S.data[newParent.dataset.var]=newParent.value;
-											
-											newParent.addEventListener('change',function(){
-												S.data[this.dataset.var]=this.value;
-												console.log(this.value);
-											});
-										}
-									}
-									break;
-								default:
-									var newParent=document.createElement(values[0]);
-									
-									//Set attributes, if any were passed
-									for(let ii=1;ii<values.length;ii++){
-										
-										if(values[ii].indexOf('=')>-1){
-											var attValues=values[ii].substr().split('=');
-											
-											//Remove surrounding quotes
-											if(/['"]/.test(attValues[1])){
-												attValues[1]=attValues[1].substr(1,attValues[1].length-2);
-											}
-											
-											newParent.setAttribute(attValues[0],attValues[1]);
-										}else{
-											newParent.setAttribute(attValues[0],'true');
-										}
-									}
-									
-									currentParent.appendChild(newParent);
-									currentParent=newParent;
+						switch(values){
+							case 'shout':
+							case 'shake':
+							case 'sing':
+							case 'fade':
+								charElement.classList.remove('showpony-char-'+values);
 								break;
-							}
-							
-						}
-						
-						//Pass over the closing bracket
-						continue;
-					default:
-						letters+=input[i];
-					
-						//Handle punctuation- at spaces we check, if constant isn't true
-						if(i!==input.length && (input[i]===' ') && !constant){
-							var testLetter=letters.length-2;
-							
-							/*
-								Go back before the following:
-									" ' ~
-								That way sentences can end with those and still have a beat for the punctuation.
-							*/
-							while(/["'~]/.test(letters[testLetter])){
-								testLetter--;
-							}
-							
-							switch(letters[testLetter]){
-								case '.':
-								case '!':
-								case '?':
-								case ':':
-								case ';':
-								case '-':
-									waitTime*=20;
-									break;
-								case ',':
-									waitTime*=10;
-									break;
-							}
-						}
-
-						//Make the char based on charElement
-						var thisChar=charElement.cloneNode(false);
-						
-						let showChar=document.createElement('span')				//Display char (appear, shout, etc), parent to animChar
-						showChar.className='showpony-char';
-						let animChar=document.createElement('span')			//Constant animation character (singing, shaking...)
-						animChar.className='showpony-char-anim';
-						let hideChar=document.createElement('span');	//Hidden char for positioning
-						hideChar.className='showpony-char-placeholder';
-						
-						//Spaces
-						//and Ending! (needs this to wrap lines correctly on Firefox)
-						if(input[i]===' ' || i===l){
-							thisChar.style.whiteSpace='pre-line';
-							hideChar.innerHTML=animChar.innerHTML=' <wbr>';
-							
-							showChar.addEventListener('animationstart',function(event){
-								//If the animation ended on a child, don't continue! (animations are applied to children for text effects)
-								if(this!=event.target) return;
-								
-								//If the element's currently hidden (the animation that ended is for unhiding)
-								if(this.style.visibility!=='visible'){
-									this.style.visibility='visible';
-									//If the letter's below the textbox
-									if(this.parentNode.getBoundingClientRect().bottom>O.el.getBoundingClientRect().bottom){
-										O.el.scrollTop=this.parentNode.offsetTop+this.parentNode.offsetHeight-O.el.offsetHeight;
-									}
-									
-									//If the letter's above the textbox
-									if(this.parentNode.getBoundingClientRect().top<O.el.getBoundingClientRect().top){
-										O.el.scrollTop=this.parentNode.offsetTop;
-									}
-									
+							case 'speed':
+								///TODO: allow nested <speed> tags, so it'll go back to the speed of the parent element
+								//Adjust by the default wait set up for it
+								baseWaitTime=.03;
+								constant=false;
+								break;
+							default:
+								//If the parent doesn't have a parent (it's top-level)
+								if(currentParent.parentElement==null){
+									fragment.appendChild(currentParent);
+									currentParent=fragment;
+								//If a parent element exists, it's the new parent
+								}else{
+									currentParent=currentParent.parentElement;
 								}
-							});
+								break;
 						}
-						else{
-							hideChar.innerHTML=animChar.innerHTML=input[i];
+					//We're creating the element
+					}else{
+						values=values.split(' ');
+						
+						switch(values[0]){
+							case 'shout':
+							case 'sing':
+							case 'shake':
+							case 'fade':
+								charElement.classList.add('showpony-char-'+values);
+								break;
+							case 'speed':
+								//Check the attributes
+								for(let i=1;i<values.length;i++){
+									if(values[i]==='constant'){
+										constant=true;
+									//It must be speed if not other
+									}else baseWaitTime*=parseFloat(/[\d\.]+/.exec(values[i])[0]);
+								}
+								break;
+							case 'br':
+								var lineBreak=document.createElement('span');
+								lineBreak.style.whiteSpace='pre-line';
+								lineBreak.innerHTML=' <wbr>';
+								currentParent.appendChild(lineBreak); //wbr fixes missing lines breaks in Firefox
+								currentParent.appendChild(document.createElement('br'));
+								break;
+							case 'wbr':
+							case 'img':
+							case 'embed':
+							case 'hr':
+							case 'input':
+								var newParent=document.createElement(values[0]);
+								
+								//Set attributes, if any were passed
+								for(let ii=1;ii<values.length;ii++){
+									
+									if(values[ii].indexOf('=')>-1){
+										var attValues=values[ii].substr().split('=');
+										
+										//Remove surrounding quotes
+										if(/['"]/.test(attValues[1])){
+											attValues[1]=attValues[1].substr(1,attValues[1].length-2);
+										}
+										
+										newParent.setAttribute(attValues[0],attValues[1]);
+									}else{
+										newParent.setAttribute(attValues[0],'true');
+									}
+								}
+								
+								currentParent.appendChild(newParent);
+								
+								//If an input type, wait until input is set and stuff
+								if(values[0]=='input'){
+									//Update data based on this
+									if(newParent.type==='button' || newParent.type==='submit'){
+										newParent.addEventListener('click',function(event){
+											//This might just be a continue button, so we need to check
+											if(this.dataset.var) S.data[this.dataset.var]=this.dataset.val;
+											
+											if(this.dataset.go) P.progress(P.lines.indexOf(this.dataset.go));
+											else P.progress();
+											
+											//We don't want to run S.input here
+											event.stopPropagation();
+										});
+									}else{
+										//Set data to the defaults of these, in case the user just clicks through
+										if(newParent.dataset.var) S.data[newParent.dataset.var]=newParent.value;
+										
+										newParent.addEventListener('change',function(){
+											S.data[this.dataset.var]=this.value;
+											console.log(this.value);
+										});
+									}
+								}
+								break;
+							default:
+								var newParent=document.createElement(values[0]);
+								
+								//Set attributes, if any were passed
+								for(let ii=1;ii<values.length;ii++){
+									
+									if(values[ii].indexOf('=')>-1){
+										var attValues=values[ii].substr().split('=');
+										
+										//Remove surrounding quotes
+										if(/['"]/.test(attValues[1])){
+											attValues[1]=attValues[1].substr(1,attValues[1].length-2);
+										}
+										
+										newParent.setAttribute(attValues[0],attValues[1]);
+									}else{
+										newParent.setAttribute(attValues[0],'true');
+									}
+								}
+								
+								currentParent.appendChild(newParent);
+								currentParent=newParent;
+							break;
 						}
 						
-						frag([animChar],showChar);
-						frag([showChar,hideChar],thisChar);
+					}
+					
+					//Pass over the closing bracket
+					continue;
+				//If letters
+				}else{
+					letters+=input[i];
+				
+					//Handle punctuation- at spaces we check, if constant isn't true
+					if(i!==input.length && (input[i]===' ') && !constant){
+						var testLetter=letters.length-2;
 						
-						//Set the display time here- but if we're paused, no delay!
-						if(!S.paused && !inputting) showChar.style.animationDelay=totalWait+'s';
-						
-						//Set animation timing for animChar, based on the type of animation
-						if(thisChar.classList.contains('showpony-char-sing')){
-							animChar.style.animationDelay=-(letters.length*.1)+'s';
+						/*
+							Go back before the following:
+								" ' ~
+							That way sentences can end with those and still have a beat for the punctuation.
+						*/
+						while(/["'~]/.test(letters[testLetter])){
+							testLetter--;
 						}
 						
-						if(thisChar.classList.contains('showpony-char-shake')){
-							animChar.style.animationDelay=-(letters.length/3)+'s';
+						switch(letters[testLetter]){
+							case '.':
+							case '!':
+							case '?':
+							case ':':
+							case ';':
+							case '-':
+								waitTime*=20;
+								break;
+							case ',':
+								waitTime*=10;
+								break;
 						}
+					}
+
+					//Make the char based on charElement
+					var thisChar=charElement.cloneNode(false);
+					
+					let showChar=document.createElement('span')				//Display char (appear, shout, etc), parent to animChar
+					showChar.className='showpony-char';
+					let animChar=document.createElement('span')			//Constant animation character (singing, shaking...)
+					animChar.className='showpony-char-anim';
+					let hideChar=document.createElement('span');	//Hidden char for positioning
+					hideChar.className='showpony-char-placeholder';
+					
+					//Spaces
+					//and Ending! (needs this to wrap lines correctly on Firefox)
+					if(input[i]===' ' || i===l){
+						thisChar.style.whiteSpace='pre-line';
+						hideChar.innerHTML=animChar.innerHTML=' <wbr>';
 						
-						//Add the char to the document fragment
-						currentParent.appendChild(thisChar);
-						totalWait+=waitTime;
-						
-						lastLetter=showChar;
-						
-						break;
+						showChar.addEventListener('animationstart',function(event){
+							//If the animation ended on a child, don't continue! (animations are applied to children for text effects)
+							if(this!=event.target) return;
+							
+							//If the element's currently hidden (the animation that ended is for unhiding)
+							if(this.style.visibility!=='visible'){
+								this.style.visibility='visible';
+								//If the letter's below the textbox
+								if(this.parentNode.getBoundingClientRect().bottom>O.el.getBoundingClientRect().bottom){
+									O.el.scrollTop=this.parentNode.offsetTop+this.parentNode.offsetHeight-O.el.offsetHeight;
+								}
+								
+								//If the letter's above the textbox
+								if(this.parentNode.getBoundingClientRect().top<O.el.getBoundingClientRect().top){
+									O.el.scrollTop=this.parentNode.offsetTop;
+								}
+								
+							}
+						});
+					}else{
+						hideChar.innerHTML=animChar.innerHTML=input[i];
+					}
+					
+					//Set the display time here- but if we're paused, no delay!
+					if(!S.paused && !inputting) showChar.style.animationDelay=totalWait+'s';
+					
+					//Set animation timing for animChar, based on the type of animation
+					if(thisChar.classList.contains('showpony-char-sing')){
+						animChar.style.animationDelay=-(letters.length*.1)+'s';
+					}
+					
+					if(thisChar.classList.contains('showpony-char-shake')){
+						animChar.style.animationDelay=-(letters.length/3)+'s';
+					}
+					
+					//Build the char and add it to the parent (which may be a document fragment)
+					showChar.appendChild(animChar);
+					thisChar.appendChild(showChar);
+					thisChar.appendChild(hideChar);
+					currentParent.appendChild(thisChar);
+					
+					totalWait+=waitTime;
+					
+					lastLetter=showChar;
 				}
 			}
 			
@@ -3070,7 +3060,10 @@ if(S.cover){
 }
 
 //And fill it up again!
-frag([styles,content,subtitles,overlay],S.window);
+S.window.appendChild(styles);
+S.window.appendChild(content);
+S.window.appendChild(subtitles);
+S.window.appendChild(overlay);
 
 var json=<?php echo json_encode($response,JSON_NUMERIC_CHECK); ?>;
 S.files=json.files;
@@ -3184,6 +3177,9 @@ if(S.subtitles){
 		captionsButton.appendChild(option);
 	}
 }
+
+//Add the Showpony window to the document
+document.currentScript.insertAdjacentElement('afterend',S.window);
 
 ///////////////////////////////////////
 /////////////////ADMIN/////////////////
