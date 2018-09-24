@@ -2625,7 +2625,7 @@ X		volume
 						}
 						
 						if(thisChar.classList.contains('showpony-char-shake')){
-							animChar.style.animationDelay=-(Math.random()*3)+'s';
+							animChar.style.animationDelay=-(letters.length/3)+'s';
 						}
 						
 						//Add the char to the document fragment
