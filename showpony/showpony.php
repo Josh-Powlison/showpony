@@ -2585,7 +2585,7 @@ X		volume
 						
 						//Spaces
 						//and Ending! (needs this to wrap lines correctly on Firefox)
-						if(input[i]==' ' || i==l){
+						if(input[i]===' ' || i===l){
 							thisChar.style.whiteSpace='pre-line';
 							hideChar.innerHTML=animChar.innerHTML=' <wbr>';
 							
