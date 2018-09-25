@@ -557,6 +557,7 @@ if(!empty($_GET['get'])){
 					,'medium'		=>	explode('/',mime_content_type($language.'/'.$file))[0]
 					,'name'			=>	$file
 					,'path'			=>	$_POST['path'].$language.'/'.$file
+					,'size'			=>	filesize($language.'/'.$file)
 					,'subtitles'	=>	false
 					,'title'		=>	null
 				];
@@ -695,11 +696,9 @@ S.subtitles=<?php
 	echo json_encode($subtitles);
 ?>;
 
-S.scrubLoad=false;
 S.data={};
 S.saveId='<?php echo substr($_GET['title'] ?? $_GET['path'] ?? gethostname(),0,20); ?>';
 S.preloadNext=1;
-S.currentSubtitles=null;
 S.cover={<?php
 	echo 'content:"',$_GET['title'] ?? 'Play','"';
 	#Pass a cover if one is found
@@ -708,9 +707,29 @@ S.cover={<?php
 	}
 ?>};
 
-//-1 before we load
-S.currentFile=-1;
-S.currentTime=-1;
+//See if the time passed has been buffered
+function checkBuffered(time=0){
+	console.log(time,S.buffered);
+	if(S.buffered===true) return true;
+	
+	for(var i=0;i<S.buffered.length;i++){
+		//If before the start time, exit
+		//if(time<S.buffered[i][0]) break;
+		
+		//If the time passed is within the range, it's true
+		if(S.buffered[i][0]<=time && time<=S.buffered[i][1]){
+			console.log('TIME BUFFERED!');
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+//null before we load
+S.currentFile=null;
+S.currentTime=null;
+S.currentSubtitles=null;
 
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
@@ -773,8 +792,23 @@ S.to=function(obj={}){
 		S[currentType].goToTime=obj.time;
 		timeUpdate(obj.time);
 		
+		//We can preload up to this amount
+		var preloadAmount=2097152; //2 MB
+		
+		//Don't allow preloading upcoming files if scrubbing
+		if(scrubbing) preloadAmount=0;
+		
+		console.log('PRELOADING AMOUNT:',preloadAmount);
+		
 		//Preload upcoming files
-		for(let i=obj.file;i<obj.file+S.preloadNext;i++){
+		for(let i=obj.file;i<S.files.length;i++){
+			//Check if we can preload this
+			preloadAmount-=S.files[obj.file].size;
+			
+			//If not, exit
+			if(preloadAmount<=0) break;
+			
+			//Otherwise, preload
 			if(S.files[i].buffered===false){
 				S.files[i].buffered='buffering';
 				
@@ -1095,7 +1129,7 @@ function userScrub(event=null,start=false){
 				scrubbing=true;
 				
 				//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
-				if(S.scrubLoad){
+				if(checkBuffered(S.duration*scrubPercent)){
 					//Add a new state on releasing
 					updateHistory('add');
 				}
@@ -1114,7 +1148,7 @@ function userScrub(event=null,start=false){
 			scrubbing=false;
 		
 			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
-			if(S.scrubLoad===false){
+			if(!checkBuffered(S.duration*scrubPercent)){
 				//Load the file our pointer's on
 				scrub(scrubPercent,true);
 				
@@ -1237,7 +1271,7 @@ function scrub(inputPercent=null,loadFile=false){
 	
 	///LOADING THE SELECTED FILE///
 	if(loadFile){
-		if(S.scrubLoad || scrubbing===false) S.to({time:timeInTotal});
+		if(checkBuffered(timeInTotal) || scrubbing===false) S.to({time:timeInTotal});
 	}
 	
 	//Move the progress bar
