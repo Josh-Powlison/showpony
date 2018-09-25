@@ -698,7 +698,6 @@ S.subtitles=<?php
 
 S.data={};
 S.saveId='<?php echo substr($_GET['title'] ?? $_GET['path'] ?? gethostname(),0,20); ?>';
-S.preloadNext=1;
 S.cover={<?php
 	echo 'content:"',$_GET['title'] ?? 'Play','"';
 	#Pass a cover if one is found
