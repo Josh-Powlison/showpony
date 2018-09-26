@@ -632,22 +632,21 @@ function toCamelCase($input){
 
 ?>'use strict';
 
-var ShowponyFolder='showpony';
-var ShowponyRunPage='';
-
 //Load CSS if not loaded already
-if(!document.querySelector('[href$="showpony.php?call=css"]')) document.head.insertAdjacentHTML('beforeend','<link type="text/css" rel="stylesheet" href="'+ShowponyFolder+'/showpony.php?call=css">');
+if(!document.querySelector('[href$="showpony.php?call=css"]')) document.head.insertAdjacentHTML('beforeend','<link type="text/css" rel="stylesheet" href="showpony/showpony.php?call=css">');
 
 function Showpony(input={}){
 
-//Engine settings
+///////////////////////////////////////
+///////////PUBLIC VARIABLES////////////
+///////////////////////////////////////
+
 const S=this;
 
 S.window=document.createElement('div');
 S.window.className='showpony';
 S.window.tabindex='0';
 S.paused=false;
-
 S.name='<?=toCamelCase($name)?>';
 
 S.window.innerHTML=`
@@ -662,23 +661,6 @@ S.window.innerHTML=`
 		<select class="showpony-captions-button" title="Closed Captions/Subtitles" alt="Closed Captions/Subtitles"></select>
 	</div>
 `;
-
-var styles=				S.window.getElementsByClassName('showpony-style')[0];
-var content=			S.window.getElementsByClassName('showpony-content')[0];
-var subtitles=			S.window.getElementsByClassName('showpony-subtitles')[0];
-var overlay=			S.window.getElementsByClassName('showpony-overlay')[0];
-var overlayBuffer=		S.window.getElementsByClassName('showpony-overlay-buffer')[0];
-var progress=			S.window.getElementsByClassName('showpony-progress')[0];
-var overlayText=		S.window.getElementsByClassName('showpony-overlay-text')[0];
-var fullscreenButton=	S.window.getElementsByClassName('showpony-fullscreen-button')[0];
-var captionsButton=		S.window.getElementsByClassName('showpony-captions-button')[0];
-
-///////////////////////////////////////
-///////////PUBLIC VARIABLES////////////
-///////////////////////////////////////
-
-//Set tabIndex so it's selectable
-S.window.tabIndex=0;
 
 S.buffered=false;
 S.query='<?=$name?>';
@@ -706,24 +688,10 @@ S.cover={<?php
 	}
 ?>};
 
-//See if the time passed has been buffered
-function checkBuffered(time=0){
-	console.log(time,S.buffered);
-	if(S.buffered===true) return true;
-	
-	for(var i=0;i<S.buffered.length;i++){
-		//If before the start time, exit
-		//if(time<S.buffered[i][0]) break;
-		
-		//If the time passed is within the range, it's true
-		if(S.buffered[i][0]<=time && time<=S.buffered[i][1]){
-			console.log('TIME BUFFERED!');
-			return true;
-		}
-	}
-	
-	return false;
-}
+//Hiding the webpage
+S.hidden=false;
+
+S.gamepad=null;
 
 //null before we load
 S.currentFile=null;
@@ -733,8 +701,6 @@ S.currentSubtitles=null;
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
 ///////////////////////////////////////
-
-var objectBuffer, keyframes;
 
 //Go to another file
 S.to=function(obj={}){
@@ -796,8 +762,6 @@ S.to=function(obj={}){
 		
 		//Don't allow preloading upcoming files if scrubbing
 		if(scrubbing) preloadAmount=0;
-		
-		console.log('PRELOADING AMOUNT:',preloadAmount);
 		
 		//Preload upcoming files
 		for(let i=obj.file;i<S.files.length;i++){
@@ -1077,6 +1041,16 @@ S.input=function(){
 ///////////PRIVATE VARIABLES///////////
 ///////////////////////////////////////
 
+var styles=				S.window.getElementsByClassName('showpony-style')[0];
+var content=			S.window.getElementsByClassName('showpony-content')[0];
+var subtitles=			S.window.getElementsByClassName('showpony-subtitles')[0];
+var overlay=			S.window.getElementsByClassName('showpony-overlay')[0];
+var overlayBuffer=		S.window.getElementsByClassName('showpony-overlay-buffer')[0];
+var progress=			S.window.getElementsByClassName('showpony-progress')[0];
+var overlayText=		S.window.getElementsByClassName('showpony-overlay-text')[0];
+var fullscreenButton=	S.window.getElementsByClassName('showpony-fullscreen-button')[0];
+var captionsButton=		S.window.getElementsByClassName('showpony-captions-button')[0];
+
 var scrubbing=false
 	,waitTimer=new powerTimer(function(){},0)
 	,currentType=null
@@ -1087,17 +1061,19 @@ cover.className='showpony-cover';
 var pageTurn=document.createElement('div');
 pageTurn.className='showpony-page-turn';
 
-overlay.appendChild(overlayBuffer);
-overlay.appendChild(progress);
-overlay.appendChild(overlayText);
-overlay.appendChild(fullscreenButton);
-overlay.appendChild(captionsButton);
+var sticky=false;
+
+//Showpony framerate- which is connected not to animations, etc, but to gamepad use and games
+var framerate=60;
+var checkGamepad=null;
+
+var pos=0;
+
+var objectBuffer, keyframes;
 
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
 ///////////////////////////////////////
-
-var pos=0;
 
 //Handles starting, running, and ending scrubbing
 function userScrub(event=null,start=false){
@@ -1191,6 +1167,25 @@ function timeUpdate(time){
 			}
 		)
 	);
+}
+
+//See if the time passed has been buffered
+function checkBuffered(time=0){
+	console.log(time,S.buffered);
+	if(S.buffered===true) return true;
+	
+	for(var i=0;i<S.buffered.length;i++){
+		//If before the start time, exit
+		//if(time<S.buffered[i][0]) break;
+		
+		//If the time passed is within the range, it's true
+		if(S.buffered[i][0]<=time && time<=S.buffered[i][1]){
+			console.log('TIME BUFFERED!');
+			return true;
+		}
+	}
+	
+	return false;
 }
 
 function getTotalBuffered(){
@@ -1302,6 +1297,142 @@ function scrub(inputPercent=null,loadFile=false){
 	
 	//We don't want to over-update the title, so we stick with when we're not scrubbing.
 	if(info!==document.title && scrubbing===false) document.title=info;
+}
+
+function updateHistory(action='add'){
+	//If using queries with time, adjust query on time update
+	var newURL=document.location.href;
+	var newQuery='';
+	
+	//Choose whether to add an ampersand or ?
+	//Choose a ? if one doesn't exist or it exists behind the query
+	newQuery=(newURL.indexOf('?')===-1 || new RegExp('\\?(?='+S.query+'=)').test(newURL)) ? '?' : '&';
+	
+	newQuery+=S.query+'='+(Math.floor(S.currentTime));
+	
+	//Replace either the case or the end
+	newURL=newURL.replace(new RegExp('(((\\?|&)'+S.query+')=?[^&#]+)|(?=#)|$'),newQuery);
+	
+	//console.log('updating',obj.history,location.href,newURL);
+	
+	if(location.href!==newURL){
+		//console.log('We are gonna ',action);
+		switch(action){
+			case 'replace':
+				history.replaceState({},'',newURL);
+				break;
+			case 'revisit':
+				//Nothing needs to be done
+				break;
+			case 'add':
+			default:
+				history.pushState({},'',newURL);
+				break;
+		}
+	}
+}
+
+function gamepadControls(){
+	//Exit if the window isn't in focus
+	if(S.hidden) return;
+	
+	if(S.gamepad!==null){
+		//If shortcuts aren't always enabled, perform checks
+		if(S.shortcuts!=='always'){
+			//Exit if it isn't fullscreen
+			if(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.fullscreenElement){
+				//If needs to be focused
+				if(S.shortcuts!=='fullscreen' && S.window!==document.activeElement) return;
+			}
+		}
+		
+		var gamepad=navigator.getGamepads()[S.gamepad.id];
+		
+		//XBOX Gamepad
+		if(/xinput/i.test(gamepad.id)){
+			gamepadButton(gamepad,9,'menu');		//Start
+			gamepadButton(gamepad,0,'input');		//A
+			gamepadButton(gamepad,14,'dpadL');		//Dpad Left
+			gamepadButton(gamepad,15,'dpadR');		//Dpad Right
+			gamepadButton(gamepad,8,'fullscreen');	//Select
+			gamepadButton(gamepad,6,'home');		//Left trigger
+			gamepadButton(gamepad,7,'end');			//Right trigger
+				
+			gamepadAxis(gamepad,0,'analogL');		//Left analogue
+		//Normal, average gamepad
+		}else{
+			gamepadButton(gamepad,9,'menu');		//Start
+			gamepadButton(gamepad,0,'input');		//A
+			gamepadButton(gamepad,8,'fullscreen');	//Select
+			gamepadButton(gamepad,6,'home');		//Left trigger
+			gamepadButton(gamepad,7,'end');			//Right trigger
+		}
+		
+		//Register inputs
+		if(S.gamepad.menu==2) S.toggle();
+		if(S.gamepad.input==2) S.input();
+		if(S.gamepad.dpadL==2) S.to({file:'-1'});
+		if(S.gamepad.dpadR==2) S.to({file:'+1'});
+		if(S.gamepad.end==2) S.to({time:'end'});
+		if(S.gamepad.home==2) S.to({time:'start'});
+		if(S.gamepad.fullscreen==2) S.fullscreenToggle();
+		
+		//Scrubbing with the analogue stick
+		if(S.gamepad.analogLPress===2){
+			overlay.style.opacity=1; //Show the overlay
+			pos=0;
+		}
+	
+		if(S.gamepad.analogL!==0){
+			
+			scrubbing=S.gamepad.analogL;
+			userScrub(S.gamepad.analogL,true);
+		}
+		
+		if(S.gamepad.analogLPress===-2){
+			overlay.style.opacity=''; //Hide the overlay
+			//If we're not scrubbing, set scrubbing to false and return
+			if(scrubbing!==true){
+				scrubbing=false;
+			}else{
+				userScrub(S.gamepad.analogL);
+				pos=0;
+			}
+		}
+	}
+}
+
+function gamepadAxis(gamepad,number,type){
+	//Active space
+	var min=S.gamepad.axisMin;
+	var max=S.gamepad.axisMax;
+	
+	//Get amount between -1 and 1 based on distance between values
+	if(Math.abs(gamepad.axes[number])>=min){
+		if(gamepad.axes[number]>0) S.gamepad[type]=(gamepad.axes[number]-min)/(max-min);
+		else S.gamepad[type]=((gamepad.axes[number]-(-max))/(-min-(-max)))-1;
+		
+		//Set pressing values right
+		if(S.gamepad[type+'Press']<0) S.gamepad[type+'Press']=2;
+		else S.gamepad[type+'Press']=1;
+	}else{
+		S.gamepad[type]=0;
+		
+		//Set pressing values right
+		if(S.gamepad[type+'Press']>0) S.gamepad[type+'Press']=-2;
+		else S.gamepad[type+'Press']=-1;
+	}
+}
+
+function gamepadButton(gamepad,number,type){
+	if(gamepad.buttons[number].pressed){
+		//Set pressing values right
+		if(S.gamepad[type]<0) S.gamepad[type]=2;
+		else S.gamepad[type]=1;
+	}else{
+		if(S.gamepad[type]>0) S.gamepad[type]=-2;
+		else S.gamepad[type]=-1;
+	}
 }
 
 function powerTimer(callback,delay){
@@ -2812,8 +2943,6 @@ if(S.subtitles){
 
 content.addEventListener('click',()=>{S.input();});
 
-var sticky=false;
-
 //Update the scrub bar when scrolling
 pageTurn.addEventListener('scroll',function(event){
 	event.stopPropagation();
@@ -2896,52 +3025,11 @@ pageTurn.addEventListener('scroll',function(event){
 	}
 });
 
-function updateHistory(action='add'){
-	//If using queries with time, adjust query on time update
-	var newURL=document.location.href;
-	var newQuery='';
-	
-	//Choose whether to add an ampersand or ?
-	//Choose a ? if one doesn't exist or it exists behind the query
-	newQuery=(newURL.indexOf('?')===-1 || new RegExp('\\?(?='+S.query+'=)').test(newURL)) ? '?' : '&';
-	
-	newQuery+=S.query+'='+(Math.floor(S.currentTime));
-	
-	//Replace either the case or the end
-	newURL=newURL.replace(new RegExp('(((\\?|&)'+S.query+')=?[^&#]+)|(?=#)|$'),newQuery);
-	
-	//console.log('updating',obj.history,location.href,newURL);
-	
-	if(location.href!==newURL){
-		//console.log('We are gonna ',action);
-		switch(action){
-			case 'replace':
-				history.replaceState({},'',newURL);
-				break;
-			case 'revisit':
-				//Nothing needs to be done
-				break;
-			case 'add':
-			default:
-				history.pushState({},'',newURL);
-				break;
-		}
-	}
-}
-
-//Hiding the webpage
-S.hidden=false;
-
 document.addEventListener('visibilitychange',function(){
 	S.hidden=document.hidden;
 });
 
 //Gamepad support
-
-//Showpony framerate- which is connected not to animations, etc, but to gamepad use and games
-S.gamepad=null;
-var framerate=60;
-var checkGamepad=null;
 
 window.addEventListener('gamepadconnected',function(e){
 	S.gamepad={
@@ -2968,110 +3056,6 @@ window.addEventListener('gamepaddisconnected',function(e){
 	clearInterval(checkGamepad);
 	checkGamepad=null;
 });
-
-function gamepadControls(){
-	//Exit if the window isn't in focus
-	if(S.hidden) return;
-	
-	if(S.gamepad!==null){
-		//If shortcuts aren't always enabled, perform checks
-		if(S.shortcuts!=='always'){
-			//Exit if it isn't fullscreen
-			if(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.fullscreenElement){
-				//If needs to be focused
-				if(S.shortcuts!=='fullscreen' && S.window!==document.activeElement) return;
-			}
-		}
-		
-		var gamepad=navigator.getGamepads()[S.gamepad.id];
-		
-		//XBOX Gamepad
-		if(/xinput/i.test(gamepad.id)){
-			gamepadButton(gamepad,9,'menu');		//Start
-			gamepadButton(gamepad,0,'input');		//A
-			gamepadButton(gamepad,14,'dpadL');		//Dpad Left
-			gamepadButton(gamepad,15,'dpadR');		//Dpad Right
-			gamepadButton(gamepad,8,'fullscreen');	//Select
-			gamepadButton(gamepad,6,'home');		//Left trigger
-			gamepadButton(gamepad,7,'end');			//Right trigger
-				
-			gamepadAxis(gamepad,0,'analogL');		//Left analogue
-		//Normal, average gamepad
-		}else{
-			gamepadButton(gamepad,9,'menu');		//Start
-			gamepadButton(gamepad,0,'input');		//A
-			gamepadButton(gamepad,8,'fullscreen');	//Select
-			gamepadButton(gamepad,6,'home');		//Left trigger
-			gamepadButton(gamepad,7,'end');			//Right trigger
-		}
-		
-		//Register inputs
-		if(S.gamepad.menu==2) S.toggle();
-		if(S.gamepad.input==2) S.input();
-		if(S.gamepad.dpadL==2) S.to({file:'-1'});
-		if(S.gamepad.dpadR==2) S.to({file:'+1'});
-		if(S.gamepad.end==2) S.to({time:'end'});
-		if(S.gamepad.home==2) S.to({time:'start'});
-		if(S.gamepad.fullscreen==2) S.fullscreenToggle();
-		
-		//Scrubbing with the analogue stick
-		if(S.gamepad.analogLPress===2){
-			overlay.style.opacity=1; //Show the overlay
-			pos=0;
-		}
-	
-		if(S.gamepad.analogL!==0){
-			
-			scrubbing=S.gamepad.analogL;
-			userScrub(S.gamepad.analogL,true);
-		}
-		
-		if(S.gamepad.analogLPress===-2){
-			overlay.style.opacity=''; //Hide the overlay
-			//If we're not scrubbing, set scrubbing to false and return
-			if(scrubbing!==true){
-				scrubbing=false;
-			}else{
-				userScrub(S.gamepad.analogL);
-				pos=0;
-			}
-		}
-	}
-}
-
-function gamepadAxis(gamepad,number,type){
-	//Active space
-	var min=S.gamepad.axisMin;
-	var max=S.gamepad.axisMax;
-	
-	//Get amount between -1 and 1 based on distance between values
-	if(Math.abs(gamepad.axes[number])>=min){
-		if(gamepad.axes[number]>0) S.gamepad[type]=(gamepad.axes[number]-min)/(max-min);
-		else S.gamepad[type]=((gamepad.axes[number]-(-max))/(-min-(-max)))-1;
-		
-		//Set pressing values right
-		if(S.gamepad[type+'Press']<0) S.gamepad[type+'Press']=2;
-		else S.gamepad[type+'Press']=1;
-	}else{
-		S.gamepad[type]=0;
-		
-		//Set pressing values right
-		if(S.gamepad[type+'Press']>0) S.gamepad[type+'Press']=-2;
-		else S.gamepad[type+'Press']=-1;
-	}
-}
-
-function gamepadButton(gamepad,number,type){
-	if(gamepad.buttons[number].pressed){
-		//Set pressing values right
-		if(S.gamepad[type]<0) S.gamepad[type]=2;
-		else S.gamepad[type]=1;
-	}else{
-		if(S.gamepad[type]>0) S.gamepad[type]=-2;
-		else S.gamepad[type]=-1;
-	}
-}
-
 
 ///////////////////////////////////////
 /////////////////START/////////////////
