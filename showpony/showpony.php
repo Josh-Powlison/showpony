@@ -396,7 +396,7 @@ S.pause=function(){
 	
 	S.window.classList.add('showpony-paused');
 	S.paused=true;
-	S[currentType].pause();
+	if(currentType) S[currentType].pause();
 	S.window.dispatchEvent(new CustomEvent('pause'));
 }
 
@@ -407,6 +407,7 @@ S.toggle=function(){
 S.fullscreen=false;
 
 //Toggle fullscreen, basing the functions on the browser's abilities
+//Standards fullscreen
 if(S.window.requestFullscreen){
 	S.fullscreenEnter=function(){
 		if(document.fullscreenElement) return;
@@ -433,6 +434,7 @@ if(S.window.requestFullscreen){
 		else S.fullscreen=false;
 	});
 }
+//Webkit fullscreen
 else if(S.window.webkitRequestFullscreen){
 	S.fullscreenEnter=function(){
 		if(document.webkitFullscreenElement) return;
@@ -458,6 +460,7 @@ else if(S.window.webkitRequestFullscreen){
 		else S.fullscreen=false;
 	});
 }
+//Firefox fullscreen
 else if(S.window.mozRequestFullScreen){
 	S.fullscreenEnter=function(){
 		if(document.mozFullScreenElement) return;
@@ -483,6 +486,7 @@ else if(S.window.mozRequestFullScreen){
 		else S.fullscreen=false;
 	});
 }
+//No fullscreen support fullscreen (like for iOS Safari)
 else{
 	S.fullscreenEnter=function(){
 		if(S.window.classList.contains('showpony-fullscreen-alt')) return;
@@ -565,70 +569,6 @@ var pos=0;
 ///////////PRIVATE FUNCTIONS///////////
 ///////////////////////////////////////
 
-//Handles starting, running, and ending scrubbing
-function userScrub(event=null,start=false){
-	var input;
-	
-	//General events
-	if(isNaN(event)){
-		//Mouse and touch work slightly differently
-		input=event.changedTouches ? 'touch' : 'cursor';
-		pos=input==='touch' ? event.changedTouches[0].clientX : event.clientX;
-	//Relative scrubbing
-	}else{
-		input='joystick';
-		pos=progress.getBoundingClientRect().left+progress.getBoundingClientRect().width/2+event*5;
-	}
-	
-	var scrubPercent=(pos-S.window.getBoundingClientRect().left)/(S.window.getBoundingClientRect().width);
-	if(scrubPercent<0) scrubPercent=0;
-	if(scrubPercent>1) scrubPercent=1;
-	
-	if(start){
-		if(scrubbing===false){
-			if(input==='touch') scrubbing=pos;
-			else return;
-		}
-			
-		//You have to swipe farther than you move the cursor to adjust the position
-		if(scrubbing!==true){
-			if(input==='joystick' || Math.abs(scrubbing-pos)>screen.width/(input==='touch' ? 20 : 100)){ 
-				scrubbing=true;
-				
-				//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
-				if(checkBuffered(S.duration*scrubPercent)){
-					//Add a new state on releasing
-					updateHistory('add');
-				}
-			}
-			else return;
-		}
-		
-		//Don't want the users to accidentally swipe to another page!
-		if(input==='touch') event.preventDefault();
-		
-		scrub(scrubPercent,true);
-	}else{
-		//Drag on the menu to go to any part
-		
-		if(scrubbing===true){
-			scrubbing=false;
-		
-			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
-			if(!checkBuffered(S.duration*scrubPercent)){
-				//Load the file our pointer's on
-				scrub(scrubPercent,true);
-				
-			}
-			
-			return true; //Exit the function
-		}
-		
-		//scrubbing needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
-		scrubbing=false;
-	}
-}
-
 function timeUpdate(time){
 	if(!isNaN(time)){
 		//Don't exceed the file's duration
@@ -663,7 +603,6 @@ function timeUpdate(time){
 
 //See if the time passed has been buffered
 function checkBuffered(time=0){
-	console.log(time,S.buffered);
 	if(S.buffered===true) return true;
 	
 	for(var i=0;i<S.buffered.length;i++){
@@ -672,7 +611,6 @@ function checkBuffered(time=0){
 		
 		//If the time passed is within the range, it's true
 		if(S.buffered[i][0]<=time && time<=S.buffered[i][1]){
-			console.log('TIME BUFFERED!');
 			return true;
 		}
 	}
@@ -799,6 +737,70 @@ function scrub(inputPercent=null,loadFile=false){
 	
 	//We don't want to over-update the title, so we stick with when we're not scrubbing.
 	if(info!==document.title && scrubbing===false) document.title=info;
+}
+
+//Handles starting, running, and ending scrubbing
+function userScrub(event=null,start=false){
+	var input;
+	
+	//General events
+	if(isNaN(event)){
+		//Mouse and touch work slightly differently
+		input=event.changedTouches ? 'touch' : 'cursor';
+		pos=input==='touch' ? event.changedTouches[0].clientX : event.clientX;
+	//Relative scrubbing
+	}else{
+		input='joystick';
+		pos=progress.getBoundingClientRect().left+progress.getBoundingClientRect().width/2+event*5;
+	}
+	
+	var scrubPercent=(pos-S.window.getBoundingClientRect().left)/(S.window.getBoundingClientRect().width);
+	if(scrubPercent<0) scrubPercent=0;
+	if(scrubPercent>1) scrubPercent=1;
+	
+	if(start){
+		if(scrubbing===false){
+			if(input==='touch') scrubbing=pos;
+			else return;
+		}
+			
+		//You have to swipe farther than you move the cursor to adjust the position
+		if(scrubbing!==true){
+			if(input==='joystick' || Math.abs(scrubbing-pos)>screen.width/(input==='touch' ? 20 : 100)){ 
+				scrubbing=true;
+				
+				//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
+				if(checkBuffered(S.duration*scrubPercent)){
+					//Add a new state on releasing
+					updateHistory('add');
+				}
+			}
+			else return;
+		}
+		
+		//Don't want the users to accidentally swipe to another page!
+		if(input==='touch') event.preventDefault();
+		
+		scrub(scrubPercent,true);
+	}else{
+		//Drag on the menu to go to any part
+		
+		if(scrubbing===true){
+			scrubbing=false;
+		
+			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
+			if(!checkBuffered(S.duration*scrubPercent)){
+				//Load the file our pointer's on
+				scrub(scrubPercent,true);
+				
+			}
+			
+			return true; //Exit the function
+		}
+		
+		//scrubbing needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
+		scrubbing=false;
+	}
 }
 
 function updateHistory(action='add'){
@@ -971,7 +973,7 @@ function powerTimer(callback,delay){
 
 <?php
 
-#Get all the relevant files
+#Get all the relevant media files
 foreach(array_keys($media) as $key){
 	require 'call/'.$key.'.js';
 }
@@ -1294,13 +1296,9 @@ window.addEventListener(
 var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i')).exec(window.location.href);
 if(page) start=parseInt(page[0].split('=')[1]);
 
-S.to({time:start,history:'replace'});
-
 //Pause the Showpony
 S.pause();
-
-//Set input to null in hopes that garbage collection will come pick it up
-input=null;
+S.to({time:start,history:'replace'});
 
 //We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
 
