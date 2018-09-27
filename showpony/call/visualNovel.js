@@ -470,7 +470,7 @@ function makeVisualNovel(){
 		const name=input;
 		
 		O.el=document.createElement('audio');
-		O.el.src='<?=$_POST['path']?>resources/audio/'+name+'.mp3';
+		O.el.src='<?=$_GET['path']?>resources/audio/'+name+'.mp3';
 		O.el.preload=true;
 		O.el.dataset.name=input;
 		P.window.appendChild(O.el);
@@ -529,7 +529,7 @@ function makeVisualNovel(){
 		P.window.appendChild(O.el);
 
 		O.content=function(input=name){
-			O.el.style.backgroundImage='url("<?=$_POST['path']?>resources/backgrounds/'+input+'.jpg")';
+			O.el.style.backgroundImage='url("<?=$_GET['path']?>resources/backgrounds/'+input+'.jpg")';
 		}
 		
 		objectAddCommonFunctions(O);
@@ -581,7 +581,7 @@ function makeVisualNovel(){
 					var thisImg=document.createElement('div');
 					thisImg.className='showpony-character-image';
 					thisImg.dataset.image=image;
-					thisImg.style.backgroundImage='url("<?=$_POST['path']?>resources/characters/'+name+'/'+image+'")';
+					thisImg.style.backgroundImage='url("<?=$_GET['path']?>resources/characters/'+name+'/'+image+'")';
 					
 					O.el.children[layer].appendChild(thisImg);
 				}
