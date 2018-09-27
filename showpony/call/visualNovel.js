@@ -20,6 +20,7 @@ function makeVisualNovel(){
 	var currentTextbox='main';
 	var objectBuffer={};
 	var keyframes=null;
+	var waitTimer=new powerTimer(function(){},0)
 	
 	P.play=function(){
 		//Go through objects that were playing- unpause them
@@ -207,7 +208,7 @@ function makeVisualNovel(){
 			.then(response=>{return response.text();})
 			.then(text=>{
 				S.files[P.currentFile].subtitles=text;
-				S[currentType].displaySubtitles();
+				P.displaySubtitles();
 			});
 		}
 	}
@@ -979,6 +980,37 @@ function makeVisualNovel(){
 		S.to({time:'-'+keyframeLength});
 	}
 	
+	function powerTimer(callback,delay){
+		//Thanks to https://stackoverflow.com/questions/3969475/javascript-pause-settimeout
+
+		const pT=this;
+		
+		var timerId,start;
+		pT.remaining=delay;
+
+		pT.pause=function(){
+			window.clearTimeout(timerId);
+			pT.remaining-=new Date()-start;
+		};
+
+		pT.resume=function(){
+			if(pT.remaining<=0) return;
+			
+			start=new Date();
+			window.clearTimeout(timerId);
+			timerId=window.setTimeout(function(){
+				callback();
+				pT.end();
+			},pT.remaining);
+		};
+
+		pT.end=function(){
+			if(pT.remaining>0) window.clearTimeout(timerId);
+			pT.remaining=0;
+		}
+		
+		pT.resume();
+	}
 }
 
 S.visualNovel=new makeVisualNovel();

@@ -83,7 +83,7 @@ function makeImage(){
 			.then(response=>{return response.text();})
 			.then(text=>{
 				S.files[P.currentFile].subtitles=text;
-				S[currentType].displaySubtitles();
+				P.displaySubtitles();
 			});
 		}
 	}

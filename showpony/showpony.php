@@ -188,6 +188,7 @@ S.gamepad=null;
 //null before we load
 S.currentFile=null;
 S.currentTime=null;
+S.currentMedium=null;
 S.currentSubtitles=null;
 
 ///////////////////////////////////////
@@ -233,20 +234,20 @@ S.to=function(obj={}){
 	///LOAD RIGHT MEDIUM AND SOURCE///
 	
 	//If switching types, do some cleanup
-	if(currentType!==S.files[obj.file].medium){
+	if(S.currentMedium!==S.files[obj.file].medium){
 		content.innerHTML='';
 		content.appendChild(S[S.files[obj.file].medium].window);
 	}
 	
-	currentType=S.files[obj.file].medium;
+	S.currentMedium=S.files[obj.file].medium;
 	
 	//Load the file
 	if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
 	
-	S[currentType].src(obj.file,obj.time).then(()=>{
-		S.currentFile=S[currentType].currentFile=obj.file;
-		S[currentType].timeUpdate(obj.time);
-		S[currentType].goToTime=obj.time;
+	S[S.currentMedium].src(obj.file,obj.time).then(()=>{
+		S.currentFile=S[S.currentMedium].currentFile=obj.file;
+		S[S.currentMedium].timeUpdate(obj.time);
+		S[S.currentMedium].goToTime=obj.time;
 		timeUpdate(obj.time);
 		
 		//We can preload up to this amount
@@ -305,7 +306,7 @@ if(S.infiniteScroll || S.files[obj.file].medium==='text'){
 
 //NEED A DIFFERENT SETUP FOR INFINITE SCROLL//
 /*
-/*if(currentType==='text'){
+/*if(S.currentMedium==='text'){
 	fetch(src,{credentials:'include'})
 		.then(response=>{
 			return response.text();
@@ -387,7 +388,7 @@ S.play=function(){
 	
 	S.window.classList.remove('showpony-paused');
 	S.paused=false;
-	S[currentType].play();
+	S[S.currentMedium].play();
 	S.window.dispatchEvent(new CustomEvent('play'));
 }
 
@@ -396,7 +397,7 @@ S.pause=function(){
 	
 	S.window.classList.add('showpony-paused');
 	S.paused=true;
-	if(currentType) S[currentType].pause();
+	if(S.currentMedium) S[S.currentMedium].pause();
 	S.window.dispatchEvent(new CustomEvent('pause'));
 }
 
@@ -530,7 +531,7 @@ else{
 //When the viewer inputs to Showpony (click, space, general action)
 S.input=function(){
 	if(S.paused) S.play();
-	else S[currentType].input();
+	else S[S.currentMedium].input();
 }
 
 ///////////////////////////////////////
@@ -547,10 +548,7 @@ var overlayText=		S.window.getElementsByClassName('showpony-overlay-text')[0];
 var fullscreenButton=	S.window.getElementsByClassName('showpony-fullscreen-button')[0];
 var captionsButton=		S.window.getElementsByClassName('showpony-captions-button')[0];
 
-var scrubbing=false
-	,waitTimer=new powerTimer(function(){},0)
-	,currentType=null
-;
+var scrubbing=false;
 
 var cover=document.createElement('div');
 cover.className='showpony-cover';
@@ -574,14 +572,14 @@ function timeUpdate(time){
 		//Don't exceed the file's duration
 		var duration=S.files[S.currentFile].duration;
 		if(time>duration) time=duration;
-		S[currentType].timeUpdate(time);
+		S[S.currentMedium].timeUpdate(time);
 	}
 	
 	//Get the current time in the midst of the entire Showpony
-	S.currentTime=S[currentType].currentTime
+	S.currentTime=S[S.currentMedium].currentTime
 	for(let i=0;i<S.currentFile;i++) S.currentTime+=S.files[i].duration;
 	
-	S[currentType].displaySubtitles();
+	S[S.currentMedium].displaySubtitles();
 	
 	if(scrubbing!==true) scrub(null,false);
 	
@@ -939,38 +937,6 @@ function gamepadButton(gamepad,number,type){
 	}
 }
 
-function powerTimer(callback,delay){
-	//Thanks to https://stackoverflow.com/questions/3969475/javascript-pause-settimeout
-
-	const pT=this;
-	
-    var timerId,start;
-	pT.remaining=delay;
-
-    pT.pause=function(){
-        window.clearTimeout(timerId);
-        pT.remaining-=new Date()-start;
-    };
-
-    pT.resume=function(){
-		if(pT.remaining<=0) return;
-		
-        start=new Date();
-        window.clearTimeout(timerId);
-        timerId=window.setTimeout(function(){
-			callback();
-			pT.end();
-		},pT.remaining);
-    };
-
-	pT.end=function(){
-		if(pT.remaining>0) window.clearTimeout(timerId);
-		pT.remaining=0;
-	}
-	
-    pT.resume();
-}
-
 <?php
 
 #Get all the relevant media files
@@ -1016,7 +982,7 @@ S.window.addEventListener('wheel',function(event){
 		if(event.deltaY>0) S.to({time:'+10'});
 		if(event.deltaY<0) S.to({time:'-10'});
 	}else{
-		if(currentType==='visualNovel'){
+		if(S.currentMedium==='visualNovel'){
 			if(event.deltaY<0){
 				S.visualNovel.previousKeyframe();
 			}
@@ -1077,7 +1043,7 @@ if(S.subtitles){
 		'change'
 		,function(){
 			S.currentSubtitles=this.options[this.selectedIndex].value==='None' ? null : this.value;
-			S[currentType].displaySubtitles();
+			S[S.currentMedium].displaySubtitles();
 		}
 	);
 }else captionsButton.remove();
