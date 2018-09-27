@@ -9,8 +9,7 @@ $language='en';
 $_GET['path']=$_GET['path'] ?? '';
 
 #Get the query from the paths
-preg_match('/[^\/]+(?=\/?$)/',$_GET['path'],$matches);
-$name=$matches[0] ?? 'story';
+$name=preg_match('/[^\/]+(?=\/?$)/',$_GET['path'],$match) ? $match[0] : 'story';
 
 #You can disable this
 session_start();
@@ -42,8 +41,9 @@ if(!empty($_GET['get'])){
 }else{
 	#Run called functions
 	
-	#This object is sent to the user as JSON
+	#These associative arrays will be sent to the user as JSON
 	$response=[];
+	$files=[];
 	
 	#Go to the story's file directory
 	chdir('../'.$_GET['path']);
@@ -52,7 +52,6 @@ if(!empty($_GET['get'])){
 	ob_start();
 	
 	#Get files and protect others
-	$response['files']=[];
 	$response['success']=true;
 	
 	#Run through the files
@@ -61,7 +60,6 @@ if(!empty($_GET['get'])){
 		if($file[0]==='.' || $file[0]==='~' || is_dir($file)) continue;
 
 		#Ignore files that have dates in their filenames set to later
-		$date;
 		if(preg_match('/\d{4}-\d\d-\d\d(\s\d\d(:|;)\d\d(:|;)\d\d)?/',$file,$date)){ #Get the posting date from the file's name; if there is one:
 			#If the time is previous to now (replacing ; with : for Windows filename compatibility)
 			$date=str_replace(';',':',$date[0]).' UTC';
@@ -76,19 +74,19 @@ if(!empty($_GET['get'])){
 				#Don't add hidden files if we aren't logged in
 				if(empty($_SESSION['showpony_admin'])) continue;
 			}
-		}
+		}else $date=null;
 		
 		#There must be a better way to get some of this info...
 		$fileInfo=[
 			'buffered'		=>	false
-			,'date'			=>	$date ?? null
-			,'duration'		=>	10
+			,'date'			=>	$date
+			,'duration'		=>	preg_match('/[^\s)]+(?=\.[^.]+$)/',$file,$match) ? $match[0] : 10
 			,'medium'		=>	explode('/',mime_content_type($language.'/'.$file))[0]
 			,'name'			=>	$file
 			,'path'			=>	$_GET['path'].$language.'/'.$file
 			,'size'			=>	filesize($language.'/'.$file)
 			,'subtitles'	=>	false
-			,'title'		=>	null
+			,'title'		=>	preg_match('/([^()])+(?=\))/',$file,$match) ? $match[0] : null
 		];
 		
 		#Adjust actions based on extension (special cases)
@@ -104,17 +102,8 @@ if(!empty($_GET['get'])){
 		if(isset($media[$fileInfo['medium']])) $media[$fileInfo['medium']]++;
 		else $media[$fileInfo['medium']]=1;
 		
-		preg_match('/[^\s)]+(?=\.[^.]+$)/',$file,$matches);
-		$fileInfo['duration']=$matches[0] ?? 10;
-		
-		preg_match('/([^()])+(?=\))/',$file,$matches);
-		$fileInfo['title']=$matches[0] ?? null;
-		
-		//preg_match('/\d{4}-\d\d-\d\d(\s\d\d:\d\d:\d\d)?/',$file,$matches);
-		//$fileInfo['date']=$matches[0] ?? null;
-		
 		#Add the file to the array
-		$response['files'][]=$fileInfo;
+		$files[]=$fileInfo;
 	}
 	
 	#Pass any echoed statements or errors to the response object
@@ -146,7 +135,7 @@ const S=this;
 S.window=document.createElement('div');
 S.window.className='showpony';
 S.window.tabindex='0';
-S.files=<?php echo json_encode($response['files'],JSON_NUMERIC_CHECK); ?>;
+S.files=<?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
 S.name='<?=toCamelCase($name)?>';
 S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 S.paused=false;
@@ -780,7 +769,7 @@ function scrub(inputPercent=null,loadFile=false){
 		($media['text'] ?? 0)
 		+($media['image'] ?? 0)
 		#+($media['other'] ?? 0) #Add lines for other media that don't need time tracked
-		===count($response['files'])){
+		===count($files)){
 		?>
 	///INFO TEXT WITH FILE///
 	function infoMake(input){
