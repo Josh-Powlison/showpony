@@ -3,6 +3,8 @@
 
 header('Content-type: application/javascript');
 
+const HIDDENCHAR='x';
+
 // POST VALUES FOR TESTING
 
 $language='en';
@@ -57,24 +59,43 @@ if(!empty($_GET['get'])){
 	// Run through the files
 	foreach(scandir($language) as &$file){
 		// Ignore hidden files and folders
-		if($file[0]==='.' || $file[0]==='~' || is_dir($file)) continue;
-
+		if($file[0]==='.' || is_dir($file)) continue;
+		
+		// If the file was hidden, and is unhid later, we'll set this to true
+		$unhid=false;
+		
 		// Ignore files that have dates in their filenames set to later
 		if(preg_match('/\d{4}-\d\d-\d\d(\s\d\d(:|;)\d\d(:|;)\d\d)?/',$file,$date)){ // Get the posting date from the file's name; if there is one:
 			// If the time is previous to now (replacing ; with : for Windows filename compatibility)
 			$date=str_replace(';',':',$date[0]).' UTC';
 			
+			// Check if the file should be live based on the date passed
 			if(strtotime($date)<=time()){
-				// Should be live; remove any x at the beginning of the filename
-				if($file[0]==='x' && !rename($language.'/'.$file,$language.'/'.($file=substr($file,1)))) $response['success']=false;
+				// $hidden is already false
 				
-				// Remove extra files
-				if($response['success']){
-					
+				// If the file is hidden but shouldn't be
+				if($file[0]===HIDDENCHAR){
+					// Remove HIDDENCHAR at the beginning of the filename
+					if(rename($language.'/'.$file,$language.'/'.($file=substr($file,1)))){
+						$unhid=true;
+					// If removing HIDDENCHAR fails
+					}else{
+						$response['success']=false;
+					}
 				}
 			}else{
-				// Shouldn't be live; make sure an x is at the beginning of the filename
-				if($file[0]!=='x' && !rename($language.'/'.$file,$language.'/'.($file='x'.$file))) $response['success']=false;
+				$hidden=true;
+				
+				// If the file isn't hidden but should be
+				if($file[0]!==HIDDENCHAR){
+					// Add HIDDENCHAR at the beginning of the filename
+					if(rename($language.'/'.$file,$language.'/'.($file=HIDDENCHAR.$file))){
+						
+					// If adding HIDDENCHAR fails
+					}else{
+						$response['success']=false;
+					}
+				}
 				
 				// Don't add hidden files if we aren't logged in
 				if(empty($_SESSION['showpony_admin'])) continue;
@@ -98,9 +119,52 @@ if(!empty($_GET['get'])){
 		switch(pathinfo($language.'/'.$file,PATHINFO_EXTENSION)){
 			case 'vn':
 				$fileInfo['medium']='visualNovel';
+				
 				break;
 			default:
 				break;
+		}
+		
+		// If this file has been unhid, unhide related files
+		if($unhid || true){
+			// Unhide subtitles
+			
+			
+			switch($fileInfo['medium']){
+				// text includes files as absolute paths
+				case 'text':
+					break;
+				// visualNovel includes files on specific lines
+				case 'visualNovel':
+					$handle=fopen($language.'/'.$file,'r');
+				
+					while(($line=fgets($handle))!==false){
+						// Remove line breaks on line
+						$line=trim($line,"\r\n");
+						// Skip comments
+						
+						// Audio
+						// Characters images
+						// Backgrounds
+						// if(preg_match('/[^\/\.\s]+/',$line)){
+						if(preg_match('/^[^\/\.\s]+$/m',$line)){
+							$hiddenName='resources/backgrounds/'.HIDDENCHAR.$line.'.jpg';
+							
+							// If the file is hidden
+							if(file_exists($hiddenName)){
+								// Remove HIDDENCHAR
+								rename($hiddenName,'resources/backgrounds/'.$line.'.jpg');
+							}
+						}
+						
+						// Other
+					}
+						
+					fclose($handle);
+					break;
+				default:
+					break;
+			}
 		}
 		
 		// Add to the items in the medium, or set to 1 if it doesn't exist yet
