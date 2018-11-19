@@ -137,23 +137,81 @@ if(!empty($_GET['get'])){
 				// visualNovel includes files on specific lines
 				case 'visualNovel':
 					$handle=fopen($language.'/'.$file,'r');
+					$comment=false;
 				
 					while(($line=fgets($handle))!==false){
 						// Remove line breaks on line
 						$line=trim($line,"\r\n");
+						
+						// TODO: remove rather than skip comments; allow comments that start midway through a line or end midway through a line; allow // comments and make exceptions for file paths (http://). Or, consider not allowing comments after the beginning of text (in case those characters are actually wanted there
 						// Skip comments
+						if(preg_match('/^\/\//',$line)){
+							continue;
+						}
+						
+						// Skip multiline comments
+						if(preg_match('/^\/\*/',$line)){
+							$comment=true;
+							continue;
+						}
+						
+						if($comment){
+							if(preg_match('/\*\/$/',$line)){
+								$comment=false;
+							}
+							
+							continue;
+						}
+						
+						// TODO: allow # separation for objects
 						
 						// Audio
-						// Characters images
-						// Backgrounds
-						// if(preg_match('/[^\/\.\s]+/',$line)){
-						if(preg_match('/^[^\/\.\s]+$/m',$line)){
-							$hiddenName='resources/backgrounds/'.HIDDENCHAR.$line.'.jpg';
+						if(preg_match('/^([^\s]+)\.(loop|play)$/',$line,$matches)){
+							$filename=$matches[1];
+							
+							$hiddenName='resources/audio/'.HIDDENCHAR.$filename.'.mp3';
 							
 							// If the file is hidden
 							if(file_exists($hiddenName)){
 								// Remove HIDDENCHAR
-								rename($hiddenName,'resources/backgrounds/'.$line.'.jpg');
+								rename($hiddenName,'resources/audio/'.$filename.'.mp3');
+							}
+						}
+						
+						// Characters images
+						else if(preg_match('/^([^\s\.\=]+)\t+(.+)$/',$line,$matches)){
+							// Unhide the folder if it's hidden
+							$folderName='resources/characters/'.$matches[1];
+							
+							$hiddenFolderName='resources/characters/'.HIDDENCHAR.$matches[1];
+							
+							if(file_exists($hiddenFolderName)){
+								rename($hiddenFolderName,$folderName);
+							}
+							
+							// TODO: add support with layered images
+							// Unhide images
+							$filename=$matches[1].'/'.$matches[2].'.png';
+							
+							$hiddenName='resources/characters/'.$matches[1].'/'.HIDDENCHAR.$matches[2].'.png';
+							
+							// If the file is hidden
+							if(file_exists($hiddenName)){
+								// Remove HIDDENCHAR
+								rename($hiddenName,'resources/characters/'.$filename);
+							}
+						}
+						
+						// Backgrounds
+						else if(preg_match('/^[^\.\s]+$/',$line,$matches)){
+							$filename=$matches[0];
+							
+							$hiddenName='resources/backgrounds/'.HIDDENCHAR.$filename.'.jpg';
+							
+							// If the file is hidden
+							if(file_exists($hiddenName)){
+								// Remove HIDDENCHAR
+								rename($hiddenName,'resources/backgrounds/'.$filename.'.jpg');
 							}
 						}
 						
