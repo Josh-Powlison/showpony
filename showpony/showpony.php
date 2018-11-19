@@ -128,7 +128,11 @@ if(!empty($_GET['get'])){
 		// If this file has been unhid, unhide related files
 		if($unhid || true){
 			// Unhide subtitles
+			$subtitleName=$fileInfo['title'].'.vtt';
 			
+			if(file_exists('subtitles/'.$language.'/'.HIDDENCHAR.$subtitleName)){
+				rename('subtitles/'.$language.'/'.HIDDENCHAR.$subtitleName,'subtitles/'.$language.'/'.$subtitleName);
+			}
 			
 			switch($fileInfo['medium']){
 				// text includes files as absolute paths
@@ -163,7 +167,7 @@ if(!empty($_GET['get'])){
 							continue;
 						}
 						
-						// TODO: allow # separation for objects
+						// TODO: allow # separation for objects (# is used for different objects using the same files, like: mook#1, mook#2)
 						
 						// Audio
 						if(preg_match('/^([^\s]+)\.(loop|play)$/',$line,$matches)){
@@ -188,6 +192,8 @@ if(!empty($_GET['get'])){
 							if(file_exists($hiddenFolderName)){
 								rename($hiddenFolderName,$folderName);
 							}
+							
+							// TODO: Unhide hidden subfolders
 							
 							// TODO: add support with layered images
 							// Unhide images
