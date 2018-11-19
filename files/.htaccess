@@ -1,3 +1,7 @@
+# Don't show files and the file structure
+Options -Indexes
+
+# If you try to access files that start with x, you'll get a Forbidden (403) message
 RewriteEngine On
 RewriteCond %{THE_REQUEST} /x [NC]
 RewriteRule ^ - [F,L]
