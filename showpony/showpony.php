@@ -4,6 +4,7 @@
 header('Content-type: application/javascript');
 
 const HIDDENCHAR='x';
+const ROOT=__DIR__;
 
 // Unhide a file, including any hidden parent folders
 function unhideFile($name){
@@ -71,6 +72,12 @@ if(!empty($_GET['get'])){
 	
 	// Get files and protect others
 	$response['success']=true;
+	
+	// May be used later for unhiding files
+	$parentDir='';
+	for($i=0;$i<substr_count($_GET['path'],'/');$i++){
+		$parentDir.='../';
+	}
 	
 	// Run through the files
 	foreach(scandir($language) as &$file){
@@ -147,8 +154,46 @@ if(!empty($_GET['get'])){
 			unhideFile('subtitles/'.$language.'/'.$fileInfo['title'].'.vtt');
 			
 			switch($fileInfo['medium']){
-				// text includes files as absolute paths
+				// text includes files as paths
 				case 'text':
+					$handle=fopen($language.'/'.$file,'r');
+					$comment=false;
+				
+					while(($line=fgets($handle))!==false){
+						// Remove line breaks on line
+						$line=trim($line,"\r\n");
+						
+						// src="file.ext"
+						// url("file.ext")
+						
+						// Go through every regex and look for matches in the line
+						$regexChecks=[
+							'/src="(\/|https?:\/\/[^\/]+\/)?([^"]+)"/'
+							,"/src='(\/|https?:\/\/[^\/]+\/)?([^']+)'/"
+							,'/url\(["\']?(\/|https?:\/\/[^\/]+\/)?([^)]+)["\']\)?/'
+						];
+						
+						foreach($regexChecks as $regex){
+							if(preg_match_all($regex,$line,$matches,PREG_SET_ORDER)){
+								foreach($matches as $match){
+									// Absolute path or from root
+									if($match[1][0]==='/' || preg_match('/https?:\/\//',$match[1])){
+										// This will not work with subdomains or redirects in Apache; it assumes that the current website's root is the server's root
+										
+										// If a file doesn't exist, it simply won't be unhidden (if it was hidden in the first place). The script will continue to run.
+										
+										unhideFile($_SERVER['DOCUMENT_ROOT'].'/'.$match[2]);
+									}
+									// Relative path
+									else{
+										unhideFile($parentDir.$match[2]);
+									}
+								}
+							}
+						}
+					}
+						
+					fclose($handle);
 					break;
 				// visualNovel includes files on specific lines
 				case 'visualNovel':
@@ -201,6 +246,36 @@ if(!empty($_GET['get'])){
 						}
 						
 						// Other
+						else{
+							// src="file.ext"
+							// src="https://example.com/file.ext"
+							// src="/file.ext"
+							// url("file.ext")
+							
+							// Go through every regex and look for matches in the line
+							$regexChecks=[
+								'/src="(\/|https?:\/\/[^\/]+\/)?([^"]+)"/'
+								,"/src='([^']+)'/"
+								,'/url\(["\']?([^)]+)["\']\)?/'
+							];
+							
+							foreach($regexChecks as $regex){
+								if(preg_match_all($regex,$line,$matches,PREG_SET_ORDER)){
+									foreach($matches as $match){
+										// Absolute path or from root
+										if($match[1][0]==='/' || preg_match('/https?:\/\//',$match[1])){
+											// This will not work with subdomains or redirects in Apache; it assumes that the current website's root is the server's root
+											
+											unhideFile($_SERVER['DOCUMENT_ROOT'].'/'.$match[2]);
+										}
+										// Relative path
+										else{
+											unhideFile($parentDir.$match[2]);
+										}
+									}
+								}
+							}
+						}
 					}
 						
 					fclose($handle);
