@@ -5,6 +5,22 @@ header('Content-type: application/javascript');
 
 const HIDDENCHAR='x';
 
+// Unhide a file, including any hidden parent folders
+function unhideFile($name){
+	// Split the file into its path segments, so we can check all folders for HIDDENCHAR
+	$segments=explode('/',$name);
+	$path='';
+	
+	foreach($segments as $check){
+		if(file_exists($path.HIDDENCHAR.$check)){
+			// Remove HIDDENCHAR
+			rename($path.HIDDENCHAR.$check,$path.$check);
+		}
+		
+		$path.=$check.'/';
+	}
+}
+
 // POST VALUES FOR TESTING
 
 $language='en';
@@ -128,11 +144,7 @@ if(!empty($_GET['get'])){
 		// If this file has been unhid, unhide related files
 		if($unhid || true){
 			// Unhide subtitles
-			$subtitleName=$fileInfo['title'].'.vtt';
-			
-			if(file_exists('subtitles/'.$language.'/'.HIDDENCHAR.$subtitleName)){
-				rename('subtitles/'.$language.'/'.HIDDENCHAR.$subtitleName,'subtitles/'.$language.'/'.$subtitleName);
-			}
+			unhideFile('subtitles/'.$language.'/'.$fileInfo['title'].'.vtt');
 			
 			switch($fileInfo['medium']){
 				// text includes files as absolute paths
@@ -171,54 +183,19 @@ if(!empty($_GET['get'])){
 						
 						// Audio
 						if(preg_match('/^([^\s]+)\.(loop|play)$/',$line,$matches)){
-							$filename=$matches[1];
-							
-							$hiddenName='resources/audio/'.HIDDENCHAR.$filename.'.mp3';
-							
-							// If the file is hidden
-							if(file_exists($hiddenName)){
-								// Remove HIDDENCHAR
-								rename($hiddenName,'resources/audio/'.$filename.'.mp3');
-							}
+							unhideFile('resources/audio/'.$matches[1].'.mp3');
 						}
 						
 						// Characters images
 						else if(preg_match('/^([^\s\.\=]+)\t+(.+)$/',$line,$matches)){
-							// Unhide the folder if it's hidden
-							$folderName='resources/characters/'.$matches[1];
-							
-							$hiddenFolderName='resources/characters/'.HIDDENCHAR.$matches[1];
-							
-							if(file_exists($hiddenFolderName)){
-								rename($hiddenFolderName,$folderName);
-							}
-							
-							// TODO: Unhide hidden subfolders
+							unhideFile('resources/characters/'.$matches[1].'/'.$matches[2].'.png');
 							
 							// TODO: add support with layered images
-							// Unhide images
-							$filename=$matches[1].'/'.$matches[2].'.png';
-							
-							$hiddenName='resources/characters/'.$matches[1].'/'.HIDDENCHAR.$matches[2].'.png';
-							
-							// If the file is hidden
-							if(file_exists($hiddenName)){
-								// Remove HIDDENCHAR
-								rename($hiddenName,'resources/characters/'.$filename);
-							}
 						}
 						
 						// Backgrounds
 						else if(preg_match('/^[^\.\s]+$/',$line,$matches)){
-							$filename=$matches[0];
-							
-							$hiddenName='resources/backgrounds/'.HIDDENCHAR.$filename.'.jpg';
-							
-							// If the file is hidden
-							if(file_exists($hiddenName)){
-								// Remove HIDDENCHAR
-								rename($hiddenName,'resources/backgrounds/'.$filename.'.jpg');
-							}
+							unhideFile('resources/backgrounds/'.$matches[0].'.jpg');
 						}
 						
 						// Other
