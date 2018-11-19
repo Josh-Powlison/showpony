@@ -4,7 +4,7 @@ chdir('../examples/'.$_GET['story']);
 
 echo '<a href="admin.php?story=',$_GET['story'],'">',$_GET['story'],'</a>/';
 
-#Add links to each subfolder
+// Add links to each subfolder
 if(isset($_GET['path'])){
 	$path='admin.php?story='.$_GET['story'].'&path=';
 	
@@ -20,7 +20,7 @@ if(isset($_GET['path'])){
 
 echo '<br>';
 
-#Commands
+// Commands
 if(isset($_POST['newFolder'])){
 	mkdir($_POST['newFolder']);
 }
@@ -28,7 +28,7 @@ if(isset($_POST['newFolder'])){
 if(isset($_FILES['files'])){
 	for($i=0;$i<count($_FILES['files']['tmp_name']);$i++){
 		if($_FILES['files']['error'][$i]!==UPLOAD_ERR_OK){
-			#Error messages: http://php.net/manual/en/features.file-upload.errors.php
+			// Error messages: http://php.net/manual/en/features.file-upload.errors.php
 			echo [
 				'Upload okay but we\'re still here somehow!'
 				,'Uploaded file size too big according to php.ini!'
@@ -48,11 +48,11 @@ if(isset($_FILES['files'])){
 			echo 'Failed to move the file!';
 		}
 		
-		#die('We did something! '.__DIR__);
+		// die('We did something! '.__DIR__);
 	}
 }
 
-#Delete directory or file
+// Delete directory or file
 if(isset($_POST['delete'])){
 	if(is_dir($_POST['delete'])) rmdir($_POST['delete']);
 	else unlink($_POST['delete']);
@@ -68,7 +68,7 @@ if(isset($_POST['updateFile'])){
 foreach(scandir('.') as $file){
 	if($file=='.' || $file=='..') continue;
 	
-	#Directory
+	// Directory
 	if(is_dir($file)){
 		echo '<a href="admin.php?story=',$_GET['story'],'&path=',isset($_GET['path']) ? $_GET['path'].'/' : '',$file,'">',$file,'</a>: ';
 		
@@ -77,7 +77,7 @@ foreach(scandir('.') as $file){
 				echo 'Contains folders for subtitles.';
 				break;
 			case 'resources':
-				echo 'For use in multimedia stories, or can store other files.';
+				echo 'For use in stories, like visual novels.';
 				break;
 			case 'audio':
 				echo 'Audio in multimedia stories.';
@@ -89,24 +89,24 @@ foreach(scandir('.') as $file){
 				echo 'Character folders and files in multimedia stories.';
 				break;
 			default:
-				#If we're in a folder, it's not a main story folder
+				// If we're in a folder, it's not a main story folder
 				if(isset($_GET['path'])){
 					if($_GET['path']==='subtitles') echo 'Holds all subtitle files for this language.';
 				}else{
 					echo 'Holds all story files for this language.';
 				}
 				
-				#We don't allow deleting other folders, but we do allow these ones.
+				// We don't allow deleting other folders, but we do allow these ones.
 				?>
 				<form method="POST"><input type="hidden" name="delete" value="<?=$file?>"><button>X</button></form>
 				<?
 				break;
 		}
 	}else{
-	#File
+	// File
 		echo '<a href="',realpath($file),'">',$file,'</a>: ';
 		
-		#If we're not in the resources folder
+		// If we're not in the resources folder
 		if(!preg_match('/^resources/',$_GET['path']  ?? '')){
 			$live=!preg_match('/^x/',$file);
 			$hidden=preg_match('/^~/',$file);
@@ -127,16 +127,16 @@ foreach(scandir('.') as $file){
 		}
 		
 		switch(pathinfo($file,PATHINFO_EXTENSION)){
-			case 'mm';
+			case 'vn';
 				echo 'A multimedia file.';
 				break;
 			case 'vtt';
 				echo 'A subtitles file.';
 				break;
 			default;
-				#If we're in the resources folder
+				// If we're in the resources folder
 				if(preg_match('/^resources/',$_GET['path']  ?? '')){
-					#echo 'A file.';
+					// echo 'A file.';
 				}else{
 					echo 'A story file.';
 				}

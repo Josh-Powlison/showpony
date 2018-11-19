@@ -1,20 +1,20 @@
 <?php
-###PHP 7 required###
+// PHP 7 required
 
 header('Content-type: application/javascript');
 
-#POST VALUES FOR TESTING#
+// POST VALUES FOR TESTING
 
 $language='en';
 $_GET['path']=$_GET['path'] ?? '';
 
-#Get the query from the paths
+// Get the query from the paths
 $name=preg_match('/[^\/]+(?=\/?$)/',$_GET['path'],$match) ? $match[0] : 'story';
 
-#You can disable this
+// You can disable this
 session_start();
 
-#Uncomment the below to show errors
+// Uncomment the below to show errors
 //*
 error_reporting(E_ALL);
 ini_set('display_errors',1);
@@ -22,61 +22,66 @@ ini_set('display_errors',1);
 
 $media=[];
 
-#Get a private file
+// Get a private file
 if(!empty($_GET['get'])){
-	#If we aren't logged in, block the effort
+	// If we aren't logged in, block the effort
 	if(empty($_SESSION['showpony_admin'])) die('You need to be logged in to access private files.');
 	
-	#Go to the correct directory
+	// Go to the correct directory
 	chdir(($_GET['rel-path'] ?: '..').'/');
 	
-	#Get the file path
+	// Get the file path
 	$file=dirname(__FILE__,2).'/'.$_GET['get'];
 
-	#These headers are required to scrub media (yes, you read that right)
+	// These headers are required to scrub media (yes, you read that right)
 	header('Accept-Ranges: bytes');
 	header('Content-Length:'.filesize($file));
 	
 	readfile($file);
 }else{
-	#Run called functions
+	// Run called functions
 	
-	#These associative arrays will be sent to the user as JSON
+	// These associative arrays will be sent to the user as JSON
 	$response=[];
 	$files=[];
 	
-	#Go to the story's file directory
+	// Go to the story's file directory
 	chdir('../'.$_GET['path']);
 	
-	#We'll store all errors and code that's echoed, so we can send that info to the user (in a way that won't break the JSON object).
+	// We'll store all errors and code that's echoed, so we can send that info to the user (in a way that won't break the JSON object).
 	ob_start();
 	
-	#Get files and protect others
+	// Get files and protect others
 	$response['success']=true;
 	
-	#Run through the files
+	// Run through the files
 	foreach(scandir($language) as &$file){
-		#Ignore hidden files and folders
+		// Ignore hidden files and folders
 		if($file[0]==='.' || $file[0]==='~' || is_dir($file)) continue;
 
-		#Ignore files that have dates in their filenames set to later
-		if(preg_match('/\d{4}-\d\d-\d\d(\s\d\d(:|;)\d\d(:|;)\d\d)?/',$file,$date)){ #Get the posting date from the file's name; if there is one:
-			#If the time is previous to now (replacing ; with : for Windows filename compatibility)
+		// Ignore files that have dates in their filenames set to later
+		if(preg_match('/\d{4}-\d\d-\d\d(\s\d\d(:|;)\d\d(:|;)\d\d)?/',$file,$date)){ // Get the posting date from the file's name; if there is one:
+			// If the time is previous to now (replacing ; with : for Windows filename compatibility)
 			$date=str_replace(';',':',$date[0]).' UTC';
 			
 			if(strtotime($date)<=time()){
-				#Should be live; remove any x at the beginning of the filename
+				// Should be live; remove any x at the beginning of the filename
 				if($file[0]==='x' && !rename($language.'/'.$file,$language.'/'.($file=substr($file,1)))) $response['success']=false;
+				
+				// Remove extra files
+				if($response['success']){
+					
+				}
 			}else{
-				#Shouldn't be live; make sure an x is at the beginning of the filename
+				// Shouldn't be live; make sure an x is at the beginning of the filename
 				if($file[0]!=='x' && !rename($language.'/'.$file,$language.'/'.($file='x'.$file))) $response['success']=false;
 				
-				#Don't add hidden files if we aren't logged in
+				// Don't add hidden files if we aren't logged in
 				if(empty($_SESSION['showpony_admin'])) continue;
 			}
 		}else $date=null;
 		
-		#There must be a better way to get some of this info...
+		// There must be a better way to get some of this info...
 		$fileInfo=[
 			'buffered'		=>	false
 			,'date'			=>	$date
@@ -89,7 +94,7 @@ if(!empty($_GET['get'])){
 			,'title'		=>	preg_match('/([^()])+(?=\))/',$file,$match) ? $match[0] : null
 		];
 		
-		#Adjust actions based on extension (special cases)
+		// Adjust actions based on extension (special cases)
 		switch(pathinfo($language.'/'.$file,PATHINFO_EXTENSION)){
 			case 'vn':
 				$fileInfo['medium']='visualNovel';
@@ -98,19 +103,19 @@ if(!empty($_GET['get'])){
 				break;
 		}
 		
-		#Add to the items in the medium, or set to 1 if it doesn't exist yet
+		// Add to the items in the medium, or set to 1 if it doesn't exist yet
 		if(isset($media[$fileInfo['medium']])) $media[$fileInfo['medium']]++;
 		else $media[$fileInfo['medium']]=1;
 		
-		#Add the file to the array
+		// Add the file to the array
 		$files[]=$fileInfo;
 	}
 	
-	#Pass any echoed statements or errors to the response object
+	// Pass any echoed statements or errors to the response object
 	$response['message']=ob_get_clean();
 }
 
-###FUNCTIONS###
+// FUNCTIONS
 function toCamelCase($input){
 	return lcfirst(
 		str_replace('-','',
@@ -140,6 +145,7 @@ S.name='<?=toCamelCase($name)?>';
 S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 S.paused=false;
 S.media=<?=json_encode($media,JSON_NUMERIC_CHECK)?>;
+S.auto=true; //false, or float between 0 and 10
 
 S.window.innerHTML=`
 	<style class="showpony-style" type="text/css"></style>
@@ -158,10 +164,10 @@ S.buffered=false;
 S.query='<?=$name?>';
 S.infiniteScroll=false;
 S.subtitles=<?php
-	#Get subtitles
+	// Get subtitles
 	$subtitles=[];
 	foreach(scandir('subtitles') as $file){
-		#Ignore hidden files and folders
+		// Ignore hidden files and folders
 		if($file[0]==='.' || $file[0]==='~') continue;
 		
 		$subtitles[$file]=$_GET['path'].'subtitles/'.$file.'/';
@@ -174,7 +180,7 @@ S.data={};
 S.saveId='<?php echo substr($_GET['title'] ?? $_GET['path'] ?? gethostname(),0,20); ?>';
 S.cover={<?php
 	echo 'content:"',$_GET['title'] ?? 'Play','"';
-	#Pass a cover if one is found
+	// Pass a cover if one is found
 	if(file_exists('cover.jpg')){
 		echo ',image:"',$_GET['path'],'cover.jpg"';
 	}
@@ -700,11 +706,11 @@ function scrub(inputPercent=null,loadFile=false){
 	progress.style.left=(inputPercent*100)+'%';
 	
 	<?
-	#If all the of the files are media that don't need time tracked, show progress with files, not time
+	// If all the of the files are media that don't need time tracked, show progress with files, not time
 	if(
 		($media['text'] ?? 0)
 		+($media['image'] ?? 0)
-		#+($media['other'] ?? 0) #Add lines for other media that don't need time tracked
+		// +($media['other'] ?? 0) #Add lines for other media that don't need time tracked
 		===count($files)){
 		?>
 	///INFO TEXT WITH FILE///
@@ -718,7 +724,7 @@ function scrub(inputPercent=null,loadFile=false){
 	var info=infoMake(newPart+1)+' | '+infoMake(S.files.length-(newPart+1))
 	;
 	<?
-	#Show progress with time if any of the files' progress is heavily measured by time
+	// Show progress with time if any of the files' progress is heavily measured by time
 	}else{
 	?>
 	///INFO TEXT WITH TIME///
@@ -939,7 +945,7 @@ function gamepadButton(gamepad,number,type){
 
 <?php
 
-#Get all the relevant media files
+// Get all the relevant media files
 foreach(array_keys($media) as $key){
 	require 'call/'.$key.'.js';
 }
@@ -1234,11 +1240,11 @@ S.window.addEventListener('blur',saveBookmark);
 
 //These are the defaults for passObj, but it can be overwritten if we're using a querystring
 var start=<?php
-	#Get Hey Bard start
+	// Get Hey Bard start
 	
 	##########
 	
-	#Start from the last file
+	// Start from the last file
 	echo 'S.files.length-1';
 ?>;
 
