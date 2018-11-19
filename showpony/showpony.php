@@ -179,23 +179,25 @@ if(!empty($_GET['get'])){
 							continue;
 						}
 						
-						// TODO: allow # separation for objects (# is used for different objects using the same files, like: mook#1, mook#2)
-						
-						// Audio
-						if(preg_match('/^([^\s]+)\.(loop|play)$/',$line,$matches)){
-							unhideFile('resources/audio/'.$matches[1].'.mp3');
-						}
+						// Determines the correct file type, and allows ids for multiple objects (mook#1, mook#2)
 						
 						// Characters images
-						else if(preg_match('/^([^\s\.\=]+)\t+(.+)$/',$line,$matches)){
-							unhideFile('resources/characters/'.$matches[1].'/'.$matches[2].'.png');
-							
-							// TODO: add support with layered images
+						if(preg_match('/^([^\s\.\=#]+)(#\S*)?\t+(.+)$/',$line,$matches)){
+							// Split layers so we can grab every file
+							$layers=explode(',',$matches[3]);
+							foreach($layers as $layer){
+								unhideFile('resources/characters/'.$matches[1].'/'.$layer.'.png');
+							}
 						}
 						
 						// Backgrounds
-						else if(preg_match('/^[^\.\s]+$/',$line,$matches)){
-							unhideFile('resources/backgrounds/'.$matches[0].'.jpg');
+						else if(preg_match('/^([^\.\s#]+)(#[^.\s]*)?$/',$line,$matches)){
+							unhideFile('resources/backgrounds/'.$matches[1].'.jpg');
+						}
+						
+						// Audio
+						else if(preg_match('/^([^\s#]+)(#\S*)?\.(loop|play)$/',$line,$matches)){
+							unhideFile('resources/audio/'.$matches[1].'.mp3');
 						}
 						
 						// Other
