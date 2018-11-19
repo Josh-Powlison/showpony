@@ -3,10 +3,10 @@ little-idea.play
 
 forest
 forest.style	bottom:100%;
-susan=	<span style="color:magenta">Susan</span>::
+/*susan=	<span style="color:magenta">Susan</span>::
 ben=	<span style="color:aqua">Ben</span>::
 player=	<span style="color:green">[playerName]</span>::
-playerAndBen=	<span style="color:aqua">Ben</span> & <span style="color:green">[playerName]</span>::
+playerAndBen=	<span style="color:aqua">Ben</span> & <span style="color:green">[playerName]</span>::*/
 
 ben		habit
 ben.style	left:25%;bottom:-100%;
@@ -26,18 +26,19 @@ forest.style	time:1s;bottom:0%;
 ben.style		time:1s;bottom:0%;
 engine.wait		3
 
-		[ben]Aren't the woods beautiful, [playerName]? And the way the light comes through the leaves and rests gently upon your face...
-
-		Ben talks like this when he's avoiding something.
-
+		[ben]Aren't the woods beautiful, [playerName]?~ And the way the light comes through the leaves and rests gently upon your face...
+ben		shock
+		Ben talks like this when he's avoiding something. "This is a 't"e's'"t'!''"""""''''""'"'"'" There should be a pause there.
+		
+ben		frown
 		[ben]...I never want to go back.
-
+ben		angry
 		[ben]I don't want to face what's waiting for us.
-
+ben		sad
 		(...can't blame him.)
-
+ben		scared
 		[ben]I don't want to...>
-
+ben		shy_blush
 		[susan]<shout>There you are!</shout> What are you and [playerName] doing out here, it's <em>your</em> turn to do the dishes!!!!
 
 		[ben]<span style="font-size:.5em;">Crap, we've been caught...</span>

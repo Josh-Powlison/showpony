@@ -1,5 +1,0 @@
-<h1 style="text-align:center;">Welcome to Showpony!</h1>
-
-<p>If you can read this, that means it's working!</p>
-
-<p>Replace the files in the <em>files/en</em> folder with your story's to get it started!</p>
