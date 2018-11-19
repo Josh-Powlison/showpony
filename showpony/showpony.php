@@ -164,29 +164,31 @@ if(!empty($_GET['get'])){
 						$line=trim($line,"\r\n");
 						
 						// src="file.ext"
+						// href="file.ext"
 						// url("file.ext")
 						
 						// Go through every regex and look for matches in the line
 						$regexChecks=[
-							'/src="(\/|https?:\/\/[^\/]+\/)?([^"]+)"/'
-							,"/src='(\/|https?:\/\/[^\/]+\/)?([^']+)'/"
-							,'/url\(["\']?(\/|https?:\/\/[^\/]+\/)?([^)]+)["\']\)?/'
+							'/(src|href)="(\/|https?:\/\/[^\/]+\/)?([^"]+)"/i'
+							,"/(src|href)='(\/|https?:\/\/[^\/]+\/)?([^']+)'/i"
+							,'/(url)\(["\']?(\/|https?:\/\/[^\/]+\/)?([^)]+)["\']\)?/i'
 						];
 						
 						foreach($regexChecks as $regex){
 							if(preg_match_all($regex,$line,$matches,PREG_SET_ORDER)){
 								foreach($matches as $match){
+									
 									// Absolute path or from root
-									if($match[1][0]==='/' || preg_match('/https?:\/\//',$match[1])){
+									if($match[2][0]==='/' || preg_match('/https?:\/\//',$match[2])){
 										// This will not work with subdomains or redirects in Apache; it assumes that the current website's root is the server's root
 										
 										// If a file doesn't exist, it simply won't be unhidden (if it was hidden in the first place). The script will continue to run.
 										
-										unhideFile($_SERVER['DOCUMENT_ROOT'].'/'.$match[2]);
+										unhideFile($_SERVER['DOCUMENT_ROOT'].'/'.$match[3]);
 									}
 									// Relative path
 									else{
-										unhideFile($parentDir.$match[2]);
+										unhideFile($parentDir.$match[3]);
 									}
 								}
 							}
@@ -248,29 +250,30 @@ if(!empty($_GET['get'])){
 						// Other
 						else{
 							// src="file.ext"
-							// src="https://example.com/file.ext"
-							// src="/file.ext"
+							// href="file.ext"
 							// url("file.ext")
 							
 							// Go through every regex and look for matches in the line
 							$regexChecks=[
-								'/src="(\/|https?:\/\/[^\/]+\/)?([^"]+)"/'
-								,"/src='([^']+)'/"
-								,'/url\(["\']?([^)]+)["\']\)?/'
+								'/(src|href)="(\/|https?:\/\/[^\/]+\/)?([^"]+)"/i'
+								,"/(src|href)='(\/|https?:\/\/[^\/]+\/)?([^']+)'/i"
+								,'/(url)\(["\']?(\/|https?:\/\/[^\/]+\/)?([^)]+)["\']\)?/i'
 							];
 							
 							foreach($regexChecks as $regex){
 								if(preg_match_all($regex,$line,$matches,PREG_SET_ORDER)){
 									foreach($matches as $match){
 										// Absolute path or from root
-										if($match[1][0]==='/' || preg_match('/https?:\/\//',$match[1])){
+										if($match[2][0]==='/' || preg_match('/https?:\/\//',$match[2])){
 											// This will not work with subdomains or redirects in Apache; it assumes that the current website's root is the server's root
 											
-											unhideFile($_SERVER['DOCUMENT_ROOT'].'/'.$match[2]);
+											// If a file doesn't exist, it simply won't be unhidden (if it was hidden in the first place). The script will continue to run.
+											
+											unhideFile($_SERVER['DOCUMENT_ROOT'].'/'.$match[3]);
 										}
 										// Relative path
 										else{
-											unhideFile($parentDir.$match[2]);
+											unhideFile($parentDir.$match[3]);
 										}
 									}
 								}
