@@ -1,8 +1,104 @@
-///////////////////////////////////////
-/////////////VISUAL NOVEL//////////////
-///////////////////////////////////////
+<?php
 
-function makeVisualNovel(){
+// Get the module name from the file
+$module=basename(__FILE__,'.php');
+
+$checks['ext:vn']=$module;
+
+function visualNovelUnhideChildren($input){
+	// visualNovel includes files on specific lines
+	
+	$handle=fopen($input,'r');
+	$comment=false;
+
+	while(($line=fgets($handle))!==false){
+		// Remove line breaks on line
+		$line=trim($line,"\r\n");
+		
+		// TODO: remove rather than skip comments; allow comments that start midway through a line or end midway through a line; allow // comments and make exceptions for file paths (http://). Or, consider not allowing comments after the beginning of text (in case those characters are actually wanted there
+		// Skip comments
+		if(preg_match('/^\/\//',$line)){
+			continue;
+		}
+		
+		// Skip multiline comments
+		if(preg_match('/^\/\*/',$line)){
+			$comment=true;
+			continue;
+		}
+		
+		if($comment){
+			if(preg_match('/\*\/$/',$line)){
+				$comment=false;
+			}
+			
+			continue;
+		}
+		
+		// Determines the correct file type, and allows ids for multiple objects (mook#1, mook#2)
+		
+		// Characters images
+		if(preg_match('/^([^\s\.\=#]+)(#\S*)?\t+(.+)$/',$line,$matches)){
+			// Split layers so we can grab every file
+			$layers=explode(',',$matches[3]);
+			foreach($layers as $layer){
+				unhideFile('resources/characters/'.$matches[1].'/'.$layer.'.png');
+			}
+		}
+		
+		// Backgrounds
+		else if(preg_match('/^([^\.\s#]+)(#[^.\s]*)?$/',$line,$matches)){
+			unhideFile('resources/backgrounds/'.$matches[1].'.jpg');
+		}
+		
+		// Audio
+		else if(preg_match('/^([^\s#]+)(#\S*)?\.(loop|play)$/',$line,$matches)){
+			unhideFile('resources/audio/'.$matches[1].'.mp3');
+		}
+		
+		// Other
+		else{
+			// src="file.ext"
+			// href="file.ext"
+			// url("file.ext")
+			
+			// Go through every regex and look for matches in the line
+			$regexChecks=[
+				'/(src|href)="(\/|https?:\/\/[^\/]+\/)?([^"]+)"/i'
+				,"/(src|href)='(\/|https?:\/\/[^\/]+\/)?([^']+)'/i"
+				,'/(url)\(["\']?(\/|https?:\/\/[^\/]+\/)?([^)]+)["\']\)?/i'
+			];
+			
+			foreach($regexChecks as $regex){
+				if(preg_match_all($regex,$line,$matches,PREG_SET_ORDER)){
+					foreach($matches as $match){
+						// Absolute path or from root
+						if($match[2][0]==='/' || preg_match('/https?:\/\//',$match[2])){
+							// This will not work with subdomains or redirects in Apache; it assumes that the current website's root is the server's root
+							
+							// If a file doesn't exist, it simply won't be unhidden (if it was hidden in the first place). The script will continue to run.
+							
+							unhideFile($_SERVER['DOCUMENT_ROOT'].'/'.$match[3]);
+						}
+						// Relative path
+						else{
+							unhideFile($parentDir.$match[3]);
+						}
+					}
+				}
+			}
+		}
+	}
+		
+	fclose($handle);
+}
+
+?>
+
+/// TODO: fix general bugs
+/// TODO: condense and optimize (I suspect we can get this down by a large amount)
+
+S.<?php echo $module; ?>=new function(){
 	const P=this;
 	
 	P.currentTime=null;
@@ -104,7 +200,17 @@ function makeVisualNovel(){
 			
 			//Continue if not waiting
 			if(!wait) P.progress();
-			else S.visualNovel.window.appendChild(continueNotice);
+			else{
+				//If automatically progressing, do so
+				///TODO: allow setting a value to progressing time
+				if(S.auto){
+					// P.progress();
+				}
+				//Else, if waiting for user input
+				else{
+					S.visualNovel.window.appendChild(continueNotice);
+				}
+			}
 		}
 	}
 
@@ -408,7 +514,16 @@ function makeVisualNovel(){
 		//If a value was included, wait for the set time
 		if(input) waitTimer=new powerTimer(P.progress,parseFloat(input)*1000);
 		//Otherwise, let the user know to continue it
-		else S.visualNovel.window.appendChild(continueNotice);
+		else{
+			//If we're automatically proceeding
+			if(S.auto){
+				// P.progress();
+			}
+			//If we're waiting for player input
+			else{
+				S.visualNovel.window.appendChild(continueNotice);
+			}
+		}
 		
 		//If we're paused, pause the timer
 		if(S.paused) waitTimer.pause();
@@ -582,7 +697,7 @@ function makeVisualNovel(){
 					var thisImg=document.createElement('div');
 					thisImg.className='showpony-character-image';
 					thisImg.dataset.image=image;
-					thisImg.style.backgroundImage='url("<?=$_GET['path']?>resources/characters/'+name+'/'+image+'")';
+					thisImg.style.backgroundImage='url("<?=$_GET['path']?>resources/characters/'+name.split('#')[0]+'/'+image+'")';
 					
 					O.el.children[layer].appendChild(thisImg);
 				}
@@ -957,7 +1072,13 @@ function makeVisualNovel(){
 					}else{
 						//If we need players to click to continue (and they have no inputs to fill out or anything), notify them:
 						if(!O.el.querySelector('input')){
-							S.visualNovel.window.appendChild(continueNotice);
+							//If we're automatically continuing
+							if(S.auto){
+								// P.progress();
+							//If we're waiting for user input
+							}else{
+								S.visualNovel.window.appendChild(continueNotice);
+							}
 						}
 					}
 				});
@@ -1011,6 +1132,4 @@ function makeVisualNovel(){
 		
 		pT.resume();
 	}
-}
-
-S.visualNovel=new makeVisualNovel();
+}();

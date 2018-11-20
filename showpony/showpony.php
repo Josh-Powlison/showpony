@@ -1,6 +1,6 @@
 <?php
-// PHP 7 required
 
+// PHP 7 required
 header('Content-type: application/javascript');
 
 const HIDDENCHAR='x';
@@ -22,6 +22,14 @@ function unhideFile($name){
 	}
 }
 
+function toCamelCase($input){
+	return lcfirst(
+		str_replace('-','',
+			ucwords($input,'-')
+		)
+	);
+}
+
 // POST VALUES FOR TESTING
 
 $language='en';
@@ -38,6 +46,29 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors',1);
 //*/
+
+// Used to determine the medium of a file
+$checks=['default'=>null];
+
+?>'use strict';
+
+//Load CSS if not loaded already
+if(!document.querySelector('[href$="showpony/styles.css"]')) document.head.insertAdjacentHTML('beforeend','<link type="text/css" rel="stylesheet" href="showpony/styles.css">');
+
+var <?php echo toCamelCase($name); ?>=new function(){
+
+const S=this;
+
+///////////////////////////////////////
+////////////////MODULES////////////////
+///////////////////////////////////////
+
+<?
+
+// For now, loads all modules
+foreach(glob('modules/*.php') as $filename){
+	include $filename;
+}
 
 $media=[];
 
@@ -130,7 +161,8 @@ if(!empty($_GET['get'])){
 			'buffered'		=>	false
 			,'date'			=>	$date
 			,'duration'		=>	preg_match('/[^\s)]+(?=\.[^.]+$)/',$file,$match) ? $match[0] : 10
-			,'medium'		=>	explode('/',mime_content_type($language.'/'.$file))[0]
+			,'extension'	=>	pathinfo($language.'/'.$file,PATHINFO_EXTENSION)
+			,'mimeType'		=>	mime_content_type($language.'/'.$file)
 			,'name'			=>	$file
 			,'path'			=>	$_GET['path'].$language.'/'.$file
 			,'size'			=>	filesize($language.'/'.$file)
@@ -138,154 +170,23 @@ if(!empty($_GET['get'])){
 			,'title'		=>	preg_match('/([^()])+(?=\))/',$file,$match) ? $match[0] : null
 		];
 		
-		// Adjust actions based on extension (special cases)
-		switch(pathinfo($language.'/'.$file,PATHINFO_EXTENSION)){
-			case 'vn':
-				$fileInfo['medium']='visualNovel';
-				
-				break;
-			default:
-				break;
-		}
+		// Get the medium based on checks
+		$fileInfo['medium']=$checks['ext:'.$fileInfo['extension']]
+			?? $checks['mime:'.explode('/',$fileInfo['mimeType'])[0]]
+			?? $checks['default']
+		;
+		
+		// If the medium isn't supported, skip over it
+		if($fileInfo['medium']===null) continue;
 		
 		// If this file has been unhid, unhide related files
-		if($unhid || true){
+		if($unhid){
 			// Unhide subtitles
 			unhideFile('subtitles/'.$language.'/'.$fileInfo['title'].'.vtt');
 			
-			switch($fileInfo['medium']){
-				// text includes files as paths
-				case 'text':
-					$handle=fopen($language.'/'.$file,'r');
-					$comment=false;
-				
-					while(($line=fgets($handle))!==false){
-						// Remove line breaks on line
-						$line=trim($line,"\r\n");
-						
-						// src="file.ext"
-						// href="file.ext"
-						// url("file.ext")
-						
-						// Go through every regex and look for matches in the line
-						$regexChecks=[
-							'/(src|href)="(\/|https?:\/\/[^\/]+\/)?([^"]+)"/i'
-							,"/(src|href)='(\/|https?:\/\/[^\/]+\/)?([^']+)'/i"
-							,'/(url)\(["\']?(\/|https?:\/\/[^\/]+\/)?([^)]+)["\']\)?/i'
-						];
-						
-						foreach($regexChecks as $regex){
-							if(preg_match_all($regex,$line,$matches,PREG_SET_ORDER)){
-								foreach($matches as $match){
-									
-									// Absolute path or from root
-									if($match[2][0]==='/' || preg_match('/https?:\/\//',$match[2])){
-										// This will not work with subdomains or redirects in Apache; it assumes that the current website's root is the server's root
-										
-										// If a file doesn't exist, it simply won't be unhidden (if it was hidden in the first place). The script will continue to run.
-										
-										unhideFile($_SERVER['DOCUMENT_ROOT'].'/'.$match[3]);
-									}
-									// Relative path
-									else{
-										unhideFile($parentDir.$match[3]);
-									}
-								}
-							}
-						}
-					}
-						
-					fclose($handle);
-					break;
-				// visualNovel includes files on specific lines
-				case 'visualNovel':
-					$handle=fopen($language.'/'.$file,'r');
-					$comment=false;
-				
-					while(($line=fgets($handle))!==false){
-						// Remove line breaks on line
-						$line=trim($line,"\r\n");
-						
-						// TODO: remove rather than skip comments; allow comments that start midway through a line or end midway through a line; allow // comments and make exceptions for file paths (http://). Or, consider not allowing comments after the beginning of text (in case those characters are actually wanted there
-						// Skip comments
-						if(preg_match('/^\/\//',$line)){
-							continue;
-						}
-						
-						// Skip multiline comments
-						if(preg_match('/^\/\*/',$line)){
-							$comment=true;
-							continue;
-						}
-						
-						if($comment){
-							if(preg_match('/\*\/$/',$line)){
-								$comment=false;
-							}
-							
-							continue;
-						}
-						
-						// Determines the correct file type, and allows ids for multiple objects (mook#1, mook#2)
-						
-						// Characters images
-						if(preg_match('/^([^\s\.\=#]+)(#\S*)?\t+(.+)$/',$line,$matches)){
-							// Split layers so we can grab every file
-							$layers=explode(',',$matches[3]);
-							foreach($layers as $layer){
-								unhideFile('resources/characters/'.$matches[1].'/'.$layer.'.png');
-							}
-						}
-						
-						// Backgrounds
-						else if(preg_match('/^([^\.\s#]+)(#[^.\s]*)?$/',$line,$matches)){
-							unhideFile('resources/backgrounds/'.$matches[1].'.jpg');
-						}
-						
-						// Audio
-						else if(preg_match('/^([^\s#]+)(#\S*)?\.(loop|play)$/',$line,$matches)){
-							unhideFile('resources/audio/'.$matches[1].'.mp3');
-						}
-						
-						// Other
-						else{
-							// src="file.ext"
-							// href="file.ext"
-							// url("file.ext")
-							
-							// Go through every regex and look for matches in the line
-							$regexChecks=[
-								'/(src|href)="(\/|https?:\/\/[^\/]+\/)?([^"]+)"/i'
-								,"/(src|href)='(\/|https?:\/\/[^\/]+\/)?([^']+)'/i"
-								,'/(url)\(["\']?(\/|https?:\/\/[^\/]+\/)?([^)]+)["\']\)?/i'
-							];
-							
-							foreach($regexChecks as $regex){
-								if(preg_match_all($regex,$line,$matches,PREG_SET_ORDER)){
-									foreach($matches as $match){
-										// Absolute path or from root
-										if($match[2][0]==='/' || preg_match('/https?:\/\//',$match[2])){
-											// This will not work with subdomains or redirects in Apache; it assumes that the current website's root is the server's root
-											
-											// If a file doesn't exist, it simply won't be unhidden (if it was hidden in the first place). The script will continue to run.
-											
-											unhideFile($_SERVER['DOCUMENT_ROOT'].'/'.$match[3]);
-										}
-										// Relative path
-										else{
-											unhideFile($parentDir.$match[3]);
-										}
-									}
-								}
-							}
-						}
-					}
-						
-					fclose($handle);
-					break;
-				default:
-					break;
-			}
+			// Unhide children files
+			$functionName=$fileInfo['medium'].'UnhideChildren';
+			$functionName($language.'/'.$file,'r');
 		}
 		
 		// Add to the items in the medium, or set to 1 if it doesn't exist yet
@@ -300,27 +201,11 @@ if(!empty($_GET['get'])){
 	$response['message']=ob_get_clean();
 }
 
-// FUNCTIONS
-function toCamelCase($input){
-	return lcfirst(
-		str_replace('-','',
-			ucwords($input,'-')
-		)
-	);
-}
-
-?>'use strict';
-
-//Load CSS if not loaded already
-if(!document.querySelector('[href$="showpony/call/styles.css"]')) document.head.insertAdjacentHTML('beforeend','<link type="text/css" rel="stylesheet" href="showpony/call/styles.css">');
-
-function Showpony(input={}){
+?>
 
 ///////////////////////////////////////
 ///////////PUBLIC VARIABLES////////////
 ///////////////////////////////////////
-
-const S=this;
 
 S.window=document.createElement('div');
 S.window.className='showpony';
@@ -1128,15 +1013,6 @@ function gamepadButton(gamepad,number,type){
 	}
 }
 
-<?php
-
-// Get all the relevant media files
-foreach(array_keys($media) as $key){
-	require 'call/'.$key.'.js';
-}
-
-?>
-
 ///////////////////////////////////////
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
@@ -1495,8 +1371,6 @@ document.currentScript.insertAdjacentElement('afterend',S.window);
 
 /////With new admin panel, we just reload the entire Showpony- this avoids risk of any bugs with AJAX vs reality and the like
 
-}
-
-var <?=toCamelCase($name)?>=new Showpony();
+}();
 
 <?php echo '/*JS generated by PHP*/'; ?>

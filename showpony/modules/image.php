@@ -1,66 +1,75 @@
-///////////////////////////////////////
-/////////////////IMAGE/////////////////
-///////////////////////////////////////
+<?php
 
-function makeImage(){
-	const P=this;
+// Get the module name from the file
+$module=basename(__FILE__,'.php');
+
+$checks['mime:image']=$module;
+
+function imageUnhideChildren($input){
+	// No children
+}
+
+?>
+
+S.<?php echo $module; ?>=new function(){
+	const M=this;
 	
-	P.currentTime=null;
-	P.currentFile=null;
+	M.currentTime=null;
+	M.currentFile=null;
 	
-	P.window=document.createElement('img');
-	P.window.className='showpony-block';
+	M.window=document.createElement('img');
+	M.window.className='showpony-block';
 	
-	P.play=function(){
+	M.play=function(){
 		
 	}
 	
-	P.pause=function(){
+	M.pause=function(){
 		
 	}
 	
-	P.input=function(){
+	M.input=function(){
 		S.to({file:'+1'});
 	}
 	
-	P.timeUpdate=function(time=0){
-		P.currentTime=time;
+	M.timeUpdate=function(time=0){
+		M.currentTime=time;
 	}
 	
-	P.src=function(file=0,time=0){
+	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
-			if(P.currentFile!==file) P.window.src=S.files[file].path;
+			if(M.currentFile!==file) M.window.src=S.files[file].path;
 			else content.classList.remove('showpony-loading');
 			
 			resolve();
 		});
 	}
 	
-	P.displaySubtitles=function(){
+	M.displaySubtitles=function(){
 		if(S.currentSubtitles===null){
 			subtitles.innerHTML='';
 			return;
 		}
 		
-		if(S.files[P.currentFile].subtitles){
+		if(S.files[M.currentFile].subtitles){
 			subtitles.innerHTML='';
 			
-			subtitles.width=P.window.naturalWidth;
-			subtitles.height=P.window.naturalHeight;
+			subtitles.width=M.window.naturalWidth;
+			subtitles.height=M.window.naturalHeight;
 			
 			var height=content.getBoundingClientRect().height;
 			var width=content.getBoundingClientRect().width;
-			var shrinkPercent=height/P.window.naturalHeight;
+			var shrinkPercent=height/M.window.naturalHeight;
 			
-			var newHeight=P.window.naturalHeight*shrinkPercent;
-			var newWidth=P.window.naturalHeight*shrinkPercent;
+			var newHeight=M.window.naturalHeight*shrinkPercent;
+			var newWidth=M.window.naturalHeight*shrinkPercent;
 
 			subtitles.style.height=newHeight+'px';
 			subtitles.style.width=newWidth+'px';
 			
 			subtitles.style.left=(width-newWidth)/2+'px';
 			
-			var lines=S.files[P.currentFile].subtitles.split(/\s{3,}/g);
+			var lines=S.files[M.currentFile].subtitles.split(/\s{3,}/g);
 			for(let i=0;i<lines.length;i++){
 				var block=document.createElement('p');
 				block.className='showpony-sub';
@@ -79,23 +88,21 @@ function makeImage(){
 			}
 		}else{
 			//If don't have the file
-			fetch(S.subtitles[S.currentSubtitles]+S.files[P.currentFile].title+'.vtt')
+			fetch(S.subtitles[S.currentSubtitles]+S.files[M.currentFile].title+'.vtt')
 			.then(response=>{return response.text();})
 			.then(text=>{
-				S.files[P.currentFile].subtitles=text;
-				P.displaySubtitles();
+				S.files[M.currentFile].subtitles=text;
+				M.displaySubtitles();
 			});
 		}
 	}
 	
 	///BUFFERING///
-	P.window.addEventListener('load',function(){
+	M.window.addEventListener('load',function(){
 		content.classList.remove('showpony-loading');
-		S.files[P.currentFile].buffered=true;
+		S.files[M.currentFile].buffered=true;
 		getTotalBuffered();
 		
 		if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
 	});
-};
-
-S.image=new makeImage();
+}();

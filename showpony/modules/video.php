@@ -1,14 +1,20 @@
-///////////////////////////////////////
-/////////////////AUDIO/////////////////
-///////////////////////////////////////
+<?php
 
-function makeAudio(){
+$checks['mime:video']=basename(__FILE__,'.php');
+
+function unhideVideoChildren(){
+	// Video doesn't have children
+}
+
+?>
+
+function makeVideo(){
 	const P=this;
 	
 	P.currentTime=null;
 	P.currentFile=null;
 	
-	P.window=document.createElement('audio');
+	P.window=document.createElement('video');
 	P.window.className='showpony-block';
 	
 	P.play=function(){
@@ -142,7 +148,7 @@ function makeAudio(){
 		getTotalBuffered();
 	});
 	
-	//When we finish playing an audio file
+	//When we finish playing a video or audio file
 	P.window.addEventListener('ended',function(){
 		//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
 		if(!S.paused) S.to({file:'+1'});
@@ -158,4 +164,4 @@ function makeAudio(){
 	});
 };
 
-S.audio=new makeAudio();
+S.video=new makeVideo();
