@@ -115,11 +115,14 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 	var keyframes=null;
 	var waitTimer=new powerTimer(function(){},0)
 	
+	//The elements in the vn
+	var objects={};
+	
 	M.play=function(){
 		//Go through objects that were playing- unpause them
-		for(var key in S.objects){
-			if(S.objects[key].wasPlaying){
-				S.objects[key].play();
+		for(var key in objects){
+			if(objects[key].wasPlaying){
+				objects[key].play();
 			}
 		}
 		
@@ -129,10 +132,10 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 	
 	M.pause=function(){
 		//Go through objects that can be played- pause them, and track that
-		for(var key in S.objects){
+		for(var key in objects){
 			//If it can play, and it is playing
-			if(typeof(S.objects[key].wasPlaying)!=='undefined'){
-				S.objects[key].pause();
+			if(typeof(objects[key].wasPlaying)!=='undefined'){
+				objects[key].pause();
 			}
 		}
 		
@@ -145,7 +148,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 		if(waitTimer.remaining>0){
 			//Run all animations, end all transitions
 			content.classList.add('showpony-loading');
-			S.visualNovel.window.offsetHeight; //Trigger reflow to flush CSS changes
+			M.window.offsetHeight; //Trigger reflow to flush CSS changes
 			content.classList.remove('showpony-loading');
 			
 			waitTimer.end();
@@ -155,33 +158,33 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 		continueNotice.remove();
 		
 		//End object animations on going to the next frame
-		for(var key in S.objects){
-			if(S.objects[key].tagName) S.objects[key].dispatchEvent(new Event('animationend'));
+		for(var key in objects){
+			if(objects[key].tagName) objects[key].dispatchEvent(new Event('animationend'));
 			else{
-				console.log(S.objects[key]);
-				S.objects[key].el.dispatchEvent(new Event('animationend'));
+				console.log(objects[key]);
+				objects[key].el.dispatchEvent(new Event('animationend'));
 			}
 		}
 		
 		var choices=false;
 		
 		//If the player is making choices right now
-		if(S.objects[currentTextbox] && S.objects[currentTextbox].el.querySelector('input')) choices=true;
+		if(objects[currentTextbox] && objects[currentTextbox].el.querySelector('input')) choices=true;
 		
 		//If all letters are displayed
-		if(!S.objects[currentTextbox] || S.objects[currentTextbox].el.children.length===0 || S.objects[currentTextbox].el.lastChild.firstChild.style.visibility=='visible'){
+		if(!objects[currentTextbox] || objects[currentTextbox].el.children.length===0 || objects[currentTextbox].el.lastChild.firstChild.style.visibility=='visible'){
 			inputting=false;
 			if(!choices) M.progress();
 		}
-		else //If some S.objects have yet to be displayed
+		else //If some objects have yet to be displayed
 		{
 			//Run all animations, end all transitions
 			content.classList.add('showpony-loading');
-			S.visualNovel.window.offsetHeight; //Trigger reflow to flush CSS changes
+			M.window.offsetHeight; //Trigger reflow to flush CSS changes
 			content.classList.remove('showpony-loading'); //Needs to happen before the latter; otherwise, it'll mess up stuff
 			
 			//Display all letters
-			S.visualNovel.window.querySelectorAll('.showpony-char').forEach(function(key){
+			M.window.querySelectorAll('.showpony-char').forEach(function(key){
 				//Skip creating animation, and display the letter
 				key.style.animationDelay=null;
 				var classes=key.className;
@@ -205,7 +208,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 				}
 				//Else, if waiting for user input
 				else{
-					S.visualNovel.window.appendChild(continueNotice);
+					M.window.appendChild(continueNotice);
 				}
 			}
 		}
@@ -219,13 +222,13 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 		return new Promise(function(resolve,reject){
 			/////RESET THINGS//////
 			//Get rid of local styles
-			for(var key in S.objects){
-				if(S.objects[key].tagName){
-					S.objects[key].removeAttribute('style');
+			for(var key in objects){
+				if(objects[key].tagName){
+					objects[key].removeAttribute('style');
 					//Empty out textboxes
-					if(S.objects[key].classList.contains('showpony-textbox')) S.objects[key].innerHTML='';
+					if(objects[key].classList.contains('showpony-textbox')) objects[key].innerHTML='';
 				}
-				else S.objects[key].el.removeAttribute('style');
+				else objects[key].el.removeAttribute('style');
 			};
 			
 			//Visual Novel engine resets
@@ -248,7 +251,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 			
 			//Save buffer to check later
 			objectBuffer={};
-			S.objects={};
+			objects={};
 			M.lines=[];
 			
 			var src=S.files[file].path;
@@ -340,15 +343,15 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 			}
 			
 			//Get rid of unused, uncreated objects
-			for(var key in S.objects){
+			for(var key in objects){
 				//Get rid of the object if it doesn't exist
 				if(!objectBuffer[key]){
-					S.objects[key].remove();
-					delete S.objects[key];
+					objects[key].remove();
+					delete objects[key];
 				}
 			};
 			
-			S.visualNovel.window.offsetHeight; //Trigger reflow to flush CSS changes
+			M.window.offsetHeight; //Trigger reflow to flush CSS changes
 			content.classList.remove('showpony-loading');
 		}
 		
@@ -395,24 +398,24 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 		else object=object[0];
 		
 		//If an object with the name doesn't exist, make it!
-		if(!S.objects[object] && object!=='engine'){
+		if(!objects[object] && object!=='engine'){
 			switch(type){
-				case 'audio': S.objects[object]=new audio(object); break;
-				case 'background': S.objects[object]=new background(object); break;
-				case 'character': S.objects[object]=new character(object); break;
-				case 'textbox': S.objects[object]=new textbox(object); break;
-				case 'name': S.objects[object]=new name(object); break;
+				case 'audio': objects[object]=new audio(object); break;
+				case 'background': objects[object]=new background(object); break;
+				case 'character': objects[object]=new character(object); break;
+				case 'textbox': objects[object]=new textbox(object); break;
+				case 'name': objects[object]=new name(object); break;
 				default: break;
 			}
 		}
 		
 		//If we're buffering, add it to the buffer so it's not deleted later
-		if(runTo) objectBuffer[object]=S.objects[object];
+		if(runTo) objectBuffer[object]=objects[object];
 		
-		var target=S.objects[object];
+		var target=objects[object];
 		
 		//The engine's the target! Gasp!
-		if(/go|end|runEvent|setTextbox|wait/.test(command)) target=P;
+		if(/go|end|runEvent|setTextbox|wait/.test(command)) target=M;
 		
 		if(target[command]) target[command](vals[1]);
 		//Operations need to be functions of the parent
@@ -518,7 +521,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 			}
 			//If we're waiting for player input
 			else{
-				S.visualNovel.window.appendChild(continueNotice);
+				M.window.appendChild(continueNotice);
 			}
 		}
 		
@@ -736,7 +739,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 			
 			//If we're running through, skip displaying text until we get to the right point
 			if(runTo){
-				objectBuffer[currentTextbox]=S.objects[currentTextbox];
+				objectBuffer[currentTextbox]=objects[currentTextbox];
 				M.progress(undefined);
 				return;
 			}
@@ -749,18 +752,18 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 			if(input[0]!=='+'){
 				O.el.innerHTML='';
 				/*
-				if(!S.objects.name) S.visualNovel.window.appendChild(S.objects.name=document.createElement('div'));
+				if(!objects.name) M.window.appendChild(objects.name=document.createElement('div'));
 				
-				S.objects.name.className='showpony-name';
+				objects.name.className='showpony-name';
 				
 				//Split up the text so we can have names automatically written
 				var nameText=input.split('::');
 				if(nameText.length>1){
 					input=nameText[1];
-					S.objects.name.innerHTML=nameText[0];
-					S.objects.name.style.visibility='visible';
+					objects.name.innerHTML=nameText[0];
+					objects.name.style.visibility='visible';
 				}else{
-					S.objects.name.style.visibility='hidden';
+					objects.name.style.visibility='hidden';
 				}*/
 				
 				inputting=false;
@@ -1058,7 +1061,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 				inputting=false;
 			}
 			
-			//if(S.objects[currentTextbox].dataset.async!=true){
+			//if(objects[currentTextbox].dataset.async!=true){
 			
 				lastLetter.addEventListener('animationstart',function(event){
 					if(this!==event.target) return;
@@ -1074,7 +1077,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 								// M.progress();
 							//If we're waiting for user input
 							}else{
-								S.visualNovel.window.appendChild(continueNotice);
+								M.window.appendChild(continueNotice);
 							}
 						}
 					}
@@ -1085,7 +1088,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 			O.el.appendChild(fragment);
 			
 			//Continue if async textbox
-			//if(S.objects[currentTextbox].dataset.async==true) M.progress();
+			//if(objects[currentTextbox].dataset.async==true) M.progress();
 		}
 		objectAddCommonFunctions(O);
 	}
