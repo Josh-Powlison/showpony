@@ -1,9 +1,6 @@
 <?php
 
-// Get the module name from the file
-$module=basename(__FILE__,'.php');
-
-$checks['ext:vn']=$module;
+$fileToModule['ext:vn']='visualNovel';
 
 function visualNovelUnhideChildren($input){
 	// visualNovel includes files on specific lines
@@ -98,15 +95,15 @@ function visualNovelUnhideChildren($input){
 /// TODO: fix general bugs
 /// TODO: condense and optimize (I suspect we can get this down by a large amount)
 
-S.<?php echo $module; ?>=new function(){
-	const P=this;
+S.<?php echo 'visualNovel'; ?>=new function(){
+	const M=this;
 	
-	P.currentTime=null;
-	P.currentFile=null;
-	P.currentLine=null;
+	M.currentTime=null;
+	M.currentFile=null;
+	M.currentLine=null;
 	
-	P.window=document.createElement('div');
-	P.window.className='showpony-visual-novel';
+	M.window=document.createElement('div');
+	M.window.className='showpony-visual-novel';
 	
 	var runTo=false;
 	var continueNotice=document.createElement('div');
@@ -118,7 +115,7 @@ S.<?php echo $module; ?>=new function(){
 	var keyframes=null;
 	var waitTimer=new powerTimer(function(){},0)
 	
-	P.play=function(){
+	M.play=function(){
 		//Go through objects that were playing- unpause them
 		for(var key in S.objects){
 			if(S.objects[key].wasPlaying){
@@ -130,7 +127,7 @@ S.<?php echo $module; ?>=new function(){
 		waitTimer.resume();
 	}
 	
-	P.pause=function(){
+	M.pause=function(){
 		//Go through objects that can be played- pause them, and track that
 		for(var key in S.objects){
 			//If it can play, and it is playing
@@ -143,7 +140,7 @@ S.<?php echo $module; ?>=new function(){
 		waitTimer.pause();
 	}
 	
-	P.input=function(){
+	M.input=function(){
 		//If a wait timer was going, stop it.
 		if(waitTimer.remaining>0){
 			//Run all animations, end all transitions
@@ -174,7 +171,7 @@ S.<?php echo $module; ?>=new function(){
 		//If all letters are displayed
 		if(!S.objects[currentTextbox] || S.objects[currentTextbox].el.children.length===0 || S.objects[currentTextbox].el.lastChild.firstChild.style.visibility=='visible'){
 			inputting=false;
-			if(!choices) P.progress();
+			if(!choices) M.progress();
 		}
 		else //If some S.objects have yet to be displayed
 		{
@@ -199,12 +196,12 @@ S.<?php echo $module; ?>=new function(){
 			inputting=true;
 			
 			//Continue if not waiting
-			if(!wait) P.progress();
+			if(!wait) M.progress();
 			else{
 				//If automatically progressing, do so
 				///TODO: allow setting a value to progressing time
 				if(S.auto){
-					// P.progress();
+					// M.progress();
 				}
 				//Else, if waiting for user input
 				else{
@@ -214,11 +211,11 @@ S.<?php echo $module; ?>=new function(){
 		}
 	}
 
-	P.timeUpdate=function(time=0){
-		P.currentTime=time;
+	M.timeUpdate=function(time=0){
+		M.currentTime=time;
 	}
 	
-	P.src=function(file=0,time=0){
+	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
 			/////RESET THINGS//////
 			//Get rid of local styles
@@ -238,21 +235,21 @@ S.<?php echo $module; ?>=new function(){
 			/////END RESETTIN//////
 			
 			//If this is the current file
-			if(P.currentFile===file){
-				runTo=Math.round(keyframes.length*(time/S.files[P.currentFile].duration));
+			if(M.currentFile===file){
+				runTo=Math.round(keyframes.length*(time/S.files[M.currentFile].duration));
 				if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
 				else runTo=keyframes[runTo];
 				
 				console.log(runTo);
 				
-				P.progress(0);
+				M.progress(0);
 				resolve();
 			}
 			
 			//Save buffer to check later
 			objectBuffer={};
 			S.objects={};
-			P.lines=[];
+			M.lines=[];
 			
 			var src=S.files[file].path;
 			
@@ -265,28 +262,28 @@ S.<?php echo $module; ?>=new function(){
 				text=text.replace(/\/\*[^]*?\*\//g,'');
 				
 				//Get all non-blank lines
-				P.lines=text.match(/.+(?=\S).+/g);
+				M.lines=text.match(/.+(?=\S).+/g);
 				
 				//Get keyframes from the text- beginning, end, (? ->)and waiting points
 				keyframes=[0];
 				
-				for(let i=1;i<P.lines.length;i++){
+				for(let i=1;i<M.lines.length;i++){
 					//If it's a user file spot, add the point immediately after the last keyframe- things let up to this, let it all happen
-					if(P.lines[i]==='engine.wait'){
+					if(M.lines[i]==='engine.wait'){
 						keyframes.push(keyframes[keyframes.length-1]+1);
 						continue;
 					}
 					
 					//Regular text lines (not continuing) can be keyframes
-					if(/^\t+(?!\t*\+)/i.test(P.lines[i])) keyframes.push(i);
+					if(/^\t+(?!\t*\+)/i.test(M.lines[i])) keyframes.push(i);
 				}
 				
-				runTo=Math.round(keyframes.length*(P.currentTime/S.files[file].duration));
+				runTo=Math.round(keyframes.length*(M.currentTime/S.files[file].duration));
 				if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
 				else runTo=keyframes[runTo];
 				
-				P.currentFile=S.currentFile=file;
-				P.progress(0);
+				M.currentFile=S.currentFile=file;
+				M.progress(0);
 				
 				if(S.files[file].buffered!==true){
 					S.files[file].buffered=true;
@@ -300,38 +297,38 @@ S.<?php echo $module; ?>=new function(){
 		});
 	}
 	
-	P.displaySubtitles=function(){
+	M.displaySubtitles=function(){
 		if(S.currentSubtitles===null){
 			subtitles.innerHTML='';
 			return;
 		}
 		
-		if(S.files[P.currentFile].subtitles){
+		if(S.files[M.currentFile].subtitles){
 			///NOTHING YET!
 		}else{
 			//If don't have the file
-			fetch(S.subtitles[S.currentSubtitles]+S.files[P.currentFile].title+'.vtt')
+			fetch(S.subtitles[S.currentSubtitles]+S.files[M.currentFile].title+'.vtt')
 			.then(response=>{return response.text();})
 			.then(text=>{
-				S.files[P.currentFile].subtitles=text;
-				P.displaySubtitles();
+				S.files[M.currentFile].subtitles=text;
+				M.displaySubtitles();
 			});
 		}
 	}
 	
 	//Run visual novel
-	P.progress=function(inputNum=P.currentLine+1){
+	M.progress=function(inputNum=M.currentLine+1){
 		//Go to either the specified line or the next one
-		P.currentLine=inputNum;
+		M.currentLine=inputNum;
 		
 		//Skip comments
-		if(/^\/\//.test(P.lines[P.currentLine])){
-			P.progress();
+		if(/^\/\//.test(M.lines[M.currentLine])){
+			M.progress();
 			return;
 		}
 		
 		//Run through if we're running to a point; if we're there or beyond though, stop running through
-		if(runTo!==false && P.currentLine>=runTo){
+		if(runTo!==false && M.currentLine>=runTo){
 			runTo=false;
 			inputting=false;
 		}
@@ -356,18 +353,18 @@ S.<?php echo $module; ?>=new function(){
 		}
 		
 		//Update the scrubbar if the frame we're on is a keyframe
-		if(runTo===false && keyframes.includes(P.currentLine)){
+		if(runTo===false && keyframes.includes(M.currentLine)){
 			//Set the time of the element
-			timeUpdate((keyframes.indexOf(P.currentLine)/keyframes.length)*S.files[P.currentFile].duration);
+			timeUpdate((keyframes.indexOf(M.currentLine)/keyframes.length)*S.files[M.currentFile].duration);
 		}
 		
 		//If we've ended manually or reached the end, stop running immediately and end it all
-		if(P.currentLine>=P.lines.length){
+		if(M.currentLine>=M.lines.length){
 			S.to({file:'+1'});
 			return;
 		}
 		
-		var vals=P.lines[P.currentLine];
+		var vals=M.lines[M.currentLine];
 		
 		//Replace all variables (including variables inside variables) with the right name
 		var match;
@@ -425,7 +422,7 @@ S.<?php echo $module; ?>=new function(){
 		if(type==='textbox' && command==='content') return;
 		if(type==='engine') return;
 		
-		P.progress();
+		M.progress();
 	}
 	
 	//If a value's a number, return it as one
@@ -434,7 +431,7 @@ S.<?php echo $module; ?>=new function(){
 	}
 	
 	//Data
-	P.operation=function(vals){
+	M.operation=function(vals){
 		
 		var type=/[+=\-<>!]+$/.exec(vals[0]);
 		console.log('RUNNING OPERATION',vals,type);
@@ -468,38 +465,38 @@ S.<?php echo $module; ?>=new function(){
 					,ifParse(vals[1])
 				);
 				
-				P.progress();
+				M.progress();
 				break;
 			//Comparisons
 			default:
 				if(operators[type](
 					ifParse(S.data[name])
 					,ifParse(vals[1])
-				)) P.progress(P.lines.indexOf(vals[2]));
-				else P.progress();
+				)) M.progress(M.lines.indexOf(vals[2]));
+				else M.progress();
 				break;
 		}
 	}
 	
-	P.go=function(input){
-		P.progress(P.lines.indexOf(input));
+	M.go=function(input){
+		M.progress(M.lines.indexOf(input));
 	}
 	
-	P.end=function(){
+	M.end=function(){
 		S.to({file:'+1'});
 	}
 	
-	P.runEvent=function(input){
+	M.runEvent=function(input){
 		S.window.dispatchEvent(new CustomEvent(input));
-		P.progress();
+		M.progress();
 	}
 	
-	P.setTextbox=function(input){
+	M.setTextbox=function(input){
 		currentTextbox=input;
-		P.progress();
+		M.progress();
 	}
 	
-	P.wait=function(input){
+	M.wait=function(input){
 		//If there's a waitTimer, clear it out
 		if(waitTimer.remaining>0){
 			waitTimer.end();
@@ -507,17 +504,17 @@ S.<?php echo $module; ?>=new function(){
 		
 		//Skip waiting if we're running through
 		if(runTo){
-			P.progress();
+			M.progress();
 			return;
 		}
 		
 		//If a value was included, wait for the set time
-		if(input) waitTimer=new powerTimer(P.progress,parseFloat(input)*1000);
+		if(input) waitTimer=new powerTimer(M.progress,parseFloat(input)*1000);
 		//Otherwise, let the user know to continue it
 		else{
 			//If we're automatically proceeding
 			if(S.auto){
-				// P.progress();
+				// M.progress();
 			}
 			//If we're waiting for player input
 			else{
@@ -561,7 +558,7 @@ S.<?php echo $module; ?>=new function(){
 			//Add back in to support multiple objects sharing the same file set
 			
 			//If running to or not requesting animation, add styles without implementing animation
-			if(animationSpeed===null || P.currentLine<runTo){
+			if(animationSpeed===null || M.currentLine<runTo){
 				O.el.style.cssText+=style;
 			}else{
 				localStyle.innerHTML='@keyframes '+cssName+'{100%{'+style+'}}';
@@ -589,7 +586,7 @@ S.<?php echo $module; ?>=new function(){
 		O.el.src='<?=$_GET['path']?>resources/audio/'+name+'.mp3';
 		O.el.preload=true;
 		O.el.dataset.name=input;
-		P.window.appendChild(O.el);
+		M.window.appendChild(O.el);
 		
 		//Checks if was playing outside of pausing the Showpony
 		O.wasPlaying=false;
@@ -642,7 +639,7 @@ S.<?php echo $module; ?>=new function(){
 		O.el.dataset.name=input;
 		const name=input;
 		
-		P.window.appendChild(O.el);
+		M.window.appendChild(O.el);
 
 		O.content=function(input=name){
 			O.el.style.backgroundImage='url("<?=$_GET['path']?>resources/backgrounds/'+input+'.jpg")';
@@ -658,18 +655,18 @@ S.<?php echo $module; ?>=new function(){
 		O.el.dataset.name=input;
 		const name=input;
 		
-		P.window.appendChild(O.el);
+		M.window.appendChild(O.el);
 		
 		/*
 		var lines=input;
 		
 		//Go through the rest of the lines, looking for images to preload
-		for(let i=P.currentLine;i<P.lines.length;i++){
+		for(let i=M.currentLine;i<M.lines.length;i++){
 			
 			//If this character is listed on this line
-			if(P.lines[i].indexOf(object+'\t')===0){
+			if(M.lines[i].indexOf(object+'\t')===0){
 				//Add the image names to the images to load
-				lines.push(P.lines[i].split(/\s{3,}|\t+/)[1]);
+				lines.push(M.lines[i].split(/\s{3,}|\t+/)[1]);
 			}
 		}*/
 		
@@ -729,18 +726,18 @@ S.<?php echo $module; ?>=new function(){
 		O.el.addEventListener('submit',function(event){
 			event.preventDefault();
 		});
-		P.window.appendChild(O.el);
+		M.window.appendChild(O.el);
 		
 		O.content=function(input){
 			//var keepGoing=multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals);
 		
 			//var keepGoing=false;
-			//if(!keepGoing) P.progress();
+			//if(!keepGoing) M.progress();
 			
 			//If we're running through, skip displaying text until we get to the right point
 			if(runTo){
 				objectBuffer[currentTextbox]=S.objects[currentTextbox];
-				P.progress(undefined);
+				M.progress(undefined);
 				return;
 			}
 			
@@ -913,8 +910,8 @@ S.<?php echo $module; ?>=new function(){
 											//This might just be a continue button, so we need to check
 											if(this.dataset.var) S.data[this.dataset.var]=this.dataset.val;
 											
-											if(this.dataset.go) P.progress(P.lines.indexOf(this.dataset.go));
-											else P.progress();
+											if(this.dataset.go) M.progress(M.lines.indexOf(this.dataset.go));
+											else M.progress();
 											
 											//We don't want to run S.input here
 											event.stopPropagation();
@@ -1068,13 +1065,13 @@ S.<?php echo $module; ?>=new function(){
 					
 					//If we aren't waiting to continue, continue
 					if(!wait){
-						P.progress();
+						M.progress();
 					}else{
 						//If we need players to click to continue (and they have no inputs to fill out or anything), notify them:
 						if(!O.el.querySelector('input')){
 							//If we're automatically continuing
 							if(S.auto){
-								// P.progress();
+								// M.progress();
 							//If we're waiting for user input
 							}else{
 								S.visualNovel.window.appendChild(continueNotice);
@@ -1088,12 +1085,12 @@ S.<?php echo $module; ?>=new function(){
 			O.el.appendChild(fragment);
 			
 			//Continue if async textbox
-			//if(S.objects[currentTextbox].dataset.async==true) P.progress();
+			//if(S.objects[currentTextbox].dataset.async==true) M.progress();
 		}
 		objectAddCommonFunctions(O);
 	}
 	
-	P.previousKeyframe=function(){
+	M.previousKeyframe=function(){
 		//Go back a keyframe's length, so we get to the previous keyframe
 		var keyframeLength=S.files[S.currentFile].duration/keyframes.length;
 		

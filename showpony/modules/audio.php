@@ -1,63 +1,63 @@
 <?php
 
-$checks['mime:audio']=basename(__FILE__,'.php');
+$fileToModule['mime:audio']='audio';
 
-function unhideAudioChildren(){
+function audioUnhideChildren(){
 	// Audio doesn't have children
 }
 
 ?>
 
-function makeAudio(){
-	const P=this;
+S.<?php echo 'audio'; ?>=new function(){
+	const M=this;
 	
-	P.currentTime=null;
-	P.currentFile=null;
+	M.currentTime=null;
+	M.currentFile=null;
 	
-	P.window=document.createElement('audio');
-	P.window.className='showpony-block';
+	M.window=document.createElement('audio');
+	M.window.className='showpony-block';
 	
-	P.play=function(){
-		P.window.play();
+	M.play=function(){
+		M.window.play();
 	}
 	
-	P.pause=function(){
-		P.window.pause();
+	M.pause=function(){
+		M.window.pause();
 	}
 	
-	P.input=function(){
+	M.input=function(){
 		S.toggle();
 	}
 	
-	P.timeUpdate=function(time=0){
-		P.currentTime=P.window.currentTime=time;
+	M.timeUpdate=function(time=0){
+		M.currentTime=M.window.currentTime=time;
 	}
 	
-	P.goToTime=0;
+	M.goToTime=0;
 	
-	P.src=function(file=0,time=0){
+	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
 			//Change the file if it'd be a new one
-			if(P.currentFile!==file) P.window.src=S.files[file].path;
+			if(M.currentFile!==file) M.window.src=S.files[file].path;
 			
 			//If we're not paused, play
-			if(!S.paused) P.play();
+			if(!S.paused) M.play();
 			
 			resolve();
 		});
 	}
 	
-	P.displaySubtitles=function(){
+	M.displaySubtitles=function(){
 		if(S.currentSubtitles===null){
 			subtitles.innerHTML='';
 			return;
 		}
 		
-		if(S.files[P.currentFile].subtitles){
+		if(S.files[M.currentFile].subtitles){
 			subtitles.style.cssText=null;
-			var currentTime=P.window.currentTime;
+			var currentTime=M.window.currentTime;
 			
-			var lines=S.files[P.currentFile].subtitles.match(/\b.+/ig);
+			var lines=S.files[M.currentFile].subtitles.match(/\b.+/ig);
 			
 			for(let i=0;i<lines.length;i++){
 				if(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[i])){
@@ -100,42 +100,42 @@ function makeAudio(){
 			}
 		}else{
 			//If don't have the file
-			fetch(S.subtitles[S.currentSubtitles]+S.files[P.currentFile].title+'.vtt')
+			fetch(S.subtitles[S.currentSubtitles]+S.files[M.currentFile].title+'.vtt')
 			.then(response=>{return response.text();})
 			.then(text=>{
-				S.files[P.currentFile].subtitles=text;
-				P.displaySubtitles();
+				S.files[M.currentFile].subtitles=text;
+				M.displaySubtitles();
 			});
 		}
 	}
 	
 	//Allow playing videos using Showpony in iOS
-	P.window.setAttribute('playsinline','');
+	M.window.setAttribute('playsinline','');
 
 	//Fix for Safari not going to the right time
-	P.window.addEventListener('loadeddata',function(){
-		P.currentTime=P.window.currentTime=P.goToTime;
+	M.window.addEventListener('loadeddata',function(){
+		M.currentTime=M.window.currentTime=M.goToTime;
 	});
 
-	P.window.addEventListener('canplay',function(){
+	M.window.addEventListener('canplay',function(){
 		content.classList.remove('showpony-loading');
 		//Consider how much has already been loaded; this isn't run on first chunk loaded
-		P.window.dispatchEvent(new CustomEvent('progress'));
+		M.window.dispatchEvent(new CustomEvent('progress'));
 	});
 
-	P.window.addEventListener('canplaythrough',function(){
+	M.window.addEventListener('canplaythrough',function(){
 		//Consider how much has already been loaded; this isn't run on first chunk loaded
-		P.window.dispatchEvent(new CustomEvent('progress'));
+		M.window.dispatchEvent(new CustomEvent('progress'));
 	});
 
 	//Buffering
-	P.window.addEventListener('progress',function(){
+	M.window.addEventListener('progress',function(){
 		var bufferedValue=[];
-		var timeRanges=P.window.buffered;
+		var timeRanges=M.window.buffered;
 		
 		for(var i=0;i<timeRanges.length;i++){
 			//If it's the first value, and it's everything
-			if(i===0 && timeRanges.start(0)==0 && timeRanges.end(0)==P.window.duration){
+			if(i===0 && timeRanges.start(0)==0 && timeRanges.end(0)==M.window.duration){
 				bufferedValue=true;
 				break;
 			}
@@ -143,25 +143,23 @@ function makeAudio(){
 			bufferedValue.push([timeRanges.start(i),timeRanges.end(i)]);
 		}
 		
-		S.files[P.currentFile].buffered=bufferedValue;
+		S.files[M.currentFile].buffered=bufferedValue;
 		
 		getTotalBuffered();
 	});
 	
 	//When we finish playing an audio file
-	P.window.addEventListener('ended',function(){
+	M.window.addEventListener('ended',function(){
 		//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
 		if(!S.paused) S.to({file:'+1'});
 	});
 
 	//On moving through time, update info and title
-	P.window.addEventListener('timeupdate',function(){
-		P.currentTime=P.window.currentTime;
+	M.window.addEventListener('timeupdate',function(){
+		M.currentTime=M.window.currentTime;
 		
 		//Consider how much has already been loaded; this isn't run on first chunk loaded
 		this.dispatchEvent(new CustomEvent('progress'));
 		timeUpdate();
 	});
-};
-
-S.audio=new makeAudio();
+}();

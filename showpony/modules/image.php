@@ -1,9 +1,6 @@
 <?php
 
-// Get the module name from the file
-$module=basename(__FILE__,'.php');
-
-$checks['mime:image']=$module;
+$fileToModule['mime:image']='image';
 
 function imageUnhideChildren($input){
 	// No children
@@ -11,7 +8,7 @@ function imageUnhideChildren($input){
 
 ?>
 
-S.<?php echo $module; ?>=new function(){
+S.<?php echo 'image'; ?>=new function(){
 	const M=this;
 	
 	M.currentTime=null;

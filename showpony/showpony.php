@@ -48,7 +48,10 @@ ini_set('display_errors',1);
 //*/
 
 // Used to determine the medium of a file
-$checks=['default'=>null];
+$fileToModule=[
+	'default'			=>	null
+	,'mime:application'	=>	null
+];
 
 ?>'use strict';
 
@@ -170,10 +173,11 @@ if(!empty($_GET['get'])){
 			,'title'		=>	preg_match('/([^()])+(?=\))/',$file,$match) ? $match[0] : null
 		];
 		
-		// Get the medium based on checks
-		$fileInfo['medium']=$checks['ext:'.$fileInfo['extension']]
-			?? $checks['mime:'.explode('/',$fileInfo['mimeType'])[0]]
-			?? $checks['default']
+		// Get the medium based on $fileToModule- first ext, then full mime, then partial mime, then default
+		$fileInfo['medium']=$fileToModule['ext:'.$fileInfo['extension']]
+			?? $fileToModule['mime:'.$fileInfo['mimeType']]
+			?? $fileToModule['mime:'.explode('/',$fileInfo['mimeType'])[0]]
+			?? $fileToModule['default']
 		;
 		
 		// If the medium isn't supported, skip over it
@@ -185,8 +189,7 @@ if(!empty($_GET['get'])){
 			unhideFile('subtitles/'.$language.'/'.$fileInfo['title'].'.vtt');
 			
 			// Unhide children files
-			$functionName=$fileInfo['medium'].'UnhideChildren';
-			$functionName($language.'/'.$file,'r');
+			call_user_func($fileInfo['medium'].'UnhideChildren',$language.'/'.$file);
 		}
 		
 		// Add to the items in the medium, or set to 1 if it doesn't exist yet
@@ -214,6 +217,7 @@ S.files=<?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
 S.name='<?=toCamelCase($name)?>';
 S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 S.paused=false;
+S.fileToModule=<?=json_encode($fileToModule,JSON_NUMERIC_CHECK); ?>;
 S.media=<?=json_encode($media,JSON_NUMERIC_CHECK)?>;
 S.auto=true; //false, or float between 0 and 10
 
