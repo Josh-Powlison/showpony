@@ -260,9 +260,6 @@ S.cover={<?php
 	}
 ?>};
 
-//Hiding the webpage
-S.hidden=false;
-
 S.gamepad=null;
 
 //null before we load
@@ -916,7 +913,7 @@ function updateHistory(action='add'){
 
 function gamepadControls(){
 	//Exit if the window isn't in focus
-	if(S.hidden) return;
+	if(document.hidden) return;
 	
 	if(S.gamepad!==null){
 		//If shortcuts aren't always enabled, perform checks
@@ -1018,8 +1015,158 @@ function gamepadButton(gamepad,number,type){
 }
 
 ///////////////////////////////////////
+/////////////////START/////////////////
+///////////////////////////////////////
+
+//Make sure setup is made of multiple Promises that can run asyncronously- and that they do!
+
+content.classList.add('showpony-loading');
+
+if(S.cover){
+	if(S.cover.image) cover.style.backgroundImage='url("'+S.cover.image+'")';
+	if(S.cover.content) cover.innerHTML='<p>'+S.cover.content+'</p>';
+	S.window.appendChild(cover);
+	
+	cover.addEventListener('click',function(){
+		this.remove();
+		cover=null;
+		S.play();
+	});
+}
+
+//And fill it up again!
+S.window.appendChild(styles);
+S.window.appendChild(content);
+S.window.appendChild(subtitles);
+S.window.appendChild(overlay);
+
+/////////////////////
+//Get Hey Bard account
+/////////////////////
+
+//User accounts and bookmarks always on
+
+//Local saving is simple- remote saving, we'll connect straight to the database with a special account (or come up with something else, but we'll get it in PHP)
+
+//Also- why not use local and remote in tandem? If disconnect, we'll save the value in local; and then upload it remotely. Rather than one, why not both so that we keep the info if we have trouble in one place?
+//We track Hey Bard time last visited; if we check that against the user's localStorage save time, we'll be golden!
+
+//Priority: Newest > Default Start
+
+var start=null;
+S.saveName=S.name+'Bookmark';
+S.saveSystem=false;
+// S.saveSystem=false;
+// S.saveSystem='remote';
+
+S.loadBookmark=function(){
+	// Remote bookmark
+	///TODO: add remote bookmark support
+	
+	// Local bookmark
+	var loadData=JSON.parse(localStorage.getItem(S.saveName));
+	return parseInt(loadData.bookmark);
+}
+
+S.saveBookmark=function(){
+	// Set up the bookmark values for saving
+	var newValues={
+		bookmark:Math.floor(S.currentTime),
+		data:S.data,
+		saveSystem:'local',
+		timestamp:Date.now()
+	};
+	
+	var oldValues=JSON.parse(localStorage.getItem(S.saveName));
+	
+	// Don't save the bookmark if relevant data is the same
+	if(
+		newValues.bookmark===oldValues.bookmark
+		&& JSON.stringify(newValues.data)===JSON.stringify(oldValues.data) // objects can easily read different; stringifying them both ensures they'll read the same
+	) return;
+	
+	// Remote bookmark
+	///TODO: add remote bookmark support
+	
+	// Local bookmark
+	localStorage.setItem(S.saveName,JSON.stringify(newValues));
+};
+
+var start=S.duration-(S.files[S.files.length-1].duration);
+if(S.saveSystem) start=S.loadBookmark();
+
+var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i')).exec(window.location.href);
+if(page) start=parseInt(page[0].split('=')[1]);
+
+//Pause the Showpony
+S.pause();
+S.to({time:start,history:'replace'});
+
+//We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
+
+if(S.subtitles){
+	var obj=Object.keys(S.subtitles);
+	
+	//Add captions to options
+	
+	var option=document.createElement('option');
+	option.className='showpony-captions-option';
+	option.innerHTML='None';
+	option.value='None';
+	option.selected=true;
+	option.addEventListener('click',function(){
+		S.currentSubtitles=null;
+	});
+	captionsButton.appendChild(option);
+	
+	for(let i=0;i<obj.length;i++){
+		let option=document.createElement('option');
+		option.className='showpony-captions-option';
+		option.innerHTML=obj[i];
+		option.value=obj[i];
+		option.addEventListener('click',function(){
+			S.currentSubtitles=this.value;
+		});
+		captionsButton.appendChild(option);
+	}
+}
+
+//Add the Showpony window to the document
+document.currentScript.insertAdjacentElement('afterend',S.window);
+
+///////////////////////////////////////
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
+
+//Allow using querystrings for navigation
+window.addEventListener(
+	'popstate'
+	,function(){
+		var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i').exec(window.location.href));
+		
+		//If we found a page
+		if(page){
+			page=parseInt(page[0].split('=')[1]);
+			
+			if(page===S.currentTime) return;
+		
+			S.to({time:page,history:'revisit'});
+		}
+	}
+);
+
+//Save user bookmarks when leaving the page
+window.addEventListener('blur',S.saveBookmark);
+window.addEventListener('beforeunload',S.saveBookmark);
+
+//Save the bookmark if the website is hidden
+document.addEventListener('visibilitychange',function(){
+	if(document.hidden) S.saveBookmark();
+});
+
+//Showpony deselection (to help with Firefox and Edge's lack of support for 'beforeunload')
+S.window.addEventListener('focusout',S.saveBookmark);
+S.window.addEventListener('blur',S.saveBookmark);
 
 //Shortcut keys
 S.window.addEventListener(
@@ -1203,10 +1350,6 @@ pageTurn.addEventListener('scroll',function(event){
 	}
 });
 
-document.addEventListener('visibilitychange',function(){
-	S.hidden=document.hidden;
-});
-
 //Gamepad support
 
 window.addEventListener('gamepadconnected',function(e){
@@ -1236,145 +1379,9 @@ window.addEventListener('gamepaddisconnected',function(e){
 });
 
 ///////////////////////////////////////
-/////////////////START/////////////////
-///////////////////////////////////////
-
-//Make sure setup is made of multiple Promises that can run asyncronously- and that they do!
-
-content.classList.add('showpony-loading');
-
-if(S.cover){
-	if(S.cover.image) cover.style.backgroundImage='url("'+S.cover.image+'")';
-	if(S.cover.content) cover.innerHTML='<p>'+S.cover.content+'</p>';
-	S.window.appendChild(cover);
-	
-	cover.addEventListener('click',function(){
-		this.remove();
-		cover=null;
-		S.play();
-	});
-}
-
-//And fill it up again!
-S.window.appendChild(styles);
-S.window.appendChild(content);
-S.window.appendChild(subtitles);
-S.window.appendChild(overlay);
-
-/////////////////////
-//Get Hey Bard account
-/////////////////////
-
-//User accounts and bookmarks always on
-
-//Local saving is simple- remote saving, we'll connect straight to the database with a special account (or come up with something else, but we'll get it in PHP)
-
-//Also- why not use local and remote in tandem? If disconnect, we'll save the value in local; and then upload it remotely. Rather than one, why not both so that we keep the info if we have trouble in one place?
-//We track Hey Bard time last visited; if we check that against the user's localStorage save time, we'll be golden!
-
-//Priority: Newest > Default Start
-
-var start=null;
-
-/*function getBookmark(){
-	var bookmark=null;
-	
-		//Set a function to save bookmarks
-		S.saveBookmark=function(){
-			var saveValue=Math.floor(S.currentTime);
-			localStorage.setItem(S.saveId,saveValue);
-			
-			return saveValue;
-		}
-		
-		bookmark=parseInt(localStorage.getItem(S.saveId));
-	}
-}*/
-
-S.saveBookmark=function(){};
-
-var saveBookmark=S.saveBookmark;
-
-//Save user bookmarks when leaving the page
-window.addEventListener('blur',saveBookmark);
-window.addEventListener('beforeunload',saveBookmark);
-
-//Showpony deselection (to help with Firefox and Edge's lack of support for 'beforeunload')
-S.window.addEventListener('focusout',saveBookmark);
-S.window.addEventListener('blur',saveBookmark);
-
-//These are the defaults for passObj, but it can be overwritten if we're using a querystring
-var start=<?php
-	// Get Hey Bard start
-	
-	##########
-	
-	// Start from the last file
-	echo 'S.files.length-1';
-?>;
-
-//If querystrings are in use, consider the querystring in the URL
-window.addEventListener(
-	'popstate'
-	,function(){
-		var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i').exec(window.location.href));
-		
-		//If we found a page
-		if(page){
-			page=parseInt(page[0].split('=')[1]);
-			
-			if(page===S.currentTime) return;
-		
-			S.to({time:page,history:'revisit'});
-		}
-	}
-);
-
-var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i')).exec(window.location.href);
-if(page) start=parseInt(page[0].split('=')[1]);
-
-//Pause the Showpony
-S.pause();
-S.to({time:start,history:'replace'});
-
-//We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
-
-if(S.subtitles){
-	var obj=Object.keys(S.subtitles);
-	
-	//Add captions to options
-	
-	var option=document.createElement('option');
-	option.className='showpony-captions-option';
-	option.innerHTML='None';
-	option.value='None';
-	option.selected=true;
-	option.addEventListener('click',function(){
-		S.currentSubtitles=null;
-	});
-	captionsButton.appendChild(option);
-	
-	for(let i=0;i<obj.length;i++){
-		let option=document.createElement('option');
-		option.className='showpony-captions-option';
-		option.innerHTML=obj[i];
-		option.value=obj[i];
-		option.addEventListener('click',function(){
-			S.currentSubtitles=this.value;
-		});
-		captionsButton.appendChild(option);
-	}
-}
-
-//Add the Showpony window to the document
-document.currentScript.insertAdjacentElement('afterend',S.window);
-
-///////////////////////////////////////
 /////////////////ADMIN/////////////////
 ///////////////////////////////////////
 
 /////With new admin panel, we just reload the entire Showpony- this avoids risk of any bugs with AJAX vs reality and the like
 
 }();
-
-<?php echo '/*JS generated by PHP*/'; ?>
