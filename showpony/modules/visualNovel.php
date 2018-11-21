@@ -111,7 +111,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 	var inputting=false;
 	var wait=false;
 	var currentTextbox='textbox';
-	var objectBuffer={};
+	var target={};
 	var keyframes=null;
 	var waitTimer=new powerTimer(function(){},0)
 	
@@ -220,22 +220,8 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 	
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
-			/////RESET THINGS//////
-			//Get rid of local styles
-			for(var key in objects){
-				if(objects[key].tagName){
-					objects[key].removeAttribute('style');
-					//Empty out textboxes
-					if(objects[key].classList.contains('showpony-textbox')) objects[key].innerHTML='';
-				}
-				else objects[key].el.removeAttribute('style');
-			};
-			
 			//Visual Novel engine resets
-			styles.innerHTML='';
 			waitTimer.end();
-			
-			/////END RESETTIN//////
 			
 			//If this is the current file
 			if(M.currentFile===file){
@@ -243,16 +229,16 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 				if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
 				else runTo=keyframes[runTo];
 				
-				console.log(runTo);
+				// If this is the current keyframe, resolve
+				if(runTo===M.currentLine){
+					resolve();
+					return;
+				}
 				
 				M.progress(0);
 				resolve();
+				return;
 			}
-			
-			//Save buffer to check later
-			objectBuffer={};
-			objects={};
-			M.lines=[];
 			
 			var src=S.files[file].path;
 			
@@ -334,37 +320,79 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 		if(runTo!==false && M.currentLine>=runTo){
 			runTo=false;
 			inputting=false;
-		}
-		
-		//We've run through!
-		if(runTo===false && content.classList.contains('showpony-loading')){
-			if(waitTimer.remaining>0){
-				waitTimer.end();
+			
+			// console.log('TARGET',target);
+			// console.log('OBJECTS',objects);
+			
+			// Delete unnecessary target info
+			delete target['engine'];
+			
+			//Adjust everything based on the list
+			
+			// Get rid of objects that aren't in target
+			for(var name in objects){
+				if(!target[name] || target[name].type!==objects[name].type){
+					objects[name].remove();
+				}
+				
+			};
+			
+			// Go through each target; add nonexisting elements and update styles
+			for(var name in target){
+				// Make the remaining objects
+				if(typeof(objects[name])==='undefined'){
+					switch(target[name].type){
+						case 'audio': objects[name]=new audio(name); break;
+						case 'background': objects[name]=new background(name); break;
+						case 'character': objects[name]=new character(name); break;
+						case 'textbox': objects[name]=new textbox(name); break;
+						case 'name': objects[name]=new name(name); break;
+						default: break;
+					}
+				}
+				
+				// Reset the object's custom CSS
+				objects[name].style();
+				
+				// Go through the object's functions and reset them to their base or passed values
+				for(var check in target[name]){
+					// Skip over "remove" function- we don't want to run that one :P
+					if(check==='remove') continue;
+					
+					// console.log('CHECKING THIS:',name,check,typeof(objects[name][check]),target[name][check]);
+					
+					if(typeof(objects[name][check])==='function'){
+						if(typeof(target[name][check])==='undefined'){
+							objects[name][check]();
+						}else{
+							// console.log('PASSING TO ',name,',',check,':',target[name][check]);
+							objects[name][check](target[name][check]);
+						}
+						
+					}
+				}
 			}
 			
-			//Get rid of unused, uncreated objects
-			for(var key in objects){
-				//Get rid of the object if it doesn't exist
-				if(!objectBuffer[key]){
-					objects[key].remove();
-					delete objects[key];
-				}
-			};
+			// console.log('TARGET AT END',target);
+			target={};
+			waitTimer.end();
 			
 			M.window.offsetHeight; //Trigger reflow to flush CSS changes
 			content.classList.remove('showpony-loading');
-		}
-		
-		//Update the scrubbar if the frame we're on is a keyframe
-		if(runTo===false && keyframes.includes(M.currentLine)){
-			//Set the time of the element
-			timeUpdate((keyframes.indexOf(M.currentLine)/keyframes.length)*S.files[M.currentFile].duration);
+			
+			// console.log('OBJECTS AT END',objects);
 		}
 		
 		//If we've ended manually or reached the end, stop running immediately and end it all
 		if(M.currentLine>=M.lines.length){
 			S.to({file:'+1'});
 			return;
+		}
+		
+		//Update the scrubbar if the frame we're on is a keyframe
+		if(runTo===false && keyframes.includes(M.currentLine)){
+			//Set the time of the element
+			timeUpdate((keyframes.indexOf(M.currentLine)/keyframes.length)*S.files[M.currentFile].duration);
 		}
 		
 		var vals=M.lines[M.currentLine];
@@ -390,40 +418,66 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 			type='audio';
 		}
 		
-		var object=/^[^\.\t]+/.exec(vals[0]);
-		if(!object){
-			object='textbox';
+		var name=/^[^\.\t]+/.exec(vals[0]);
+		if(!name){
+			name='textbox';
 			type='textbox';
 		}
-		else object=object[0];
+		else name=name[0];
+		
+		//The engine's the object! Gasp!
+		if(/go|end|runEvent|setTextbox|wait/.test(command)) name='engine';
+		
+		//If we're running through to a point, add the info to the target
+		if(runTo){
+			if(!target[name]){
+				target[name]={
+					'type':type
+				};
+			}
+			
+			// Add styles; everything else is replaced
+			if(command==='style'){
+				if(!target[name].style) target[name].style='';
+				
+				//Styles are appended; later ones will override earlier ones. Time is removed here; we don't want to affect that here.
+				var value=vals[1].replace(/time:[^;]+;?/i,'');
+				target[name].style+=value;
+			}else{
+				var value=vals[1];
+				target[name][command]=value;
+			}
+			
+			// Continue without creating objects- we'll look at THAT once we've run through and added all the info to the target
+			M.progress();
+			return;
+		}
 		
 		//If an object with the name doesn't exist, make it!
-		if(!objects[object] && object!=='engine'){
+		if(!objects[name] && name!=='engine'){
 			switch(type){
-				case 'audio': objects[object]=new audio(object); break;
-				case 'background': objects[object]=new background(object); break;
-				case 'character': objects[object]=new character(object); break;
-				case 'textbox': objects[object]=new textbox(object); break;
-				case 'name': objects[object]=new name(object); break;
+				case 'audio': objects[name]=new audio(name); break;
+				case 'background': objects[name]=new background(name); break;
+				case 'character': objects[name]=new character(name); break;
+				case 'textbox': objects[name]=new textbox(name); break;
+				case 'name': objects[name]=new name(name); break;
 				default: break;
 			}
 		}
 		
-		//If we're buffering, add it to the buffer so it's not deleted later
-		if(runTo) objectBuffer[object]=objects[object];
+		// Run an engine command or object command
+		if(name==='engine'){
+			M[command](vals[1]);
+			return;
+		}else{
+			objects[name][command](vals[1]);
+		}
 		
-		var target=objects[object];
-		
-		//The engine's the target! Gasp!
-		if(/go|end|runEvent|setTextbox|wait/.test(command)) target=M;
-		
-		if(target[command]) target[command](vals[1]);
 		//Operations need to be functions of the parent
 		///TODO: get operations working again, but as engine.commands
 				
 		//Don't automatically continue on text updates or engine commands
 		if(type==='textbox' && command==='content') return;
-		if(type==='engine') return;
 		
 		M.progress();
 	}
@@ -548,6 +602,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 		//Remove element
 		O.remove=function(){
 			O.el.remove();
+			delete objects[O.name];
 		}
 		
 		var localStyle=document.createElement('style');
@@ -555,7 +610,15 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 		var cssName=O.el.dataset.name.replace(/#/g,'id');
 		
 		//Adjust the styles, and add animations
-		O.style=function(style){
+		O.style=function(style=null){
+			// If no styles are passed, remove all added styles
+			if(style===null){
+				// console.log('Removed styles for ',O.name);
+				O.el.style.cssText='';
+				localStyle.innerHTML='';
+				return;
+			}
+			
 			var animationSpeed=/time:[^s;$]+/i.exec(style);
 			
 			//Add back in to support multiple objects sharing the same file set
@@ -583,10 +646,11 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 	
 	function audio(input){
 		const O=this;
-		const name=input;
+		O.type='audio';
+		O.name=input;
 		
 		O.el=document.createElement('audio');
-		O.el.src='<?=$_GET['path']?>resources/audio/'+name+'.mp3';
+		O.el.src='<?=$_GET['path']?>resources/audio/'+O.name+'.mp3';
 		O.el.preload=true;
 		O.el.dataset.name=input;
 		M.window.appendChild(O.el);
@@ -616,19 +680,19 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 			O.el.currentTime=0;
 		}
 		
-		O.loop=function(input){
-			O.el.loop=input;
+		O.loop=function(input=true){
+			O.el.loop=(input=="false" ? false : true);
 		}
 		
-		O.volume=function(input){
+		O.volume=function(input=1){
 			O.el.volume=input;
 		}
 		
-		O.speed=function(input){
+		O.speed=function(input=1){
 			O.el.playbackRate=input;
 		}
 		
-		O.time=function(input){
+		O.time=function(input=0){
 			O.el.currentTime=input;
 		}
 		
@@ -637,14 +701,16 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 	
 	function background(input){
 		const O=this;
+		O.type='background';
+		
 		O.el=document.createElement('div');
 		O.el.className='showpony-background';
 		O.el.dataset.name=input;
-		const name=input;
+		O.name=input;
 		
 		M.window.appendChild(O.el);
 
-		O.content=function(input=name){
+		O.content=function(input=O.name){
 			O.el.style.backgroundImage='url("<?=$_GET['path']?>resources/backgrounds/'+input+'.jpg")';
 		}
 		
@@ -653,10 +719,12 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 	
 	function character(input){
 		const O=this;
+		O.type='character';
+		
 		O.el=document.createElement('div');
 		O.el.className='showpony-character';
 		O.el.dataset.name=input;
-		const name=input;
+		O.name=input;
 		
 		M.window.appendChild(O.el);
 		
@@ -697,7 +765,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 					var thisImg=document.createElement('div');
 					thisImg.className='showpony-character-image';
 					thisImg.dataset.image=image;
-					thisImg.style.backgroundImage='url("<?=$_GET['path']?>resources/characters/'+name.split('#')[0]+'/'+image+'")';
+					thisImg.style.backgroundImage='url("<?=$_GET['path']?>resources/characters/'+O.name.split('#')[0]+'/'+image+'")';
 					
 					O.el.children[layer].appendChild(thisImg);
 				}
@@ -721,7 +789,8 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 	
 	function textbox(input){
 		const O=this;
-		const name=input;
+		O.type='textbox';
+		O.name=input;
 		
 		O.el=document.createElement('form');
 		O.el.className='showpony-textbox';
@@ -731,7 +800,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 		});
 		M.window.appendChild(O.el);
 		
-		O.content=function(input){
+		O.content=function(input='NULL: No text was passed.'){
 			//var keepGoing=multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals);
 		
 			//var keepGoing=false;
@@ -739,7 +808,6 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 			
 			//If we're running through, skip displaying text until we get to the right point
 			if(runTo){
-				objectBuffer[currentTextbox]=objects[currentTextbox];
 				M.progress(undefined);
 				return;
 			}
