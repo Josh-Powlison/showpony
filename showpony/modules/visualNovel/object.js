@@ -314,7 +314,7 @@ S.modules.visualNovel=new function(){
 						case 'background': objects[name]=new background(name); break;
 						case 'character': objects[name]=new character(name); break;
 						case 'textbox': objects[name]=new textbox(name); break;
-						case 'name': objects[name]=new name(name); break;
+						case 'nameplate': objects[name]=new nameplate(name); break;
 						default: break;
 					}
 				}
@@ -488,13 +488,6 @@ S.modules.visualNovel=new function(){
 		
 		//Don't automatically go to the next line
 	}
-	
-	/*
-	ADD:
-	name
-		content
-		style
-	*/
 
 	//STYLE and REMOVE are the same for every instance.
 	
@@ -685,6 +678,28 @@ S.modules.visualNovel=new function(){
 		}
 	}
 	
+	function nameplate(input){
+		const O=this;
+		O.type='nameplate';
+		O.name=input;
+		
+		O.el=document.createElement('p');
+		O.el.className='showpony-nameplate';
+		O.el.dataset.name=input;
+		M.window.appendChild(O.el);
+		
+		O.content=function(input){
+			if(input){
+				O.el.innerHTML=input;
+				O.el.style.visibility='visible';
+			}else{
+				O.el.style.visibility='hidden';
+			}
+		}
+		
+		objectAddCommonFunctions(O);
+	}
+	
 	function textbox(input){
 		const O=this;
 		O.type='textbox';
@@ -711,22 +726,22 @@ S.modules.visualNovel=new function(){
 			//If the line doesn't start with +, replace the text
 			if(input[0]!=='+'){
 				O.el.innerHTML='';
-				/*
-				if(!objects.name) M.window.appendChild(objects.name=document.createElement('div'));
-				
-				objects.name.className='showpony-name';
-				
-				//Split up the text so we can have names automatically written
-				var nameText=input.split('::');
-				if(nameText.length>1){
-					input=nameText[1];
-					objects.name.innerHTML=nameText[0];
-					objects.name.style.visibility='visible';
-				}else{
-					objects.name.style.visibility='hidden';
-				}*/
 				
 				inputting=false;
+				
+				// Split text by nameplate
+				if(!objects.nameplate){
+					objects.nameplate=new nameplate('nameplate');
+				}
+				
+				var matches=/(.+)::(.*)/.exec(input);
+				if(matches){
+					objects.nameplate.content(matches[1]);
+					input=matches[2];
+				}else{
+					objects.nameplate.content();
+				}
+				
 			}
 			else input=input.substr(1);
 			

@@ -61,7 +61,7 @@
 	margin:.25em;
 }
 
-.showpony-name{
+.showpony-nameplate{
 	background-color:#000;
 	padding:.4em;
 	left:0;
@@ -71,6 +71,7 @@
 	font-size:2em;
 	font-family:Arial;
 	font-weight:bold;
+	margin:0;
 }
 
 .showpony-background{
