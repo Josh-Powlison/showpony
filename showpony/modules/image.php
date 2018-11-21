@@ -1,6 +1,6 @@
 <?php
 
-$fileToModule['mime:image']='image';
+// $fileToModule['mime:image']='image';
 
 function imageUnhideChildren($input){
 	// No children

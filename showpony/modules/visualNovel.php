@@ -1,6 +1,6 @@
 <?php
 
-$fileToModule['ext:vn']='visualNovel';
+// $fileToModule['ext:vn']='visualNovel';
 
 function visualNovelUnhideChildren($input){
 	// visualNovel includes files on specific lines

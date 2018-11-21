@@ -47,11 +47,7 @@ error_reporting(E_ALL);
 ini_set('display_errors',1);
 //*/
 
-// Used to determine the medium of a file
-$fileToModule=[
-	'default'			=>	null
-	,'mime:application'	=>	null
-];
+require 'settings.php';
 
 ?>'use strict';
 
@@ -65,13 +61,7 @@ const S=this;
 ///////////////////////////////////////
 ////////////////MODULES////////////////
 ///////////////////////////////////////
-
 <?
-
-// For now, loads all modules
-foreach(glob('modules/*.php') as $filename){
-	include $filename;
-}
 
 $media=[];
 
@@ -202,6 +192,13 @@ if(!empty($_GET['get'])){
 	
 	// Pass any echoed statements or errors to the response object
 	$response['message']=ob_get_clean();
+}
+
+// Load modules
+foreach(array_keys($media) as $moduleName){
+	include_once 'modules/'.$moduleName.'.php';
+	echo '
+	';
 }
 
 ?>

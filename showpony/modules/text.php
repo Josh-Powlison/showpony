@@ -1,6 +1,6 @@
 <?php
 
-$fileToModule['mime:text']='text';
+// $fileToModule['mime:text']='text';
 
 function textUnhideChildren($input){
 	// text includes files as paths
