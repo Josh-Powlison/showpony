@@ -174,7 +174,7 @@ S.modules.visualNovel=new function(){
 					}
 					
 					//Regular text lines (not continuing) can be keyframes
-					if(/^\t+(?!\t*\+)/i.test(M.lines[i])) keyframes.push(i);
+					if(/^\t+/.test(M.lines[i])) keyframes.push(i);
 				}
 				
 				// Get the keyframe
@@ -254,9 +254,8 @@ S.modules.visualNovel=new function(){
 		
 		vals=vals.split(/(?:\s{3,}|\t+)/);
 		
+		// Operations
 		var type=/[+=\-<>!]+$/.exec(vals[0]);
-		console.log('RUNNING OPERATION',vals,type);
-		
 		if(type){
 			type=type[0];
 			//Remove type from variable name
@@ -392,11 +391,18 @@ S.modules.visualNovel=new function(){
 				if(!target[name].style) target[name].style='';
 				
 				//Styles are appended; later ones will override earlier ones. Time is removed here; we don't want to affect that here.
-				var value=vals[1].replace(/time:[^;]+;?/i,'');
-				target[name].style+=value;
+				target[name].style+=vals[1].replace(/time:[^;]+;?/i,'');
 			}else{
-				var value=vals[1];
-				target[name][command]=value;
+				console.log(target[name].type,command,vals);
+				
+				//Append textbox content if it starts with a "+" this time
+				if(target[name].type==='textbox' && command==='content' && vals[1][0]==='+'){
+					target[name][command]+=vals[1].replace(/^\+/,'');
+				}
+				// Update values
+				else{
+					target[name][command]=vals[1];
+				}
 			}
 			
 			// Continue without creating objects- we'll look at THAT once we've run through and added all the info to the target
