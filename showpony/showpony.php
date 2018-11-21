@@ -1,5 +1,29 @@
 <?php
 
+/*
+
+ABOUT SHOWPONY'S CODE
+
+Showpony is set up to only make 1 file call. So you'll see CSS, JS, etc, all compiled into this one file.
+
+For just one medium, here are all the files that would be called from the client side if it was all split up in a more typical way:
+1. Showpony JS
+2. Showpony PHP (called by Showpony JS)
+3. Showpony CSS
+4. Module JS
+5. Module CSS
+
+This setup has a few benefits:
+1. PHP can be run in JS and CSS files: this lets us customize display and functionality based on server data directly.
+2. 1 server call instead of 3+(Modules*2): server calls are generally more expensive than bandwidth. This is meant to speed up the process.
+3. Allows us to require just 1 line of code to run: we can pass $_GET info to PHP to retrieve all of the info immediately.
+
+If you'd like to contest this setup, feel free to start up a discussion and let us know why you think an alternative setup would be more resource-efficient.
+
+Thanks!
+
+*/
+
 session_start();
 
 require 'settings.php';
@@ -185,7 +209,7 @@ S.window=document.createElement('div');
 S.window.className='showpony';
 S.window.tabindex='0';
 S.files=<?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
-S.name='<?=toCamelCase($name)?>';
+S.name='<?php echo toCamelCase($name); ?>';
 S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 S.paused=false;
 S.modules={};
@@ -207,7 +231,7 @@ S.window.innerHTML=`
 `;
 
 S.buffered=false;
-S.query='<?=$name?>';
+S.query='<?php echo $name; ?>';
 S.infiniteScroll=false;
 S.subtitles=<?php
 	// Get subtitles
@@ -760,7 +784,7 @@ function scrub(inputPercent=null,loadFile=false){
 	//Move the progress bar
 	progress.style.left=(inputPercent*100)+'%';
 	
-	<?
+	<?php
 	// If all the of the files are media that don't need time tracked, show progress with files, not time
 	if(
 		($media['text'] ?? 0)
@@ -778,7 +802,7 @@ function scrub(inputPercent=null,loadFile=false){
 	
 	var info=infoMake(newPart+1)+' | '+infoMake(S.files.length-(newPart+1))
 	;
-	<?
+	<?php
 	// Show progress with time if any of the files' progress is heavily measured by time
 	}else{
 	?>
@@ -790,7 +814,7 @@ function scrub(inputPercent=null,loadFile=false){
 	
 	var info=infoMake(timeInTotal / 60)+':'+infoMake(timeInTotal % 60,2)+' | '+infoMake((S.duration-timeInTotal) / 60)+':'+infoMake((S.duration-timeInTotal) % 60,2)
 	;
-	<? } ?>
+	<?php } ?>
 	
 	if(info!==overlayText.innerHTML) overlayText.innerHTML=info;
 	
