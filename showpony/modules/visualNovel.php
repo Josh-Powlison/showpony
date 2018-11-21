@@ -110,7 +110,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 	continueNotice.className='showpony-continue';
 	var inputting=false;
 	var wait=false;
-	var currentTextbox='main';
+	var currentTextbox='textbox';
 	var objectBuffer={};
 	var keyframes=null;
 	var waitTimer=new powerTimer(function(){},0)
@@ -392,7 +392,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 		
 		var object=/^[^\.\t]+/.exec(vals[0]);
 		if(!object){
-			object='main';
+			object='textbox';
 			type='textbox';
 		}
 		else object=object[0];
