@@ -327,15 +327,10 @@ S.modules.visualNovel=new function(){
 					// Skip over "remove" function- we don't want to run that one :P
 					if(command==='remove') continue;
 					
-					// console.log('CHECKING THIS:',name,command,typeof(objects[name][command]),target[name][command]);
-					
 					if(typeof(objects[name][command])==='function'){
 						if(typeof(target[name][command])==='undefined'){
 							objects[name][command]();
 						}else{
-							console.log(command);
-							
-							// console.log('PASSING TO ',name,',',command,':',target[name][command]);
 							objects[name][command](target[name][command]);
 						}
 					}
@@ -343,7 +338,6 @@ S.modules.visualNovel=new function(){
 			}
 			
 			target={};
-			// console.log('TARGET AT END',target);
 			waitTimer.end();
 
 			runTo=false;
@@ -352,33 +346,34 @@ S.modules.visualNovel=new function(){
 			content.classList.remove('showpony-loading');
 		}
 		
-		//Determine the type of object//
+		/*
+		object.command		value
+		variableOperation	value
+		
+		type is assumed
+		*/
+		
+		// Determine command
 		var command=/\..+/.exec(vals[0]);
 		if(!command) command='content';
 		else command=command[0].replace('.','');
 		
+		// Determine type
 		var type='character';
-		if(vals.length===1){
-			type='background';
-		}
+		if(vals.length===1) type='background';
+		if(/play|pause|stop|loop/.test(command)) type='audio';
+		if(/go|end|runEvent|setTextbox|wait/.test(command)) type='engine';
 		
-		//Check if audio
-		if(/play|pause|stop|loop/.test(command)){
-			type='audio';
-		}
-		
+		// Determine name
 		var name=/^[^\.\t]+/.exec(vals[0]);
-		if(!name){
+		if(name) name=name[0]
+		else{
 			name='textbox';
 			type='textbox';
 		}
-		else name=name[0];
-		
-		//The engine's the object! Gasp!
-		if(/go|end|runEvent|setTextbox|wait/.test(command)) name='engine';
 		
 		//If we're running through to a point, add the info to the target
-		if(runTo!==false){
+		if(runTo!==false && type!=='engine'){
 			if(!target[name]){
 				target[name]={
 					'type':type
@@ -392,8 +387,6 @@ S.modules.visualNovel=new function(){
 				//Styles are appended; later ones will override earlier ones. Time is removed here; we don't want to affect that here.
 				target[name].style+=vals[1].replace(/time:[^;]+;?/i,'');
 			}else{
-				console.log(target[name].type,command,vals);
-				
 				//Append textbox content if it starts with a "+" this time
 				if(target[name].type==='textbox' && command==='content' && vals[1][0]==='+'){
 					target[name][command]+=vals[1].replace(/^\+/,'');
@@ -409,28 +402,26 @@ S.modules.visualNovel=new function(){
 			return;
 		}
 		
-		//If an object with the name doesn't exist, make it!
-		if(!objects[name] && name!=='engine'){
-			switch(type){
-				case 'audio': objects[name]=new audio(name); break;
-				case 'background': objects[name]=new background(name); break;
-				case 'character': objects[name]=new character(name); break;
-				case 'textbox': objects[name]=new textbox(name); break;
-				case 'name': objects[name]=new name(name); break;
-				default: break;
-			}
-		}
-		
-		// Run an engine command or object command
-		if(name==='engine'){
+		if(type==='engine'){
+			// Engine command
 			M[command](vals[1]);
 			return;
 		}else{
+			//If an object with the name doesn't exist, make it!
+			if(!objects[name]){
+				switch(type){
+					case 'audio': objects[name]=new audio(name); break;
+					case 'background': objects[name]=new background(name); break;
+					case 'character': objects[name]=new character(name); break;
+					case 'textbox': objects[name]=new textbox(name); break;
+					case 'name': objects[name]=new name(name); break;
+					default: break;
+				}
+			}
+			
+			// Object command
 			objects[name][command](vals[1]);
 		}
-		
-		//Operations need to be functions of the parent
-		///TODO: get operations working again, but as engine.commands
 		
 		//Update the scrubbar if the frame we're on is a keyframe
 		if(runTo===false && keyframes.includes(M.currentLine)){
@@ -526,7 +517,6 @@ S.modules.visualNovel=new function(){
 		O.style=function(style=null){
 			// If no styles are passed, remove all added styles
 			if(style===null){
-				// console.log('Removed styles for ',O.name);
 				O.el.style.cssText='';
 				localStyle.innerHTML='';
 				return;
