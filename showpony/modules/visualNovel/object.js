@@ -131,19 +131,19 @@ S.modules.visualNovel=new function(){
 			
 			//If this is the current file
 			if(M.currentFile===file){
-				// Get the correct keyframe position
-				runTo=Math.round(keyframes.length*(time/S.files[M.currentFile].duration));
-				if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
-				else runTo=keyframes[runTo];
-				
-				console.log(M.currentLine,{time,runTo,keyframes},M.lines[runTo]);
-				// console.log(M.lines);
+				// Get the keyframe
+				var keyframeSelect=Math.round(keyframes.length*(time/S.files[M.currentFile].duration));
+				if(keyframeSelect>=keyframes.length) keyframeSelect=keyframes[keyframes.length-1];
+				else keyframeSelect=keyframes[keyframeSelect];
 				
 				// If this is the current keyframe, resolve
-				if(runTo===M.currentLine){
+				if(keyframeSelect===M.currentLine){
+					content.classList.remove('showpony-loading');
 					resolve();
 					return;
 				}
+				
+				runTo=keyframeSelect;
 				
 				M.progress(0);
 				resolve();
@@ -177,9 +177,12 @@ S.modules.visualNovel=new function(){
 					if(/^\t+(?!\t*\+)/i.test(M.lines[i])) keyframes.push(i);
 				}
 				
-				runTo=Math.round(keyframes.length*(M.currentTime/S.files[file].duration));
-				if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
-				else runTo=keyframes[runTo];
+				// Get the keyframe
+				var keyframeSelect=Math.round(keyframes.length*(time/S.files[file].duration));
+				if(keyframeSelect>=keyframes.length) keyframeSelect=keyframes[keyframes.length-1];
+				else keyframeSelect=keyframes[keyframeSelect];
+				
+				runTo=keyframeSelect;
 				
 				M.currentFile=S.currentFile=file;
 				M.progress(0);
@@ -339,8 +342,7 @@ S.modules.visualNovel=new function(){
 		if(/go|end|runEvent|setTextbox|wait/.test(command)) name='engine';
 		
 		//If we're running through to a point, add the info to the target
-		if(runTo){
-			
+		if(runTo!==false){
 			if(!target[name]){
 				target[name]={
 					'type':type
