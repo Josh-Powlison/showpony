@@ -1,0 +1,14 @@
+/*/////////////////////////////////////
+/////////////////TEXT//////////////////
+/////////////////////////////////////*/
+
+.showpony-page-turn{
+	overflow:auto;
+	height:100%;
+	width:100%;
+	padding:1em;
+	box-sizing:border-box;
+	background-color:white;
+	color:black;
+	word-break:break-word;
+}

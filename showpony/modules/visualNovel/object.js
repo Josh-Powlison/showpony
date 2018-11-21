@@ -1,97 +1,3 @@
-<?php
-
-// FILE_DATA_GET_MODULE['ext:vn']='visualNovel';
-
-function visualNovelUnhideChildren($input){
-	// visualNovel includes files on specific lines
-	
-	$handle=fopen($input,'r');
-	$comment=false;
-
-	while(($line=fgets($handle))!==false){
-		// Remove line breaks on line
-		$line=trim($line,"\r\n");
-		
-		// TODO: remove rather than skip comments; allow comments that start midway through a line or end midway through a line; allow // comments and make exceptions for file paths (http://). Or, consider not allowing comments after the beginning of text (in case those characters are actually wanted there
-		// Skip comments
-		if(preg_match('/^\/\//',$line)){
-			continue;
-		}
-		
-		// Skip multiline comments
-		if(preg_match('/^\/\*/',$line)){
-			$comment=true;
-			continue;
-		}
-		
-		if($comment){
-			if(preg_match('/\*\/$/',$line)){
-				$comment=false;
-			}
-			
-			continue;
-		}
-		
-		// Determines the correct file type, and allows ids for multiple objects (mook#1, mook#2)
-		
-		// Characters images
-		if(preg_match('/^([^\s\.\=#]+)(#\S*)?\t+(.+)$/',$line,$matches)){
-			// Split layers so we can grab every file
-			$layers=explode(',',$matches[3]);
-			foreach($layers as $layer){
-				unhideFile('resources/characters/'.$matches[1].'/'.$layer.'.png');
-			}
-		}
-		
-		// Backgrounds
-		else if(preg_match('/^([^\.\s#]+)(#[^.\s]*)?$/',$line,$matches)){
-			unhideFile('resources/backgrounds/'.$matches[1].'.jpg');
-		}
-		
-		// Audio
-		else if(preg_match('/^([^\s#]+)(#\S*)?\.(loop|play)$/',$line,$matches)){
-			unhideFile('resources/audio/'.$matches[1].'.mp3');
-		}
-		
-		// Other
-		else{
-			// src="file.ext"
-			// href="file.ext"
-			// url("file.ext")
-			
-			// Go through every regex and look for matches in the line
-			$regexChecks=[
-				'/(src|href)="(\/|https?:\/\/[^\/]+\/)?([^"]+)"/i'
-				,"/(src|href)='(\/|https?:\/\/[^\/]+\/)?([^']+)'/i"
-				,'/(url)\(["\']?(\/|https?:\/\/[^\/]+\/)?([^)]+)["\']\)?/i'
-			];
-			
-			foreach($regexChecks as $regex){
-				if(preg_match_all($regex,$line,$matches,PREG_SET_ORDER)){
-					foreach($matches as $match){
-						// Absolute path or from root
-						if($match[2][0]==='/' || preg_match('/https?:\/\//',$match[2])){
-							// This will not work with subdomains or redirects in Apache; it assumes that the current website's root is the server's root
-							
-							// If a file doesn't exist, it simply won't be unhidden (if it was hidden in the first place). The script will continue to run.
-							
-							unhideFile($_SERVER['DOCUMENT_ROOT'].'/'.$match[3]);
-						}
-						// Relative path
-						else{
-							unhideFile($parentDir.$match[3]);
-						}
-					}
-				}
-			}
-		}
-	}
-		
-	fclose($handle);
-}
-
-?>
-
 /// TODO: fix general bugs
 /// TODO: condense and optimize (I suspect we can get this down by a large amount)
 
@@ -655,7 +561,7 @@ S.modules.<?php echo 'visualNovel'; ?>=new function(){
 		O.name=input;
 		
 		O.el=document.createElement('audio');
-		O.el.src='<?=$_GET['path']?>resources/audio/'+O.name+'.mp3';
+		O.el.src='<?php echo $stories_path; ?>resources/audio/'+O.name+'.mp3';
 		O.el.preload=true;
 		O.el.dataset.name=input;
 		M.window.appendChild(O.el);
@@ -716,7 +622,7 @@ S.modules.<?php echo 'visualNovel'; ?>=new function(){
 		M.window.appendChild(O.el);
 
 		O.content=function(input=O.name){
-			O.el.style.backgroundImage='url("<?=$_GET['path']?>resources/backgrounds/'+input+'.jpg")';
+			O.el.style.backgroundImage='url("<?php echo $stories_path; ?>resources/backgrounds/'+input+'.jpg")';
 		}
 		
 		objectAddCommonFunctions(O);
@@ -770,7 +676,7 @@ S.modules.<?php echo 'visualNovel'; ?>=new function(){
 					var thisImg=document.createElement('div');
 					thisImg.className='showpony-character-image';
 					thisImg.dataset.image=image;
-					thisImg.style.backgroundImage='url("<?=$_GET['path']?>resources/characters/'+O.name.split('#')[0]+'/'+image+'")';
+					thisImg.style.backgroundImage='url("<?php echo $stories_path; ?>resources/characters/'+O.name.split('#')[0]+'/'+image+'")';
 					
 					O.el.children[layer].appendChild(thisImg);
 				}

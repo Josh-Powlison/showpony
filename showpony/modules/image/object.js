@@ -1,13 +1,3 @@
-<?php
-
-// $fileToModule['mime:image']='image';
-
-function imageUnhideChildren($input){
-	// No children
-}
-
-?>
-
 S.modules.<?php echo 'image'; ?>=new function(){
 	const M=this;
 	

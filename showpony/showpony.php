@@ -47,12 +47,6 @@ chdir('../'.$stories_path);
 // We'll store all errors and code that's echoed, so we can send that info to the user (in a way that won't break the JSON object).
 ob_start();
 
-// May be used later for unhiding files
-$parentDir='';
-for($i=0;$i<substr_count($stories_path,'/');$i++){
-	$parentDir.='../';
-}
-
 // Run through the files
 foreach(scandir($language) as &$file){
 	// Ignore hidden files and folders
@@ -123,6 +117,11 @@ foreach(scandir($language) as &$file){
 	// If the module isn't supported, skip over it
 	if($fileInfo['module']===null) continue;
 	
+	// Load module functions
+	foreach(array_keys($media) as $moduleName){
+		require_once ROOT.'/modules/'.$moduleName.'/functions.php';
+	}
+	
 	// If this file has been unhid, unhide related files
 	if($unhid){
 		// Unhide subtitles
@@ -146,8 +145,33 @@ $message=ob_get_clean();
 header('Content-type: application/javascript');
 ?>'use strict';
 
-//Load CSS if not loaded already
-if(!document.querySelector('[href$="showpony/styles.css"]')) document.head.insertAdjacentHTML('beforeend','<link type="text/css" rel="stylesheet" href="showpony/styles.css">');
+//Add styles if not added already
+if(!document.getElementById('showpony-styles')){
+	var styles=document.createElement('style');
+	styles.id='showpony-styles';
+	styles.innerHTML=`<?php
+		addslashes(readfile(ROOT.'/showpony/styles.css'));
+	?>`;
+	document.head.appendChild(styles);
+}
+
+<?php
+
+// Load modules
+foreach(array_keys($media) as $moduleName){
+	
+?>
+//Add <?php echo $moduleName; ?> styles if not added already
+if(!document.getElementById('showpony-<?php echo $moduleName; ?>-styles')){
+	var styles=document.createElement('style');
+	styles.id='showpony-<?php echo $moduleName; ?>-styles';
+	styles.innerHTML=`<?php
+		addslashes(readfile(ROOT.'/modules/'.$moduleName.'/styles.css'));
+	?>`;
+	document.head.appendChild(styles);
+}
+
+<?php } ?>
 
 var <?php echo toCamelCase($name); ?>=new function(){
 
@@ -223,7 +247,7 @@ S.currentSubtitles=null;
 
 // Load modules
 foreach(array_keys($media) as $moduleName){
-	include 'modules/'.$moduleName.'.php';
+	include ROOT.'/modules/'.$moduleName.'/object.js';
 }
 
 ?>

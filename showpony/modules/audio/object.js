@@ -1,20 +1,10 @@
-<?php
-
-// $fileToModule['mime:video']='video';
-
-function videoUnhideChildren(){
-	// Video doesn't have children
-}
-
-?>
-
-S.modules.<?php echo 'video'; ?>=new function(){
+S.modules.audio=new function(){
 	const M=this;
 	
 	M.currentTime=null;
 	M.currentFile=null;
 	
-	M.window=document.createElement('video');
+	M.window=document.createElement('audio');
 	M.window.className='showpony-block';
 	
 	M.play=function(){
@@ -148,7 +138,7 @@ S.modules.<?php echo 'video'; ?>=new function(){
 		getTotalBuffered();
 	});
 	
-	//When we finish playing a video or audio file
+	//When we finish playing an audio file
 	M.window.addEventListener('ended',function(){
 		//Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
 		if(!S.paused) S.to({file:'+1'});
