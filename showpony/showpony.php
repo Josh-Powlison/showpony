@@ -150,7 +150,7 @@ if(!document.getElementById('showpony-styles')){
 	var styles=document.createElement('style');
 	styles.id='showpony-styles';
 	styles.innerHTML=`<?php
-		addslashes(readfile(ROOT.'/showpony/styles.css'));
+		addslashes(readfile(ROOT.'/styles.css'));
 	?>`;
 	document.head.appendChild(styles);
 }
