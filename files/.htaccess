@@ -1,7 +1,6 @@
-# Don't show files and the file structure
 Options -Indexes
 
-# If you try to access files that start with x, you'll get a Forbidden (403) message
+# Forbid access to files starting with setting.php's HIDDEN_FILENAME_STARTING_CHAR
 RewriteEngine On
 RewriteCond %{THE_REQUEST} /x [NC]
 RewriteRule ^ - [F,L]
