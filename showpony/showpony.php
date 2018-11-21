@@ -1,21 +1,27 @@
 <?php
 
-// PHP 7 required
-header('Content-type: application/javascript');
+session_start();
 
-const HIDDENCHAR='x';
-const ROOT=__DIR__;
+require 'settings.php';
+
+// POST VALUES FOR TESTING
+
+$stories_path=$_GET['path'] ?? DEFAULT_STORIES_PATH;
+$language=$_GET['lang'] ?? DEFAULT_LANGUAGE;
+
+// Get the query from the paths
+$name=preg_match('/[^\/]+(?=\/?$)/',$stories_path,$match) ? $match[0] : 'story';
 
 // Unhide a file, including any hidden parent folders
 function unhideFile($name){
-	// Split the file into its path segments, so we can check all folders for HIDDENCHAR
+	// Split the file into its path segments, so we can check all folders for HIDDEN_FILENAME_STARTING_CHAR
 	$segments=explode('/',$name);
 	$path='';
 	
 	foreach($segments as $check){
-		if(file_exists($path.HIDDENCHAR.$check)){
-			// Remove HIDDENCHAR
-			rename($path.HIDDENCHAR.$check,$path.$check);
+		if(file_exists($path.HIDDEN_FILENAME_STARTING_CHAR.$check)){
+			// Remove HIDDEN_FILENAME_STARTING_CHAR
+			rename($path.HIDDEN_FILENAME_STARTING_CHAR.$check,$path.$check);
 		}
 		
 		$path.=$check.'/';
@@ -30,25 +36,114 @@ function toCamelCase($input){
 	);
 }
 
-// POST VALUES FOR TESTING
+// These associative arrays will be sent to the user as JSON
+$media=[];
+$files=[];
+$success=true;
 
-$language='en';
-$_GET['path']=$_GET['path'] ?? '';
+// Go to the story's file directory
+chdir('../'.$stories_path);
 
-// Get the query from the paths
-$name=preg_match('/[^\/]+(?=\/?$)/',$_GET['path'],$match) ? $match[0] : 'story';
+// We'll store all errors and code that's echoed, so we can send that info to the user (in a way that won't break the JSON object).
+ob_start();
 
-// You can disable this
-session_start();
+// May be used later for unhiding files
+$parentDir='';
+for($i=0;$i<substr_count($stories_path,'/');$i++){
+	$parentDir.='../';
+}
 
-// Uncomment the below to show errors
-//*
-error_reporting(E_ALL);
-ini_set('display_errors',1);
-//*/
+// Run through the files
+foreach(scandir($language) as &$file){
+	// Ignore hidden files and folders
+	if($file[0]==='.' || is_dir($file)) continue;
+	
+	// If the file was hidden, and is unhid later, we'll set this to true
+	$unhid=false;
+	
+	// Ignore files that have dates in their filenames set to later
+	if(preg_match('/\d{4}-\d\d-\d\d(\s\d\d(:|;)\d\d(:|;)\d\d)?/',$file,$date)){ // Get the posting date from the file's name; if there is one:
+		// If the time is previous to now (replacing ; with : for Windows filename compatibility)
+		$date=str_replace(';',':',$date[0]).' UTC';
+		
+		// Check if the file should be live based on the date passed
+		if(strtotime($date)<=time()){
+			// $hidden is already false
+			
+			// If the file is hidden but shouldn't be
+			if($file[0]===HIDDEN_FILENAME_STARTING_CHAR){
+				// Remove HIDDEN_FILENAME_STARTING_CHAR at the beginning of the filename
+				if(rename($language.'/'.$file,$language.'/'.($file=substr($file,1)))){
+					$unhid=true;
+				// If removing HIDDEN_FILENAME_STARTING_CHAR fails
+				}else{
+					$success=false;
+				}
+			}
+		}else{
+			$hidden=true;
+			
+			// If the file isn't hidden but should be
+			if($file[0]!==HIDDEN_FILENAME_STARTING_CHAR){
+				// Add HIDDEN_FILENAME_STARTING_CHAR at the beginning of the filename
+				if(rename($language.'/'.$file,$language.'/'.($file=HIDDEN_FILENAME_STARTING_CHAR.$file))){
+					
+				// If adding HIDDEN_FILENAME_STARTING_CHAR fails
+				}else{
+					$success=false;
+				}
+			}
+			
+			// Don't add hidden files if we aren't logged in
+			if(empty($_SESSION['showpony_admin'])) continue;
+		}
+	}else $date=null;
+	
+	// There must be a better way to get some of this info...
+	$fileInfo=[
+		'buffered'		=>	false
+		,'date'			=>	$date
+		,'duration'		=>	preg_match('/[^\s)]+(?=\.[^.]+$)/',$file,$match) ? $match[0] : 10
+		,'extension'	=>	pathinfo($language.'/'.$file,PATHINFO_EXTENSION)
+		,'mimeType'		=>	mime_content_type($language.'/'.$file)
+		,'name'			=>	$file
+		,'path'			=>	$stories_path.$language.'/'.$file
+		,'size'			=>	filesize($language.'/'.$file)
+		,'subtitles'	=>	false
+		,'title'		=>	preg_match('/([^()])+(?=\))/',$file,$match) ? $match[0] : null
+	];
+	
+	// Get the module based on FILE_DATA_GET_MODULE- first ext, then full mime, then partial mime, then default
+	$fileInfo['module']=FILE_DATA_GET_MODULE['ext:'.$fileInfo['extension']]
+		?? FILE_DATA_GET_MODULE['mime:'.$fileInfo['mimeType']]
+		?? FILE_DATA_GET_MODULE['mime:'.explode('/',$fileInfo['mimeType'])[0]]
+		?? FILE_DATA_GET_MODULE['default']
+	;
+	
+	// If the module isn't supported, skip over it
+	if($fileInfo['module']===null) continue;
+	
+	// If this file has been unhid, unhide related files
+	if($unhid){
+		// Unhide subtitles
+		unhideFile('subtitles/'.$language.'/'.$fileInfo['title'].'.vtt');
+		
+		// Unhide children files
+		call_user_func($fileInfo['module'].'UnhideChildren',$language.'/'.$file);
+	}
+	
+	// Add to the items in the module, or set to 1 if it doesn't exist yet
+	if(isset($media[$fileInfo['module']])) $media[$fileInfo['module']]++;
+	else $media[$fileInfo['module']]=1;
+	
+	// Add the file to the array
+	$files[]=$fileInfo;
+}
 
-require 'settings.php';
+// Pass any echoed statements or errors to the response object
+$message=ob_get_clean();
 
+header('Content-type: application/javascript');
 ?>'use strict';
 
 //Load CSS if not loaded already
@@ -57,151 +152,6 @@ if(!document.querySelector('[href$="showpony/styles.css"]')) document.head.inser
 var <?php echo toCamelCase($name); ?>=new function(){
 
 const S=this;
-
-///////////////////////////////////////
-////////////////MODULES////////////////
-///////////////////////////////////////
-<?
-
-$media=[];
-
-// Get a private file
-if(!empty($_GET['get'])){
-	// If we aren't logged in, block the effort
-	if(empty($_SESSION['showpony_admin'])) die('You need to be logged in to access private files.');
-	
-	// Go to the correct directory
-	chdir(($_GET['rel-path'] ?: '..').'/');
-	
-	// Get the file path
-	$file=dirname(__FILE__,2).'/'.$_GET['get'];
-
-	// These headers are required to scrub media (yes, you read that right)
-	header('Accept-Ranges: bytes');
-	header('Content-Length:'.filesize($file));
-	
-	readfile($file);
-}else{
-	// Run called functions
-	
-	// These associative arrays will be sent to the user as JSON
-	$response=[];
-	$files=[];
-	
-	// Go to the story's file directory
-	chdir('../'.$_GET['path']);
-	
-	// We'll store all errors and code that's echoed, so we can send that info to the user (in a way that won't break the JSON object).
-	ob_start();
-	
-	// Get files and protect others
-	$response['success']=true;
-	
-	// May be used later for unhiding files
-	$parentDir='';
-	for($i=0;$i<substr_count($_GET['path'],'/');$i++){
-		$parentDir.='../';
-	}
-	
-	// Run through the files
-	foreach(scandir($language) as &$file){
-		// Ignore hidden files and folders
-		if($file[0]==='.' || is_dir($file)) continue;
-		
-		// If the file was hidden, and is unhid later, we'll set this to true
-		$unhid=false;
-		
-		// Ignore files that have dates in their filenames set to later
-		if(preg_match('/\d{4}-\d\d-\d\d(\s\d\d(:|;)\d\d(:|;)\d\d)?/',$file,$date)){ // Get the posting date from the file's name; if there is one:
-			// If the time is previous to now (replacing ; with : for Windows filename compatibility)
-			$date=str_replace(';',':',$date[0]).' UTC';
-			
-			// Check if the file should be live based on the date passed
-			if(strtotime($date)<=time()){
-				// $hidden is already false
-				
-				// If the file is hidden but shouldn't be
-				if($file[0]===HIDDENCHAR){
-					// Remove HIDDENCHAR at the beginning of the filename
-					if(rename($language.'/'.$file,$language.'/'.($file=substr($file,1)))){
-						$unhid=true;
-					// If removing HIDDENCHAR fails
-					}else{
-						$response['success']=false;
-					}
-				}
-			}else{
-				$hidden=true;
-				
-				// If the file isn't hidden but should be
-				if($file[0]!==HIDDENCHAR){
-					// Add HIDDENCHAR at the beginning of the filename
-					if(rename($language.'/'.$file,$language.'/'.($file=HIDDENCHAR.$file))){
-						
-					// If adding HIDDENCHAR fails
-					}else{
-						$response['success']=false;
-					}
-				}
-				
-				// Don't add hidden files if we aren't logged in
-				if(empty($_SESSION['showpony_admin'])) continue;
-			}
-		}else $date=null;
-		
-		// There must be a better way to get some of this info...
-		$fileInfo=[
-			'buffered'		=>	false
-			,'date'			=>	$date
-			,'duration'		=>	preg_match('/[^\s)]+(?=\.[^.]+$)/',$file,$match) ? $match[0] : 10
-			,'extension'	=>	pathinfo($language.'/'.$file,PATHINFO_EXTENSION)
-			,'mimeType'		=>	mime_content_type($language.'/'.$file)
-			,'name'			=>	$file
-			,'path'			=>	$_GET['path'].$language.'/'.$file
-			,'size'			=>	filesize($language.'/'.$file)
-			,'subtitles'	=>	false
-			,'title'		=>	preg_match('/([^()])+(?=\))/',$file,$match) ? $match[0] : null
-		];
-		
-		// Get the medium based on $fileToModule- first ext, then full mime, then partial mime, then default
-		$fileInfo['medium']=$fileToModule['ext:'.$fileInfo['extension']]
-			?? $fileToModule['mime:'.$fileInfo['mimeType']]
-			?? $fileToModule['mime:'.explode('/',$fileInfo['mimeType'])[0]]
-			?? $fileToModule['default']
-		;
-		
-		// If the medium isn't supported, skip over it
-		if($fileInfo['medium']===null) continue;
-		
-		// If this file has been unhid, unhide related files
-		if($unhid){
-			// Unhide subtitles
-			unhideFile('subtitles/'.$language.'/'.$fileInfo['title'].'.vtt');
-			
-			// Unhide children files
-			call_user_func($fileInfo['medium'].'UnhideChildren',$language.'/'.$file);
-		}
-		
-		// Add to the items in the medium, or set to 1 if it doesn't exist yet
-		if(isset($media[$fileInfo['medium']])) $media[$fileInfo['medium']]++;
-		else $media[$fileInfo['medium']]=1;
-		
-		// Add the file to the array
-		$files[]=$fileInfo;
-	}
-	
-	// Pass any echoed statements or errors to the response object
-	$response['message']=ob_get_clean();
-}
-
-// Load modules
-foreach(array_keys($media) as $moduleName){
-	include_once 'modules/'.$moduleName.'.php';
-	echo '
-	';
-}
-
-?>
 
 ///////////////////////////////////////
 ///////////PUBLIC VARIABLES////////////
@@ -214,8 +164,9 @@ S.files=<?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
 S.name='<?=toCamelCase($name)?>';
 S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 S.paused=false;
-S.fileToModule=<?=json_encode($fileToModule,JSON_NUMERIC_CHECK); ?>;
+S.modules={};
 S.media=<?=json_encode($media,JSON_NUMERIC_CHECK)?>;
+S.message='<?php echo addslashes($message); ?>';
 S.auto=true; //false, or float between 0 and 10
 
 S.window.innerHTML=`
@@ -239,21 +190,21 @@ S.subtitles=<?php
 	$subtitles=[];
 	foreach(scandir('subtitles') as $file){
 		// Ignore hidden files and folders
-		if($file[0]==='.' || $file[0]==='~') continue;
+		if($file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
 		
-		$subtitles[$file]=$_GET['path'].'subtitles/'.$file.'/';
+		$subtitles[$file]=$stories_path.'subtitles/'.$file.'/';
 	}
 	
 	echo json_encode($subtitles);
 ?>;
 
 S.data={};
-S.saveId='<?php echo substr($_GET['title'] ?? $_GET['path'] ?? gethostname(),0,20); ?>';
+S.saveId='<?php echo substr($_GET['title'] ?? $stories_path ?? gethostname(),0,20); ?>';
 S.cover={<?php
 	echo 'content:"',$_GET['title'] ?? 'Play','"';
 	// Pass a cover if one is found
 	if(file_exists('cover.jpg')){
-		echo ',image:"',$_GET['path'],'cover.jpg"';
+		echo ',image:"',$stories_path,'cover.jpg"';
 	}
 ?>};
 
@@ -262,8 +213,20 @@ S.gamepad=null;
 //null before we load
 S.currentFile=null;
 S.currentTime=null;
-S.currentMedium=null;
+S.currentModule=null;
 S.currentSubtitles=null;
+
+///////////////////////////////////////
+////////////////MODULES////////////////
+///////////////////////////////////////
+<?php
+
+// Load modules
+foreach(array_keys($media) as $moduleName){
+	include 'modules/'.$moduleName.'.php';
+}
+
+?>
 
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
@@ -303,25 +266,25 @@ S.to=function(obj={}){
 	}
 	
 	//Only start images at beginning; you can't go into the "middle" of image
-	if(S.files[obj.file].medium==='image') obj.time=0;
+	if(S.files[obj.file].module==='image') obj.time=0;
 	
-	///LOAD RIGHT MEDIUM AND SOURCE///
+	///LOAD RIGHT module AND SOURCE///
 	
 	//If switching types, do some cleanup
-	if(S.currentMedium!==S.files[obj.file].medium){
+	if(S.currentModule!==S.files[obj.file].module){
 		content.innerHTML='';
-		content.appendChild(S[S.files[obj.file].medium].window);
+		content.appendChild(S.modules[S.files[obj.file].module].window);
 	}
 	
-	S.currentMedium=S.files[obj.file].medium;
+	S.currentModule=S.files[obj.file].module;
 	
 	//Load the file
 	if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
 	
-	S[S.currentMedium].src(obj.file,obj.time).then(()=>{
-		S.currentFile=S[S.currentMedium].currentFile=obj.file;
-		S[S.currentMedium].timeUpdate(obj.time);
-		S[S.currentMedium].goToTime=obj.time;
+	S.modules[S.currentModule].src(obj.file,obj.time).then(()=>{
+		S.currentFile=S.modules[S.currentModule].currentFile=obj.file;
+		S.modules[S.currentModule].timeUpdate(obj.time);
+		S.modules[S.currentModule].goToTime=obj.time;
 		timeUpdate(obj.time);
 		
 		//We can preload up to this amount
@@ -371,7 +334,7 @@ if(S.infiniteScroll){//Scroll to the right spot
 }*/
 
 /*//Use either infinite text or page turn, whichever is requested
-if(S.infiniteScroll || S.files[obj.file].medium==='text'){
+if(S.infiniteScroll || S.files[obj.file].module==='text'){
 	content.appendChild(pageTurn);
 }else{
 	content.classList.remove('showpony-loading');
@@ -380,7 +343,7 @@ if(S.infiniteScroll || S.files[obj.file].medium==='text'){
 
 //NEED A DIFFERENT SETUP FOR INFINITE SCROLL//
 /*
-/*if(S.currentMedium==='text'){
+/*if(S.currentModule==='text'){
 	fetch(src,{credentials:'include'})
 		.then(response=>{
 			return response.text();
@@ -462,7 +425,7 @@ S.play=function(){
 	
 	S.window.classList.remove('showpony-paused');
 	S.paused=false;
-	S[S.currentMedium].play();
+	S.modules[S.currentModule].play();
 	S.window.dispatchEvent(new CustomEvent('play'));
 }
 
@@ -471,7 +434,7 @@ S.pause=function(){
 	
 	S.window.classList.add('showpony-paused');
 	S.paused=true;
-	if(S.currentMedium) S[S.currentMedium].pause();
+	if(S.currentModule) S.modules[S.currentModule].pause();
 	S.window.dispatchEvent(new CustomEvent('pause'));
 }
 
@@ -605,7 +568,7 @@ else{
 //When the viewer inputs to Showpony (click, space, general action)
 S.input=function(){
 	if(S.paused) S.play();
-	else S[S.currentMedium].input();
+	else S.modules[S.currentModule].input();
 }
 
 ///////////////////////////////////////
@@ -646,14 +609,14 @@ function timeUpdate(time){
 		//Don't exceed the file's duration
 		var duration=S.files[S.currentFile].duration;
 		if(time>duration) time=duration;
-		S[S.currentMedium].timeUpdate(time);
+		S.modules[S.currentModule].timeUpdate(time);
 	}
 	
 	//Get the current time in the midst of the entire Showpony
-	S.currentTime=S[S.currentMedium].currentTime
+	S.currentTime=S.modules[S.currentModule].currentTime
 	for(let i=0;i<S.currentFile;i++) S.currentTime+=S.files[i].duration;
 	
-	S[S.currentMedium].displaySubtitles();
+	S.modules[S.currentModule].displaySubtitles();
 	
 	if(scrubbing!==true) scrub(null,false);
 	
@@ -1197,7 +1160,7 @@ S.window.addEventListener('wheel',function(event){
 		if(event.deltaY>0) S.to({time:'+10'});
 		if(event.deltaY<0) S.to({time:'-10'});
 	}else{
-		if(S.currentMedium==='visualNovel'){
+		if(S.currentModule==='visualNovel'){
 			if(event.deltaY<0){
 				S.visualNovel.previousKeyframe();
 			}
@@ -1258,7 +1221,7 @@ if(S.subtitles){
 		'change'
 		,function(){
 			S.currentSubtitles=this.options[this.selectedIndex].value==='None' ? null : this.value;
-			S[S.currentMedium].displaySubtitles();
+			S.modules[S.currentModule].displaySubtitles();
 		}
 	);
 }else captionsButton.remove();

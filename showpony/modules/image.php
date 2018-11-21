@@ -8,7 +8,7 @@ function imageUnhideChildren($input){
 
 ?>
 
-S.<?php echo 'image'; ?>=new function(){
+S.modules.<?php echo 'image'; ?>=new function(){
 	const M=this;
 	
 	M.currentTime=null;

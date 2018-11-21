@@ -1,6 +1,6 @@
 <?php
 
-// $fileToModule['ext:vn']='visualNovel';
+// FILE_DATA_GET_MODULE['ext:vn']='visualNovel';
 
 function visualNovelUnhideChildren($input){
 	// visualNovel includes files on specific lines
@@ -95,7 +95,7 @@ function visualNovelUnhideChildren($input){
 /// TODO: fix general bugs
 /// TODO: condense and optimize (I suspect we can get this down by a large amount)
 
-S.<?php echo 'visualNovel'; ?>=new function(){
+S.modules.<?php echo 'visualNovel'; ?>=new function(){
 	const M=this;
 	
 	M.currentTime=null;
@@ -225,9 +225,13 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 			
 			//If this is the current file
 			if(M.currentFile===file){
+				// Get the correct keyframe position
 				runTo=Math.round(keyframes.length*(time/S.files[M.currentFile].duration));
 				if(runTo>=keyframes.length) runTo=keyframes[keyframes.length-1];
 				else runTo=keyframes[runTo];
+				
+				console.log(M.currentLine,{time,runTo,keyframes},M.lines[runTo]);
+				// console.log(M.lines);
 				
 				// If this is the current keyframe, resolve
 				if(runTo===M.currentLine){
@@ -321,8 +325,8 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 			runTo=false;
 			inputting=false;
 			
-			// console.log('TARGET',target);
-			// console.log('OBJECTS',objects);
+			console.log('TARGET',target);
+			console.log('OBJECTS',objects);
 			
 			// Delete unnecessary target info
 			delete target['engine'];
@@ -373,8 +377,8 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 				}
 			}
 			
-			// console.log('TARGET AT END',target);
 			target={};
+			// console.log('TARGET AT END',target);
 			waitTimer.end();
 			
 			M.window.offsetHeight; //Trigger reflow to flush CSS changes
@@ -430,6 +434,7 @@ S.<?php echo 'visualNovel'; ?>=new function(){
 		
 		//If we're running through to a point, add the info to the target
 		if(runTo){
+			
 			if(!target[name]){
 				target[name]={
 					'type':type

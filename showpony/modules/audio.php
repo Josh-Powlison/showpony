@@ -8,7 +8,7 @@ function audioUnhideChildren(){
 
 ?>
 
-S.<?php echo 'audio'; ?>=new function(){
+S.modules.<?php echo 'audio'; ?>=new function(){
 	const M=this;
 	
 	M.currentTime=null;

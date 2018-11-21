@@ -8,7 +8,7 @@ function videoUnhideChildren(){
 
 ?>
 
-S.<?php echo 'video'; ?>=new function(){
+S.modules.<?php echo 'video'; ?>=new function(){
 	const M=this;
 	
 	M.currentTime=null;

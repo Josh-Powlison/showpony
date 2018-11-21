@@ -47,7 +47,7 @@ function textUnhideChildren($input){
 
 ?>
 
-S.<?php echo 'text'; ?>=new function(){
+S.modules.<?php echo 'text'; ?>=new function(){
 	const M=this;
 	
 	M.currentTime=null;
