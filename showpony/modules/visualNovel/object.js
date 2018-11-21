@@ -218,14 +218,72 @@ S.modules.visualNovel=new function(){
 		}
 	}
 	
-	//Run visual novel
+	var operations={
+		'='		:(a,b)=>	b
+		,'+'	:(a,b)=>	a+b
+		,'-'	:(a,b)=>	a-b
+		,'=='	:(a,b)=>	a==b
+		,'<'	:(a,b)=>	a<b
+		,'>'	:(a,b)=>	a>b
+		,'<='	:(a,b)=>	a<=b
+		,'>='	:(a,b)=>	a>=b
+		,'!'	:(a,b)=>	a!=b
+	};
+	
 	M.progress=function(inputNum=M.currentLine+1){
 		//Go to either the specified line or the next one
 		M.currentLine=inputNum;
 		
+		//If we've ended manually or reached the end, stop running immediately and end it all
+		if(M.currentLine>=M.lines.length){
+			S.to({file:'+1'});
+			return;
+		}
+		
 		//Skip comments
 		if(/^\/\//.test(M.lines[M.currentLine])){
 			M.progress();
+			return;
+		}
+		
+		var vals=M.lines[M.currentLine];
+		
+		//Replace all variables (including variables inside variables) with the right name
+		var match;
+		while(match=/[^\[]+(?=\])/g.exec(vals)) vals=vals.replace('['+match[0]+']',S.data[match[0]]);
+		
+		vals=vals.split(/(?:\s{3,}|\t+)/);
+		
+		var type=/[+=\-<>!]+$/.exec(vals[0]);
+		console.log('RUNNING OPERATION',vals,type);
+		
+		if(type){
+			type=type[0];
+			//Remove type from variable name
+			var name=vals[0].replace(type,'');
+			
+			switch(type){
+				//Operations
+				case '=':
+				case '+':
+				case '-':
+					S.data[name]=operations[type](
+						ifParse(S.data[name])
+						,ifParse(vals[1])
+					);
+					
+					M.progress();
+					break;
+				//Comparisons
+				default:
+					if(operations[type](
+						ifParse(S.data[name])
+						,ifParse(vals[1])
+					)) M.progress(M.lines.indexOf(vals[2]));
+					else M.progress();
+					break;
+			}
+			
 			return;
 		}
 		
@@ -295,26 +353,6 @@ S.modules.visualNovel=new function(){
 			
 			// console.log('OBJECTS AT END',objects);
 		}
-		
-		//If we've ended manually or reached the end, stop running immediately and end it all
-		if(M.currentLine>=M.lines.length){
-			S.to({file:'+1'});
-			return;
-		}
-		
-		//Update the scrubbar if the frame we're on is a keyframe
-		if(runTo===false && keyframes.includes(M.currentLine)){
-			//Set the time of the element
-			timeUpdate((keyframes.indexOf(M.currentLine)/keyframes.length)*S.files[M.currentFile].duration);
-		}
-		
-		var vals=M.lines[M.currentLine];
-		
-		//Replace all variables (including variables inside variables) with the right name
-		var match;
-		while(match=/[^\[]+(?=\])/g.exec(vals)) vals=vals.replace('['+match[0]+']',S.data[match[0]]);
-		
-		vals=vals.split(/(?:\s{3,}|\t+)/);
 		
 		//Determine the type of object//
 		var command=/\..+/.exec(vals[0]);
@@ -388,6 +426,11 @@ S.modules.visualNovel=new function(){
 		
 		//Operations need to be functions of the parent
 		///TODO: get operations working again, but as engine.commands
+		
+		//Update the scrubbar if the frame we're on is a keyframe
+		if(runTo===false && keyframes.includes(M.currentLine)){
+			timeUpdate((keyframes.indexOf(M.currentLine)/keyframes.length)*S.files[M.currentFile].duration);
+		}
 				
 		//Don't automatically continue on text updates or engine commands
 		if(type==='textbox' && command==='content') return;
@@ -398,54 +441,6 @@ S.modules.visualNovel=new function(){
 	//If a value's a number, return it as one
 	function ifParse(input){
 		return isNaN(input) ? input : parseFloat(input);
-	}
-	
-	//Data
-	M.operation=function(vals){
-		
-		var type=/[+=\-<>!]+$/.exec(vals[0]);
-		console.log('RUNNING OPERATION',vals,type);
-		
-		if(!type) return;
-		
-		type=type[0];
-		//Remove type from variable name
-		var name=vals[0].replace(type,'');
-		
-		//Check values inline
-		var operators={
-			'='		:(a,b)=>	b
-			,'+='	:(a,b)=>	a+b
-			,'-='	:(a,b)=>	a-b
-			,'=='	:(a,b)=>	a==b
-			,'<'	:(a,b)=>	a<b
-			,'>'	:(a,b)=>	a>b
-			,'<='	:(a,b)=>	a<=b
-			,'>='	:(a,b)=>	a>=b
-			,'!'	:(a,b)=>	a!=b
-		};
-		
-		switch(type){
-			//Operations
-			case '=':
-			case '+=':
-			case '-=':
-				S.data[name]=operators[type](
-					ifParse(S.data[name])
-					,ifParse(vals[1])
-				);
-				
-				M.progress();
-				break;
-			//Comparisons
-			default:
-				if(operators[type](
-					ifParse(S.data[name])
-					,ifParse(vals[1])
-				)) M.progress(M.lines.indexOf(vals[2]));
-				else M.progress();
-				break;
-		}
 	}
 	
 	M.go=function(input){
