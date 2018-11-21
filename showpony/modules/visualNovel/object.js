@@ -288,11 +288,8 @@ S.modules.visualNovel=new function(){
 		
 		//Run through if we're running to a point; if we're there or beyond though, stop running through
 		if(runTo!==false && M.currentLine>=runTo){
-			runTo=false;
-			inputting=false;
 			
-			console.log('TARGET',target);
-			console.log('OBJECTS',objects);
+			inputting=false;
 			
 			// Delete unnecessary target info
 			delete target['engine'];
@@ -325,20 +322,21 @@ S.modules.visualNovel=new function(){
 				objects[name].style();
 				
 				// Go through the object's functions and reset them to their base or passed values
-				for(var check in target[name]){
+				for(var command in target[name]){
 					// Skip over "remove" function- we don't want to run that one :P
-					if(check==='remove') continue;
+					if(command==='remove') continue;
 					
-					// console.log('CHECKING THIS:',name,check,typeof(objects[name][check]),target[name][check]);
+					// console.log('CHECKING THIS:',name,command,typeof(objects[name][command]),target[name][command]);
 					
-					if(typeof(objects[name][check])==='function'){
-						if(typeof(target[name][check])==='undefined'){
-							objects[name][check]();
+					if(typeof(objects[name][command])==='function'){
+						if(typeof(target[name][command])==='undefined'){
+							objects[name][command]();
 						}else{
-							// console.log('PASSING TO ',name,',',check,':',target[name][check]);
-							objects[name][check](target[name][check]);
+							console.log(command);
+							
+							// console.log('PASSING TO ',name,',',command,':',target[name][command]);
+							objects[name][command](target[name][command]);
 						}
-						
 					}
 				}
 			}
@@ -346,11 +344,11 @@ S.modules.visualNovel=new function(){
 			target={};
 			// console.log('TARGET AT END',target);
 			waitTimer.end();
+
+			runTo=false;
 			
 			M.window.offsetHeight; //Trigger reflow to flush CSS changes
 			content.classList.remove('showpony-loading');
-			
-			// console.log('OBJECTS AT END',objects);
 		}
 		
 		//Determine the type of object//
@@ -474,7 +472,7 @@ S.modules.visualNovel=new function(){
 		}
 		
 		//Skip waiting if we're running through
-		if(runTo){
+		if(runTo!==false){
 			M.progress();
 			return;
 		}
@@ -538,7 +536,7 @@ S.modules.visualNovel=new function(){
 			//Add back in to support multiple objects sharing the same file set
 			
 			//If running to or not requesting animation, add styles without implementing animation
-			if(animationSpeed===null || M.currentLine<runTo){
+			if(animationSpeed===null || runTo!==false){
 				O.el.style.cssText+=style;
 			}else{
 				localStyle.innerHTML='@keyframes '+cssName+'{100%{'+style+'}}';
@@ -719,12 +717,6 @@ S.modules.visualNovel=new function(){
 		
 			//var keepGoing=false;
 			//if(!keepGoing) M.progress();
-			
-			//If we're running through, skip displaying text until we get to the right point
-			if(runTo){
-				M.progress(undefined);
-				return;
-			}
 			
 			wait=true; //Assume we're waiting at the end time
 			
@@ -1012,8 +1004,8 @@ S.modules.visualNovel=new function(){
 						hideChar.innerHTML=animChar.innerHTML=input[i];
 					}
 					
-					//Set the display time here- but if we're paused, no delay!
-					if(!S.paused && !inputting) showChar.style.animationDelay=totalWait+'s';
+					//Set the display time here- but if we're paused, or running through the text with runTo, no delay!
+					if(!S.paused && !inputting && runTo===false) showChar.style.animationDelay=totalWait+'s';
 					
 					//Set animation timing for animChar, based on the type of animation
 					if(thisChar.classList.contains('showpony-char-sing')){
