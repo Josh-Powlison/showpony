@@ -1,24 +1,4 @@
-<?php
-
-/*
-// On renaming, replace instances of the word template:
-// $filetoModule settings
-// templateUnhideChildren
-// S.template=
-*/
-
-// You can associate this module with files based on file extension, full mime types, or partial mime types. They will be checked in that order.
-$fileToModule['ext:xyz']='template';
-// $fileToModule['mime:text/plain']='template';
-// $fileToModule['mime:application']='template';
-
-function templateUnhideChildren($input){
-	// Unhides children of the file, if any are present. If none are, this can be kept blank.
-}
-
-?>
-
-S.<?php echo 'template'; ?>=new function(){
+S.modules.template=new function(){
 	const M=this; //The media Player
 	
 	M.currentTime=null;
