@@ -614,7 +614,7 @@ S.modules.visualNovel=new function(){
 		M.window.appendChild(O.el);
 
 		O.content=function(input=O.name){
-			O.el.style.backgroundImage='url("<?php echo $stories_path; ?>resources/backgrounds/'+input+'.jpg")';
+			O.el.style.backgroundImage='url("<?php echo $stories_path; ?>resources/backgrounds/'+input.split('#')[0]+'.jpg")';
 		}
 		
 		objectAddCommonFunctions(O);
