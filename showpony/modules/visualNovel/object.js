@@ -7,6 +7,7 @@ S.modules.visualNovel=new function(){
 	M.currentTime=null;
 	M.currentFile=null;
 	M.currentLine=null;
+	M.lines=null;
 	
 	M.window=document.createElement('div');
 	M.window.className='showpony-visual-novel';
@@ -639,21 +640,8 @@ S.modules.visualNovel=new function(){
 		O.name=input;
 		
 		M.window.appendChild(O.el);
-		
-		/*
-		var lines=input;
-		
-		//Go through the rest of the lines, looking for images to preload
-		for(let i=M.currentLine;i<M.lines.length;i++){
-			
-			//If this character is listed on this line
-			if(M.lines[i].indexOf(object+'\t')===0){
-				//Add the image names to the images to load
-				lines.push(M.lines[i].split(/\s{3,}|\t+/)[1]);
-			}
-		}*/
-		
-		O.content=function(input,hide=false){
+
+		O.content=function(input,preloading=false){
 			//Character level
 			//Get the image names passed (commas separate layers)
 			var imageNames=input.split(',');
@@ -680,9 +668,13 @@ S.modules.visualNovel=new function(){
 					thisImg.style.backgroundImage='url("<?php echo $stories_path; ?>resources/characters/'+O.name.split('#')[0]+'/'+image+'")';
 					
 					O.el.children[layer].appendChild(thisImg);
+					
+					if(preloading) thisImg.style.opacity=0;
 				}
 				
-				//Set the matching images' opacity to 1, and all the others to 0
+				if(preloading) continue;
+				
+				//Set the matching images' opacity to 1, and all the others to 0 (visibility:hidden, display:none would result in flashing images on some browsers)
 				var images=O.el.children[layer].children;
 				for(let ii=0;ii<images.length;ii++){
 					if(images[ii].dataset.image===image){
@@ -696,7 +688,11 @@ S.modules.visualNovel=new function(){
 		
 		objectAddCommonFunctions(O);
 		
-		//if(input) O.content();
+		//Preload images
+		for(let i=M.currentLine;i<M.lines.length;i++){
+			var value=new RegExp(O.name+'(\s{3,}|\t+)(.+$)').exec(M.lines[i]);
+			if(value) O.content(value[2],true);
+		}
 	}
 	
 	function textbox(input){
