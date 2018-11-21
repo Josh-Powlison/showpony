@@ -257,6 +257,11 @@
 	white-space:nowrap;
 }
 
+/* Don't let textbox elements exceed textbox width */
+.showpony-textbox>*{
+	max-width:100%;
+}
+
 .showpony-textbox input{
 	pointer-events:auto;
 	font-size:1em;
