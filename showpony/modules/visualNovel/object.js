@@ -1,7 +1,7 @@
 /// TODO: fix general bugs
 /// TODO: condense and optimize (I suspect we can get this down by a large amount)
 
-S.modules.<?php echo 'visualNovel'; ?>=new function(){
+S.modules.visualNovel=new function(){
 	const M=this;
 	
 	M.currentTime=null;
