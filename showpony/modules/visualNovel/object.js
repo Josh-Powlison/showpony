@@ -310,14 +310,7 @@ S.modules.visualNovel=new function(){
 			for(var name in target){
 				// Make the remaining objects
 				if(typeof(objects[name])==='undefined'){
-					switch(target[name].type){
-						case 'audio': objects[name]=new audio(name); break;
-						case 'background': objects[name]=new background(name); break;
-						case 'character': objects[name]=new character(name); break;
-						case 'textbox': objects[name]=new textbox(name); break;
-						case 'nameplate': objects[name]=new nameplate(name); break;
-						default: break;
-					}
+					objects[name]=new M[target[name].type](name);
 				}
 				
 				// Reset the object's custom CSS
@@ -426,14 +419,7 @@ S.modules.visualNovel=new function(){
 		}else{
 			//If an object with the name doesn't exist, make it!
 			if(!objects[name]){
-				switch(type){
-					case 'audio': objects[name]=new audio(name); break;
-					case 'background': objects[name]=new background(name); break;
-					case 'character': objects[name]=new character(name); break;
-					case 'textbox': objects[name]=new textbox(name); break;
-					case 'name': objects[name]=new name(name); break;
-					default: break;
-				}
+				objects[name]=new M[type](name);
 			}
 			
 			// Object command
@@ -557,7 +543,7 @@ S.modules.visualNovel=new function(){
 		});
 	}
 	
-	function audio(input){
+	M.audio=function(input){
 		const O=this;
 		O.type='audio';
 		O.name=input;
@@ -616,7 +602,7 @@ S.modules.visualNovel=new function(){
 		objectAddCommonFunctions(O);
 	}
 	
-	function background(input){
+	M.background=function(input){
 		const O=this;
 		O.type='background';
 		
@@ -634,7 +620,7 @@ S.modules.visualNovel=new function(){
 		objectAddCommonFunctions(O);
 	}
 	
-	function character(input){
+	M.character=function(input){
 		const O=this;
 		O.type='character';
 		
@@ -699,7 +685,7 @@ S.modules.visualNovel=new function(){
 		}
 	}
 	
-	function nameplate(input){
+	M.nameplate=function(input){
 		const O=this;
 		O.type='nameplate';
 		O.name=input;
@@ -721,7 +707,7 @@ S.modules.visualNovel=new function(){
 		objectAddCommonFunctions(O);
 	}
 	
-	function textbox(input){
+	M.textbox=function(input){
 		const O=this;
 		O.type='textbox';
 		O.name=input;
@@ -753,7 +739,7 @@ S.modules.visualNovel=new function(){
 				
 				// Split text by nameplate
 				if(!objects.nameplate){
-					objects.nameplate=new nameplate('nameplate');
+					objects.nameplate=new M.nameplate('nameplate');
 				}
 				
 				var matches=/(.+)::(.*)/.exec(input);
