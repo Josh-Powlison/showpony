@@ -482,8 +482,8 @@ S.pause=function(){
 	if(S.paused===true) return;
 	
 	S.window.classList.add('showpony-paused');
-	S.paused=true;
 	if(S.currentModule) S.modules[S.currentModule].pause();
+	S.paused=true;
 	S.window.dispatchEvent(new CustomEvent('pause'));
 }
 

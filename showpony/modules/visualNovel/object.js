@@ -27,9 +27,10 @@ S.modules.visualNovel=new function(){
 	
 	M.play=function(){
 		//Go through objects that were playing- unpause them
-		for(var key in objects){
-			if(objects[key].wasPlaying){
-				objects[key].play();
+		for(var name in objects){
+			console.log('PLAY',objects[name].playing);
+			if(objects[name].playing){
+				objects[name].el.play();
 			}
 		}
 		
@@ -39,10 +40,10 @@ S.modules.visualNovel=new function(){
 	
 	M.pause=function(){
 		//Go through objects that can be played- pause them, and track that
-		for(var key in objects){
+		for(var name in objects){
 			//If it can play, and it is playing
-			if(typeof(objects[key].wasPlaying)!=='undefined'){
-				objects[key].pause();
+			if(objects[name].playing){
+				objects[name].el.pause();
 			}
 		}
 		
@@ -393,6 +394,22 @@ S.modules.visualNovel=new function(){
 				}
 				// Update values
 				else{
+					// When it comes to conflicting commands, choose only the latest
+					switch(command){
+						case 'play':
+							delete target[name].pause;
+							delete target[name].stop;
+							break;
+						case 'pause':
+							delete target[name].play;
+							delete target[name].stop;
+							break;
+						case 'stop':
+							delete target[name].play;
+							delete target[name].pause;
+							break;
+					}
+					
 					target[name][command]=vals[1];
 				}
 			}
@@ -552,7 +569,7 @@ S.modules.visualNovel=new function(){
 		M.window.appendChild(O.el);
 		
 		//Checks if was playing outside of pausing the Showpony
-		O.wasPlaying=false;
+		O.playing=false;
 		
 		O.content=function(input){
 			if(Array.isArray(input)) input=input[0];
@@ -561,22 +578,22 @@ S.modules.visualNovel=new function(){
 		}
 		
 		O.play=function(){
-			if(S.paused) O.wasPlaying=true;
+			O.playing=true;
 			if(!S.paused) O.el.play();
 		}
 		
 		O.pause=function(){
-			if(S.paused) O.wasPlaying=false;
+			O.playing=false;
 			O.el.pause();
 		}
 		
 		O.stop=function(){
-			if(S.paused) O.wasPlaying=false;
+			O.playing=false;
 			O.el.pause();
 			O.el.currentTime=0;
 		}
 		
-		O.loop=function(input=true){
+		O.loop=function(input=false){
 			O.el.loop=(input=="false" ? false : true);
 		}
 		
@@ -591,6 +608,10 @@ S.modules.visualNovel=new function(){
 		O.time=function(input=0){
 			O.el.currentTime=input;
 		}
+		
+		O.el.addEventListener('ended',function(){
+			if(!O.el.loop) O.playing=false;
+		});
 		
 		objectAddCommonFunctions(O);
 	}
