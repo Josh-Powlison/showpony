@@ -28,7 +28,7 @@ S.modules.visualNovel=new function(){
 	M.play=function(){
 		//Go through objects that were playing- unpause them
 		for(var name in objects){
-			console.log('PLAY',objects[name].playing);
+			// console.log('PLAY',objects[name].playing);
 			if(objects[name].playing){
 				objects[name].el.play();
 			}
@@ -747,6 +747,7 @@ S.modules.visualNovel=new function(){
 			//If the line doesn't start with +, replace the text
 			if(input[0]!=='+'){
 				O.el.innerHTML='';
+				O.el.scrollTop=0;
 				
 				inputting=false;
 				
@@ -1010,6 +1011,10 @@ S.modules.visualNovel=new function(){
 							//If the element's currently hidden (the animation that ended is for unhiding)
 							if(this.style.visibility!=='visible'){
 								this.style.visibility='visible';
+								
+								// If running to a spot, ignore all of this
+								if(runTo!==false) return;
+								
 								//If the letter's below the textbox
 								if(this.parentNode.getBoundingClientRect().bottom>O.el.getBoundingClientRect().bottom){
 									O.el.scrollTop=this.parentNode.offsetTop+this.parentNode.offsetHeight-O.el.offsetHeight;
