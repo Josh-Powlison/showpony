@@ -825,9 +825,17 @@ S.modules.visualNovel=new function(){
 						}
 					//We're creating the element
 					}else{
-						var tag=/^\S+/.exec(values)[0];
+						// Get the element's tag and attributes
+						var regex=/(\S+)=(['"]?)(.+?)\2(?=\s|$)|(\S+)/g;
+						var match;
 						
-						values=values.split(' ');
+						var tag=null;
+						var attributes=[];
+						
+						while((match=regex.exec(values))!==null){
+						  if(tag) attributes.push(match);
+						  else tag=match[0];
+						}
 						
 						switch(tag){
 							case 'shout':
@@ -837,12 +845,12 @@ S.modules.visualNovel=new function(){
 								charElement.classList.add('showpony-char-'+tag);
 								break;
 							case 'speed':
-								//Check the attributes
-								for(let i=1;i<values.length;i++){
-									if(values[i]==='constant'){
-										constant=true;
-									//It must be speed if not other
-									}else baseWaitTime*=parseFloat(/[\d\.]+/.exec(values[i])[0]);
+								for(let ii=0;ii<attributes.length;ii++){
+									if(attributes[ii][4]) constant=true;
+									else{
+										if(attributes[ii][1]==='constant') constant=(attributes[ii][3]==='false' ? false : true);
+										if(attributes[ii][1]==='rate') baseWaitTime*=parseFloat(attributes[ii][3]);
+									}
 								}
 								break;
 							case 'br':
@@ -856,21 +864,9 @@ S.modules.visualNovel=new function(){
 							default:
 								var newElement=document.createElement(tag);
 								
-								//Set attributes, if any were passed
-								for(let ii=1;ii<values.length;ii++){
-									
-									if(values[ii].indexOf('=')>-1){
-										var attValues=values[ii].substr().split('=');
-										
-										//Remove surrounding quotes
-										if(/['"]/.test(attValues[1])){
-											attValues[1]=attValues[1].substr(1,attValues[1].length-2);
-										}
-										
-										newElement.setAttribute(attValues[0],attValues[1]);
-									}else{
-										newElement.setAttribute(attValues[0],'true');
-									}
+								for(let ii=0;ii<attributes.length;ii++){
+									if(attributes[ii][4]) newElement.setAttribute(attributes[ii][4],true);
+									else newElement.setAttribute(attributes[ii][1],attributes[ii][3]);
 								}
 								
 								currentParent.appendChild(newElement);
