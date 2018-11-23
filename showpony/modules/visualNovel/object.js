@@ -167,15 +167,9 @@ S.modules.visualNovel=new function(){
 				//Get keyframes from the text- beginning, end, (? ->)and waiting points
 				keyframes=[0];
 				
+				//Regular text lines and waits can be keyframes
 				for(let i=1;i<M.lines.length;i++){
-					//If it's a user file spot, add the point immediately after the last keyframe- things let up to this, let it all happen
-					if(M.lines[i]==='engine.wait'){
-						keyframes.push(keyframes[keyframes.length-1]+1);
-						continue;
-					}
-					
-					//Regular text lines (not continuing) can be keyframes
-					if(/^\t+/.test(M.lines[i])) keyframes.push(i);
+					if(/^(\t+|engine\.wait)/.test(M.lines[i])) keyframes.push(i);
 				}
 				
 				// Get the keyframe
@@ -355,7 +349,7 @@ S.modules.visualNovel=new function(){
 		var type='character';
 		if(vals.length===1) type='background';
 		if(/play|pause|stop|loop/.test(command)) type='audio';
-		if(/go|end|runEvent|setTextbox|wait/.test(command)) type='engine';
+		if(/go|end|runEvent|wait/.test(command)) type='engine';
 		
 		// Determine name
 		var name=/^[^\.\t]+/.exec(vals[0]);
@@ -714,15 +708,15 @@ S.modules.visualNovel=new function(){
 		});
 		M.window.appendChild(O.el);
 		
-		O.content=function(input='NULL: No text was passed.'){
-			//var keepGoing=multimediaFunction[vals[0].toLowerCase().substr(0,2)](vals);
+		O.empty=function(){
+			O.el.classList.add('showpony-textbox-hidden');
+		}
 		
-			//var keepGoing=false;
-			//if(!keepGoing) M.progress();
+		O.content=function(input='NULL: No text was passed.'){
+			O.el.classList.remove('showpony-textbox-hidden');
+			O.el.classList.remove('showpony-textbox-form-inactive');
 			
 			wait=true; //Assume we're waiting at the end time
-			
-			input=input.replace(/^\t+/,'');
 			
 			//If the line doesn't start with +, replace the text
 			if(input[0]!=='+'){
@@ -831,14 +825,16 @@ S.modules.visualNovel=new function(){
 						}
 					//We're creating the element
 					}else{
+						var tag=/^\S+/.exec(values)[0];
+						
 						values=values.split(' ');
 						
-						switch(values[0]){
+						switch(tag){
 							case 'shout':
 							case 'sing':
 							case 'shake':
 							case 'fade':
-								charElement.classList.add('showpony-char-'+values);
+								charElement.classList.add('showpony-char-'+tag);
 								break;
 							case 'speed':
 								//Check the attributes
@@ -853,15 +849,12 @@ S.modules.visualNovel=new function(){
 								var lineBreak=document.createElement('span');
 								lineBreak.style.whiteSpace='pre-line';
 								lineBreak.innerHTML=' <wbr>';
-								currentParent.appendChild(lineBreak); //wbr fixes missing lines breaks in Firefox
+								currentParent.appendChild(lineBreak);
+								//wbr fixes missing lines breaks in Firefox
 								currentParent.appendChild(document.createElement('br'));
 								break;
-							case 'wbr':
-							case 'img':
-							case 'embed':
-							case 'hr':
-							case 'input':
-								var newParent=document.createElement(values[0]);
+							default:
+								var newElement=document.createElement(tag);
 								
 								//Set attributes, if any were passed
 								for(let ii=1;ii<values.length;ii++){
@@ -874,19 +867,26 @@ S.modules.visualNovel=new function(){
 											attValues[1]=attValues[1].substr(1,attValues[1].length-2);
 										}
 										
-										newParent.setAttribute(attValues[0],attValues[1]);
+										newElement.setAttribute(attValues[0],attValues[1]);
 									}else{
-										newParent.setAttribute(attValues[0],'true');
+										newElement.setAttribute(attValues[0],'true');
 									}
 								}
 								
-								currentParent.appendChild(newParent);
+								currentParent.appendChild(newElement);
+								
+								// If it's not a self-closing tag, make it the new parent
+								if(!/^(area|br|col|embed|hr|img|input|link|meta|param|wbr)$/i.test(tag)){
+									currentParent=newElement;
+								}
 								
 								//If an input type, wait until input is set and stuff
-								if(values[0]=='input'){
+								if(tag==='input'){
 									//Update data based on this
-									if(newParent.type==='button' || newParent.type==='submit'){
-										newParent.addEventListener('click',function(event){
+									if(newElement.type==='button' || newElement.type==='submit'){
+										newElement.addEventListener('click',function(event){
+											O.el.classList.add('showpony-textbox-form-inactive');
+											
 											//This might just be a continue button, so we need to check
 											if(this.dataset.var) S.data[this.dataset.var]=this.dataset.val;
 											
@@ -898,37 +898,14 @@ S.modules.visualNovel=new function(){
 										});
 									}else{
 										//Set data to the defaults of these, in case the user just clicks through
-										if(newParent.dataset.var) S.data[newParent.dataset.var]=newParent.value;
+										if(newElement.dataset.var) S.data[newElement.dataset.var]=newElement.value;
 										
-										newParent.addEventListener('change',function(){
+										newElement.addEventListener('change',function(){
 											S.data[this.dataset.var]=this.value;
 											console.log(this.value);
 										});
 									}
 								}
-								break;
-							default:
-								var newParent=document.createElement(values[0]);
-								
-								//Set attributes, if any were passed
-								for(let ii=1;ii<values.length;ii++){
-									
-									if(values[ii].indexOf('=')>-1){
-										var attValues=values[ii].substr().split('=');
-										
-										//Remove surrounding quotes
-										if(/['"]/.test(attValues[1])){
-											attValues[1]=attValues[1].substr(1,attValues[1].length-2);
-										}
-										
-										newParent.setAttribute(attValues[0],attValues[1]);
-									}else{
-										newParent.setAttribute(attValues[0],'true');
-									}
-								}
-								
-								currentParent.appendChild(newParent);
-								currentParent=newParent;
 							break;
 						}
 						
@@ -1042,34 +1019,28 @@ S.modules.visualNovel=new function(){
 				inputting=false;
 			}
 			
-			//if(objects[currentTextbox].dataset.async!=true){
-			
-				lastLetter.addEventListener('animationstart',function(event){
-					if(this!==event.target) return;
-					
-					//If we aren't waiting to continue, continue
-					if(!wait){
-						M.progress();
-					}else{
-						//If we need players to click to continue (and they have no inputs to fill out or anything), notify them:
-						if(!O.el.querySelector('input')){
-							//If we're automatically continuing
-							if(S.auto){
-								// M.progress();
-							//If we're waiting for user input
-							}else{
-								M.window.appendChild(continueNotice);
-							}
+			lastLetter.addEventListener('animationstart',function(event){
+				if(this!==event.target) return;
+				
+				//If we aren't waiting to continue, continue
+				if(!wait){
+					M.progress();
+				}else{
+					//If we need players to click to continue (and they have no inputs to fill out or anything), notify them:
+					if(!O.el.querySelector('input')){
+						//If we're automatically continuing
+						if(S.auto){
+							// M.progress();
+						//If we're waiting for user input
+						}else{
+							M.window.appendChild(continueNotice);
 						}
 					}
-				});
-			//}
+				}
+			});
 			
 			//Add the chars to the textbox
 			O.el.appendChild(fragment);
-			
-			//Continue if async textbox
-			//if(objects[currentTextbox].dataset.async==true) M.progress();
 		}
 		objectAddCommonFunctions(O);
 	}

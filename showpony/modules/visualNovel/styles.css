@@ -61,6 +61,17 @@
 	margin:.25em;
 }
 
+.showpony-textbox-hidden{
+	pointer-events:none;
+	display:none;
+}
+
+.showpony-textbox-form-inactive input,
+.showpony-textbox-form-inactive button{
+	pointer-events:none;
+	opacity:.5;
+}
+
 .showpony-nameplate{
 	background-color:#000;
 	padding:.4em;
