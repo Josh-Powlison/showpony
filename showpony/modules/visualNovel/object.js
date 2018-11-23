@@ -69,7 +69,6 @@ S.modules.visualNovel=new function(){
 		for(var key in objects){
 			if(objects[key].tagName) objects[key].dispatchEvent(new Event('animationend'));
 			else{
-				console.log(objects[key]);
 				objects[key].el.dispatchEvent(new Event('animationend'));
 			}
 		}
@@ -454,12 +453,7 @@ S.modules.visualNovel=new function(){
 		S.window.dispatchEvent(new CustomEvent(input));
 		M.progress();
 	}
-	
-	M.setTextbox=function(input){
-		currentTextbox=input;
-		M.progress();
-	}
-	
+
 	M.wait=function(input){
 		//If there's a waitTimer, clear it out
 		if(waitTimer.remaining>0){
