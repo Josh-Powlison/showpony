@@ -12,7 +12,7 @@ S.modules.text=new function(){
 	M.pause=function(){}
 	
 	M.input=function(){
-		//S.to({file:'+1'});
+		// S.to({file:'+1'});
 	}
 	
 	M.timeUpdate=function(time=0){
@@ -23,7 +23,7 @@ S.modules.text=new function(){
 		return new Promise(function(resolve,reject){
 			var src=S.files[file].path;
 			
-			//If this is the current file
+			// If this is the current file
 			if(M.currentFile===file){
 				pageTurn.scrollTop=pageTurn.scrollHeight*(M.currentTime/S.files[M.currentFile].duration);
 				content.classList.remove('showpony-loading');
@@ -36,13 +36,13 @@ S.modules.text=new function(){
 			})
 			.then(text=>{
 				
-				//Put in the text
+				// Put in the text
 				pageTurn.innerHTML=text;
 				
-				//Scroll to spot
+				// Scroll to spot
 				pageTurn.scrollTop=pageTurn.scrollHeight*(M.currentTime/S.files[file].duration);
 				
-				//Stop loading
+				// Stop loading
 				content.classList.remove('showpony-loading');
 				
 				if(S.files[file].buffered!==true){
@@ -64,9 +64,9 @@ S.modules.text=new function(){
 		}
 		
 		if(S.files[M.currentFile].subtitles){
-			///NOT YET! OR PROBABLY EVER... this is text already, after all.
+			/// NOT YET! OR PROBABLY EVER... this is text already, after all.
 		}else{
-			//If don't have the file
+			// If don't have the file
 			fetch(S.subtitles[S.currentSubtitles]+S.files[M.currentFile].title+'.vtt')
 			.then(response=>{return response.text();})
 			.then(text=>{
@@ -76,7 +76,7 @@ S.modules.text=new function(){
 		}
 	}
 	
-	///BUFFERING///
+	/// BUFFERING ///
 	M.window.addEventListener('load',function(){
 		content.classList.remove('showpony-loading');
 		S.files[M.currentFile].buffered=true;

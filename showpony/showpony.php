@@ -169,7 +169,7 @@ $message=ob_get_clean();
 header('Content-type: application/javascript');
 ?>'use strict';
 
-//Add styles if not added already
+// Add styles if not added already
 if(!document.getElementById('showpony-styles')){
 	var styles=document.createElement('style');
 	styles.id='showpony-styles';
@@ -185,7 +185,7 @@ if(!document.getElementById('showpony-styles')){
 foreach(array_keys($media) as $moduleName){
 	
 ?>
-//Add <?php echo $moduleName; ?> styles if not added already
+// Add <?php echo $moduleName; ?> styles if not added already
 if(!document.getElementById('showpony-<?php echo $moduleName; ?>-styles')){
 	var styles=document.createElement('style');
 	styles.id='showpony-<?php echo $moduleName; ?>-styles';
@@ -215,7 +215,7 @@ S.paused=false;
 S.modules={};
 S.media=<?=json_encode($media,JSON_NUMERIC_CHECK)?>;
 S.message='<?php echo addslashes($message); ?>';
-S.auto=true; //false, or float between 0 and 10
+S.auto=true; // false, or float between 0 and 10
 
 S.window.innerHTML=`
 	<style class="showpony-style" type="text/css"></style>
@@ -258,7 +258,7 @@ S.cover={<?php
 
 S.gamepad=null;
 
-//null before we load
+// null before we load
 S.currentFile=null;
 S.currentTime=null;
 S.currentModule=null;
@@ -280,45 +280,45 @@ foreach(array_keys($media) as $moduleName){
 ///////////PUBLIC FUNCTIONS////////////
 ///////////////////////////////////////
 
-//Go to another file
+// Go to another file
 S.to=function(obj={}){
 	content.classList.add('showpony-loading');
 	
-	///GET TIME AND FILE///
+	/// GET TIME AND FILE ///
 	
-	//Special values
+	// Special values
 	if(obj.file==='last') obj.file=S.files.length-1;
 	if(obj.time==='end') obj.time=S.duration-10;
 	
-	//Relative adjustments if the values have - or +. If both are relative, file will be relative and time will instead be absolute to avoid strange behavior.
+	// Relative adjustments if the values have - or +. If both are relative, file will be relative and time will instead be absolute to avoid strange behavior.
 	if(/-|\+/.test(obj.file)) obj.file=S.currentFile+parseInt(obj.file);
 	else if(/-|\+/.test(obj.time)) obj.time=S.currentTime+parseFloat(obj.time);
 	
-	//Minimal time and file values are 0
+	// Minimal time and file values are 0
 	obj.file=Math.max(0,obj.file || 0);
 	obj.time=Math.max(0,parseFloat(obj.time) || 0);
 	
-	//Based on time, get the right file
+	// Based on time, get the right file
 	for(obj.file;obj.file<S.files.length;obj.file++){
-		if(obj.time<S.files[obj.file].duration) break; //We've reached the file
+		if(obj.time<S.files[obj.file].duration) break; // We've reached the file
 		
 		obj.time-=S.files[obj.file].duration;
 	}
 	
-	//If we're at the end, pause and run an event
+	// If we're at the end, pause and run an event
 	if(obj.file>=S.files.length){
 		obj.file=S.files.length-1;
 		
-		//Run the event that users can read
+		// Run the event that users can read
 		S.window.dispatchEvent(new CustomEvent('end'));
 	}
 	
-	//Only start images at beginning; you can't go into the "middle" of image
+	// Only start images at beginning; you can't go into the "middle" of image
 	if(S.files[obj.file].module==='image') obj.time=0;
 	
-	///LOAD RIGHT module AND SOURCE///
+	/// LOAD RIGHT module AND SOURCE ///
 	
-	//If switching types, do some cleanup
+	// If switching types, do some cleanup
 	if(S.currentModule!==S.files[obj.file].module){
 		content.innerHTML='';
 		content.appendChild(S.modules[S.files[obj.file].module].window);
@@ -326,31 +326,31 @@ S.to=function(obj={}){
 	
 	S.currentModule=S.files[obj.file].module;
 	
-	//Load the file
+	// Load the file
 	if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
 	
 	S.modules[S.currentModule].src(obj.file,obj.time).then(()=>{
-		//TODO: condense or remove parts from below. I can't help but think this should all be called in the object.js files, and not touched at all here.
+		// TODO: condense or remove parts from below. I can't help but think this should all be called in the object.js files, and not touched at all here.
 		S.currentFile=S.modules[S.currentModule].currentFile=obj.file;
 		S.modules[S.currentModule].timeUpdate(obj.time);
 		S.modules[S.currentModule].goToTime=obj.time;
 		timeUpdate(obj.time);
 		
-		//We can preload up to this amount
-		var preloadAmount=2097152; //2 MB
+		// We can preload up to this amount
+		var preloadAmount=2097152; // 2 MB
 		
-		//Don't allow preloading upcoming files if scrubbing
+		// Don't allow preloading upcoming files if scrubbing
 		if(scrubbing) preloadAmount=0;
 		
-		//Preload upcoming files
+		// Preload upcoming files
 		for(let i=obj.file;i<S.files.length;i++){
-			//Check if we can preload this
+			// Check if we can preload this
 			preloadAmount-=S.files[obj.file].size;
 			
-			//If not, exit
+			// If not, exit
 			if(preloadAmount<=0) break;
 			
-			//Otherwise, preload
+			// Otherwise, preload
 			if(S.files[i].buffered===false){
 				S.files[i].buffered='buffering';
 				
@@ -373,16 +373,16 @@ Updating file with infinite scroll
 }*/
 
 /*
-//If it's the same and we're using infinite scrolling
-if(S.infiniteScroll){//Scroll to the right spot
+// If it's the same and we're using infinite scrolling
+if(S.infiniteScroll){// Scroll to the right spot
 	var part=document.querySelector('[data-file="'+obj.file+'"]');
 
 	pageTurn.scrollTop=part.offsetTop+part.offsetHeight*(obj.time/S.files[obj.file].duration);
-}else{ //Page turn
+}else{ // Page turn
 	
 }*/
 
-/*//Use either infinite text or page turn, whichever is requested
+/*// Use either infinite text or page turn, whichever is requested
 if(S.infiniteScroll || S.files[obj.file].module==='text'){
 	content.appendChild(pageTurn);
 }else{
@@ -390,7 +390,7 @@ if(S.infiniteScroll || S.files[obj.file].module==='text'){
 }
 */
 
-//NEED A DIFFERENT SETUP FOR INFINITE SCROLL//
+// NEED A DIFFERENT SETUP FOR INFINITE SCROLL //
 /*
 /*if(S.currentModule==='text'){
 	fetch(src,{credentials:'include'})
@@ -398,16 +398,16 @@ if(S.infiniteScroll || S.files[obj.file].module==='text'){
 			return response.text();
 		})
 		.then(text=>{
-			//Use either page infinite or page turn, whichever is requested
+			// Use either page infinite or page turn, whichever is requested
 			if(S.infiniteScroll){
 				
-				//If file hasn't already been loaded, load it!
+				// If file hasn't already been loaded, load it!
 				let part=content.querySelector('[data-file="'+obj.file+'"]');
 				
-				//Safety check; if we're sticking, and trying to load a part that doesn't have a div, something's off and we need to get outta here!
+				// Safety check; if we're sticking, and trying to load a part that doesn't have a div, something's off and we need to get outta here!
 				if(sticky!==false && !part) return;
 				
-				//If the part hasn't been created, it's not being automatically appended; so empty the div!
+				// If the part hasn't been created, it's not being automatically appended; so empty the div!
 				if(!part){
 					part=document.createElement('div');
 					part.dataset.file=obj.file;
@@ -416,7 +416,7 @@ if(S.infiniteScroll || S.files[obj.file].module==='text'){
 					
 					S.currentFile=obj.file;
 					
-					//Stick to the set file and time
+					// Stick to the set file and time
 					sticky={file:S.currentFile,time:obj.time};
 					console.log(sticky);
 				}
@@ -425,12 +425,12 @@ if(S.infiniteScroll || S.files[obj.file].module==='text'){
 				var addScroll=pageTurn.scrollTop-currentPart.offsetTop;
 				
 				if(!part.innerHTML){
-					//If adding a file in normally, just add it in
+					// If adding a file in normally, just add it in
 					part.innerHTML=text;
 				
 					pageTurn.scrollTop=currentPart.offsetTop+addScroll;
 				}else{
-					//Scroll to spot for file
+					// Scroll to spot for file
 					pageTurn.scrollTop=part.offsetTop+(obj.time/S.files[obj.file].duration)*part.offsetHeight;
 				}
 				
@@ -444,14 +444,14 @@ if(S.infiniteScroll || S.files[obj.file].module==='text'){
 				
 				content.classList.remove('showpony-loading');
 				
-			}else{ //Page turning
-				//Put in the text
+			}else{ // Page turning
+				// Put in the text
 				pageTurn.innerHTML=text;
 				
-				//Scroll to spot
+				// Scroll to spot
 				pageTurn.scrollTop=pageTurn.scrollHeight*(obj.time/S.files[obj.file].duration);
 				
-				//Stop loading
+				// Stop loading
 				content.classList.remove('showpony-loading');
 			}
 			
@@ -466,7 +466,7 @@ if(S.infiniteScroll || S.files[obj.file].module==='text'){
 		})
 	;
 }else{
-//}
+// }
 */
 
 S.play=function(){
@@ -493,8 +493,8 @@ S.toggle=function(){
 
 S.fullscreen=false;
 
-//Toggle fullscreen, basing the functions on the browser's abilities
-//Standards fullscreen
+// Toggle fullscreen, basing the functions on the browser's abilities
+// Standards fullscreen
 if(S.window.requestFullscreen){
 	S.fullscreenEnter=function(){
 		if(document.fullscreenElement) return;
@@ -521,7 +521,7 @@ if(S.window.requestFullscreen){
 		else S.fullscreen=false;
 	});
 }
-//Webkit fullscreen
+// Webkit fullscreen
 else if(S.window.webkitRequestFullscreen){
 	S.fullscreenEnter=function(){
 		if(document.webkitFullscreenElement) return;
@@ -547,7 +547,7 @@ else if(S.window.webkitRequestFullscreen){
 		else S.fullscreen=false;
 	});
 }
-//Firefox fullscreen
+// Firefox fullscreen
 else if(S.window.mozRequestFullScreen){
 	S.fullscreenEnter=function(){
 		if(document.mozFullScreenElement) return;
@@ -573,7 +573,7 @@ else if(S.window.mozRequestFullScreen){
 		else S.fullscreen=false;
 	});
 }
-//No fullscreen support fullscreen (like for iOS Safari)
+// No fullscreen support fullscreen (like for iOS Safari)
 else{
 	S.fullscreenEnter=function(){
 		if(S.window.classList.contains('showpony-fullscreen-alt')) return;
@@ -583,7 +583,7 @@ else{
 		
 		S.window.dataset.prevz=S.window.style.zIndex || 'initial';
 		
-		//From: https://stackoverflow.com/questions/1118198/how-can-you-figure-out-the-highest-z-index-in-your-document
+		// From: https://stackoverflow.com/questions/1118198/how-can-you-figure-out-the-highest-z-index-in-your-document
 		S.window.style.zIndex=Array.from(document.querySelectorAll('body *'))
 		   .map(a => parseFloat(window.getComputedStyle(a).zIndex))
 		   .filter(a => !isNaN(a))
@@ -600,7 +600,7 @@ else{
 		S.window.classList.remove('showpony-fullscreen-alt');
 		document.getElementsByTagName('html')[0].classList.remove('showpony-fullscreen-control');
 		
-		//Get the original z-index value
+		// Get the original z-index value
 		S.window.style.zIndex=S.window.dataset.prevz;
 		S.window.removeAttribute('data-prevz');
 		
@@ -614,7 +614,7 @@ else{
 	}
 }
 
-//When the viewer inputs to Showpony (click, space, general action)
+// When the viewer inputs to Showpony (click, space, general action)
 S.input=function(){
 	if(S.paused) S.play();
 	else S.modules[S.currentModule].input();
@@ -643,7 +643,7 @@ pageTurn.className='showpony-page-turn';
 
 var sticky=false;
 
-//Showpony framerate- which is connected not to animations, etc, but to gamepad use and games
+// Showpony framerate- which is connected not to animations, etc, but to gamepad use and games
 var framerate=60;
 var checkGamepad=null;
 
@@ -655,13 +655,13 @@ var pos=0;
 
 function timeUpdate(time){
 	if(!isNaN(time)){
-		//Don't exceed the file's duration
+		// Don't exceed the file's duration
 		var duration=S.files[S.currentFile].duration;
 		if(time>duration) time=duration;
 		S.modules[S.currentModule].timeUpdate(time);
 	}
 	
-	//Get the current time in the midst of the entire Showpony
+	// Get the current time in the midst of the entire Showpony
 	S.currentTime=S.modules[S.currentModule].currentTime
 	for(let i=0;i<S.currentFile;i++) S.currentTime+=S.files[i].duration;
 	
@@ -671,7 +671,7 @@ function timeUpdate(time){
 	
 	updateHistory('replace');
 	
-	//Run custom event for checking time
+	// Run custom event for checking time
 	S.window.dispatchEvent(
 		new CustomEvent(
 			'timeupdate'
@@ -685,15 +685,15 @@ function timeUpdate(time){
 	);
 }
 
-//See if the time passed has been buffered
+// See if the time passed has been buffered
 function checkBuffered(time=0){
 	if(S.buffered===true) return true;
 	
 	for(var i=0;i<S.buffered.length;i++){
-		//If before the start time, exit
-		//if(time<S.buffered[i][0]) break;
+		// If before the start time, exit
+		// if(time<S.buffered[i][0]) break;
 		
-		//If the time passed is within the range, it's true
+		// If the time passed is within the range, it's true
 		if(S.buffered[i][0]<=time && time<=S.buffered[i][1]){
 			return true;
 		}
@@ -706,7 +706,7 @@ function getTotalBuffered(){
 	var time=0;
 	var buffered=[];
 	
-	//Update amount buffered total
+	// Update amount buffered total
 	for(let i=0;i<S.files.length;i++){
 		var buffer=false;
 		
@@ -714,20 +714,20 @@ function getTotalBuffered(){
 			buffer=[time,time+S.files[i].duration];
 			
 			if(buffer){
-				//Combine buffered arrays, if we're moving forward
+				// Combine buffered arrays, if we're moving forward
 				if(buffered.length>0 && buffer[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=buffer[1];
 				else buffered.push(buffer);
 			}
 		}
 		else if(Array.isArray(S.files[i].buffered)){
-			//Get working for multiple contained buffers
+			// Get working for multiple contained buffers
 			for(let ii=0;ii<S.files[i].buffered.length;ii++){
 				buffer=[
 					time+S.files[i].buffered[ii][0]
 					,time+S.files[i].buffered[ii][1]
 				];
 				
-				//Combine buffered arrays, if we're moving forward
+				// Combine buffered arrays, if we're moving forward
 				if(buffered.length>0 && buffer[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=buffer[1];
 				else buffered.push(buffer);
 			}
@@ -741,7 +741,7 @@ function getTotalBuffered(){
 	
 	S.buffered=buffered;
 	
-	//Show buffer//
+	// Show buffer
 	var rectRes=1000;
 	overlayBuffer.width=rectRes;
 	overlayBuffer.height=1;
@@ -749,7 +749,7 @@ function getTotalBuffered(){
 	ctx.clearRect(0,0,rectRes,1);
 	ctx.fillStyle='#95f442';
 	
-	//Update info on dropdown
+	// Update info on dropdown
 	if(S.buffered===true){
 		ctx.fillRect(0,0,rectRes,1);
 	}else if(Array.isArray(S.buffered)){
@@ -764,12 +764,12 @@ function getTotalBuffered(){
 	}
 }
 
-//Update the scrubber's position
+// Update the scrubber's position
 function scrub(inputPercent=null,loadFile=false){
-	//"sticky" is an infinite scroll-related variable
-	//if(sticky!==false) return;
+	// "sticky" is an infinite scroll-related variable
+	// if(sticky!==false) return;
 	
-	//If no inputPercent was set, get it!
+	// If no inputPercent was set, get it!
 	if(inputPercent===null) inputPercent=S.currentTime/S.duration;
 	
 	if(inputPercent<0) inputPercent=0;
@@ -777,12 +777,12 @@ function scrub(inputPercent=null,loadFile=false){
 	
 	var timeInTotal=S.duration*inputPercent;
 	
-	///LOADING THE SELECTED FILE///
+	/// LOADING THE SELECTED FILE ///
 	if(loadFile){
 		if(checkBuffered(timeInTotal) || scrubbing===false) S.to({time:timeInTotal});
 	}
 	
-	//Move the progress bar
+	// Move the progress bar
 	progress.style.left=(inputPercent*100)+'%';
 	
 	<?php
@@ -793,7 +793,7 @@ function scrub(inputPercent=null,loadFile=false){
 		// +($media['other'] ?? 0) #Add lines for other media that don't need time tracked
 		===count($files)){
 		?>
-	///INFO TEXT WITH FILE///
+	/// INFO TEXT WITH FILE ///
 	function infoMake(input){
 		return String(input).padStart((String(S.files.length).length),'0');
 	}
@@ -807,9 +807,9 @@ function scrub(inputPercent=null,loadFile=false){
 	// Show progress with time if any of the files' progress is heavily measured by time
 	}else{
 	?>
-	///INFO TEXT WITH TIME///
+	/// INFO TEXT WITH TIME ///
 	function infoMake(input,pad=(String((S.duration / 60)|0).length)){
-		//|0 is a shorter way to floor floats.
+		// |0 is a shorter way to floor floats.
 		return String((input)|0).padStart(pad,'0');
 	}
 	
@@ -819,20 +819,20 @@ function scrub(inputPercent=null,loadFile=false){
 	
 	if(info!==overlayText.innerHTML) overlayText.innerHTML=info;
 	
-	//We don't want to over-update the title, so we stick with when we're not scrubbing.
+	// We don't want to over-update the title, so we stick with when we're not scrubbing.
 	if(info!==document.title && scrubbing===false) document.title=info;
 }
 
-//Handles starting, running, and ending scrubbing
+// Handles starting, running, and ending scrubbing
 function userScrub(event=null,start=false){
 	var input;
 	
-	//General events
+	// General events
 	if(isNaN(event)){
-		//Mouse and touch work slightly differently
+		// Mouse and touch work slightly differently
 		input=event.changedTouches ? 'touch' : 'cursor';
 		pos=input==='touch' ? event.changedTouches[0].clientX : event.clientX;
-	//Relative scrubbing
+	// Relative scrubbing
 	}else{
 		input='joystick';
 		pos=progress.getBoundingClientRect().left+progress.getBoundingClientRect().width/2+event*5;
@@ -848,69 +848,69 @@ function userScrub(event=null,start=false){
 			else return;
 		}
 			
-		//You have to swipe farther than you move the cursor to adjust the position
+		// You have to swipe farther than you move the cursor to adjust the position
 		if(scrubbing!==true){
 			if(input==='joystick' || Math.abs(scrubbing-pos)>screen.width/(input==='touch' ? 20 : 100)){ 
 				scrubbing=true;
 				
-				//On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
+				// On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
 				if(checkBuffered(S.duration*scrubPercent)){
-					//Add a new state on releasing
+					// Add a new state on releasing
 					updateHistory('add');
 				}
 			}
 			else return;
 		}
 		
-		//Don't want the users to accidentally swipe to another page!
+		// Don't want the users to accidentally swipe to another page!
 		if(input==='touch') event.preventDefault();
 		
 		scrub(scrubPercent,true);
 	}else{
-		//Drag on the menu to go to any part
+		// Drag on the menu to go to any part
 		
 		if(scrubbing===true){
 			scrubbing=false;
 		
-			//If we don't preload while scrubbing, load the file now that we've stopped scrubbing
+			// If we don't preload while scrubbing, load the file now that we've stopped scrubbing
 			if(!checkBuffered(S.duration*scrubPercent)){
-				//Load the file our pointer's on
+				// Load the file our pointer's on
 				scrub(scrubPercent,true);
 				
 			}
 			
-			return true; //Exit the function
+			return true; // Exit the function
 		}
 		
-		//scrubbing needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
+		// scrubbing needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
 		scrubbing=false;
 	}
 }
 
 function updateHistory(action='add'){
-	//If using queries with time, adjust query on time update
+	// If using queries with time, adjust query on time update
 	var newURL=document.location.href;
 	var newQuery='';
 	
-	//Choose whether to add an ampersand or ?
-	//Choose a ? if one doesn't exist or it exists behind the query
+	// Choose whether to add an ampersand or ?
+	// Choose a ? if one doesn't exist or it exists behind the query
 	newQuery=(newURL.indexOf('?')===-1 || new RegExp('\\?(?='+S.query+'=)').test(newURL)) ? '?' : '&';
 	
 	newQuery+=S.query+'='+(Math.floor(S.currentTime));
 	
-	//Replace either the case or the end
+	// Replace either the case or the end
 	newURL=newURL.replace(new RegExp('(((\\?|&)'+S.query+')=?[^&#]+)|(?=#)|$'),newQuery);
 	
-	//console.log('updating',obj.history,location.href,newURL);
+	// console.log('updating',obj.history,location.href,newURL);
 	
 	if(location.href!==newURL){
-		//console.log('We are gonna ',action);
+		// console.log('We are gonna ',action);
 		switch(action){
 			case 'replace':
 				history.replaceState({},'',newURL);
 				break;
 			case 'revisit':
-				//Nothing needs to be done
+				// Nothing needs to be done
 				break;
 			case 'add':
 			default:
@@ -921,42 +921,42 @@ function updateHistory(action='add'){
 }
 
 function gamepadControls(){
-	//Exit if the window isn't in focus
+	// Exit if the window isn't in focus
 	if(document.hidden) return;
 	
 	if(S.gamepad!==null){
-		//If shortcuts aren't always enabled, perform checks
+		// If shortcuts aren't always enabled, perform checks
 		if(S.shortcuts!=='always'){
-			//Exit if it isn't fullscreen
+			// Exit if it isn't fullscreen
 			if(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.fullscreenElement){
-				//If needs to be focused
+				// If needs to be focused
 				if(S.shortcuts!=='fullscreen' && S.window!==document.activeElement) return;
 			}
 		}
 		
 		var gamepad=navigator.getGamepads()[S.gamepad.id];
 		
-		//XBOX Gamepad
+		// XBOX Gamepad
 		if(/xinput/i.test(gamepad.id)){
-			gamepadButton(gamepad,9,'menu');		//Start
-			gamepadButton(gamepad,0,'input');		//A
-			gamepadButton(gamepad,14,'dpadL');		//Dpad Left
-			gamepadButton(gamepad,15,'dpadR');		//Dpad Right
-			gamepadButton(gamepad,8,'fullscreen');	//Select
-			gamepadButton(gamepad,6,'home');		//Left trigger
-			gamepadButton(gamepad,7,'end');			//Right trigger
+			gamepadButton(gamepad,9,'menu');		// Start
+			gamepadButton(gamepad,0,'input');		// A
+			gamepadButton(gamepad,14,'dpadL');		// Dpad Left
+			gamepadButton(gamepad,15,'dpadR');		// Dpad Right
+			gamepadButton(gamepad,8,'fullscreen');	// Select
+			gamepadButton(gamepad,6,'home');		// Left trigger
+			gamepadButton(gamepad,7,'end');			// Right trigger
 				
-			gamepadAxis(gamepad,0,'analogL');		//Left analogue
-		//Normal, average gamepad
+			gamepadAxis(gamepad,0,'analogL');		// Left analogue
+		// Normal, average gamepad
 		}else{
-			gamepadButton(gamepad,9,'menu');		//Start
-			gamepadButton(gamepad,0,'input');		//A
-			gamepadButton(gamepad,8,'fullscreen');	//Select
-			gamepadButton(gamepad,6,'home');		//Left trigger
-			gamepadButton(gamepad,7,'end');			//Right trigger
+			gamepadButton(gamepad,9,'menu');		// Start
+			gamepadButton(gamepad,0,'input');		// A
+			gamepadButton(gamepad,8,'fullscreen');	// Select
+			gamepadButton(gamepad,6,'home');		// Left trigger
+			gamepadButton(gamepad,7,'end');			// Right trigger
 		}
 		
-		//Register inputs
+		// Register inputs
 		if(S.gamepad.menu==2) S.toggle();
 		if(S.gamepad.input==2) S.input();
 		if(S.gamepad.dpadL==2) S.to({file:'-1'});
@@ -965,9 +965,9 @@ function gamepadControls(){
 		if(S.gamepad.home==2) S.to({time:'start'});
 		if(S.gamepad.fullscreen==2) S.fullscreenToggle();
 		
-		//Scrubbing with the analogue stick
+		// Scrubbing with the analogue stick
 		if(S.gamepad.analogLPress===2){
-			overlay.style.opacity=1; //Show the overlay
+			overlay.style.opacity=1; // Show the overlay
 			pos=0;
 		}
 	
@@ -978,8 +978,8 @@ function gamepadControls(){
 		}
 		
 		if(S.gamepad.analogLPress===-2){
-			overlay.style.opacity=''; //Hide the overlay
-			//If we're not scrubbing, set scrubbing to false and return
+			overlay.style.opacity=''; // Hide the overlay
+			// If we're not scrubbing, set scrubbing to false and return
 			if(scrubbing!==true){
 				scrubbing=false;
 			}else{
@@ -991,22 +991,22 @@ function gamepadControls(){
 }
 
 function gamepadAxis(gamepad,number,type){
-	//Active space
+	// Active space
 	var min=S.gamepad.axisMin;
 	var max=S.gamepad.axisMax;
 	
-	//Get amount between -1 and 1 based on distance between values
+	// Get amount between -1 and 1 based on distance between values
 	if(Math.abs(gamepad.axes[number])>=min){
 		if(gamepad.axes[number]>0) S.gamepad[type]=(gamepad.axes[number]-min)/(max-min);
 		else S.gamepad[type]=((gamepad.axes[number]-(-max))/(-min-(-max)))-1;
 		
-		//Set pressing values right
+		// Set pressing values right
 		if(S.gamepad[type+'Press']<0) S.gamepad[type+'Press']=2;
 		else S.gamepad[type+'Press']=1;
 	}else{
 		S.gamepad[type]=0;
 		
-		//Set pressing values right
+		// Set pressing values right
 		if(S.gamepad[type+'Press']>0) S.gamepad[type+'Press']=-2;
 		else S.gamepad[type+'Press']=-1;
 	}
@@ -1014,7 +1014,7 @@ function gamepadAxis(gamepad,number,type){
 
 function gamepadButton(gamepad,number,type){
 	if(gamepad.buttons[number].pressed){
-		//Set pressing values right
+		// Set pressing values right
 		if(S.gamepad[type]<0) S.gamepad[type]=2;
 		else S.gamepad[type]=1;
 	}else{
@@ -1027,7 +1027,7 @@ function gamepadButton(gamepad,number,type){
 /////////////////START/////////////////
 ///////////////////////////////////////
 
-//Make sure setup is made of multiple Promises that can run asyncronously- and that they do!
+// Make sure setup is made of multiple Promises that can run asyncronously- and that they do!
 
 content.classList.add('showpony-loading');
 
@@ -1043,7 +1043,7 @@ if(S.cover){
 	});
 }
 
-//And fill it up again!
+// And fill it up again!
 S.window.appendChild(styles);
 S.window.appendChild(content);
 S.window.appendChild(subtitles);
@@ -1053,14 +1053,14 @@ S.window.appendChild(overlay);
 //Get Hey Bard account
 /////////////////////
 
-//User accounts and bookmarks always on
+// User accounts and bookmarks always on
 
-//Local saving is simple- remote saving, we'll connect straight to the database with a special account (or come up with something else, but we'll get it in PHP)
+// Local saving is simple- remote saving, we'll connect straight to the database with a special account (or come up with something else, but we'll get it in PHP)
 
-//Also- why not use local and remote in tandem? If disconnect, we'll save the value in local; and then upload it remotely. Rather than one, why not both so that we keep the info if we have trouble in one place?
-//We track Hey Bard time last visited; if we check that against the user's localStorage save time, we'll be golden!
+// Also- why not use local and remote in tandem? If disconnect, we'll save the value in local; and then upload it remotely. Rather than one, why not both so that we keep the info if we have trouble in one place?
+// We track Hey Bard time last visited; if we check that against the user's localStorage save time, we'll be golden!
 
-//Priority: Newest > Default Start
+// Priority: Newest > Default Start
 
 var start=null;
 S.saveName=S.name+'Bookmark';
@@ -1070,7 +1070,7 @@ S.saveSystem=false;
 
 S.loadBookmark=function(){
 	// Remote bookmark
-	///TODO: add remote bookmark support
+	/// TODO: add remote bookmark support
 	
 	// Local bookmark
 	var loadData=JSON.parse(localStorage.getItem(S.saveName));
@@ -1095,7 +1095,7 @@ S.saveBookmark=function(){
 	) return;
 	
 	// Remote bookmark
-	///TODO: add remote bookmark support
+	/// TODO: add remote bookmark support
 	
 	// Local bookmark
 	localStorage.setItem(S.saveName,JSON.stringify(newValues));
@@ -1107,16 +1107,16 @@ if(S.saveSystem) start=S.loadBookmark();
 var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i')).exec(window.location.href);
 if(page) start=parseInt(page[0].split('=')[1]);
 
-//Pause the Showpony
+// Pause the Showpony
 S.pause();
 S.to({time:start,history:'replace'});
 
-//We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
+// We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
 
 if(S.subtitles){
 	var obj=Object.keys(S.subtitles);
 	
-	//Add captions to options
+	// Add captions to options
 	
 	var option=document.createElement('option');
 	option.className='showpony-captions-option';
@@ -1140,20 +1140,20 @@ if(S.subtitles){
 	}
 }
 
-//Add the Showpony window to the document
+// Add the Showpony window to the document
 document.currentScript.insertAdjacentElement('afterend',S.window);
 
 ///////////////////////////////////////
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
 
-//Allow using querystrings for navigation
+// Allow using querystrings for navigation
 window.addEventListener(
 	'popstate'
 	,function(){
 		var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i').exec(window.location.href));
 		
-		//If we found a page
+		// If we found a page
 		if(page){
 			page=parseInt(page[0].split('=')[1]);
 			
@@ -1164,20 +1164,20 @@ window.addEventListener(
 	}
 );
 
-//Save user bookmarks when leaving the page
+// Save user bookmarks when leaving the page
 window.addEventListener('blur',S.saveBookmark);
 window.addEventListener('beforeunload',S.saveBookmark);
 
-//Save the bookmark if the website is hidden
+// Save the bookmark if the website is hidden
 document.addEventListener('visibilitychange',function(){
 	if(document.hidden) S.saveBookmark();
 });
 
-//Showpony deselection (to help with Firefox and Edge's lack of support for 'beforeunload')
+// Showpony deselection (to help with Firefox and Edge's lack of support for 'beforeunload')
 S.window.addEventListener('focusout',S.saveBookmark);
 S.window.addEventListener('blur',S.saveBookmark);
 
-//Shortcut keys
+// Shortcut keys
 S.window.addEventListener(
 	'keydown'
 	,function(event){
@@ -1201,7 +1201,7 @@ S.window.addEventListener(
 	}
 );
 
-//Scrolling only works on fullscreen
+// Scrolling only works on fullscreen
 S.window.addEventListener('wheel',function(event){
 	if(event.ctrlKey || !S.fullscreen) return;
 	
@@ -1217,10 +1217,10 @@ S.window.addEventListener('wheel',function(event){
 	}
 });
 
-//We need to set this as a variable to remove it later on
-//This needs to be click- otherwise, you could click outside of Showpony, release inside, and the menu would toggle. This results in messy scenarios when you're using the UI.
+// We need to set this as a variable to remove it later on
+// This needs to be click- otherwise, you could click outside of Showpony, release inside, and the menu would toggle. This results in messy scenarios when you're using the UI.
 var windowClick=function(event){
-	//If we just ended scrubbing, don't toggle the menu at all
+	// If we just ended scrubbing, don't toggle the menu at all
 	if(scrubbing==='out'){
 		scrubbing=false;
 		return;
@@ -1231,23 +1231,23 @@ var windowClick=function(event){
 	if(event.target===overlay) S.toggle();
 };
 
-//On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
+// On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
 window.addEventListener('click',windowClick);
 
 window.addEventListener('mouseup',function(event){
-	//If we're not scrubbing, set scrubbing to false and return
+	// If we're not scrubbing, set scrubbing to false and return
 	if(scrubbing!==true){
 		scrubbing=false;
 		return;
 	}
 	
-	//Scrub the bar
+	// Scrub the bar
 	userScrub(event);
 	
 	scrubbing='out';
 });
 
-//On mousedown, we prepare to move the cursor (but not over overlay buttons)
+// On mousedown, we prepare to move the cursor (but not over overlay buttons)
 overlay.addEventListener('mousedown',function(event){
 	if(event.target===this){
 		scrubbing=event.clientX;
@@ -1255,14 +1255,14 @@ overlay.addEventListener('mousedown',function(event){
 	}
 });
 
-//On touch end, don't keep moving the bar to the user's touch
+// On touch end, don't keep moving the bar to the user's touch
 overlay.addEventListener('touchend',userScrub);
 
-//On dragging
+// On dragging
 window.addEventListener('mousemove',function(event){userScrub(event,true);});
 overlay.addEventListener('touchmove',function(event){userScrub(event,true);});
 
-//Menu buttons
+// Menu buttons
 fullscreenButton.addEventListener('click',S.fullscreenToggle);
 
 if(S.subtitles){
@@ -1277,20 +1277,20 @@ if(S.subtitles){
 
 content.addEventListener('click',()=>{S.input();});
 
-//Update the scrub bar when scrolling
+// Update the scrub bar when scrolling
 pageTurn.addEventListener('scroll',function(event){
 	event.stopPropagation();
 	
 	if(S.infiniteScroll){
-		//if(content.classList.contains('showpony-loading')) return;
+		// if(content.classList.contains('showpony-loading')) return;
 		
 		console.log(sticky);
 		
-		//Set current time to percent scrolled
+		// Set current time to percent scrolled
 		if(!scrubbing && sticky===false){
 			var parts=pageTurn.children;
 			for(var i=0;i<parts.length;i++){
-				//If we're beyond a part
+				// If we're beyond a part
 				if(pageTurn.scrollTop>parts[i].offsetTop+parts[i].offsetHeight) continue;
 				
 				S.currentFile=parseInt(parts[i].dataset.file);
@@ -1301,41 +1301,41 @@ pageTurn.addEventListener('scroll',function(event){
 			}
 		}
 		
-		//If 1 page height away from bottom
+		// If 1 page height away from bottom
 		if(this.scrollTop>=this.scrollHeight-this.clientHeight*2){
 			for(var i=S.currentFile+1;i<S.files.length;i++){
 				
 				var check=content.querySelector('[data-file="'+i+'"]');
 				
-				//Not started loading
+				// Not started loading
 				if(!check){
 					pageTurn.insertAdjacentHTML('beforeend','<div data-file="'+i+'"></div>');
 					S.to({file:i});
 					return;
 				}
 				
-				//Keep the loop going if it has text
+				// Keep the loop going if it has text
 				if(!check.innerHTML){
 					return;
 				}
 			}
 		}
 		
-		//If 1 page height away from top
+		// If 1 page height away from top
 		if(this.scrollTop<=this.clientHeight){
 			for(var i=S.currentFile-1;i>=0;i--){
 				console.log(i);
 				
 				var check=content.querySelector('[data-file="'+i+'"]');
 				
-				//Not started loading
+				// Not started loading
 				if(!check){
 					pageTurn.insertAdjacentHTML('afterbegin','<div data-file="'+i+'"></div>');
 					S.to({file:i});
 					return;
 				}
 				
-				//Keep the loop going if it has text
+				// Keep the loop going if it has text
 				if(!check.innerHTML){
 					return;
 				}
@@ -1344,22 +1344,22 @@ pageTurn.addEventListener('scroll',function(event){
 		
 		sticky=false;
 	}else{
-		//Set current time to percent scrolled
+		// Set current time to percent scrolled
 		timeUpdate(S.files[S.currentFile].duration*(this.scrollTop/this.scrollHeight));
 		
-		//If at top
+		// If at top
 		if(this.scrollTop<=0){
 			S.to({time:'-1'});
 		}
 		
-		//If at bottom
+		// If at bottom
 		if(this.scrollTop>=this.scrollHeight-this.scrollTop){
 			S.to({file:'+1'});
 		}
 	}
 });
 
-//Gamepad support
+// Gamepad support
 
 window.addEventListener('gamepadconnected',function(e){
 	S.gamepad={
@@ -1379,7 +1379,7 @@ window.addEventListener('gamepadconnected',function(e){
 });
 
 window.addEventListener('gamepaddisconnected',function(e){
-	//Ignore if it's not the same gamepad
+	// Ignore if it's not the same gamepad
 	if(e.gamepad.index!==S.gamepad.id) return;
 	
 	S.gamepad=null;
@@ -1391,6 +1391,6 @@ window.addEventListener('gamepaddisconnected',function(e){
 /////////////////ADMIN/////////////////
 ///////////////////////////////////////
 
-/////With new admin panel, we just reload the entire Showpony- this avoids risk of any bugs with AJAX vs reality and the like
+///// With new admin panel, we just reload the entire Showpony- this avoids risk of any bugs with AJAX vs reality and the like
 
 }();

@@ -74,7 +74,7 @@ S.modules.<?php echo 'image'; ?>=new function(){
 				subtitles.appendChild(block);
 			}
 		}else{
-			//If don't have the file
+			// If don't have the file
 			fetch(S.subtitles[S.currentSubtitles]+S.files[M.currentFile].title+'.vtt')
 			.then(response=>{return response.text();})
 			.then(text=>{
@@ -84,7 +84,7 @@ S.modules.<?php echo 'image'; ?>=new function(){
 		}
 	}
 	
-	///BUFFERING///
+	/// BUFFERING ///
 	M.window.addEventListener('load',function(){
 		content.classList.remove('showpony-loading');
 		S.files[M.currentFile].buffered=true;
