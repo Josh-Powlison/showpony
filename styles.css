@@ -175,13 +175,6 @@ pre h3{
 	color:white;
 	padding:.25em;
 }
-
-/*Story setups*/
-#audio{
-	background-image:url("examples/bob-and-susie/~cover.jpg");
-	background-size:cover;
-	background-position:center;
-}
 	
 /*Set width and height to whatever you want*/
 .story{

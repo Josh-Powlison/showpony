@@ -1,24 +1,37 @@
+const DEFAULT_SHOWPONY='comic';
+
+var currentShowpony=/#([^\?]+)/.exec(location.href);
+if(currentShowpony) currentShowpony=currentShowpony[1];
+else currentShowpony=DEFAULT_SHOWPONY;
+
+console.log(currentShowpony);
+
+chooseStory(currentShowpony);
+
 document.getElementById("example-list").addEventListener("change",function(){
 	chooseStory(this.value);
 });
 
+// Buttons
+document.getElementById('button-previous').addEventListener('click',function(){
+	showponies[currentShowpony].to({time:'-10'});
+});
+
+document.getElementById('button-next').addEventListener('click',function(){
+	showponies[currentShowpony].to({time:'+10'});
+});
+
+document.getElementById('button-toggle').addEventListener('click',function(){
+	showponies[currentShowpony].toggle();
+});
+
 //Choose the right input value
 function chooseStory(id){
-	var stories=document.getElementsByClassName("showpony");
-/*
-	if(document.querySelector(".show-selected")) document.querySelector(".show-selected").classList.remove("show-selected");
-	showponies[id].window.classList.add("show-selected");
-	*/
+	
 	//Set the dropdown's value
 	if(document.getElementById("example-list").value!==id){ 
 		document.getElementById("example-list").value=id;
 	}
-	/*
-	for(var obj in showponies[id]){
-		if(Object.key(obj)!==id) showponies[id].window.classList.add("show-selected");
-		else showponies[id].window.classList.remove("show-selected");
-	}
-	*/
 	
 	var keys=Object.keys(showponies);
 	for(var i=0;i<keys.length;i++){
@@ -48,8 +61,11 @@ function chooseStory(id){
 		}
 	}
 	
+	currentShowpony=id;
+}
+
+function updateObjectDisplay(){
 	var container=document.createElement("p");
-	
 	var objects=Object.keys(showponies[id]);
 	
 	for(var i=0;i<objects.length;i++){
@@ -131,7 +147,3 @@ var propertyInfo={
 	,infiniteScroll:"Text and images only. Sets all content into a scrollable box and automatically adds content above and below as you scroll. Defaults to <em>false</em>"
 	,resourcesPath:"The path to resources like images and audio. Used by the multimedia engine. Remember the slash at the end! Defaults to '<em>resources/</em>'"
 };
-
-var type=/#[^$?]+/.exec(location.href);
-
-chooseStory(type ? type[0].replace('#','') : "comic");
