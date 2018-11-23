@@ -169,7 +169,7 @@ S.modules.visualNovel=new function(){
 				
 				//Regular text lines and waits can be keyframes
 				for(let i=1;i<M.lines.length;i++){
-					if(/^(\t+|engine\.wait)/.test(M.lines[i])) keyframes.push(i);
+					if(/^(\t+|engine\.wait$)/.test(M.lines[i])) keyframes.push(i);
 				}
 				
 				// Get the keyframe
