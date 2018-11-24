@@ -59,7 +59,6 @@ S.modules.visualNovel=new function(){
 	M.play=function(){
 		// Go through objects that were playing- unpause them
 		for(var name in objects){
-			// console.log('PLAY',objects[name].playing);
 			if(objects[name].playing){
 				objects[name].el.play();
 			}
@@ -93,7 +92,6 @@ S.modules.visualNovel=new function(){
 		
 		// If a continue notice exists, continue!
 		if(M.window.querySelector('.showpony-continue')){
-			console.log("Continue notice found!");
 			M.progress();
 			continueNotice.remove();
 			return;
@@ -124,9 +122,8 @@ S.modules.visualNovel=new function(){
 		if(!wait){ //XXX
 			M.progress();
 		}
-		// Else, add a continue notice
 		else{
-			M.window.appendChild(continueNotice);
+			junction();
 		}
 	}
 
@@ -195,8 +192,6 @@ S.modules.visualNovel=new function(){
 					S.files[file].buffered=true;
 					getTotalBuffered();
 				}
-				
-				console.log('VISUAL NOVEL ENGINE RAN');
 				
 				resolve();
 			});
@@ -466,14 +461,7 @@ S.modules.visualNovel=new function(){
 		}
 		// Otherwise, let the user know to continue it
 		else{
-			// If we're automatically proceeding
-			if(S.auto){
-				// M.progress();
-			}
-			// If we're waiting for player input
-			else{
-				M.window.appendChild(continueNotice);
-			}
+			junction();
 		}
 		
 		// If we're paused, pause the timer
@@ -884,10 +872,7 @@ S.modules.visualNovel=new function(){
 									// Update data based on this
 									if(newElement.type==='button' || newElement.type==='submit'){
 										newElement.addEventListener('click',function(event){
-											if(!O.el.checkValidity()){
-												console.log('Failed validation!');
-												return;
-											}
+											if(!O.el.checkValidity()) return;
 											
 											O.el.classList.add('showpony-textbox-form-inactive');
 											
@@ -897,7 +882,7 @@ S.modules.visualNovel=new function(){
 											if(this.dataset.go) M.progress(M.lines.indexOf(this.dataset.go));
 											else M.progress();
 											
-											// We don't want to run S.input here
+											// We don't want to run S.input here by clicking on a button
 											event.stopPropagation();
 										});
 									}else{
@@ -906,7 +891,6 @@ S.modules.visualNovel=new function(){
 										
 										newElement.addEventListener('change',function(){
 											S.data[this.dataset.var]=this.value;
-											console.log(this.value);
 										});
 									}
 								}
@@ -1022,17 +1006,8 @@ S.modules.visualNovel=new function(){
 				if(!wait){ //XXX
 					M.progress();
 				}else{
-					console.log('Check if need continue notice',O.el.querySelector('input'));
-					// If we need players to click to continue (and they have no inputs to fill out or anything), notify them:
 					if(!O.el.querySelector('input')){
-						// If we're automatically continuing
-						if(S.auto){
-							// M.progress();
-						// If we're waiting for user input
-						}else{
-							console.log('Adding continue notice');
-							M.window.appendChild(continueNotice);
-						}
+						junction();
 					}
 				}
 			});
@@ -1041,6 +1016,16 @@ S.modules.visualNovel=new function(){
 			O.el.appendChild(fragment);
 		}
 		objectAddCommonFunctions(O);
+	}
+	
+	// What to do when we aren't sure whether to proceed automatically or wait for input
+	function junction(){
+		if(S.auto){
+			M.progress();
+		}
+		else{
+			M.window.appendChild(continueNotice);
+		}
 	}
 	
 	M.previousKeyframe=function(){
