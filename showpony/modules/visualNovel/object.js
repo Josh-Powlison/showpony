@@ -822,14 +822,14 @@ S.modules.visualNovel=new function(){
 					
 					// We're closing the element
 					if(values[0]==='/'){
-						values=values.substr(1);
+						var tag=values.substr(1);
 						
-						switch(values){
+						switch(tag){
 							case 'shout':
 							case 'shake':
 							case 'sing':
 							case 'fade':
-								charElement.classList.remove('showpony-char-'+values);
+								charElement.classList.remove('showpony-char-'+tag);
 								break;
 							case 'speed':
 								// /TODO: allow nested <speed> tags, so it'll go back to the speed of the parent element
