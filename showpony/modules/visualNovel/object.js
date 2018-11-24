@@ -17,7 +17,7 @@ S.modules.visualNovel=new function(){
 	var continueNotice=document.createElement('div');
 	continueNotice.className='showpony-continue';
 	
-	var wait=false;
+	var wait=false; //XXX
 	
 	// The elements in the vn
 	var objects={};
@@ -83,69 +83,50 @@ S.modules.visualNovel=new function(){
 	}
 	
 	M.input=function(){
-		// If a wait timer was going, stop it.
+		// Finish all animations
+		for(var name in objects){
+			objects[name].el.dispatchEvent(new Event('animationend'));
+		}
+		content.classList.add('showpony-loading');
+		M.window.offsetHeight; // Trigger reflow to flush CSS changes
+		content.classList.remove('showpony-loading');
+		
+		// If a continue notice exists, continue!
+		if(M.window.querySelector('.showpony-continue')){
+			console.log("Continue notice found!");
+			M.progress();
+			continueNotice.remove();
+			return;
+		}
+		
+		// Continue if the timer was going
 		if(timer.remaining>0){
-			// Run all animations, end all transitions
-			content.classList.add('showpony-loading');
-			M.window.offsetHeight; // Trigger reflow to flush CSS changes
-			content.classList.remove('showpony-loading');
-			
 			timer.stop();
+			M.progress();
+			return;
 		}
 		
-		// Remove the continue notice
-		continueNotice.remove();
+		// Display all letters
+		M.window.querySelectorAll('.showpony-char').forEach(function(key){
+			// Skip creating animation, and display the letter
+			key.style.animationDelay=null;
+			var classes=key.className;
+			key.className=classes;
+			key.style.animation='initial';
+			key.firstChild.dispatchEvent(new CustomEvent('animationstart'));
+			key.style.visibility='visible';
+		});
 		
-		// End object animations on going to the next frame
-		for(var key in objects){
-			if(objects[key].tagName) objects[key].dispatchEvent(new Event('animationend'));
-			else{
-				objects[key].el.dispatchEvent(new Event('animationend'));
-			}
+		// If we're inputting, exit
+		if(objects.textbox.el.querySelector('input')) return;
+		
+		// Continue if we don't wait at the end of the text
+		if(!wait){ //XXX
+			M.progress();
 		}
-		
-		var choices=false;
-		
-		// If the player is making choices right now
-		if(objects.textbox && objects.textbox.el.querySelector('input')) choices=true;
-		
-		// If all letters are displayed
-		if(!objects.textbox || objects.textbox.el.children.length===0 || objects.textbox.el.lastChild.firstChild.style.visibility=='visible'){
-			if(!choices) M.progress();
-		}
-		else // If some objects have yet to be displayed
-		{
-			// Run all animations, end all transitions
-			content.classList.add('showpony-loading');
-			M.window.offsetHeight; // Trigger reflow to flush CSS changes
-			content.classList.remove('showpony-loading'); // Needs to happen before the latter; otherwise, it'll mess up stuff
-			
-			// Display all letters
-			M.window.querySelectorAll('.showpony-char').forEach(function(key){
-				// Skip creating animation, and display the letter
-				key.style.animationDelay=null;
-				var classes=key.className;
-				key.className=classes;
-				key.style.animation='initial';
-				key.firstChild.dispatchEvent(new CustomEvent('animationstart'));
-				key.style.visibility='visible';
-			});
-			
-			if(choices) return;
-			
-			// Continue if not waiting
-			if(!wait) M.progress();
-			else{
-				// If automatically progressing, do so
-				/// TODO: allow setting a value to progressing time
-				if(S.auto){
-					// M.progress();
-				}
-				// Else, if waiting for user input
-				else{
-					M.window.appendChild(continueNotice);
-				}
-			}
+		// Else, add a continue notice
+		else{
+			M.window.appendChild(continueNotice);
 		}
 	}
 
@@ -737,7 +718,7 @@ S.modules.visualNovel=new function(){
 			O.el.classList.remove('showpony-textbox-hidden');
 			O.el.classList.remove('showpony-textbox-form-inactive');
 			
-			wait=true; // Assume we're waiting at the end time
+			wait=true; // Assume we're waiting at the end time //XXX
 			
 			// If the line doesn't start with +, replace the text
 			if(input[0]!=='+'){
@@ -797,7 +778,7 @@ S.modules.visualNovel=new function(){
 				// If a > is at the end of a text line, continue automatically.
 				// Won't interfere with tags, no worries!
 				if(i==l-1 && input[i]==='>'){
-					wait=false;
+					wait=false; //XXX
 					continue;
 				}
 				
@@ -903,6 +884,11 @@ S.modules.visualNovel=new function(){
 									// Update data based on this
 									if(newElement.type==='button' || newElement.type==='submit'){
 										newElement.addEventListener('click',function(event){
+											if(!O.el.checkValidity()){
+												console.log('Failed validation!');
+												return;
+											}
+											
 											O.el.classList.add('showpony-textbox-form-inactive');
 											
 											// This might just be a continue button, so we need to check
@@ -1033,9 +1019,10 @@ S.modules.visualNovel=new function(){
 				if(this!==event.target) return;
 				
 				// If we aren't waiting to continue, continue
-				if(!wait){
+				if(!wait){ //XXX
 					M.progress();
 				}else{
+					console.log('Check if need continue notice',O.el.querySelector('input'));
 					// If we need players to click to continue (and they have no inputs to fill out or anything), notify them:
 					if(!O.el.querySelector('input')){
 						// If we're automatically continuing
@@ -1043,6 +1030,7 @@ S.modules.visualNovel=new function(){
 							// M.progress();
 						// If we're waiting for user input
 						}else{
+							console.log('Adding continue notice');
 							M.window.appendChild(continueNotice);
 						}
 					}
