@@ -4,10 +4,6 @@ var currentShowpony=/#([^\?]+)/.exec(location.href);
 if(currentShowpony) currentShowpony=currentShowpony[1];
 else currentShowpony=DEFAULT_SHOWPONY;
 
-console.log(currentShowpony);
-
-chooseStory(currentShowpony);
-
 document.getElementById("example-list").addEventListener("change",function(){
 	chooseStory(this.value);
 });
@@ -24,6 +20,31 @@ document.getElementById('button-next').addEventListener('click',function(){
 document.getElementById('button-toggle').addEventListener('click',function(){
 	showponies[currentShowpony].toggle();
 });
+
+// Add event listeners to them all
+for(var key in showponies){
+	showponies[key].window.addEventListener('timeupdate',function(event){
+		if(this===showponies[currentShowpony].window){
+			document.querySelector('[data-obj-print-value="currentTime"]').innerHTML=event.detail.time;
+			
+			document.querySelector('[data-obj-print-value="currentFile"]').innerHTML=event.detail.file;
+		}
+	});
+	
+	showponies[key].window.addEventListener('play',function(event){
+		if(this===showponies[currentShowpony].window){
+			document.querySelector('[data-obj-print-value="paused"]').innerHTML=showponies[currentShowpony].paused;
+			// document.querySelector('[data-obj-print-value="paused"]').innerHTML='<em>'+(showponies[currentShowpony].paused ? 'true' : 'false')+'</em>';
+		}
+	});
+	
+	showponies[key].window.addEventListener('pause',function(event){
+		if(this===showponies[currentShowpony].window){
+			document.querySelector('[data-obj-print-value="paused"]').innerHTML=showponies[currentShowpony].paused;
+			// document.querySelector('[data-obj-print-value="paused"]').innerHTML=='<em>'+(showponies[currentShowpony].paused ? 'true' : 'false')+'</em>';
+		}
+	});
+}
 
 //Choose the right input value
 function chooseStory(id){
@@ -62,88 +83,193 @@ function chooseStory(id){
 	}
 	
 	currentShowpony=id;
+	
+	listing.updateObjectDisplay(showponies[currentShowpony]);
 }
 
-function updateObjectDisplay(){
-	var container=document.createElement("p");
-	var objects=Object.keys(showponies[id]);
-	
-	for(var i=0;i<objects.length;i++){
-		var line=document.createElement("span");
-		
-		line.innerHTML+='    <span class="obj-name">'+objects[i]+'</span>: ';
-		var value=showponies[id][objects[i]];
-		
-		var print='';
-		var valuePrint=document.createElement("span");
-		
-		switch(typeof value){
-			case 'number':
-				print+=value;
-				break;
-			case 'boolean':
-				print+=value ? 'true' : 'false';
-				break;
-			case 'string':
-				print+='"'+value+'"';
-				break;
-			case 'object':
-				if(value && value.id) print+='document.getElementById("'+value.id+'")';
-				else print+=JSON.stringify(value,null,'    ');
-				break;
-			default:
-				//
-				break;
-		}
-		
-		valuePrint.innerText=print;
+var listing=new ObjList(document.getElementById("code"));
 
-		line.appendChild(valuePrint);
-		container.appendChild(line);
+function ObjList(input){
+	const O=this;
+	O.window=input;
+	
+	container=null;
+
+	O.updateObjectDisplay=function(obj){
+		O.window.innerHTML='Loading...';
 		
-		if(i<objects.length-1){
-			container.innerHTML+=',<br>';
+		container=document.createDocumentFragment();
+		
+		var openingBracket=document.createElement('p');
+		openingBracket.className='obj-print-bracket';
+		openingBracket.innerHTML=Array.isArray(obj) ? '[' : '{';
+		openingBracket.style.marginLeft='0em';
+		container.appendChild(openingBracket);
+		
+		O.buildObjectList(obj,1);
+		
+		O.window.innerHTML='';
+		O.window.appendChild(container);
+
+		document.getElementById("propertyExplanation").innerHTML='Hover over a property to get info on it!';
+	}
+
+	O.buildObjectList=function(obj,level=1,depth=''){
+		container.className='obj-print-container';
+		
+		var keys=Object.keys(obj);
+		if(!Array.isArray(obj)) keys=keys.sort();
+		
+		for(var i=0;i<keys.length;i++){
+			var value=obj[keys[i]];
+			
+			// Build line
+			var lineEl=document.createElement('p');
+			lineEl.className='obj-print-line';
+			lineEl.style.marginLeft=level+'em';
+			
+			container.appendChild(lineEl);
+			
+			// Build name
+			var nameEl=document.createElement('span');
+			nameEl.innerHTML=keys[i];
+			if(!Array.isArray(obj)){
+				nameEl.className='obj-print-name';
+				nameEl.dataset.call=depth+keys[i];
+				nameEl.addEventListener("mouseover",function(){
+					if(document.querySelector('.obj-print-name-study')) document.querySelector('.obj-print-name-study').classList.remove('obj-print-name-study');
+					
+					this.classList.add('obj-print-name-study');
+
+					var value='VALUE NOT FOUND';
+					
+					if(propertyInfo[this.dataset.call]){
+						value=propertyInfo[this.dataset.call];
+					}else{
+						// Try using wildcards in the text
+						var split=this.dataset.call.split(':');
+						for(var i=0;i<split.length;i++){
+							var test=this.dataset.call.replace(split[i],'*');
+							if(propertyInfo[test]){
+								value=propertyInfo[test];
+								break;
+							}
+						}
+					}
+					
+					document.getElementById("propertyExplanation").innerHTML="<strong>"+this.innerHTML+"</strong>: "+value;
+				});
+			}else{
+				nameEl.dataset.call=depth+'#';
+			}
+			
+			lineEl.appendChild(nameEl);
+
+			// Build value
+			var valueEl=document.createElement("span");
+			
+			var print='';
+			
+			switch(typeof value){
+				case 'number':
+					print+=value;
+					break;
+				case 'boolean':
+					print+='<em>'+(value ? 'true' : 'false')+'</em>';
+					break;
+				case 'string':
+					print+='"'+value+'"';
+					break;
+				case 'object':
+					if(value===null) print+='<em>null</em>';
+					else{
+						print+=Array.isArray(value) ? '[' : '{';
+						O.buildObjectList(value,level+1,nameEl.dataset.call+':');
+					}
+					break;
+				case 'function':
+					print+='<em>'+/.+?(?={\r)/.exec(value.toString())[0]+'</em>';
+					break;
+				case 'undefined':
+					print+='<em>undefined</em>';
+					break;
+				default: break;
+			}
+			
+			valueEl.innerHTML=': <span data-obj-print-value="'+nameEl.dataset.call+'">'+print+'</span>';
+			
+			lineEl.appendChild(valueEl);
+			
+			
 		}
+		
+		var closingBracket=document.createElement('p');
+		closingBracket.className='obj-print-bracket';
+		closingBracket.innerHTML=Array.isArray(obj) ? ']' : '}';
+		closingBracket.style.marginLeft=(level-1)+'em';
+		container.appendChild(closingBracket);
 	}
-	document.getElementById("code").innerHTML=container.innerHTML;
-	document.getElementById("propertyExplanation").innerHTML='Hover over a property to get info on it!';
-	
-	var properties=document.querySelectorAll(".obj-name");
-	for(var i=0;i<properties.length;i++){
-		properties[i].addEventListener("mouseover",function(){
-			if(document.querySelector('.obj-name-study')) document.querySelector('.obj-name-study').classList.remove('obj-name-study');
-			
-			this.classList.add('obj-name-study');
-			
-			document.getElementById("propertyExplanation").innerHTML="<strong>"+this.innerHTML+"</strong>: "+(propertyInfo[this.innerHTML]);
-		});
-	}
-	
 }
 
 var propertyInfo={
-	window:"The element to put Showpony into. Ideally a div. If unset or <em>null</em>, will create an element."
-	,start:"What file to start at if one isn't set in the querystring or bookmark. Can be a number or <em>'last'</em>. Defaults to <em>'last'</em>"
-	,get:"If set to a folder, will automatically get all files in that folder (unless they're not ready to be released yet, more info in the Wiki). If an array of paths to files, will just get those files. [lang] will be replaced with the <strong>language</strong> value and can be placed anywhere in the <strong>get</strong> value. Defaults to 'files/[lang]/'"
-	,language:"The language to use. Defaults to <em>'en'</em>"
-	,scrubLoad:"If <em>false</em>, don't load files while scrubbing. If <em>true</em>, load files while scrubbing. Defaults to <em>false</em>"
-	,info:"The text displayed at the top of Showpony. Defaults to <em>'[Current File] | [Files Left]'</em>"
-	,credits:"The text displayed at the bottom-right of Showpony. Can write CompanyName.logo to automatically load in a logo from simpleicons.org. If <em>null</em>, no credits are shown. Defaults to <em>null</em>."
-	,data:"An object that can be used to save user data. Defaults to <em>{}</em>"
-	,defaultDuration:"The assumed length for files without a duration in their filename. For comics or media where you want all pieces represented the same in the URL, you may want to go with <em>1</em>. Defaults to <em>10</em>"
-	,title:"Info to show in the website title that shows up in the tab. If null, won't impact the website title. Defaults to null"
-	,dateFormat:"How to format dates. Defaults to <em>{year:'numeric',month:'numeric',day:'numeric'}</em>"
-	,admin:"Whether or not to allow use of the admin panel, set up in the PHP file. Defaults to <em>false</em>"
-	,query:"The text in the search bar that tracks where you're at in the story. If <em>false</em>, no query is used. Defaults to <em>'part'</em>"
-	,shortcuts:"Allows keyboard shortcuts for Showpony. <em>'always'</em> means always use shortcut keys. <em>'focus'</em> means only when the element is focused on. <em>'fullscreen'</em> means only when Showpony is fullscreened. <em>false</em> means don't allow shortcut keys. Defaults to <em>'focus'</em>"
-	,saveId:"The id to use for saving bookmarks, both locally and remotely. Defaults to <em>location.hostname.substring(0,20)</em>"
-	,remoteSave:"Save user bookmarks remotely to a user's Hey Bard account, so they can be accessed from any machine. If the user loads the webpage without a query, the bookmark will automatically be loaded. Defaults to <em>true</em>"
-	,localSave:"Save user bookmarks locally. If the user loads the webpage without a query, the bookmark will automatically be loaded. Defaults to <em>false</em>"
-	,bookmark:"<em>'file'</em> means queries and bookmarks are saved based on the current file. <em>'time'</em> means it's based on the total time we are into the story. Defaults to <em>'file'</em>"
-	,preloadNext:"Preload upcoming files. Can set to any positive integer you like, or to 0 to not preload. This will affect bandwidth usage, so consider your viewership and the size of your files; for example, preloading the next video file might be a bad idea. Defaults to <em>1</em>"
-	,showBuffer:"Show the file buffer at the top. For media where loading is incredibly fast, displaying this might just be weird. Defaults to <em>true</em>"
-	,subtitles:"Add in the languages and types you want to support; closed captions should also go in here. Full name and link to the folders where they are. Their names should be the same as the corresponding file names! <em>null</em> means subtitles aren't supported. Defaults to <em>null</em>"
-	,cover:"Create a cover that shows up before you start the story. It disappears once you click on it or if you're loading a local or remote bookmark. Will play media once closed. If you don't want a cover, set it to <em>null</em>. Set <em>image</em> to a background image or <em>null</em>; set <em>content</em> to containing content (with or without HTML) or <em>null</em>. Both default to <em>null</em>. Cover as a whole defaults to <em>null</em>"
-	,infiniteScroll:"Text and images only. Sets all content into a scrollable box and automatically adds content above and below as you scroll. Defaults to <em>false</em>"
-	,resourcesPath:"The path to resources like images and audio. Used by the multimedia engine. Remember the slash at the end! Defaults to '<em>resources/</em>'"
+	'auto':			'Whether the Showpony will automatically progress. Defaults to <em>false</em>.'
+	,'buffered':	'How much of the story has been buffered.'
+	,'cover':		'Appears when the Showpony loads. When clicked, will be removed and the Showpony will begin playing.'
+		,'cover:content':	'The cover\'s title HTML.'
+		,'cover:image':		'The cover\'s image.'
+	,'currentFile':		'The current file number in the Showpony.'
+	,'currentModule':	'The module the current file is using.'
+	,'currentSubtitles':	'The subtitles in use for the current file (if any).'
+	,'currentTime':		'The current time in the whole Showpony.'
+	,'data':'An object that can be used to save user data. Defaults to <em>{}</em>'
+	,'duration':	'The sum of all of the files\' durations.'
+	,'files':		'An array of all of the files\' data.'
+		,'files:#:buffered':		'An array of the amount of buffered content for a file. Initializes to <em>false</em>'
+		,'files:#:date':		'The date and time the file went live.'
+		,'files:#:duration':	'The length or estimated length of the file.'
+		,'files:#:extension':	'The file\'s extension.'
+		,'files:#:mimeType':	'The file\'s mime type.'
+		,'files:#:module':		'The module this file will call.'
+		,'files:#:name':		'The full filename for this file.'
+		,'files:#:path':		'The path to this file.'
+		,'files:#:size':		'The file\'s size in bytes.'
+		,'files:#:subtitles':	'The file\'s subtitles.'
+		,'files:#:title':		'The file\'s title.'
+	,'fullscreen':			'Whether the Showpony is currently in fullscreen.'
+	,'fullscreenEnter':		'Run to enter fullscreen.'
+	,'fullscreenExit':		'Run to exit fullscreen.'
+	,'fullscreenToggle':	'Run to toggle fullscreen.'
+	,'gamepad':				'The gamepad currently in use with Showpony. Initializes to <em>null</em>.'
+	,'infiniteScroll':		'Not yet in use.'
+	,'input':		'General user input, like clicking.'
+	,'loadBookmark':		'Load the user\'s bookmark.'
+	,'media':		'Contains a count of how many of each module are in use.'
+	,'message':		'A message from Showpony\'s PHP file. Should be empty if everything worked correctly; otherwise, it may contain important information.'
+	,'modules':		'The modules in use by this Showpony.'
+		,'modules:*':		'A module for displaying media.'
+			,'modules:*:currentFile':		'The module\'s current file.'
+			,'modules:*:currentTime':		'The module\'s current file\'s time.'
+			,'modules:*:displaySubtitles':		'A function ran for working the subtitles.'
+			,'modules:*:input':		'A function ran for user input.'
+			,'modules:*:pause':		'A function ran to pause the module.'
+			,'modules:*:play':		'A function ran to play the module.'
+			,'modules:*:src':		'A function ran to update the source.'
+			,'modules:*:timeUpdate':		'A function ran to track the current file\'s time.'
+			,'modules:*:window':		'The module\'s window.'
+	,'name':		'The Showpony object\'s name.'
+	,'pause':		'Run to pause the Showpony.'
+	,'paused':		'True if the Showpony is currently paused.'
+	,'play':		'Run to play the Showpony.'
+	,'query':		'The text in the search bar that tracks where you\'re at in the story. If <em>false</em>, no query is used. Defaults to <em>\'part\'</em>'
+	,'saveBookmark':		'Run to save the current bookmark.'
+	,'saveId':		'The filename for saving and loading bookmarks.'
+	,'saveName':		'The filename for saving and loading bookmarks.'
+	,'saveSystem':		'May be <em>false,<em>, "local", or "remote".'
+	,'subtitles':		'Contains supported languages and paths to those language\'s subtitles.'
+	,'to':			'Run to go to any point in the Showpony file. You can go to an exact position or relative position. Pass an object like so: showpony.to({file:\'15\',time:\'2\'}). Relative values need to be prepended with a + or a - sign.'
+	,'toggle':		'Run this function to pause and unpause the Showpony.'
+	,'window':		'The element the Showpony is in.'
 };
+
+// Start
+chooseStory(currentShowpony);

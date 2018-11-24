@@ -159,22 +159,6 @@ pre h3{
 #example-list>option{
 	background-color:#fff;
 }
-
-.obj-name{
-	transition:background-color .1s,color .1s;
-	font-weight:bold;
-}
-
-.obj-name.obj-name-study{
-	background-color:black;
-	color:white;
-}
-
-#propertyExplanation{
-	background-color:black;
-	color:white;
-	padding:.25em;
-}
 	
 /*Set width and height to whatever you want*/
 .story{
@@ -210,4 +194,36 @@ footer{
 footer p{
 	margin:0;
 	padding:.5em;
+}
+
+#code{
+	max-height:80vh;
+	height:20rem;
+	overflow:auto;
+}
+
+/*OBJ Print*/
+.obj-print-container{
+	
+}
+
+.obj-print-line
+,.obj-print-bracket{
+	margin:0;
+}
+
+.obj-print-name{
+	transition:background-color .1s,color .1s;
+	font-weight:bold;
+}
+
+.obj-print-name.obj-print-name-study{
+	background-color:black;
+	color:white;
+}
+
+#propertyExplanation{
+	background-color:black;
+	color:white;
+	padding:.25em;
 }
