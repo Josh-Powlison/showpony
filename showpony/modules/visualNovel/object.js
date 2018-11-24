@@ -17,7 +17,6 @@ S.modules.visualNovel=new function(){
 	continueNotice.className='showpony-continue';
 	var inputting=false;
 	var wait=false;
-	var currentTextbox='textbox';
 	var target={};
 	var keyframes=null;
 	var timer=new function(){
@@ -105,10 +104,10 @@ S.modules.visualNovel=new function(){
 		var choices=false;
 		
 		// If the player is making choices right now
-		if(objects[currentTextbox] && objects[currentTextbox].el.querySelector('input')) choices=true;
+		if(objects.textbox && objects.textbox.el.querySelector('input')) choices=true;
 		
 		// If all letters are displayed
-		if(!objects[currentTextbox] || objects[currentTextbox].el.children.length===0 || objects[currentTextbox].el.lastChild.firstChild.style.visibility=='visible'){
+		if(!objects.textbox || objects.textbox.el.children.length===0 || objects.textbox.el.lastChild.firstChild.style.visibility=='visible'){
 			inputting=false;
 			if(!choices) M.progress();
 		}
