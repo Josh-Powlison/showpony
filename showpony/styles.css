@@ -75,10 +75,14 @@
 	-moz-user-select:none;
 	-webkit-user-select:none;
 	user-select:none;
+	
+	/* For now, we'll disable the menu when it's not active. */
+	pointer-events:none;
 }
 
 .showpony-paused .showpony-overlay{
 	opacity:1;
+	pointer-events:auto;
 }
 
 .showpony-paused .showpony-overlay{

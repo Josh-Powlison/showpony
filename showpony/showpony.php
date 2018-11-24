@@ -215,7 +215,7 @@ S.paused=false;
 S.modules={};
 S.media=<?=json_encode($media,JSON_NUMERIC_CHECK)?>;
 S.message='<?php echo addslashes($message); ?>';
-S.auto=true; // false, or float between 0 and 10
+S.auto=false; // false, or float between 0 and 10
 
 S.window.innerHTML=`
 	<style class="showpony-style" type="text/css"></style>
