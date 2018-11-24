@@ -20,7 +20,36 @@ S.modules.visualNovel=new function(){
 	var currentTextbox='textbox';
 	var target={};
 	var keyframes=null;
-	var waitTimer=new powerTimer(function(){},0)
+	var timer=new function(){
+		// Thanks to https://stackoverflow.com/questions/3969475/javascript-pause-settimeout
+
+		const O=this;
+		O.id;
+		O.startTime;
+		O.remaining=0;
+
+		O.start=function(duration=O.remaining){
+			if(duration<=0) return;
+			O.remaining=duration;
+			
+			O.startTime=new Date();
+			
+			O.id=window.setTimeout(function(){
+				O.remaining=0;
+				M.progress();
+			},duration);
+		}
+		
+		O.pause=function(){
+			window.clearTimeout(O.id);
+			if(O.remaining>0) O.remaining-=new Date()-O.startTime;
+		}
+
+		O.stop=function(){
+			window.clearTimeout(O.id);
+			O.remaining=0;
+		}
+	};
 	
 	// The elements in the vn
 	var objects={};
@@ -34,8 +63,8 @@ S.modules.visualNovel=new function(){
 			}
 		}
 		
-		// Resume waitTimer
-		waitTimer.resume();
+		// Resume timer
+		timer.start();
 	}
 	
 	M.pause=function(){
@@ -47,19 +76,19 @@ S.modules.visualNovel=new function(){
 			}
 		}
 		
-		// Pause waitTimer
-		waitTimer.pause();
+		// Pause timer
+		timer.pause();
 	}
 	
 	M.input=function(){
 		// If a wait timer was going, stop it.
-		if(waitTimer.remaining>0){
+		if(timer.remaining>0){
 			// Run all animations, end all transitions
 			content.classList.add('showpony-loading');
 			M.window.offsetHeight; // Trigger reflow to flush CSS changes
 			content.classList.remove('showpony-loading');
 			
-			waitTimer.end();
+			timer.stop();
 		}
 		
 		// Remove the continue notice
@@ -128,7 +157,7 @@ S.modules.visualNovel=new function(){
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
 			// Visual Novel engine resets
-			waitTimer.end();
+			timer.stop();
 			
 			// If this is the current file
 			if(M.currentFile===file){
@@ -325,7 +354,6 @@ S.modules.visualNovel=new function(){
 			}
 			
 			target={};
-			waitTimer.end();
 
 			runTo=false;
 			
@@ -449,19 +477,15 @@ S.modules.visualNovel=new function(){
 	}
 
 	M.wait=function(input){
-		// If there's a waitTimer, clear it out
-		if(waitTimer.remaining>0){
-			waitTimer.end();
-		}
-		
 		// Skip waiting if we're running through
 		if(runTo!==false){
 			M.progress();
 			return;
 		}
 		
-		// If a value was included, wait for the set time
-		if(input) waitTimer=new powerTimer(M.progress,parseFloat(input)*1000);
+		if(input){
+			timer.start(parseFloat(input)*1000);
+		}
 		// Otherwise, let the user know to continue it
 		else{
 			// If we're automatically proceeding
@@ -475,7 +499,7 @@ S.modules.visualNovel=new function(){
 		}
 		
 		// If we're paused, pause the timer
-		if(S.paused) waitTimer.pause();
+		if(S.paused) timer.pause();
 		
 		// Don't automatically go to the next line
 	}
@@ -790,6 +814,7 @@ S.modules.visualNovel=new function(){
 					var values='';
 					
 					// Wait until a closing bracket (or the end of the text)
+					// TODO: add support for > inside of quotes; for example, <input value="Go Right >">
 					while(input[i]!='>' && i<input.length){
 						values+=input[i];
 						i++;
@@ -908,7 +933,7 @@ S.modules.visualNovel=new function(){
 						}
 					}
 					
-					// Pass over the closing bracket
+					// Pass over the closing bracket, and read the next character
 					continue;
 				// If letters
 				}else{
@@ -1048,37 +1073,5 @@ S.modules.visualNovel=new function(){
 		
 		// /TODO: account for starting at the end of a previous KN file
 		S.to({time:'-'+keyframeLength});
-	}
-	
-	function powerTimer(callback,delay){
-		// Thanks to https://stackoverflow.com/questions/3969475/javascript-pause-settimeout
-
-		const pT=this;
-		
-		var timerId,start;
-		pT.remaining=delay;
-
-		pT.pause=function(){
-			window.clearTimeout(timerId);
-			pT.remaining-=new Date()-start;
-		};
-
-		pT.resume=function(){
-			if(pT.remaining<=0) return;
-			
-			start=new Date();
-			window.clearTimeout(timerId);
-			timerId=window.setTimeout(function(){
-				callback();
-				pT.end();
-			},pT.remaining);
-		};
-
-		pT.end=function(){
-			if(pT.remaining>0) window.clearTimeout(timerId);
-			pT.remaining=0;
-		}
-		
-		pT.resume();
 	}
 }();
