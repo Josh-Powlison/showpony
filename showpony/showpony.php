@@ -482,8 +482,8 @@ S.pause=function(){
 	if(S.paused===true) return;
 	
 	S.window.classList.add('showpony-paused');
-	if(S.currentModule) S.modules[S.currentModule].pause();
 	S.paused=true;
+	if(S.currentModule) S.modules[S.currentModule].pause();
 	S.window.dispatchEvent(new CustomEvent('pause'));
 }
 
@@ -677,7 +677,7 @@ function timeUpdate(time){
 			'timeupdate'
 			,{
 				detail:{
-					file:(S.currentFile+1)
+					file:S.currentFile
 					,time:S.currentTime
 				}
 			}
