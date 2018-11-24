@@ -13,12 +13,18 @@ S.modules.visualNovel=new function(){
 	M.window.className='showpony-visual-novel';
 	
 	var runTo=false;
+	
 	var continueNotice=document.createElement('div');
 	continueNotice.className='showpony-continue';
-	var inputting=false;
+	
 	var wait=false;
+	
+	// The elements in the vn
+	var objects={};
 	var target={};
+	
 	var keyframes=null;
+	
 	var timer=new function(){
 		// Thanks to https://stackoverflow.com/questions/3969475/javascript-pause-settimeout
 
@@ -49,9 +55,6 @@ S.modules.visualNovel=new function(){
 			O.remaining=0;
 		}
 	};
-	
-	// The elements in the vn
-	var objects={};
 	
 	M.play=function(){
 		// Go through objects that were playing- unpause them
@@ -108,7 +111,6 @@ S.modules.visualNovel=new function(){
 		
 		// If all letters are displayed
 		if(!objects.textbox || objects.textbox.el.children.length===0 || objects.textbox.el.lastChild.firstChild.style.visibility=='visible'){
-			inputting=false;
 			if(!choices) M.progress();
 		}
 		else // If some objects have yet to be displayed
@@ -130,8 +132,6 @@ S.modules.visualNovel=new function(){
 			});
 			
 			if(choices) return;
-			
-			inputting=true;
 			
 			// Continue if not waiting
 			if(!wait) M.progress();
@@ -311,8 +311,6 @@ S.modules.visualNovel=new function(){
 		
 		// Run through if we're running to a point; if we're there or beyond though, stop running through
 		if(runTo!==false && M.currentLine>=runTo){
-			
-			inputting=false;
 			
 			// Delete unnecessary target info
 			delete target['engine'];
@@ -746,8 +744,6 @@ S.modules.visualNovel=new function(){
 				O.el.innerHTML='';
 				O.el.scrollTop=0;
 				
-				inputting=false;
-				
 				// Split text by nameplate
 				if(!objects.nameplate){
 					objects.nameplate=new M.nameplate('nameplate');
@@ -1010,7 +1006,7 @@ S.modules.visualNovel=new function(){
 					}
 					
 					// Set the display time here- but if we're paused, or running through the text with runTo, no delay!
-					if(!S.paused && !inputting && runTo===false) showChar.style.animationDelay=totalWait+'s';
+					if(!S.paused && runTo===false) showChar.style.animationDelay=totalWait+'s';
 					
 					// Set animation timing for animChar, based on the type of animation
 					if(thisChar.classList.contains('showpony-char-sing')){
@@ -1031,13 +1027,6 @@ S.modules.visualNovel=new function(){
 					
 					lastLetter=showChar;
 				}
-			}
-			
-			// If the user's trying to skip text, let them
-			if(inputting && input[input.length-1]=='>'){
-				console.log('Hey! skip this!');
-			}else{
-				inputting=false;
 			}
 			
 			lastLetter.addEventListener('animationstart',function(event){
