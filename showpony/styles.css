@@ -61,15 +61,23 @@
 /////////////////MENU//////////////////
 /////////////////////////////////////*/
 
+@font-face{
+	font-family: 'ShowponyUI';
+	src:url('showpony/M-1m/mplus-1m-medium.ttf');
+	font-weight:medium;
+	font-style:normal;
+}
+
 .showpony-overlay{
 	position:absolute;
 	top:0;
 	left:0;
 	right:0;
 	bottom:0;
+	
 	opacity:0;
 	color:#000;
-	background-color:rgba(255,255,255,.5);
+	background-color:#fff;
 	
 	-ms-user-select:none;
 	-moz-user-select:none;
@@ -78,56 +86,50 @@
 	
 	/* For now, we'll disable the menu when it's not active. */
 	pointer-events:none;
-}
-
-.showpony-paused .showpony-overlay{
-	opacity:1;
-	pointer-events:auto;
-}
-
-.showpony-paused .showpony-overlay{
-	background-color:rgba(255,255,255,.5);
-}
-
-.showpony-overlay-text{
-	position:absolute;
-	width:100%;
-	height:100%;
-	pointer-events:none;
 	
-	font-family:monospace;
-	font-size:2.5em;
-	margin:0;
-	padding:.25em;
+	font-family: 'ShowponyUI';
+	font-size: 1rem;
 }
 
-.showpony-overlay button{
-	border:none;
-	width:3rem;
-	height:3rem;
+.showpony-paused .showpony-overlay{
+	opacity:.75;
 	pointer-events:auto;
-	cursor:pointer;
 }
 
 .showpony-overlay-buffer{
-	width:100%;
-	top:3.25em;
-	height:.25em;
 	position:absolute;
+	width:100%;
+	height:1em;
+	top:0;
+	
 	pointer-events:none;
-	opacity:.5;
-	background-color:black;
 }
 
 /*Menu scrub bar*/
 .showpony-progress{
 	position:absolute;
-	top:3.25em;
+	width:.5em;
+	height:100%;
+	top:0;
 	
-	width:1em;
-	height:.25em;
-	background-color:#fff;
-	transform:translate(-.5em,0);
+	background-color:#000;
+	transform:translate(-.25em,0);
+	
+	pointer-events:none;
+}
+
+.showpony-overlay-text{
+	position:absolute;
+	width:100%;
+	
+	display:flex;
+	justify-content:space-between;
+	
+	font-size:2em;
+	margin:0;
+	padding:.75em 1em;
+	box-sizing:border-box;
+	
 	pointer-events:none;
 }
 
@@ -153,6 +155,70 @@
 	cursor:pointer;
 	object-fit:contain;
 }
+
+
+
+.showpony-buttons{
+	position:absolute;
+	bottom:0;
+	width:100%;
+	
+	display:flex;
+	justify-content:center;
+	margin:auto;
+	
+	pointer-events:none;
+}
+
+.showpony-buttons button{
+	width:7.5em;
+	height:7.5em;
+	
+	border:none;
+	cursor:pointer;
+	
+	background-color:#fff;
+	color:#000;
+	
+	border:.25em solid black;
+	
+	box-sizing:border-box;
+	
+	background-size:contain;
+}
+
+.showpony-buttons button:active{
+	filter:invert(1);
+}
+
+.showpony-paused .showpony-buttons button{
+	pointer-events:auto;
+}
+
+.showpony-button-comments{
+	background-image:url('showpony/icons/comments.svg');
+}
+
+.showpony-button-language{
+	background-image:url('showpony/icons/language.svg');
+}
+
+.showpony-button-subtitles{
+	background-image:url('showpony/icons/subtitles.svg');
+}
+
+.showpony-button-bookmark{
+	background-image:url('showpony/icons/bookmark.svg');
+}
+
+.showpony-fullscreen-button{
+	background-image:url('showpony/icons/fullscreen.svg');
+}
+
+.showpony-captions-button{
+	display:none;
+}
+
 
 /*Fullscreen display*/
 :-webkit-full-screen{

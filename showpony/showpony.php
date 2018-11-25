@@ -224,9 +224,15 @@ S.window.innerHTML=`
 	<div class="showpony-overlay">
 		<canvas class="showpony-overlay-buffer" width="1000" height="1"></canvas>
 		<div class="showpony-progress" style="left: 14.5688%;"></div>
-		<p class="showpony-overlay-text">1 | 3</p>
-		<button class="showpony-button showpony-fullscreen-button" alt="Fullscreen" title="Fullscreen Toggle"></button>
-		<select class="showpony-captions-button" title="Closed Captions/Subtitles" alt="Closed Captions/Subtitles"></select>
+		<p class="showpony-overlay-text"><span>0</span><span>0</span></p>
+		<div class="showpony-buttons">
+			<select class="showpony-captions-button" title="Closed Captions/Subtitles" alt="Closed Captions/Subtitles"></select>
+			<button class="showpony-button-comments" alt="Comments" title="Comments"></button>
+			<button class="showpony-button-language" alt="Language" title="Language"></button>
+			<button class="showpony-button-subtitles" alt="Subtitles" title="Subtitles"></button>
+			<button class="showpony-button-bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
+			<button class="showpony-fullscreen-button" alt="Fullscreen" title="Fullscreen Toggle"></button>
+		</div>
 	</div>
 `;
 
@@ -747,7 +753,7 @@ function getTotalBuffered(){
 	overlayBuffer.height=1;
 	var ctx=overlayBuffer.getContext('2d');
 	ctx.clearRect(0,0,rectRes,1);
-	ctx.fillStyle='#95f442';
+	//ctx.fillStyle='#000';
 	
 	// Update info on dropdown
 	if(S.buffered===true){
@@ -801,8 +807,7 @@ function scrub(inputPercent=null,loadFile=false){
 	var newPart=0;
 	for(var i=timeInTotal;i>S.files[newPart].duration;i-=S.files[newPart].duration) newPart++;
 	
-	var info=infoMake(newPart+1)+' | '+infoMake(S.files.length-(newPart+1))
-	;
+	var info='<span>'+infoMake(newPart+1)+'</span><span>'+infoMake(S.files.length-(newPart+1))+'</span>';
 	<?php
 	// Show progress with time if any of the files' progress is heavily measured by time
 	}else{
@@ -813,8 +818,7 @@ function scrub(inputPercent=null,loadFile=false){
 		return String((input)|0).padStart(pad,'0');
 	}
 	
-	var info=infoMake(timeInTotal / 60)+':'+infoMake(timeInTotal % 60,2)+' | '+infoMake((S.duration-timeInTotal) / 60)+':'+infoMake((S.duration-timeInTotal) % 60,2)
-	;
+	var info='<span>'+infoMake(timeInTotal / 60)+':'+infoMake(timeInTotal % 60,2)+'</span><span>'+infoMake((S.duration-timeInTotal) / 60)+':'+infoMake((S.duration-timeInTotal) % 60,2)+'</span>';
 	<?php } ?>
 	
 	if(info!==overlayText.innerHTML) overlayText.innerHTML=info;
