@@ -68,6 +68,6 @@ A few ways, no obligation:
 * Get involved as a programmer!
 * Send me money and let me know it's for Showpony, and I'll try to put more hours towards it (since I can't make any promises, view this as a donation, not as payment)! https://www.paypal.me/joshpowlison
 
-## Please support by letting me use your service, BrowserStack! It'd really help me move forward!
+## Thank you for supporting the open source community, BrowserStack!
 
 [<img src="Browserstack-logo.svg" width="200">](https://www.browserstack.com/)
