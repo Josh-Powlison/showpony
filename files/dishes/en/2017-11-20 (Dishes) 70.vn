@@ -1,24 +1,31 @@
-little-idea.loop
-little-idea.play
+//theme.loop
+theme.play
+theme.loop	false
 
 forest
 forest.style	bottom:100%;
-/*susan=	<span style="color:magenta">Susan</span>::
+susan=	<span style="color:magenta">Susan</span>::
 ben=	<span style="color:aqua">Ben</span>::
 player=	<span style="color:green">[playerName]</span>::
-playerAndBen=	<span style="color:aqua">Ben</span> & <span style="color:green">[playerName]</span>::*/
+playerAndBen=	<span style="color:aqua">Ben</span> & <span style="color:green">[playerName]</span>::
 
-ben		habit
+ben			habit
 ben.style	left:25%;bottom:-100%;
 susan	angry
-susan.style	left:-100%;
+susan.style	left:-100%;height:80%;
 
-//main.style	height:100%;
+		Welcome to our dynamic world!
+		
+		This will continue automatically>
+		Isn't that great?>
+		Keep going>
+		Going again>
+		Stopping here!
 
-		<span style="display:block;text-align:center;">What is your name?</span><br><input data-var="playerName"><input type="submit" value="Confirm">
+		<span style="display:block;text-align:center;">What is your name?</span><br><input data-var="playerName" placeholder="Your Name" required><input type="submit" value="Confirm">
+//theme.stop
 
-//main.style	pointer-events:none;
-//main.style	time:1s;opacity:0;
+textbox.empty
 		
 engine.wait		.1
 
@@ -26,12 +33,13 @@ forest.style	time:1s;bottom:0%;
 ben.style		time:1s;bottom:0%;
 engine.wait		3
 
+//theme.play
 		[ben]Aren't the woods beautiful, [playerName]?~ And the way the light comes through the leaves and rests gently upon your face...
 ben		shock
 		Ben talks like this when he's avoiding something. "This is a 't"e's'"t'!''"""""''''""'"'"'" There should be a pause there.
 		
 ben		frown
-		[ben]...I never want to go back.
+		[ben]<speed constant rate="0">...I never want to go back.</speed> <speed rate="5">Can you imagine?</speed>
 ben		angry
 		[ben]I don't want to face what's waiting for us.
 ben		sad
@@ -39,6 +47,8 @@ ben		sad
 ben		scared
 		[ben]I don't want to...>
 ben		shy_blush
+
+susan.style		time:1s;left:-25%;
 		[susan]<shout>There you are!</shout> What are you and [playerName] doing out here, it's <em>your</em> turn to do the dishes!!!!
 
 		[ben]<span style="font-size:.5em;">Crap, we've been caught...</span>
