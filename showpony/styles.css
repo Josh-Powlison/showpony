@@ -189,6 +189,7 @@
 
 .showpony-buttons button:active{
 	filter:invert(1);
+	
 }
 
 .showpony-paused .showpony-buttons button{
@@ -197,18 +198,22 @@
 
 .showpony-button-comments{
 	background-image:url('showpony/icons/comments.svg');
+	background-color:red!important;
 }
 
 .showpony-button-language{
 	background-image:url('showpony/icons/language.svg');
+	background-color:red!important;
 }
 
 .showpony-button-subtitles{
 	background-image:url('showpony/icons/subtitles.svg');
+	background-color:red!important;
 }
 
 .showpony-button-bookmark{
 	background-image:url('showpony/icons/bookmark.svg');
+	background-color:red !important;
 }
 
 .showpony-fullscreen-button{
