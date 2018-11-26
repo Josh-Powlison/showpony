@@ -1239,6 +1239,9 @@ var windowClick=function(event){
 window.addEventListener('click',windowClick);
 
 window.addEventListener('mouseup',function(event){
+	// Allow left-click only
+	if(event.button!==0) return;
+	
 	// If we're not scrubbing, set scrubbing to false and return
 	if(scrubbing!==true){
 		scrubbing=false;
@@ -1253,6 +1256,9 @@ window.addEventListener('mouseup',function(event){
 
 // On mousedown, we prepare to move the cursor (but not over overlay buttons)
 overlay.addEventListener('mousedown',function(event){
+	// Allow left-click only
+	if(event.button!==0) return;
+	
 	if(event.target===this){
 		scrubbing=event.clientX;
 		window.getSelection().removeAllRanges();
