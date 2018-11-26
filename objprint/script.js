@@ -41,7 +41,7 @@ function ObjPrint(obj={}){
 	// PRIVATE FUNCTIONS //
 	
 	// This is run for the overall object and sub-objects
-	function buildObjectList(obj,level=1,depth=''){
+	function buildObjectList(obj,level=1,depth='',name=''){
 		container.className='objprint-container';
 		
 		var keys=Object.keys(obj);
@@ -67,6 +67,7 @@ function ObjPrint(obj={}){
 				nameEl.dataset.call=depth+'#';
 			}
 			
+			
 			// What do we do with this?
 			if(getPropertyText(nameEl.dataset.call)===null){
 				if(O.unsetAction==='hide') continue;
@@ -75,7 +76,7 @@ function ObjPrint(obj={}){
 				nameEl.dataset.select='true';
 			}
 			
-			nameEl.dataset.name=depth+keys[i];
+			nameEl.dataset.name=name+keys[i];
 			
 			lineEl.appendChild(nameEl);
 			lineEl.insertAdjacentHTML('beforeend',': ');
@@ -94,7 +95,7 @@ function ObjPrint(obj={}){
 					valueEl.className='objprint-boolean';
 					break;
 				case 'string':
-					valueEl.innerText='"'+value.replace(/"/g,'\\"')+'"';
+					valueEl.innerText=JSON.stringify(value);
 					valueEl.className='objprint-string';
 					break;
 				case 'object':
@@ -103,8 +104,16 @@ function ObjPrint(obj={}){
 						valueEl.className='objprint-null';
 					}
 					else{
-						valueEl.innerHTML=Array.isArray(value) ? '[' : '{';
-						buildObjectList(value,level+1,nameEl.dataset.call+'.');
+						// Add the opening tag with its attributes if it's an HTML element
+						if(value.tagName){
+							var elementEl=document.createElement('span');
+							elementEl.innerText=/^[^>]+?>/.exec(value.outerHTML)[0];
+							elementEl.className='objprint-element';
+							valueEl.appendChild(elementEl);
+						}
+						
+						valueEl.insertAdjacentHTML('beforeend',Array.isArray(value) ? '[' : '{');
+						buildObjectList(value,level+1,nameEl.dataset.call+'.',nameEl.dataset.name+'.');
 					}
 					break;
 				case 'function':
@@ -203,8 +212,12 @@ function ObjPrint(obj={}){
 		
 		event.target.classList.add('objprint-study');
 		
-		//Only surround the relevant part of the name with strong tags
-		var nameDisplay=event.target.dataset.name.replace(event.target.innerHTML,'<strong>'+event.target.innerHTML+'</strong>');;
+		// Get the regex-safe name and find the last instance of it
+		var searchString=event.target.innerHTML;
+		var regex=new RegExp(searchString+'(?=(?:(?!'+searchString+').)*$)');
+		
+		// Only surround the relevant part of the name with strong tags
+		var nameDisplay=event.target.dataset.name.replace(regex,'<strong>'+event.target.innerHTML+'</strong>');;
 		
 		O.explanationWindow.innerHTML=nameDisplay+": "+getPropertyText(event.target.dataset.call);
 	});

@@ -16,7 +16,8 @@
 	
 }
 
-.objprint-function
+.objprint-element
+,.objprint-function
 ,.objprint-null
 ,.objprint-undefined{
 	font-style:italic;
