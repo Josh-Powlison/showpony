@@ -119,7 +119,7 @@ foreach(scandir($language) as &$file){
 	
 	// There must be a better way to get some of this info...
 	$fileInfo=[
-		'buffered'		=>	false
+		'buffered'		=>	[]
 		,'date'			=>	$date
 		,'duration'		=>	preg_match('/[^\s)]+(?=\.[^.]+$)/',$file,$match) ? $match[0] : 10
 		,'extension'	=>	pathinfo($language.'/'.$file,PATHINFO_EXTENSION)
@@ -236,7 +236,7 @@ S.window.innerHTML=`
 	</div>
 `;
 
-S.buffered=false;
+S.buffered=[];
 S.query='<?php echo $name; ?>';
 S.infiniteScroll=false;
 S.subtitles=<?php
@@ -743,7 +743,7 @@ function getTotalBuffered(){
 	}
 	
 	if(buffered.length===1 && buffered[0][0]===0 && buffered[0][1]>=S.duration) buffered=true;
-	if(buffered.length===0) buffered=false;
+	if(buffered.length===0) buffered=[];
 	
 	S.buffered=buffered;
 	
