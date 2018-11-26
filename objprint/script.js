@@ -108,15 +108,18 @@ function ObjPrint(obj={}){
 					}
 					break;
 				case 'function':
-					console.log(value.toString());
+					// Add parentheses to clarify that this is a function
+					nameEl.dataset.name+='(';
+				
 					var functionText=/([^(]+)\(([^\)]*)\)(?={)/.exec(value.toString());
-					
-					console.log(functionText);
 					
 					valueEl.innerHTML=functionText[1]+'(';
 					
+					
 					// Add function parameters if needbe
 					if(functionText[2]!==''){
+						nameEl.dataset.name+=functionText[2];
+						
 						var parameters=functionText[2].split(',');
 						for(var ii=0;ii<parameters.length;ii++){
 							var parameterEl=document.createElement('span');
@@ -127,7 +130,7 @@ function ObjPrint(obj={}){
 							parameterEl.className='objprint-parameter';
 							parameterEl.innerHTML=parameterSplit[1];
 							
-							parameterEl.dataset.name=nameEl.dataset.call+'('+parameterSplit[1]+')';
+							parameterEl.dataset.name=nameEl.dataset.call+'('+functionText[2]+')';
 							
 							valueEl.appendChild(parameterEl);
 							
@@ -140,11 +143,15 @@ function ObjPrint(obj={}){
 							
 							if(parameterSplit[2]) valueEl.insertAdjacentHTML('beforeend',parameterSplit[2]);
 							
-							if(ii<parameters.length-1) valueEl.insertAdjacentHTML('beforeend',',');
+							if(ii<parameters.length-1){
+								valueEl.insertAdjacentHTML('beforeend',',');
+							}
 							
 							if(ii>5) break;
+						}
 					}
-					}
+					
+					nameEl.dataset.name+=')';
 					
 					valueEl.insertAdjacentHTML('beforeend',')');
 					valueEl.className='objprint-function';
@@ -196,6 +203,9 @@ function ObjPrint(obj={}){
 		
 		event.target.classList.add('objprint-study');
 		
-		O.explanationWindow.innerHTML="<strong>"+event.target.dataset.name+"</strong>: "+getPropertyText(event.target.dataset.call);
+		//Only surround the relevant part of the name with strong tags
+		var nameDisplay=event.target.dataset.name.replace(event.target.innerHTML,'<strong>'+event.target.innerHTML+'</strong>');;
+		
+		O.explanationWindow.innerHTML=nameDisplay+": "+getPropertyText(event.target.dataset.call);
 	});
 }
