@@ -94,7 +94,7 @@ function ObjPrint(obj={}){
 					valueEl.className='objprint-boolean';
 					break;
 				case 'string':
-					valueEl.innerText='"'+value.replace(/"/g,'\"')+'"';
+					valueEl.innerText='"'+value.replace(/"/g,'\\"')+'"';
 					valueEl.className='objprint-string';
 					break;
 				case 'object':
