@@ -1285,7 +1285,50 @@ if(S.subtitles){
 	);
 }else captionsButton.remove();
 
-content.addEventListener('click',()=>{S.input();});
+content.addEventListener('click',S.input);
+
+// TODO: merge all basic click events into here; it will MUCH more convenient, and use fewer resources
+/*S.window.addEventListener('mousedown',function(event){
+	switch(event.button){
+		// Left button
+		case 0:
+			//if(!S.paused) S.input();
+			//if(S.paused) S.toggle();
+			break;
+		// Middle button
+		case 1:
+			break;
+		// Right button
+		case 2:
+			event.stopPropagation();
+			event.preventDefault();
+			S.toggle();
+			break;
+	}
+});*/
+
+// Toggling the menu
+
+S.window.addEventListener('contextmenu',function(event){
+	event.preventDefault();
+	event.stopPropagation();
+	S.toggle();
+});
+
+/*S.window.addEventListener('touchend',function(event){
+	if(event.touches.length>1){
+		
+	}
+});*/
+
+/*
+	// Right button
+		case 2:
+			event.stopPropagation();
+			event.preventDefault();
+			S.toggle();
+			break;
+	*/
 
 // Update the scrub bar when scrolling
 pageTurn.addEventListener('scroll',function(event){
