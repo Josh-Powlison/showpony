@@ -38,64 +38,49 @@ S.modules.audio=new function(){
 	}
 	
 	M.displaySubtitles=function(){
-		if(S.currentSubtitles===null){
-			subtitles.innerHTML='';
-			return;
-		}
+		subtitles.style.cssText=null;
+		var currentTime=M.window.currentTime;
 		
-		if(S.files[M.currentFile].subtitles){
-			subtitles.style.cssText=null;
-			var currentTime=M.window.currentTime;
-			
-			var lines=S.files[M.currentFile].subtitles.match(/\b.+/ig);
-			
-			for(let i=0;i<lines.length;i++){
-				if(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[i])){
-					var times=lines[i].split(/\s*-->\s*/);
-					// If between both times
-					if(
-						currentTime>=times[0].split(/:/)[1]
-						&& currentTime<=times[1].split(/:/)[1]
-					){
-						var newSubtitle='';
+		var lines=S.files[M.currentFile].subtitles.match(/\b.+/ig);
+		
+		for(let i=0;i<lines.length;i++){
+			if(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[i])){
+				var times=lines[i].split(/\s*-->\s*/);
+				// If between both times
+				if(
+					currentTime>=times[0].split(/:/)[1]
+					&& currentTime<=times[1].split(/:/)[1]
+				){
+					var newSubtitle='';
+					
+					var ii=i+1;
+					while(!(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[ii])) && ii<lines.length){
+						if(newSubtitle.length) newSubtitle+='<br>';
+						newSubtitle+=lines[ii];
 						
-						var ii=i+1;
-						while(!(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[ii])) && ii<lines.length){
-							if(newSubtitle.length) newSubtitle+='<br>';
-							newSubtitle+=lines[ii];
-							
-							ii++;
-						}
-						
-						if(subtitles.children.length===0 || subtitles.children[0].innerHTML!==newSubtitle){
-							subtitles.innerHTML='';
-						
-							var block=document.createElement('p');
-							block.className='showpony-sub';
-							block.innerHTML=newSubtitle;
-							
-							subtitles.appendChild(block);
-						}
-						
-						break;
+						ii++;
 					}
 					
-					if(currentTime<times[0].split(/:/)[0] || i==lines.length-1){
+					if(subtitles.children.length===0 || subtitles.children[0].innerHTML!==newSubtitle){
 						subtitles.innerHTML='';
-						break;
+					
+						var block=document.createElement('p');
+						block.className='showpony-sub';
+						block.innerHTML=newSubtitle;
+						
+						subtitles.appendChild(block);
 					}
+					
+					break;
 				}
 				
-				if(i==lines.length-1) subtitles.innerHTML='';
+				if(currentTime<times[0].split(/:/)[0] || i==lines.length-1){
+					subtitles.innerHTML='';
+					break;
+				}
 			}
-		}else{
-			// If don't have the file
-			fetch(S.subtitles[S.currentSubtitles]+S.files[M.currentFile].title+'.vtt')
-			.then(response=>{return response.text();})
-			.then(text=>{
-				S.files[M.currentFile].subtitles=text;
-				M.displaySubtitles();
-			});
+			
+			if(i==lines.length-1) subtitles.innerHTML='';
 		}
 	}
 	

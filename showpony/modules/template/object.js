@@ -40,21 +40,7 @@ S.modules.template=new function(){
 	}
 	
 	M.displaySubtitles=function(){
-		if(S.currentSubtitles===null){
-			subtitles.innerHTML='';
-			return;
-		}
-		
-		if(S.files[M.currentFile].subtitles){
-			// Add them in
-		}else{
-			// If don't have the file
-			fetch(S.subtitles[S.currentSubtitles]+S.files[M.currentFile].title+'.vtt')
-			.then(response=>{return response.text();})
-			.then(text=>{
-				S.files[M.currentFile].subtitles=text;
-				M.displaySubtitles();
-			});
-		}
+		// Add them in to the element, as you want them to be displayed
+		// subtitles.innerHTML=S.files[M.currentFile].subtitles;
 	}
 }();

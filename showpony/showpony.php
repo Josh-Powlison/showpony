@@ -671,7 +671,7 @@ function timeUpdate(time){
 	S.currentTime=S.modules[S.currentModule].currentTime
 	for(let i=0;i<S.currentFile;i++) S.currentTime+=S.files[i].duration;
 	
-	S.modules[S.currentModule].displaySubtitles();
+	displaySubtitles();
 	
 	if(scrubbing!==true) scrub(null,false);
 	
@@ -921,6 +921,26 @@ function updateHistory(action='add'){
 				history.pushState({},'',newURL);
 				break;
 		}
+	}
+}
+
+function displaySubtitles(){
+	if(S.currentSubtitles===null){
+		subtitles.innerHTML='';
+		return;
+	}
+	
+	// Display the subtitles if they're loaded in
+	if(S.files[S.currentFile].subtitles){
+		S.modules[S.currentModule].displaySubtitles();
+	// Otherwise, load them
+	}else{
+		fetch(S.subtitles[S.currentSubtitles]+S.files[S.currentFile].title+'.vtt')
+		.then(response=>{return response.text();})
+		.then(text=>{
+			S.files[S.currentFile].subtitles=text;
+			S.modules[S.currentModule].displaySubtitles();
+		});
 	}
 }
 
@@ -1280,7 +1300,7 @@ if(S.subtitles){
 		'change'
 		,function(){
 			S.currentSubtitles=this.options[this.selectedIndex].value==='None' ? null : this.value;
-			S.modules[S.currentModule].displaySubtitles();
+			displaySubtitles();
 		}
 	);
 }else captionsButton.remove();

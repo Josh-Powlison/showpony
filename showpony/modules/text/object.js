@@ -58,22 +58,7 @@ S.modules.text=new function(){
 	}
 	
 	M.displaySubtitles=function(){
-		if(S.currentSubtitles===null){
-			subtitles.innerHTML='';
-			return;
-		}
-		
-		if(S.files[M.currentFile].subtitles){
-			/// NOT YET! OR PROBABLY EVER... this is text already, after all.
-		}else{
-			// If don't have the file
-			fetch(S.subtitles[S.currentSubtitles]+S.files[M.currentFile].title+'.vtt')
-			.then(response=>{return response.text();})
-			.then(text=>{
-				S.files[M.currentFile].subtitles=text;
-				M.displaySubtitles();
-			});
-		}
+		/// NOT YET! OR PROBABLY EVER... this is text already, after all.
 	}
 	
 	/// BUFFERING ///
