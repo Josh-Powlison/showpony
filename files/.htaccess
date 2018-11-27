@@ -2,5 +2,5 @@ Options -Indexes
 
 # Forbid access to files starting with setting.php's HIDDEN_FILENAME_STARTING_CHAR
 RewriteEngine On
-RewriteCond %{THE_REQUEST} /x [NC]
+RewriteCond %{THE_REQUEST} /~ [NC]
 RewriteRule ^ - [F,L]
