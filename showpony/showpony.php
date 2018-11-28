@@ -242,11 +242,13 @@ S.infiniteScroll=false;
 S.subtitles=<?php
 	// Get subtitles
 	$subtitles=[];
-	foreach(scandir('subtitles') as $file){
-		// Ignore hidden files and folders
-		if($file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
-		
-		$subtitles[$file]=$stories_path.'subtitles/'.$file.'/';
+	if(file_exists('subtitles')){
+		foreach(scandir('subtitles') as $file){
+			// Ignore hidden files and folders
+			if($file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
+			
+			$subtitles[$file]=$stories_path.'subtitles/'.$file.'/';
+		}
 	}
 	
 	echo json_encode($subtitles);
