@@ -937,8 +937,10 @@ function displaySubtitles(){
 		fetch('showpony/get-subtitles.php?path=<?php echo $stories_path; ?>&lang='+S.currentSubtitles)
 		.then(response=>{return response.text();})
 		.then(text=>{
-			S.subtitles[S.currentSubtitles]=text.split('|SPLIT|').split(-1,1);
+			S.subtitles[S.currentSubtitles]=text.split('|SPLIT|');
+			
 			S.modules[S.currentModule].displaySubtitles();
+			console.log('hey',S.subtitles);
 		})
 		.catch(response=>{
 			console.log(response);
