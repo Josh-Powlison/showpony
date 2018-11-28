@@ -938,9 +938,9 @@ function displaySubtitles(){
 		.then(response=>{return response.text();})
 		.then(text=>{
 			S.subtitles[S.currentSubtitles]=text.split('|SPLIT|');
+			S.subtitles[S.currentSubtitles].pop(); // Last item is blank, remove it
 			
 			S.modules[S.currentModule].displaySubtitles();
-			console.log('hey',S.subtitles);
 		})
 		.catch(response=>{
 			console.log(response);
