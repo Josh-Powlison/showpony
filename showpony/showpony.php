@@ -1100,6 +1100,8 @@ S.loadBookmark=function(){
 }
 
 S.saveBookmark=function(){
+	if(S.saveSystem===false) return;
+	
 	// Set up the bookmark values for saving
 	var newValues={
 		bookmark:Math.floor(S.currentTime),
@@ -1112,7 +1114,8 @@ S.saveBookmark=function(){
 	
 	// Don't save the bookmark if relevant data is the same
 	if(
-		newValues.bookmark===oldValues.bookmark
+		oldValues!==null
+		&& newValues.bookmark===oldValues.bookmark
 		&& JSON.stringify(newValues.data)===JSON.stringify(oldValues.data) // objects can easily read different; stringifying them both ensures they'll read the same
 	) return;
 	
