@@ -957,7 +957,7 @@ S.modules.visualNovel=new function(){
 							}
 						});
 					}else{
-						hideChar.innerHTML=animChar.innerHTML=input[i];
+						hideChar.innerText=animChar.innerText=input[i];
 					}
 					
 					// Set the display time here- but if we're paused, or running through the text with runTo, no delay!
