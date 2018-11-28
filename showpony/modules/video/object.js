@@ -41,7 +41,7 @@ S.modules.video=new function(){
 		subtitles.style.cssText=null;
 		var currentTime=M.window.currentTime;
 		
-		var lines=S.files[M.currentFile].subtitles.match(/\b.+/ig);
+		var lines=S.subtitles[S.currentSubtitles][M.currentFile].match(/\b.+/ig);
 		
 		for(let i=0;i<lines.length;i++){
 			if(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[i])){

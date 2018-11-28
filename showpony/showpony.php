@@ -239,7 +239,7 @@ S.window.innerHTML=`
 S.buffered=[];
 S.query='<?php echo $name; ?>';
 S.infiniteScroll=false;
-S.subtitles=<?php
+S.supportedSubtitles=<?php
 	// Get subtitles
 	$subtitles=[];
 	if(file_exists('subtitles')){
@@ -253,6 +253,7 @@ S.subtitles=<?php
 	
 	echo json_encode($subtitles);
 ?>;
+S.subtitles={};
 
 S.data={};
 S.saveId='<?php echo substr($_GET['title'] ?? $stories_path ?? gethostname(),0,20); ?>';
@@ -929,18 +930,26 @@ function displaySubtitles(){
 	}
 	
 	// Display the subtitles if they're loaded in
-	if(S.files[S.currentFile].subtitles){
+	if(S.subtitles[S.currentSubtitles]){
 		S.modules[S.currentModule].displaySubtitles();
 	// Otherwise, load them
 	}else{
-		fetch(S.subtitles[S.currentSubtitles]+S.files[S.currentFile].title+'.vtt')
+		fetch('showpony/get-subtitles.php?path=<?php echo $stories_path; ?>&lang='+S.currentSubtitles)
 		.then(response=>{return response.text();})
 		.then(text=>{
-			S.files[S.currentFile].subtitles=text;
+			S.subtitles[S.currentSubtitles]=text.split('|SPLIT|').split(-1,1);
 			S.modules[S.currentModule].displaySubtitles();
+		})
+		.catch(response=>{
+			console.log(response);
 		});
 	}
 }
+
+S.subtitlesTest=function(input='en'){
+	S.currentSubtitles=input;
+	displaySubtitles();
+};
 
 function gamepadControls(){
 	// Exit if the window isn't in focus
@@ -1138,8 +1147,8 @@ S.to({time:start,history:'replace'});
 
 // We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
 
-if(S.subtitles){
-	var obj=Object.keys(S.subtitles);
+if(S.supportedSubtitles){
+	var obj=Object.keys(S.supportedSubtitles);
 	
 	// Add captions to options
 	
@@ -1296,7 +1305,7 @@ overlay.addEventListener('touchmove',function(event){userScrub(event,true);});
 // Menu buttons
 fullscreenButton.addEventListener('click',S.fullscreenToggle);
 
-if(S.subtitles){
+if(S.supportedSubtitles){
 	captionsButton.addEventListener(
 		'change'
 		,function(){

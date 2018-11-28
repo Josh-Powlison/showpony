@@ -50,7 +50,7 @@ S.modules.<?php echo 'image'; ?>=new function(){
 		
 		subtitles.style.left=(width-newWidth)/2+'px';
 		
-		var lines=S.files[M.currentFile].subtitles.split(/\s{3,}/g);
+		var lines=S.subtitles[S.currentSubtitles][M.currentFile].split(/\s{3,}/g);
 		for(let i=0;i<lines.length;i++){
 			var block=document.createElement('p');
 			block.className='showpony-sub';
