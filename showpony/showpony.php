@@ -793,11 +793,7 @@ function scrub(inputPercent=null,loadFile=false){
 	
 	<?php
 	// If all the of the files are media that don't need time tracked, show progress with files, not time
-	if(
-		($media['text'] ?? 0)
-		+($media['image'] ?? 0)
-		// +($media['other'] ?? 0) #Add lines for other media that don't need time tracked
-		===count($files)){
+	if(($_GET['progress-display'] ?? DEFAULT_PROGRESS_DISPLAY)==='file'){
 		?>
 	/// INFO TEXT WITH FILE ///
 	function infoMake(input){
