@@ -41,20 +41,49 @@ S.modules.audio=new function(){
 		subtitles.style.cssText=null;
 		var currentTime=M.window.currentTime;
 		
-		var lines=S.subtitles[S.currentSubtitles][M.currentFile].match(/\b.+/ig);
-		
+		var lines=S.subtitles[S.currentSubtitles][M.currentFile].match(/.+/ug);
+		console.log(lines);
 		for(let i=0;i<lines.length;i++){
-			if(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[i])){
-				var times=lines[i].split(/\s*-->\s*/);
+			if(/-->/.test(lines[i])){
+				var times=/(\S*)\s?-->\s?(\S*)/.exec(lines[i]);
+				
+				var startTime=times[1].split(/:/);
+				startTime.reverse();
+				var endTime=times[2].split(/:/);
+				endTime.reverse();
+				console.log(startTime,endTime);
+				
+				var check=0;
+				for(var ii=0;ii<startTime.length;ii++){
+					switch(ii){
+						case 0: check+=parseFloat(startTime[ii].replace(',','.')); break;
+						case 1: check+=startTime[ii]*60; break;
+						case 2: check+=startTime[ii]*3600; break;
+					}
+				}
+				startTime=check;
+				
+				check=0;
+				for(var ii=0;ii<endTime.length;ii++){
+					switch(ii){
+						case 0: check+=parseFloat(endTime[ii].replace(',','.')); break;
+						case 1: check+=endTime[ii]*60; break;
+						case 2: check+=endTime[ii]*3600; break;
+					}
+				}
+				endTime=check;
+				
 				// If between both times
+				console.log(startTime,endTime,M.currentTime);
+				
 				if(
-					currentTime>=times[0].split(/:/)[1]
-					&& currentTime<=times[1].split(/:/)[1]
+					startTime<=M.currentTime && M.currentTime<=endTime
 				){
-					var newSubtitle='';
+					var newSubtitle=lines[i+1];
+					var ii=i+2;
 					
-					var ii=i+1;
-					while(!(/\d{2}:\d{2}\.\d{3}.+\d{2}:\d{2}\.\d{3}/.test(lines[ii])) && ii<lines.length){
+					// Add following lines, if they're not numbers or times
+					while(!(/^\d+$|-->/.test(lines[ii])) && ii<lines.length){
 						if(newSubtitle.length) newSubtitle+='<br>';
 						newSubtitle+=lines[ii];
 						
@@ -71,17 +100,13 @@ S.modules.audio=new function(){
 						subtitles.appendChild(block);
 					}
 					
-					break;
-				}
-				
-				if(currentTime<times[0].split(/:/)[0] || i==lines.length-1){
-					subtitles.innerHTML='';
-					break;
+					return;
 				}
 			}
 			
-			if(i==lines.length-1) subtitles.innerHTML='';
 		}
+		
+		subtitles.innerHTML='';
 	}
 	
 	// Allow playing videos using Showpony in iOS
