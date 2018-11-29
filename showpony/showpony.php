@@ -216,6 +216,7 @@ S.modules={};
 S.media=<?=json_encode($media,JSON_NUMERIC_CHECK)?>;
 S.message='<?php echo addslashes($message); ?>';
 S.auto=false; // false, or float between 0 and 10
+S.path='<?php echo $stories_path; ?>';
 
 S.window.innerHTML=`
 	<style class="showpony-style" type="text/css"></style>
@@ -225,8 +226,9 @@ S.window.innerHTML=`
 		<canvas class="showpony-overlay-buffer" width="1000" height="1"></canvas>
 		<div class="showpony-progress" style="left: 14.5688%;"></div>
 		<p class="showpony-overlay-text"><span>0</span><span>0</span></p>
+		<div class="showpony-dropdown showpony-dropdown-subtitles"></div>
+		<div class="showpony-dropdown showpony-dropdown-language"></div>
 		<div class="showpony-buttons">
-			<select class="showpony-captions-button" title="Closed Captions/Subtitles" alt="Closed Captions/Subtitles"></select>
 			<button class="showpony-button-comments" alt="Comments" title="Comments"></button>
 			<button class="showpony-button-language" alt="Language" title="Language"></button>
 			<button class="showpony-button-subtitles" alt="Subtitles" title="Subtitles"></button>
@@ -239,21 +241,136 @@ S.window.innerHTML=`
 S.buffered=[];
 S.query='<?php echo $name; ?>';
 S.infiniteScroll=false;
-S.supportedSubtitles=<?php
+S.subtitles={};
+S.currentLanguage='<?php echo $language; ?>';
+
+/////////////////
+
+var supportedLanguages=<?php
+	// Get subtitles
+	$languages=[];
+	foreach(scandir('.') as $file){
+		// Ignore hidden folders and subtitles folder
+		if($file==='subtitles' || $file==='resources' || !is_dir($file) || $file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
+
+		$languages[]=[
+			'short'	=>	$file
+			,'long'	=>	Locale::getDisplayLanguage($file)
+		];
+	}
+	
+	echo json_encode($languages);
+?>;
+
+if(supportedLanguages.length>1){
+	function toggleLanguage(){
+		// Remove selected class from previous selected item
+		var previous=S.window.querySelector('.showpony-dropdown-language .showpony-selected');
+		if(previous){
+			previous.classList.remove('showpony-selected');
+		}
+		
+		// Set language to null if clicking on the same item
+		if(S.currentLanguage===this.dataset.value){
+			// S.displaySubtitles(null);
+			return;
+		}
+		
+		this.classList.add('showpony-selected');
+		// S.displaySubtitles(this.dataset.value);
+	}
+
+	console.log(supportedLanguages);
+	var languageButtons=document.createDocumentFragment();
+	for(var i=0;i<supportedLanguages.length;i++){
+		var buttonEl=document.createElement('button');
+		buttonEl.innerText=supportedLanguages[i]['long'];
+		buttonEl.dataset.value=supportedLanguages[i]['short'];
+		buttonEl.addEventListener('click',toggleLanguage);
+		
+		if(S.currentLanguage===supportedLanguages[i]['short']) buttonEl.className='showpony-selected';
+		
+		languageButtons.appendChild(buttonEl);
+	}
+	S.window.querySelector(".showpony-dropdown-language").appendChild(languageButtons);
+
+	S.window.querySelector('.showpony-button-language').addEventListener('click',function(){
+		if(S.window.querySelector('.showpony-dropdown-language').classList.toggle('showpony-visible')){
+			// Added
+		}else{
+			// Removed
+		}
+	});
+}else{
+	S.window.querySelector('.showpony-button-language').remove();
+}
+
+var supportedSubtitles=<?php
 	// Get subtitles
 	$subtitles=[];
 	if(file_exists('subtitles')){
 		foreach(scandir('subtitles') as $file){
 			// Ignore hidden files and folders
-			if($file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
+			if(!is_dir($file) || $file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
+
+			// TODO: add support for differentiating Closed Captions (maybe append with "cc", like "en-cc" "es-cc"
 			
-			$subtitles[$file]=$stories_path.'subtitles/'.$file.'/';
+			$subtitles[]=[
+				'short'	=>	$file
+				,'long'	=>	Locale::getDisplayLanguage($file)
+			];
 		}
 	}
 	
 	echo json_encode($subtitles);
 ?>;
-S.subtitles={};
+
+if(supportedSubtitles.length>0){
+	function toggleSubtitle(){
+		// Remove selected class from previous selected item
+		var previous=S.window.querySelector('.showpony-dropdown-subtitles .showpony-selected');
+		if(previous){
+			previous.classList.remove('showpony-selected');
+		}
+		
+		// Set subtitles to null if clicking on the same item
+		if(S.currentSubtitles===this.dataset.value){
+			S.displaySubtitles(null);
+			return;
+		}
+		
+		this.classList.add('showpony-selected');
+		S.displaySubtitles(this.dataset.value);
+	}
+
+	console.log(supportedSubtitles);
+	var subtitleButtons=document.createDocumentFragment();
+	for(var i=0;i<supportedSubtitles.length;i++){
+		var buttonEl=document.createElement('button');
+		buttonEl.innerText=supportedSubtitles[i]['long'];
+		buttonEl.dataset.value=supportedSubtitles[i]['short'];
+		buttonEl.addEventListener('click',toggleSubtitle);
+		
+		if(S.currentSubtitles===supportedSubtitles[i]['short']) buttonEl.className='showpony-selected';
+		
+		subtitleButtons.appendChild(buttonEl);
+	}
+	S.window.querySelector(".showpony-dropdown-subtitles").appendChild(subtitleButtons);
+
+	console.log(S.window.querySelector(".showpony-dropdown"));
+
+	S.window.querySelector('.showpony-button-subtitles').addEventListener('click',function(){
+		if(S.window.querySelector('.showpony-dropdown-subtitles').classList.toggle('showpony-visible')){
+			// Added
+		}else{
+			// Removed
+		}
+	});
+}else{
+	S.window.querySelector('.showpony-button-subtitles').remove();
+}
+
+/////////////////
 
 S.data={};
 S.saveId='<?php echo substr($_GET['title'] ?? $stories_path ?? gethostname(),0,20); ?>';
@@ -674,7 +791,7 @@ function timeUpdate(time){
 	S.currentTime=S.modules[S.currentModule].currentTime
 	for(let i=0;i<S.currentFile;i++) S.currentTime+=S.files[i].duration;
 	
-	displaySubtitles();
+	S.displaySubtitles();
 	
 	if(scrubbing!==true) scrub(null,false);
 	
@@ -923,22 +1040,24 @@ function updateHistory(action='add'){
 	}
 }
 
-function displaySubtitles(){
-	if(S.currentSubtitles===null){
+S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
+	S.currentSubtitles=newSubtitles;
+	
+	if(newSubtitles===null){
 		subtitles.innerHTML='';
 		return;
 	}
 	
 	// Display the subtitles if they're loaded in
-	if(S.subtitles[S.currentSubtitles]){
+	if(S.subtitles[newSubtitles]){
 		S.modules[S.currentModule].displaySubtitles();
 	// Otherwise, load them
 	}else{
-		fetch('showpony/get-subtitles.php?path=<?php echo $stories_path; ?>&lang='+S.currentSubtitles)
+		fetch('showpony/get-subtitles.php?path=<?php echo $stories_path; ?>&lang='+newSubtitles)
 		.then(response=>{return response.text();})
 		.then(text=>{
-			S.subtitles[S.currentSubtitles]=text.split('|SPLIT|');
-			S.subtitles[S.currentSubtitles].pop(); // Last item is blank, remove it
+			S.subtitles[newSubtitles]=text.split('|SPLIT|');
+			S.subtitles[newSubtitles].pop(); // Last item is blank, remove it
 			
 			S.modules[S.currentModule].displaySubtitles();
 		})
@@ -947,11 +1066,6 @@ function displaySubtitles(){
 		});
 	}
 }
-
-S.subtitlesTest=function(input='en'){
-	S.currentSubtitles=input;
-	displaySubtitles();
-};
 
 function gamepadControls(){
 	// Exit if the window isn't in focus
@@ -1149,33 +1263,6 @@ S.to({time:start,history:'replace'});
 
 // We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
 
-if(S.supportedSubtitles){
-	var obj=Object.keys(S.supportedSubtitles);
-	
-	// Add captions to options
-	
-	var option=document.createElement('option');
-	option.className='showpony-captions-option';
-	option.innerHTML='None';
-	option.value='None';
-	option.selected=true;
-	option.addEventListener('click',function(){
-		S.currentSubtitles=null;
-	});
-	captionsButton.appendChild(option);
-	
-	for(let i=0;i<obj.length;i++){
-		let option=document.createElement('option');
-		option.className='showpony-captions-option';
-		option.innerHTML=obj[i];
-		option.value=obj[i];
-		option.addEventListener('click',function(){
-			S.currentSubtitles=this.value;
-		});
-		captionsButton.appendChild(option);
-	}
-}
-
 // Add the Showpony window to the document
 document.currentScript.insertAdjacentElement('afterend',S.window);
 
@@ -1306,16 +1393,6 @@ overlay.addEventListener('touchmove',function(event){userScrub(event,true);});
 
 // Menu buttons
 fullscreenButton.addEventListener('click',S.fullscreenToggle);
-
-if(S.supportedSubtitles){
-	captionsButton.addEventListener(
-		'change'
-		,function(){
-			S.currentSubtitles=this.options[this.selectedIndex].value==='None' ? null : this.value;
-			displaySubtitles();
-		}
-	);
-}else captionsButton.remove();
 
 content.addEventListener('click',S.input);
 

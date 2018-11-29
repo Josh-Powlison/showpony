@@ -174,12 +174,10 @@
 	width:7.5em;
 	height:7.5em;
 	
-	border:none;
 	cursor:pointer;
 	
 	background-color:#fff;
 	color:#000;
-	
 	border:.25em solid black;
 	
 	box-sizing:border-box;
@@ -189,7 +187,52 @@
 
 .showpony-buttons button:active{
 	filter:invert(1);
+}
+
+.showpony-dropdown{
+	font-size:2em;
+	width:10em;
+	max-width:90%;
+	height:5em;
+	bottom:7.5em;
 	
+	margin:auto;
+	
+	overflow:auto;
+	
+	background-color:#fff;
+	border:.125em solid black;
+	
+	position:absolute;
+	display:none;
+}
+
+.showpony-dropdown button{
+	font-size:1em;
+	width:100%;
+	padding:0 .25em;
+	margin:0;
+	box-sizing:border-box;
+	margin:0;
+	
+	text-align:left;
+	cursor:pointer;
+	font-family:'ShowponyUI';
+	
+	background:none;
+	background-color:#fff;
+	border:none;
+	box-shadow:none;
+}
+
+.showpony-dropdown button:hover
+,.showpony-dropdown .showpony-selected{
+	background-color:#000;
+	color:#fff;
+}
+
+.showpony-dropdown.showpony-visible{
+	display:block;
 }
 
 .showpony-paused .showpony-buttons button{
@@ -203,12 +246,10 @@
 
 .showpony-button-language{
 	background-image:url('showpony/icons/language.svg');
-	background-color:red!important;
 }
 
 .showpony-button-subtitles{
 	background-image:url('showpony/icons/subtitles.svg');
-	background-color:red!important;
 }
 
 .showpony-button-bookmark{
