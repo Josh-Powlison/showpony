@@ -226,9 +226,11 @@ S.window.innerHTML=`
 		<canvas class="showpony-overlay-buffer" width="1000" height="1"></canvas>
 		<div class="showpony-progress" style="left: 14.5688%;"></div>
 		<p class="showpony-overlay-text"><span>0</span><span>0</span></p>
-		<div class="showpony-dropdown showpony-dropdown-language"></div>
-		<div class="showpony-dropdown showpony-dropdown-subtitles"></div>
-		<div class="showpony-dropdown showpony-dropdown-bookmark"></div>
+		<div class="showpony-dropdowns">
+			<div class="showpony-dropdown showpony-dropdown-language"></div>
+			<div class="showpony-dropdown showpony-dropdown-subtitles"></div>
+			<div class="showpony-dropdown showpony-dropdown-bookmark"></div>
+		</div>
 		<div class="showpony-buttons">
 			<button class="showpony-button-comments" alt="Comments" title="Comments"></button>
 			<button class="showpony-button-language" alt="Language" title="Language"></button>
@@ -311,8 +313,8 @@ var supportedSubtitles=<?php
 	$subtitles=[];
 	if(file_exists('subtitles')){
 		foreach(scandir('subtitles') as $file){
-			// Ignore hidden files and folders
-			if(!is_dir($file) || $file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
+			// Ignore hidden files
+			if(!is_dir('subtitles/'.$file) || $file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
 
 			// TODO: add support for differentiating Closed Captions (maybe append with "cc", like "en-cc" "es-cc"
 			
@@ -392,7 +394,7 @@ function toggleBookmark(){
 	S.saveSystem=this.dataset.value;
 }
 
-var currentBookmarks=['Local','Remote (not yet!)'];
+var currentBookmarks=['Local','Remote (WIP)'];
 var bookmarkButtons=document.createDocumentFragment();
 for(var i=0;i<currentBookmarks.length;i++){
 	var buttonEl=document.createElement('button');

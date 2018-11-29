@@ -189,6 +189,20 @@
 	filter:invert(1);
 }
 
+.showpony-dropdowns{
+	left:0;
+	top:0;
+	right:0;
+	bottom:0;
+	position:absolute;
+	display:flex;
+	
+	justify-content:center;
+	align-items:center;
+	
+	pointer-events:none;
+}
+
 .showpony-dropdown{
 	font-size:2em;
 	width:10em;
@@ -197,14 +211,20 @@
 	bottom:7.5em;
 	
 	margin:auto;
+	padding-left:3em;
+	box-sizing:border-box;
 	
 	overflow:auto;
 	
 	background-color:#fff;
 	border:.125em solid black;
 	
-	position:absolute;
 	display:none;
+	
+	pointer-events:auto;
+	
+	background-repeat:no-repeat;
+	background-size:3em;
 }
 
 .showpony-dropdown button{
@@ -233,6 +253,18 @@
 
 .showpony-dropdown.showpony-visible{
 	display:block;
+}
+
+.showpony-dropdown-language{
+	background-image:url('showpony/icons/language.svg');
+}
+
+.showpony-dropdown-subtitles{
+	background-image:url('showpony/icons/subtitles.svg');
+}
+
+.showpony-dropdown-bookmark{
+	background-image:url('showpony/icons/bookmark.svg');
 }
 
 .showpony-paused .showpony-buttons button{
