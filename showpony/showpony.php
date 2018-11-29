@@ -226,8 +226,9 @@ S.window.innerHTML=`
 		<canvas class="showpony-overlay-buffer" width="1000" height="1"></canvas>
 		<div class="showpony-progress" style="left: 14.5688%;"></div>
 		<p class="showpony-overlay-text"><span>0</span><span>0</span></p>
-		<div class="showpony-dropdown showpony-dropdown-subtitles"></div>
 		<div class="showpony-dropdown showpony-dropdown-language"></div>
+		<div class="showpony-dropdown showpony-dropdown-subtitles"></div>
+		<div class="showpony-dropdown showpony-dropdown-bookmark"></div>
 		<div class="showpony-buttons">
 			<button class="showpony-button-comments" alt="Comments" title="Comments"></button>
 			<button class="showpony-button-language" alt="Language" title="Language"></button>
@@ -369,6 +370,51 @@ if(supportedSubtitles.length>0){
 }else{
 	S.window.querySelector('.showpony-button-subtitles').remove();
 }
+
+// Bookmarks
+
+function toggleBookmark(){
+	// Remove selected class from previous selected item
+	var previous=S.window.querySelector('.showpony-dropdown-bookmark .showpony-selected');
+	if(previous){
+		previous.classList.remove('showpony-selected');
+	}
+	
+	console.log(previous,S.saveSystem,this.dataset.value);
+
+	// Set subtitles to null if clicking on the same item
+	if(S.saveSystem===this.dataset.value){
+		S.saveSystem=false;
+		return;
+	}
+	
+	this.classList.add('showpony-selected');
+	S.saveSystem=this.dataset.value;
+}
+
+var currentBookmarks=['Local','Remote (not yet!)'];
+var bookmarkButtons=document.createDocumentFragment();
+for(var i=0;i<currentBookmarks.length;i++){
+	var buttonEl=document.createElement('button');
+	buttonEl.innerText=currentBookmarks[i];
+	buttonEl.dataset.value=currentBookmarks[i];
+	buttonEl.addEventListener('click',toggleBookmark);
+	
+	if(S.saveSystem===currentBookmarks[i]) buttonEl.className='showpony-selected';
+	
+	bookmarkButtons.appendChild(buttonEl);
+}
+S.window.querySelector(".showpony-dropdown-bookmark").appendChild(bookmarkButtons);
+
+console.log(S.window.querySelector(".showpony-dropdown"));
+
+S.window.querySelector('.showpony-button-bookmark').addEventListener('click',function(){
+	if(S.window.querySelector('.showpony-dropdown-bookmark').classList.toggle('showpony-visible')){
+		// Added
+	}else{
+		// Removed
+	}
+});
 
 /////////////////
 
@@ -1225,7 +1271,7 @@ S.loadBookmark=function(){
 }
 
 S.saveBookmark=function(){
-	if(S.saveSystem===false) return;
+	if(!S.saveSystem) return;
 	
 	// Set up the bookmark values for saving
 	var newValues={
