@@ -207,7 +207,7 @@ const S=this;
 
 S.window=document.createElement('div');
 S.window.className='showpony';
-S.window.tabindex='0';
+S.window.tabIndex=0;
 S.files=<?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
 S.name='<?php echo toCamelCase($name); ?>';
 S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
@@ -1419,7 +1419,9 @@ S.window.addEventListener('blur',S.saveBookmark);
 S.window.addEventListener(
 	'keydown'
 	,function(event){
-		if(document.activeElement.tagName==='INPUT' || event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) return;
+		if(this!==event.target) return;
+		
+		if(event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) return;
 		
 		switch(event.key){
 			case ' ':				S.input();				break;
