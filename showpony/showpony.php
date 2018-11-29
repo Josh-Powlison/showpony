@@ -1435,6 +1435,7 @@ S.window.addEventListener(
 			case 'MediaNext':		S.to({file:'+1'});		break;
 			case 'MediaPlayPause':	S.toggle();				break;
 			case 'f':				S.fullscreenToggle();	break;
+			case 'm':				S.toggle();				break;
 			default:				return;					break;
 		}
 		
