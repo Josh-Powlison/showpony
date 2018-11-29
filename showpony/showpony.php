@@ -1184,71 +1184,63 @@ function timeToSeconds(input=0){
 }
 
 function gamepadControls(){
-	// Exit if the window isn't in focus
+	if(S.gamepad===null) return;
 	if(document.hidden) return;
 	
-	if(S.gamepad!==null){
-		// If shortcuts aren't always enabled, perform checks
-		if(S.shortcuts!=='always'){
-			// Exit if it isn't fullscreen
-			if(S.window!==document.webkitFullscreenElement && S.window!==document.mozFullScreenElement && S.window!==document.fullscreenElement){
-				// If needs to be focused
-				if(S.shortcuts!=='fullscreen' && S.window!==document.activeElement) return;
-			}
-		}
-		
-		var gamepad=navigator.getGamepads()[S.gamepad.id];
-		
-		// XBOX Gamepad
-		if(/xinput/i.test(gamepad.id)){
-			gamepadButton(gamepad,9,'menu');		// Start
-			gamepadButton(gamepad,0,'input');		// A
-			gamepadButton(gamepad,14,'dpadL');		// Dpad Left
-			gamepadButton(gamepad,15,'dpadR');		// Dpad Right
-			gamepadButton(gamepad,8,'fullscreen');	// Select
-			gamepadButton(gamepad,6,'home');		// Left trigger
-			gamepadButton(gamepad,7,'end');			// Right trigger
-				
-			gamepadAxis(gamepad,0,'analogL');		// Left analogue
-		// Normal, average gamepad
-		}else{
-			gamepadButton(gamepad,9,'menu');		// Start
-			gamepadButton(gamepad,0,'input');		// A
-			gamepadButton(gamepad,8,'fullscreen');	// Select
-			gamepadButton(gamepad,6,'home');		// Left trigger
-			gamepadButton(gamepad,7,'end');			// Right trigger
-		}
-		
-		// Register inputs
-		if(S.gamepad.menu==2) S.toggle();
-		if(S.gamepad.input==2) S.input();
-		if(S.gamepad.dpadL==2) S.to({file:'-1'});
-		if(S.gamepad.dpadR==2) S.to({file:'+1'});
-		if(S.gamepad.end==2) S.to({time:'end'});
-		if(S.gamepad.home==2) S.to({time:'start'});
-		if(S.gamepad.fullscreen==2) S.fullscreenToggle();
-		
-		// Scrubbing with the analogue stick
-		if(S.gamepad.analogLPress===2){
-			overlay.style.opacity=1; // Show the overlay
-			pos=0;
-		}
+	// If we're not focused or fullscreen
+	if(document.activeElement!==S.window && !S.fullscreen) return;
 	
-		if(S.gamepad.analogL!==0){
+	var gamepad=navigator.getGamepads()[S.gamepad.id];
+	
+	// XBOX Gamepad
+	if(/xinput/i.test(gamepad.id)){
+		gamepadButton(gamepad,9,'menu');		// Start
+		gamepadButton(gamepad,0,'input');		// A
+		gamepadButton(gamepad,14,'dpadL');		// Dpad Left
+		gamepadButton(gamepad,15,'dpadR');		// Dpad Right
+		gamepadButton(gamepad,8,'fullscreen');	// Select
+		gamepadButton(gamepad,6,'home');		// Left trigger
+		gamepadButton(gamepad,7,'end');			// Right trigger
 			
-			scrubbing=S.gamepad.analogL;
-			userScrub(S.gamepad.analogL,true);
-		}
+		gamepadAxis(gamepad,0,'analogL');		// Left analogue
+	// Normal, average gamepad
+	}else{
+		gamepadButton(gamepad,9,'menu');		// Start
+		gamepadButton(gamepad,0,'input');		// A
+		gamepadButton(gamepad,8,'fullscreen');	// Select
+		gamepadButton(gamepad,6,'home');		// Left trigger
+		gamepadButton(gamepad,7,'end');			// Right trigger
+	}
+	
+	// Register inputs
+	if(S.gamepad.menu==2) S.toggle();
+	if(S.gamepad.input==2) S.input();
+	if(S.gamepad.dpadL==2) S.to({time:'-10'});
+	if(S.gamepad.dpadR==2) S.to({time:'+10'});
+	if(S.gamepad.end==2) S.to({time:'end'});
+	if(S.gamepad.home==2) S.to({time:'start'});
+	if(S.gamepad.fullscreen==2) S.fullscreenToggle();
+	
+	// Scrubbing with the analogue stick
+	if(S.gamepad.analogLPress===2){
+		overlay.style.opacity=1; // Show the overlay
+		pos=0;
+	}
+
+	if(S.gamepad.analogL!==0){
 		
-		if(S.gamepad.analogLPress===-2){
-			overlay.style.opacity=''; // Hide the overlay
-			// If we're not scrubbing, set scrubbing to false and return
-			if(scrubbing!==true){
-				scrubbing=false;
-			}else{
-				userScrub(S.gamepad.analogL);
-				pos=0;
-			}
+		scrubbing=S.gamepad.analogL;
+		userScrub(S.gamepad.analogL,true);
+	}
+	
+	if(S.gamepad.analogLPress===-2){
+		overlay.style.opacity=''; // Hide the overlay
+		// If we're not scrubbing, set scrubbing to false and return
+		if(scrubbing!==true){
+			scrubbing=false;
+		}else{
+			userScrub(S.gamepad.analogL);
+			pos=0;
 		}
 	}
 }
@@ -1656,7 +1648,11 @@ window.addEventListener('gamepadconnected',function(e){
 		,axisMax:1
 	};
 	
-	if(checkGamepad===null) checkGamepad=setInterval(gamepadControls,1000/framerate);
+	console.log('Connected!',checkGamepad);
+	
+	if(checkGamepad===null){
+		checkGamepad=setInterval(gamepadControls,Math.floor(1000/framerate));
+	}
 });
 
 window.addEventListener('gamepaddisconnected',function(e){
