@@ -1506,7 +1506,7 @@ overlay.addEventListener('touchend',userScrub);
 
 // On dragging
 window.addEventListener('mousemove',function(event){userScrub(event,true);});
-overlay.addEventListener('touchmove',function(event){userScrub(event,true);});
+window.addEventListener('touchmove',function(event){userScrub(event,true);});
 
 // Menu buttons
 fullscreenButton.addEventListener('click',S.fullscreenToggle);
