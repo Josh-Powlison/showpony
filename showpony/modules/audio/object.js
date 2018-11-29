@@ -41,69 +41,27 @@ S.modules.audio=new function(){
 		subtitles.style.cssText=null;
 		var currentTime=M.window.currentTime;
 		
-		var lines=S.subtitles[S.currentSubtitles][M.currentFile].match(/.+/ug);
-		console.log(lines);
-		for(let i=0;i<lines.length;i++){
-			if(/-->/.test(lines[i])){
-				var times=/(\S*)\s?-->\s?(\S*)/.exec(lines[i]);
+		var phrases=S.subtitles[S.currentSubtitles][M.currentFile];
+		var keys=Object.keys(phrases);
+		for(var i=0;i<keys.length;i++){
+			
+			// Continue if we're before the start
+			if(M.currentTime<timeToSeconds(phrases[keys[i]].start)) continue;
+			
+			// Continue if we're after the end
+			if(M.currentTime>timeToSeconds(phrases[keys[i]].end)) continue;
+			
+			if(subtitles.children.length===0 || subtitles.children[0].innerHTML!==phrases[keys[i]].content){
+				subtitles.innerHTML='';
+			
+				var block=document.createElement('p');
+				block.className='showpony-sub';
+				block.innerHTML=phrases[keys[i]].content;
 				
-				var startTime=times[1].split(/:/);
-				startTime.reverse();
-				var endTime=times[2].split(/:/);
-				endTime.reverse();
-				console.log(startTime,endTime);
-				
-				var check=0;
-				for(var ii=0;ii<startTime.length;ii++){
-					switch(ii){
-						case 0: check+=parseFloat(startTime[ii].replace(',','.')); break;
-						case 1: check+=startTime[ii]*60; break;
-						case 2: check+=startTime[ii]*3600; break;
-					}
-				}
-				startTime=check;
-				
-				check=0;
-				for(var ii=0;ii<endTime.length;ii++){
-					switch(ii){
-						case 0: check+=parseFloat(endTime[ii].replace(',','.')); break;
-						case 1: check+=endTime[ii]*60; break;
-						case 2: check+=endTime[ii]*3600; break;
-					}
-				}
-				endTime=check;
-				
-				// If between both times
-				console.log(startTime,endTime,M.currentTime);
-				
-				if(
-					startTime<=M.currentTime && M.currentTime<=endTime
-				){
-					var newSubtitle=lines[i+1];
-					var ii=i+2;
-					
-					// Add following lines, if they're not numbers or times
-					while(!(/^\d+$|-->/.test(lines[ii])) && ii<lines.length){
-						if(newSubtitle.length) newSubtitle+='<br>';
-						newSubtitle+=lines[ii];
-						
-						ii++;
-					}
-					
-					if(subtitles.children.length===0 || subtitles.children[0].innerHTML!==newSubtitle){
-						subtitles.innerHTML='';
-					
-						var block=document.createElement('p');
-						block.className='showpony-sub';
-						block.innerHTML=newSubtitle;
-						
-						subtitles.appendChild(block);
-					}
-					
-					return;
-				}
+				subtitles.appendChild(block);
 			}
 			
+			return;
 		}
 		
 		subtitles.innerHTML='';

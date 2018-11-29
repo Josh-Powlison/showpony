@@ -50,20 +50,21 @@ S.modules.<?php echo 'image'; ?>=new function(){
 		
 		subtitles.style.left=(width-newWidth)/2+'px';
 		
-		var lines=S.subtitles[S.currentSubtitles][M.currentFile].split(/\s{3,}/g);
-		for(let i=0;i<lines.length;i++){
+		var phrases=S.subtitles[S.currentSubtitles][M.currentFile];
+		var keys=Object.keys(phrases);
+		for(var i=0;i<keys.length;i++){
 			var block=document.createElement('p');
 			block.className='showpony-sub';
 			
-			var input=lines[i].split(/\n/);
-			block.innerHTML=input[1];
+			block.innerHTML=phrases[keys[i]].content;
 			
-			input=input[0].match(/(\d|\.)+/g);
+			var start=phrases[keys[i]].start.split(',');
+			var end=phrases[keys[i]].end.split(',');
 			
-			block.style.left=input[0]+'%';
-			block.style.width=input[2]-input[0]+'%';
-			block.style.top=input[1]+'%';
-			block.style.height=input[3]-input[1]+'%';
+			block.style.left=start[0]+'%';
+			block.style.right=(100-end[0])+'%';
+			block.style.top=start[1]+'%';
+			block.style.bottom=(100-end[1])+'%';
 			
 			subtitles.appendChild(block);
 		}

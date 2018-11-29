@@ -283,7 +283,6 @@ if(supportedLanguages.length>1){
 		// S.displaySubtitles(this.dataset.value);
 	}
 
-	console.log(supportedLanguages);
 	var languageButtons=document.createDocumentFragment();
 	for(var i=0;i<supportedLanguages.length;i++){
 		var buttonEl=document.createElement('button');
@@ -346,7 +345,6 @@ if(supportedSubtitles.length>0){
 		S.displaySubtitles(this.dataset.value);
 	}
 
-	console.log(supportedSubtitles);
 	var subtitleButtons=document.createDocumentFragment();
 	for(var i=0;i<supportedSubtitles.length;i++){
 		var buttonEl=document.createElement('button');
@@ -359,8 +357,6 @@ if(supportedSubtitles.length>0){
 		subtitleButtons.appendChild(buttonEl);
 	}
 	S.window.querySelector(".showpony-dropdown-subtitles").appendChild(subtitleButtons);
-
-	console.log(S.window.querySelector(".showpony-dropdown"));
 
 	S.window.querySelector('.showpony-button-subtitles').addEventListener('click',function(){
 		if(S.window.querySelector('.showpony-dropdown-subtitles').classList.toggle('showpony-visible')){
@@ -407,8 +403,6 @@ for(var i=0;i<currentBookmarks.length;i++){
 	bookmarkButtons.appendChild(buttonEl);
 }
 S.window.querySelector(".showpony-dropdown-bookmark").appendChild(bookmarkButtons);
-
-console.log(S.window.querySelector(".showpony-dropdown"));
 
 S.window.querySelector('.showpony-button-bookmark').addEventListener('click',function(){
 	if(S.window.querySelector('.showpony-dropdown-bookmark').classList.toggle('showpony-visible')){
@@ -1104,8 +1098,54 @@ S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 		fetch('showpony/get-subtitles.php?path=<?php echo $stories_path; ?>&lang='+newSubtitles)
 		.then(response=>{return response.text();})
 		.then(text=>{
-			S.subtitles[newSubtitles]=text.split('|SPLIT|');
-			S.subtitles[newSubtitles].pop(); // Last item is blank, remove it
+			var filesArray=[];
+			
+			// Loop through files
+			var files=text.split('|SPLIT|');
+			files.pop(); // Last item is blank, remove it
+			for(var i=0;i<files.length;i++){
+				var grouping={};
+				
+				// Loop through sections (get rid of surrounding blanks
+				var sections=files[i].replace(/^\s+|\s+$/g,'').split(/(?:\n\s*){2,}/g);
+				for(var j=0;j<sections.length;j++){
+					var name=j;
+					var phrase={
+						start:null
+						,end:null
+						,content:''
+					};
+					
+					// Loop through chunk
+					var chunk=sections[j].split(/\n\s*/g);
+					for(var k=0;k<chunk.length;k++){
+						// Get time
+						if(/-->/.test(chunk[k])){
+							var times=chunk[k].split(/\s*-->\s*/);
+							phrase.start=times[0];
+							phrase.end=times[1];
+							
+							continue;
+						}
+						
+						// The first line is a name; otherwise, it's content
+						if(k===0){
+							name=chunk[k];
+						}else{
+							// Add a <br> tag if this is an additional line
+							if(phrase.content.length) phrase.content+='<br>';
+							phrase.content+=chunk[k];
+						}
+					}
+					grouping[name]=phrase;
+				}
+				
+				filesArray.push(grouping);
+			}
+			
+			console.log('ALL SUBTITLES',filesArray);
+			
+			S.subtitles[newSubtitles]=filesArray;
 			
 			S.modules[S.currentModule].displaySubtitles();
 		})
@@ -1113,6 +1153,24 @@ S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 			console.log(response);
 		});
 	}
+}
+
+// Convert a time to seconds. Useful for to() function, and subtitles
+function timeToSeconds(input){
+	var timeFloat=0;
+	
+	// Get seconds, minutes, and hours- from smallest to greatest
+	var numbers=input.split(/:/);
+	numbers.reverse();
+	for(var i=0;i<numbers.length;i++){
+		switch(i){
+			case 0: timeFloat+=parseFloat(numbers[i].replace(',','.')); break;
+			case 1: timeFloat+=numbers[i]*60; break;
+			case 2: timeFloat+=numbers[i]*3600; break;
+		}
+	}
+	
+	return timeFloat;
 }
 
 function gamepadControls(){
