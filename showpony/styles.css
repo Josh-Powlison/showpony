@@ -227,6 +227,14 @@
 	background-size:3em;
 }
 
+.showpony-dropdown::-webkit-scrollbar{
+	width:.5em;
+}
+
+.showpony-dropdown::-webkit-scrollbar-thumb{
+	background-color:#000;
+}
+
 .showpony-dropdown button{
 	font-size:1em;
 	width:100%;
