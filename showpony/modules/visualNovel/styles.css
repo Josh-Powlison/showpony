@@ -30,6 +30,14 @@
 	white-space:nowrap;
 }
 
+.showpony-textbox::-webkit-scrollbar{
+	width:.5em;
+}
+
+.showpony-textbox::-webkit-scrollbar-thumb{
+	background-color:#fff;
+}
+
 /* Don't let textbox elements exceed textbox width */
 .showpony-textbox>*{
 	max-width:100%;
