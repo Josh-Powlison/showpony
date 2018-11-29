@@ -460,7 +460,9 @@ S.to=function(obj={}){
 	
 	// Relative adjustments if the values have - or +. If both are relative, file will be relative and time will instead be absolute to avoid strange behavior.
 	if(/-|\+/.test(obj.file)) obj.file=S.currentFile+parseInt(obj.file);
-	else if(/-|\+/.test(obj.time)) obj.time=S.currentTime+parseFloat(obj.time);
+	else if(/-|\+/.test(obj.time)) obj.time=S.currentTime+timeToSeconds(obj.time);
+	
+	obj.time=timeToSeconds(obj.time);
 	
 	// Minimal time and file values are 0
 	obj.file=Math.max(0,obj.file || 0);
@@ -1159,8 +1161,12 @@ S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 function timeToSeconds(input){
 	var timeFloat=0;
 	
+	// Check if a negative value was passed; if so, make sure it stays negative!
+	var positive=true;
+	if(input[0]==='-') positive=false;
+	
 	// Get seconds, minutes, and hours- from smallest to greatest
-	var numbers=input.split(/:/);
+	var numbers=String(input).split(/:/);
 	numbers.reverse();
 	for(var i=0;i<numbers.length;i++){
 		switch(i){
@@ -1169,6 +1175,9 @@ function timeToSeconds(input){
 			case 2: timeFloat+=numbers[i]*3600; break;
 		}
 	}
+	
+	// Flip this to negative if needbe
+	if(timeFloat>=0 && !positive) timeFloat*=-1;
 	
 	return timeFloat;
 }
