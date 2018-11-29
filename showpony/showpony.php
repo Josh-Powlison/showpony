@@ -1158,7 +1158,8 @@ S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 }
 
 // Convert a time to seconds. Useful for to() function, and subtitles
-function timeToSeconds(input){
+function timeToSeconds(input=0){
+	input=String(input);
 	var timeFloat=0;
 	
 	// Check if a negative value was passed; if so, make sure it stays negative!
@@ -1166,7 +1167,7 @@ function timeToSeconds(input){
 	if(input[0]==='-') positive=false;
 	
 	// Get seconds, minutes, and hours- from smallest to greatest
-	var numbers=String(input).split(/:/);
+	var numbers=input.split(/:/);
 	numbers.reverse();
 	for(var i=0;i<numbers.length;i++){
 		switch(i){
