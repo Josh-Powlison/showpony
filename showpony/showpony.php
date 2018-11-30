@@ -115,7 +115,12 @@ foreach(scandir($language) as &$file){
 			// Don't add hidden files if we aren't logged in
 			if(empty($_SESSION['showpony_admin'])) continue;
 		}
-	}else $date=null;
+	}else{
+		// Still skip hidden files
+		if($file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
+		
+		$date=null;
+	}
 	
 	// There must be a better way to get some of this info...
 	$fileInfo=[
