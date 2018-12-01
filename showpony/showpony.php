@@ -967,7 +967,8 @@ function scrub(inputPercent=null,loadFile=false){
 	var newPart=0;
 	for(var i=timeInTotal;i>S.files[newPart].duration;i-=S.files[newPart].duration) newPart++;
 	
-	var info='<span>'+infoMake(newPart+1)+'</span><span>'+infoMake(S.files.length-(newPart+1))+'</span>';
+    var completed=infoMake(newPart+1);
+    var remaining=infoMake(S.files.length-(newPart+1));
 	<?php
 	// Show progress with time if any of the files' progress is heavily measured by time
 	}else{
@@ -978,13 +979,16 @@ function scrub(inputPercent=null,loadFile=false){
 		return String((input)|0).padStart(pad,'0');
 	}
 	
-	var info='<span>'+infoMake(timeInTotal / 60)+':'+infoMake(timeInTotal % 60,2)+'</span><span>'+infoMake((S.duration-timeInTotal) / 60)+':'+infoMake((S.duration-timeInTotal) % 60,2)+'</span>';
+    var completed=infoMake(timeInTotal / 60)+':'+infoMake(timeInTotal % 60,2);
+    var remaining=infoMake((S.duration-timeInTotal) / 60)+':'+infoMake((S.duration-timeInTotal) % 60,2);
 	<?php } ?>
+    
+    var info = '<span>'+completed+'</span><span>'+remaining+'</span>';
 	
 	if(info!==overlayText.innerHTML) overlayText.innerHTML=info;
 	
 	// We don't want to over-update the title, so we stick with when we're not scrubbing.
-	if(info!==document.title && scrubbing===false) document.title=info;
+	if(info!==document.title && scrubbing===false) document.title=completed+' - '+remaining;
 }
 
 // Handles starting, running, and ending scrubbing
