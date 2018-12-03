@@ -60,9 +60,9 @@ function toCamelCase($input){
 	);
 }
 
-// These associative arrays will be sent to the user as JSON
 $media=[];
 $files=[];
+$releaseDates=[];
 $success=true;
 
 // Go to the story's file directory
@@ -110,6 +110,11 @@ foreach(scandir($language) as &$file){
 				}else{
 					$success=false;
 				}
+			}
+			
+			// The time the next file will go live
+			if(RELEASE_DATES && count($releaseDates)<RELEASE_DATES){
+				$releaseDates[]=strtotime($date);
 			}
 			
 			// Don't add hidden files if we aren't logged in
@@ -218,10 +223,11 @@ S.name='<?php echo toCamelCase($name); ?>';
 S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 S.paused=false;
 S.modules={};
-S.media=<?=json_encode($media,JSON_NUMERIC_CHECK)?>;
+S.media=<?php echo json_encode($media,JSON_NUMERIC_CHECK)?>;
 S.message='<?php echo addslashes($message); ?>';
 S.auto=false; // false, or float between 0 and 10
 S.path='<?php echo $stories_path; ?>';
+S.upcomingFiles=<?php echo json_encode($releaseDates); ?>;
 
 S.window.innerHTML=`
 	<style class="showpony-style" type="text/css"></style>
