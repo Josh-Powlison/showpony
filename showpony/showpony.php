@@ -258,173 +258,6 @@ S.infiniteScroll=false;
 S.subtitles={};
 S.currentLanguage='<?php echo $language; ?>';
 
-/////////////////
-
-var supportedLanguages=<?php
-	// Get subtitles
-	$languages=[];
-	foreach(scandir('.') as $file){
-		// Ignore hidden folders and subtitles folder
-		if($file==='subtitles' || $file==='resources' || !is_dir($file) || $file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
-
-		$languages[]=[
-			'short'	=>	$file
-			,'long'	=>	Locale::getDisplayLanguage($file)
-		];
-	}
-	
-	echo json_encode($languages);
-?>;
-
-if(supportedLanguages.length>1){
-	function toggleLanguage(){
-		// Remove selected class from previous selected item
-		var previous=S.window.querySelector('.showpony-dropdown-language .showpony-selected');
-		if(previous){
-			previous.classList.remove('showpony-selected');
-		}
-		
-		// Set language to null if clicking on the same item
-		if(S.currentLanguage===this.dataset.value){
-			// S.displaySubtitles(null);
-			return;
-		}
-		
-		this.classList.add('showpony-selected');
-		// S.displaySubtitles(this.dataset.value);
-	}
-
-	var languageButtons=document.createDocumentFragment();
-	for(var i=0;i<supportedLanguages.length;i++){
-		var buttonEl=document.createElement('button');
-		buttonEl.innerText=supportedLanguages[i]['long'];
-		buttonEl.dataset.value=supportedLanguages[i]['short'];
-		buttonEl.addEventListener('click',toggleLanguage);
-		
-		if(S.currentLanguage===supportedLanguages[i]['short']) buttonEl.className='showpony-selected';
-		
-		languageButtons.appendChild(buttonEl);
-	}
-	S.window.querySelector(".showpony-dropdown-language").appendChild(languageButtons);
-
-	S.window.querySelector('.showpony-button-language').addEventListener('click',function(){
-		if(S.window.querySelector('.showpony-dropdown-language').classList.toggle('showpony-visible')){
-			// Added
-		}else{
-			// Removed
-		}
-	});
-}else{
-	S.window.querySelector('.showpony-button-language').remove();
-}
-
-var supportedSubtitles=<?php
-	// Get subtitles
-	$subtitles=[];
-	if(file_exists('subtitles')){
-		foreach(scandir('subtitles') as $file){
-			// Ignore hidden files
-			if(!is_dir('subtitles/'.$file) || $file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
-
-			// TODO: add support for differentiating Closed Captions (maybe append with "cc", like "en-cc" "es-cc"
-			
-			$subtitles[]=[
-				'short'	=>	$file
-				,'long'	=>	Locale::getDisplayLanguage($file)
-			];
-		}
-	}
-	
-	echo json_encode($subtitles);
-?>;
-
-if(supportedSubtitles.length>0){
-	function toggleSubtitle(){
-		// Remove selected class from previous selected item
-		var previous=S.window.querySelector('.showpony-dropdown-subtitles .showpony-selected');
-		if(previous){
-			previous.classList.remove('showpony-selected');
-		}
-		
-		// Set subtitles to null if clicking on the same item
-		if(S.currentSubtitles===this.dataset.value){
-			S.displaySubtitles(null);
-			return;
-		}
-		
-		this.classList.add('showpony-selected');
-		S.displaySubtitles(this.dataset.value);
-	}
-
-	var subtitleButtons=document.createDocumentFragment();
-	for(var i=0;i<supportedSubtitles.length;i++){
-		var buttonEl=document.createElement('button');
-		buttonEl.innerText=supportedSubtitles[i]['long'];
-		buttonEl.dataset.value=supportedSubtitles[i]['short'];
-		buttonEl.addEventListener('click',toggleSubtitle);
-		
-		if(S.currentSubtitles===supportedSubtitles[i]['short']) buttonEl.className='showpony-selected';
-		
-		subtitleButtons.appendChild(buttonEl);
-	}
-	S.window.querySelector(".showpony-dropdown-subtitles").appendChild(subtitleButtons);
-
-	S.window.querySelector('.showpony-button-subtitles').addEventListener('click',function(){
-		if(S.window.querySelector('.showpony-dropdown-subtitles').classList.toggle('showpony-visible')){
-			// Added
-		}else{
-			// Removed
-		}
-	});
-}else{
-	S.window.querySelector('.showpony-button-subtitles').remove();
-}
-
-// Bookmarks
-
-function toggleBookmark(){
-	// Remove selected class from previous selected item
-	var previous=S.window.querySelector('.showpony-dropdown-bookmark .showpony-selected');
-	if(previous){
-		previous.classList.remove('showpony-selected');
-	}
-	
-	console.log(previous,S.saveSystem,this.dataset.value);
-
-	// Set subtitles to null if clicking on the same item
-	if(S.saveSystem===this.dataset.value){
-		S.saveSystem=false;
-		return;
-	}
-	
-	this.classList.add('showpony-selected');
-	S.saveSystem=this.dataset.value;
-}
-
-var currentBookmarks=['Local','Remote (WIP)'];
-var bookmarkButtons=document.createDocumentFragment();
-for(var i=0;i<currentBookmarks.length;i++){
-	var buttonEl=document.createElement('button');
-	buttonEl.innerText=currentBookmarks[i];
-	buttonEl.dataset.value=currentBookmarks[i];
-	buttonEl.addEventListener('click',toggleBookmark);
-	
-	if(S.saveSystem===currentBookmarks[i]) buttonEl.className='showpony-selected';
-	
-	bookmarkButtons.appendChild(buttonEl);
-}
-S.window.querySelector(".showpony-dropdown-bookmark").appendChild(bookmarkButtons);
-
-S.window.querySelector('.showpony-button-bookmark').addEventListener('click',function(){
-	if(S.window.querySelector('.showpony-dropdown-bookmark').classList.toggle('showpony-visible')){
-		// Added
-	}else{
-		// Removed
-	}
-});
-
-/////////////////
-
 S.data={};
 S.saveId='<?php echo substr($_GET['title'] ?? $stories_path ?? gethostname(),0,20); ?>';
 S.cover={<?php
@@ -1339,49 +1172,253 @@ S.window.appendChild(overlay);
 // Priority: Newest > Default Start
 
 var start=null;
-S.saveName=S.name+'Bookmark';
+S.saveName=S.name+'Data';
 S.saveSystem=false;
 // S.saveSystem=false;
 // S.saveSystem='remote';
 
-S.loadBookmark=function(){
-	// Remote bookmark
-	/// TODO: add remote bookmark support
-	
-	// Local bookmark
-	var loadData=JSON.parse(localStorage.getItem(S.saveName));
-	return parseInt(loadData.bookmark);
+
+S.saves={
+	currentSave:'bookmark1'
+	,local:{}
+	,system:null //|| 'local' || 'HeyBard' || etc
+	,timestamp:Date.now()
 }
 
-S.saveBookmark=function(){
-	if(!S.saveSystem) return;
+if(localStorage.getItem(S.saveName)===null){
+	localStorage.setItem(S.saveName,JSON.stringify(S.saves));
+}else{
+	S.saves=localStorage.getItem(S.saveName);
+}
+
+S.load=function(){
+	S.saves=JSON.parse(localStorage.getItem(S.saveName));
 	
-	// Set up the bookmark values for saving
-	var newValues={
-		bookmark:Math.floor(S.currentTime),
-		data:S.data,
-		saveSystem:'local',
-		timestamp:Date.now()
-	};
-	
-	var oldValues=JSON.parse(localStorage.getItem(S.saveName));
-	
-	// Don't save the bookmark if relevant data is the same
-	if(
-		oldValues!==null
-		&& newValues.bookmark===oldValues.bookmark
-		&& JSON.stringify(newValues.data)===JSON.stringify(oldValues.data) // objects can easily read different; stringifying them both ensures they'll read the same
-	) return;
-	
-	// Remote bookmark
 	/// TODO: add remote bookmark support
 	
-	// Local bookmark
-	localStorage.setItem(S.saveName,JSON.stringify(newValues));
-};
+	switch(S.saves.system){
+		case 'local':
+			var loadFile=S.saves.local[S.saves.currentSave];
+			
+			// If the load file can't be found, break
+			if(!loadFile) break;
+			
+			S.data=loadFile.data;
+			S.currentLanguage=loadFile.language;
+			S.displaySubtitles(loadFile.subtitles);
+			start=loadFile.bookmark;
+			
+			// S.to({time:loadFile.bookmark});
+			break;
+		case 'remote':
+			break;
+		default:
+			break;
+	}
+	
+	console.log('LOADING '+S.saveName,S.saves);
+}
+
+S.save=function(){
+	// TODO: Don't save the bookmark if relevant data is the same
+	// if(
+		// oldValues!==null
+		// && newValues.bookmark===oldValues.bookmark
+		// && JSON.stringify(newValues.data)===JSON.stringify(oldValues.data) // objects can easily read different; stringifying them both ensures they'll read the same
+	// ) return;
+	
+	switch(S.saves.system){
+		case 'local':
+			// Update the save file before setting it
+			S.saves.local[S.saves.currentSave]={
+				bookmark:S.currentTime
+				,data:S.data
+				,language:S.currentLanguage
+				,subtitles:S.currentSubtitles
+				,timestamp:Date.now()
+			};
+			break;
+		case 'remote':
+			break;
+		default:
+			break;
+	}
+	
+	localStorage.setItem(S.saveName,JSON.stringify(S.saves));
+	console.log('SAVING '+S.saveName,S.saves);
+}
 
 var start=S.duration-(S.files[S.files.length-1].duration);
-if(S.saveSystem) start=S.loadBookmark();
+S.load();
+
+/////////////////
+
+var supportedLanguages=<?php
+	// Get subtitles
+	$languages=[];
+	foreach(scandir('.') as $file){
+		// Ignore hidden folders and subtitles folder
+		if($file==='subtitles' || $file==='resources' || !is_dir($file) || $file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
+
+		$languages[]=[
+			'short'	=>	$file
+			,'long'	=>	Locale::getDisplayLanguage($file)
+		];
+	}
+	
+	echo json_encode($languages);
+?>;
+
+if(supportedLanguages.length>1){
+	function toggleLanguage(){
+		// Remove selected class from previous selected item
+		var previous=S.window.querySelector('.showpony-dropdown-language .showpony-selected');
+		if(previous){
+			previous.classList.remove('showpony-selected');
+		}
+		
+		// Set language to null if clicking on the same item
+		if(S.currentLanguage===this.dataset.value){
+			// S.displaySubtitles(null);
+			return;
+		}
+		
+		this.classList.add('showpony-selected');
+		// S.displaySubtitles(this.dataset.value);
+	}
+
+	var languageButtons=document.createDocumentFragment();
+	for(var i=0;i<supportedLanguages.length;i++){
+		var buttonEl=document.createElement('button');
+		buttonEl.innerText=supportedLanguages[i]['long'];
+		buttonEl.dataset.value=supportedLanguages[i]['short'];
+		buttonEl.addEventListener('click',toggleLanguage);
+		
+		if(S.currentLanguage===supportedLanguages[i]['short']) buttonEl.className='showpony-selected';
+		
+		languageButtons.appendChild(buttonEl);
+	}
+	S.window.querySelector(".showpony-dropdown-language").appendChild(languageButtons);
+
+	S.window.querySelector('.showpony-button-language').addEventListener('click',function(){
+		if(S.window.querySelector('.showpony-dropdown-language').classList.toggle('showpony-visible')){
+			// Added
+		}else{
+			// Removed
+		}
+	});
+}else{
+	S.window.querySelector('.showpony-button-language').remove();
+}
+
+var supportedSubtitles=<?php
+	// Get subtitles
+	$subtitles=[];
+	if(file_exists('subtitles')){
+		foreach(scandir('subtitles') as $file){
+			// Ignore hidden files
+			if(!is_dir('subtitles/'.$file) || $file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
+
+			// TODO: add support for differentiating Closed Captions (maybe append with "cc", like "en-cc" "es-cc"
+			
+			$subtitles[]=[
+				'short'	=>	$file
+				,'long'	=>	Locale::getDisplayLanguage($file)
+			];
+		}
+	}
+	
+	echo json_encode($subtitles);
+?>;
+
+if(supportedSubtitles.length>0){
+	function toggleSubtitle(){
+		// Remove selected class from previous selected item
+		var previous=S.window.querySelector('.showpony-dropdown-subtitles .showpony-selected');
+		if(previous){
+			previous.classList.remove('showpony-selected');
+		}
+		
+		// Set subtitles to null if clicking on the same item
+		if(S.currentSubtitles===this.dataset.value){
+			S.displaySubtitles(null);
+			return;
+		}
+		
+		this.classList.add('showpony-selected');
+		S.displaySubtitles(this.dataset.value);
+	}
+
+	var subtitleButtons=document.createDocumentFragment();
+	for(var i=0;i<supportedSubtitles.length;i++){
+		var buttonEl=document.createElement('button');
+		buttonEl.innerText=supportedSubtitles[i]['long'];
+		buttonEl.dataset.value=supportedSubtitles[i]['short'];
+		buttonEl.addEventListener('click',toggleSubtitle);
+		
+		if(S.currentSubtitles===supportedSubtitles[i]['short']) buttonEl.className='showpony-selected';
+		
+		subtitleButtons.appendChild(buttonEl);
+	}
+	S.window.querySelector(".showpony-dropdown-subtitles").appendChild(subtitleButtons);
+
+	S.window.querySelector('.showpony-button-subtitles').addEventListener('click',function(){
+		if(S.window.querySelector('.showpony-dropdown-subtitles').classList.toggle('showpony-visible')){
+			// Added
+		}else{
+			// Removed
+		}
+	});
+}else{
+	S.window.querySelector('.showpony-button-subtitles').remove();
+}
+
+// Bookmarks
+
+function toggleBookmark(){
+	// Remove selected class from previous selected item
+	var previous=S.window.querySelector('.showpony-dropdown-bookmark .showpony-selected');
+	if(previous){
+		previous.classList.remove('showpony-selected');
+	}
+	
+	console.log(previous,S.saves.system,this.dataset.value);
+
+	// Set subtitles to null if clicking on the same item
+	if(S.saves.currentSave===this.dataset.value){
+		S.saves.system=null;
+		S.saves.currentSave=null;
+		return;
+	}
+	
+	this.classList.add('showpony-selected');
+	S.saves.system='local';
+	S.saves.currentSave=this.dataset.value;
+}
+
+var currentBookmarks=Object.keys(S.saves.local);
+var bookmarkButtons=document.createDocumentFragment();
+for(var i=0;i<currentBookmarks.length;i++){
+	var buttonEl=document.createElement('button');
+	buttonEl.innerText=currentBookmarks[i];
+	buttonEl.dataset.value=currentBookmarks[i];
+	buttonEl.addEventListener('click',toggleBookmark);
+	
+	if(S.saves.currentSave===currentBookmarks[i]) buttonEl.className='showpony-selected';
+	
+	bookmarkButtons.appendChild(buttonEl);
+}
+S.window.querySelector(".showpony-dropdown-bookmark").appendChild(bookmarkButtons);
+
+S.window.querySelector('.showpony-button-bookmark').addEventListener('click',function(){
+	if(S.window.querySelector('.showpony-dropdown-bookmark').classList.toggle('showpony-visible')){
+		// Added
+	}else{
+		// Removed
+	}
+});
+
+/////////////////
 
 var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i')).exec(window.location.href);
 if(page) start=parseInt(page[0].split('=')[1]);
@@ -1417,17 +1454,17 @@ window.addEventListener(
 );
 
 // Save user bookmarks when leaving the page
-window.addEventListener('blur',S.saveBookmark);
-window.addEventListener('beforeunload',S.saveBookmark);
+window.addEventListener('blur',S.save);
+window.addEventListener('beforeunload',S.save);
 
 // Save the bookmark if the website is hidden
 document.addEventListener('visibilitychange',function(){
-	if(document.hidden) S.saveBookmark();
+	if(document.hidden) S.save();
 });
 
 // Showpony deselection (to help with Firefox and Edge's lack of support for 'beforeunload')
-S.window.addEventListener('focusout',S.saveBookmark);
-S.window.addEventListener('blur',S.saveBookmark);
+S.window.addEventListener('focusout',S.save);
+S.window.addEventListener('blur',S.save);
 
 // Shortcut keys
 S.window.addEventListener(
