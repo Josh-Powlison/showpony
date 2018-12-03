@@ -509,12 +509,11 @@ S.modules.visualNovel=new function(){
 	M.audio=function(input){
 		const O=this;
 		O.type='audio';
-		O.name=input;
 		
 		O.el=document.createElement('audio');
-		O.el.src='<?php echo $stories_path; ?>resources/audio/'+O.name+'.mp3';
 		O.el.preload=true;
 		O.el.dataset.name=input;
+		O.name=input;
 		M.window.appendChild(O.el);
 		
 		// Checks if was playing outside of pausing the Showpony
@@ -522,9 +521,23 @@ S.modules.visualNovel=new function(){
 		
 		O.content=function(input){
 			if(Array.isArray(input)) input=input[0];
+			var name=input.split('#')[0];
+			var extension=name.split('.');
+			name=extension[0];
+			if(extension.length>1) extension=extension[1];
+			else extension='mp3';
 			
-			O.el.src=input;
+			// Play the track automatically if it needs to be played
+			var play=false;
+			if(!O.el.paused) play=true;
+			
+			O.el.src='<?php echo $stories_path; ?>resources/audio/'+name+'.'+extension;
+			
+			if(play) O.play();
 		}
+		
+		// TODO: don't have this call O.content here. This should follow the setup of other objects: content() should just automatically be called in the M.progress() function when this object is created
+		O.content(input);
 		
 		O.play=function(){
 			O.playing=true;
