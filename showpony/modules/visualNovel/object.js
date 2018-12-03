@@ -301,6 +301,12 @@ S.modules.visualNovel=new function(){
 					// Skip over "remove" function- we don't want to run that one :P
 					if(command==='remove') continue;
 					
+					// If playing but shouldn't loop: stop, don't play
+					if(command==='play' && (!target[name].loop || target[name].loop==='false')){
+						objects[name].stop();
+						continue;
+					}
+					
 					if(typeof(objects[name][command])==='function'){
 						if(typeof(target[name][command])==='undefined'){
 							objects[name][command]();
@@ -807,8 +813,6 @@ S.modules.visualNovel=new function(){
 								var attributes=nestedAttributes.speed.pop();
 								baseWaitTime=attributes.waitTime;
 								constant=attributes.constant;
-								
-								console.log('SPEED ATRIBUTES',i,attributes,constant,typeof(constant));
 								break;
 							default:
 								// If the parent doesn't have a parent (it's top-level)
