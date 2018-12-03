@@ -970,7 +970,12 @@ function scrub(inputPercent=null,loadFile=false){
 	}
 	
 	var newPart=0;
-	for(var i=timeInTotal;i>S.files[newPart].duration;i-=S.files[newPart].duration) newPart++;
+	// Based on time, get the right file
+	for(newPart;newPart<S.files.length;newPart++){
+		if(timeInTotal<S.files[newPart].duration) break; // We've reached the file
+		
+		timeInTotal-=S.files[newPart].duration;
+	}
 	
     var completed=infoMake(newPart+1);
     var remaining=infoMake(S.files.length-(newPart+1));
