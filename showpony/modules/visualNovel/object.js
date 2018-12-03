@@ -717,22 +717,24 @@ S.modules.visualNovel=new function(){
 			// STEP 2: Design the text//
 			
 			// Design defaults
+			const defaultBaseWaitTime=.03;
+			const defaultConstant=false;
+			
 			var charElementDefault=document.createElement('span');
-			charElementDefault.className='showpony-char-container';
-			var charElement;
-			var baseWaitTime;
-			var constant;
 			
-			// Reset the defaults with this function, or set them inside here!
-			function charDefaults(){
-				// Use the default element for starting off
-				charElement=charElementDefault.cloneNode(true);
-				baseWaitTime=.03; // The default wait time
-				constant=false; // Default punctuation pauses
-			}
+			var charElement=document.createElement('span');
+			charElement.className='showpony-char-container';
+			var baseWaitTime=defaultBaseWaitTime;
+			var constant=defaultConstant;
 			
-			// Use the defaults
-			charDefaults();
+			// Tracks nested attributes
+			var nestedAttributes={
+				speed:[]
+				,shake:[]
+				,shout:[]
+				,sing:[]
+				,fade:[]
+			};
 
 			// The total time we're waiting until x happens
 			var totalWait=0;
@@ -746,8 +748,6 @@ S.modules.visualNovel=new function(){
 			var l=input.length;
 			// We check beyond the length of the text because that lets us place characters that allow text wrapping in Firefox
 			for(let i=0;i<=l;i++){
-				var waitTime=baseWaitTime;
-				
 				// If a > is at the end of a text line, continue automatically.
 				// Won't interfere with tags, no worries!
 				if(i==l-1 && input[i]==='>'){
@@ -774,17 +774,22 @@ S.modules.visualNovel=new function(){
 						var tag=values.substr(1);
 						
 						switch(tag){
-							case 'shout':
 							case 'shake':
+							case 'shout':
 							case 'sing':
 							case 'fade':
-								charElement.classList.remove('showpony-char-'+tag);
+								// Revert the attributes to their previous values
+								var attributes=nestedAttributes[tag].pop();
+							
+								if(attributes.on===false) charElement.classList.remove('showpony-char-'+tag);
 								break;
 							case 'speed':
-								// /TODO: allow nested <speed> tags, so it'll go back to the speed of the parent element
-								// Adjust by the default wait set up for it
-								baseWaitTime=.03;
-								constant=false;
+								// Revert the attributes to their previous values
+								var attributes=nestedAttributes.speed.pop();
+								baseWaitTime=attributes.waitTime;
+								constant=attributes.constant;
+								
+								console.log('SPEED ATRIBUTES',i,attributes,constant,typeof(constant));
 								break;
 							default:
 								// If the parent doesn't have a parent (it's top-level)
@@ -814,20 +819,44 @@ S.modules.visualNovel=new function(){
 						}
 						
 						switch(tag){
+							case 'shake':
 							case 'shout':
 							case 'sing':
-							case 'shake':
 							case 'fade':
 								charElement.classList.add('showpony-char-'+tag);
+								
+								nestedAttributes[tag].push({
+									on:true
+								});
 								break;
 							case 'speed':
+								// Save the previous speed values
+								nestedAttributes.speed.push({
+									constant:constant
+									,waitTime:baseWaitTime
+								});
+							
+								var setConstant=false;
+								var setRate=null;
+								var setBaseTime=null;
 								for(let ii=0;ii<attributes.length;ii++){
-									if(attributes[ii][4]) constant=true;
+									if(attributes[ii][4]) setConstant=true;
 									else{
-										if(attributes[ii][1]==='constant') constant=(attributes[ii][3]==='false' ? false : true);
-										if(attributes[ii][1]==='rate') baseWaitTime*=parseFloat(attributes[ii][3]);
+										if(attributes[ii][1]==='constant') setConstant=(attributes[ii][3]==='false' ? false : true);
+										else if(attributes[ii][1]==='rate') setRate=parseFloat(attributes[ii][3]);
+										else if(attributes[ii][1]==='basetime') setBaseTime=attributes[ii][3];
 									}
 								}
+								
+								constant=setConstant;
+								
+								if(setBaseTime==='default') setBaseTime=defaultBaseWaitTime;
+								else setBaseTime=parseFloat(setBaseTime);
+								
+								// Use either the new base time or the rate, whichever exists
+								if(setBaseTime!==null) baseWaitTime=setBaseTime;
+								else if(setRate!==null) baseWaitTime*=setRate;
+								
 								break;
 							case 'br':
 								var lineBreak=document.createElement('span');
@@ -890,6 +919,7 @@ S.modules.visualNovel=new function(){
 					// Escape character
 					if(input[i]==='\\' && i+1<input.length) i++;
 					
+					var waitTime=baseWaitTime;
 					letters+=input[i];
 				
 					// Handle punctuation- at spaces we check, if constant isn't true
@@ -923,11 +953,11 @@ S.modules.visualNovel=new function(){
 					// Make the char based on charElement
 					var thisChar=charElement.cloneNode(false);
 					
-					let showChar=document.createElement('span')				// Display char (appear, shout, etc), parent to animChar
+					let showChar=document.createElement('span')			// Display animation character (appear, shout, etc), parent to animChar
 					showChar.className='showpony-char';
-					let animChar=document.createElement('span')			// Constant animation character (singing, shaking...)
+					let animChar=document.createElement('span')			// Perpetual animation character (singing, shaking...)
 					animChar.className='showpony-char-anim';
-					let hideChar=document.createElement('span');	// Hidden char for positioning
+					let hideChar=document.createElement('span');		// Hidden char for positioning
 					hideChar.className='showpony-char-placeholder';
 					
 					// Spaces
