@@ -488,10 +488,7 @@ S.to=function(obj={}){
 		S.window.dispatchEvent(new CustomEvent('end'));
 	}
 	
-	// Only start images at beginning; you can't go into the "middle" of image
-	if(S.files[obj.file].module==='image') obj.time=0;
-	
-	/// LOAD RIGHT module AND SOURCE ///
+	/// LOAD RIGHT MODULE AND SOURCE ///
 	
 	// If switching types, do some cleanup
 	if(S.currentModule!==S.files[obj.file].module){
