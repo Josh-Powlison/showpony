@@ -609,8 +609,9 @@ S.modules.visualNovel=new function(){
 			for(var i=0;i<imageNames.length;i++){
 				let layer=i+1;
 				
-				// Assume .png
-				var image=imageNames[i]+='.png';
+				var image=imageNames[i];
+				// If no extension, assume png
+				if(!/\./.test(image)) image+='.png';
 				
 				// If the layer doesn't exist, add it!
 				if(!O.el.children[layer]){
