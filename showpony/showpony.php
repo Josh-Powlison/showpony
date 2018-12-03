@@ -480,12 +480,16 @@ S.to=function(obj={}){
 		obj.time-=S.files[obj.file].duration;
 	}
 	
-	// If we're at the end, pause and run an event
+	// If we're past the end, go to the very end
 	if(obj.file>=S.files.length){
 		obj.file=S.files.length-1;
+		obj.time=S.files[obj.file].duration;
 		
 		// Run the event that users can read
 		S.window.dispatchEvent(new CustomEvent('end'));
+		
+		// Pause
+		S.pause();
 	}
 	
 	/// LOAD RIGHT MODULE AND SOURCE ///
