@@ -887,6 +887,9 @@ S.modules.visualNovel=new function(){
 					continue;
 				// If letters
 				}else{
+					// Escape character
+					if(input[i]==='\\' && i+1<input.length) i++;
+					
 					letters+=input[i];
 				
 					// Handle punctuation- at spaces we check, if constant isn't true
