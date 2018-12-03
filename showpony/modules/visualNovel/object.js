@@ -573,11 +573,16 @@ S.modules.visualNovel=new function(){
 		O.el.className='showpony-background';
 		O.el.dataset.name=input;
 		O.name=input;
-		
 		M.window.appendChild(O.el);
 
 		O.content=function(input=O.name){
-			O.el.style.backgroundImage='url("<?php echo $stories_path; ?>resources/backgrounds/'+input.split('#')[0]+'.jpg")';
+			var name=input.split('#')[0];
+			var extension=name.split('.');
+			name=extension[0];
+			if(extension.length>1) extension=extension[1];
+			else extension='jpg';
+			
+			O.el.style.backgroundImage='url("<?php echo $stories_path; ?>resources/backgrounds/'+name+'.'+extension+'")';
 		}
 		
 		objectAddCommonFunctions(O);
