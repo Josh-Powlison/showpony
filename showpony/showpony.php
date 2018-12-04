@@ -234,26 +234,24 @@ S.window.innerHTML=`
 	<div class="showpony-content"></div>
 	<div class="showpony-subtitles"></div>
 	<div class="showpony-overlay">
-		<button class="showpony-progress"></button>
-		<button class="showpony-regress"></button>
-		<button class="showpony-pause"></button>
-		<div class="showpony-dropdowns">
-			<div class="showpony-dropdown showpony-dropdown-language"></div>
-			<div class="showpony-dropdown showpony-dropdown-subtitles"></div>
-			<div class="showpony-dropdown showpony-dropdown-bookmark"></div>
-		</div>
-		<div class="showpony-buttons">
+		<button class="showpony-progress showpony-hide-on-hold"></button>
+		<button class="showpony-regress showpony-hide-on-hold"></button>
+		<button class="showpony-pause showpony-hide-on-hold"></button>
+		<div class="showpony-progress-bar" style="left:0%;"></div>
+		<canvas class="showpony-overlay-buffer" width="1000" height="1"></canvas>
+		<p class="showpony-overlay-text"><span>0</span><span>0</span></p>
+		<div class="showpony-buttons showpony-hide-on-hold">
 			<button class="showpony-button-comments" alt="Comments" title="Comments"></button>
 			<button class="showpony-button-language" alt="Language" title="Language"></button>
 			<button class="showpony-button-subtitles" alt="Subtitles" title="Subtitles"></button>
 			<button class="showpony-button-bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
 			<button class="showpony-fullscreen-button" alt="Fullscreen" title="Fullscreen Toggle"></button>
 		</div>
-	</div>
-	<div class="showpony-scrub">
-		<canvas class="showpony-overlay-buffer" width="1000" height="1"></canvas>
-		<div class="showpony-progress-bar" style="left:0%;"></div>
-		<p class="showpony-overlay-text"><span>0</span><span>0</span></p>
+		<div class="showpony-dropdowns showpony-hide-on-hold">
+			<div class="showpony-dropdown showpony-dropdown-language"></div>
+			<div class="showpony-dropdown showpony-dropdown-subtitles"></div>
+			<div class="showpony-dropdown showpony-dropdown-bookmark"></div>
+		</div>
 	</div>
 `;
 
