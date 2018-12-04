@@ -32,6 +32,7 @@
 
 .showpony-textbox::-webkit-scrollbar{
 	width:.5em;
+	background-color:#000;
 }
 
 .showpony-textbox::-webkit-scrollbar-thumb{

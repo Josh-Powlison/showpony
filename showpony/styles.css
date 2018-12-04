@@ -227,12 +227,15 @@
 	background-size:3em;
 }
 
-.showpony-dropdown::-webkit-scrollbar{
-	width:.5em;
+.showpony *::-webkit-scrollbar{
+	width:1em;
+	background-color:#fff;
+	cursor:auto;
 }
 
-.showpony-dropdown::-webkit-scrollbar-thumb{
+.showpony *::-webkit-scrollbar-thumb{
 	background-color:#000;
+	border-left:solid #fff .1em;
 }
 
 .showpony-dropdown button{
