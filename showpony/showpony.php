@@ -1436,8 +1436,8 @@ S.progress=function(){
 
 // On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
 window.addEventListener('click',function(event){
-	if(event.target.classList.contains('showpony-cover')){
-		event.target.remove();
+	if(cover && checkCollision(event.clientX,event.clientY,S.window)){
+		cover.remove();
 		cover=null;
 		return;
 	}
