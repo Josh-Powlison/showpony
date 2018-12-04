@@ -779,6 +779,8 @@ function getTotalBuffered(){
 	}
 }
 
+var scrubLoad=null;
+
 // Update the scrubber's position
 function scrub(inputPercent=null,loadFile=false){
 	// "sticky" is an infinite scroll-related variable
@@ -794,7 +796,12 @@ function scrub(inputPercent=null,loadFile=false){
 	
 	/// LOADING THE SELECTED FILE ///
 	if(loadFile){
+		clearTimeout(scrubLoad);
 		if(checkBuffered(timeInTotal) || scrubbing===false) S.to({time:timeInTotal});
+		else{
+			// Load the file if we sit in the same spot for a moment
+			scrubLoad=setTimeout(S.to,400,{time:timeInTotal});
+		}
 	}
 	
 	// Move the progress bar
@@ -894,7 +901,6 @@ function userScrub(event=null,start=false){
 			if(!checkBuffered(S.duration*scrubPercent)){
 				// Load the file our pointer's on
 				scrub(scrubPercent,true);
-				
 			}
 			
 			return true; // Exit the function
