@@ -22,6 +22,14 @@ S.modules.<?php echo 'image'; ?>=new function(){
 		S.to({file:'+1'});
 	}
 	
+	M.regress=function(){
+		S.to({file:'-1'});
+	}
+	
+	M.progress=function(){
+		S.to({file:'+1'});
+	}
+	
 	M.timeUpdate=function(time=0){
 		M.currentTime=time;
 	}

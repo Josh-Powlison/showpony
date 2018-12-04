@@ -19,6 +19,14 @@ S.modules.video=new function(){
 		S.toggle();
 	}
 	
+	M.regress=function(){
+		S.to({time:'-10'});
+	}
+	
+	M.progress=function(){
+		S.to({time:'+10'});
+	}
+	
 	M.timeUpdate=function(time=0){
 		M.currentTime=M.window.currentTime=time;
 	}

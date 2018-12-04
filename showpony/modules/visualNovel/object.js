@@ -41,7 +41,7 @@ S.modules.visualNovel=new function(){
 			
 			O.id=window.setTimeout(function(){
 				O.remaining=0;
-				M.progress();
+				M.readLine();
 			},duration);
 		}
 		
@@ -81,7 +81,34 @@ S.modules.visualNovel=new function(){
 		timer.pause();
 	}
 	
-	M.input=function(){
+	M.regress=function(){
+		// console.log(M.currentLine);
+		
+		var keyframeIndex=keyframes.indexOf(M.currentLine)-1;
+		
+		if(keyframeIndex===-1){
+			keyframeIndex=0;
+			for(var i=M.currentLine;i>0;i--){
+				// console.log('KEYFRAME INDEX OF',keyframes.indexOf(i));
+				if(keyframes.indexOf(i)){
+					keyframeIndex=keyframes.indexOf(i)-1;
+					break;
+				}
+			}
+		}
+		
+		if(keyframeIndex>0){
+			
+			// console.log('KEYFRAMES | GO TO FRAME',keyframes,keyframes[keyframeIndex]);
+			
+			runTo=keyframes[keyframeIndex];
+			M.readLine(0);
+		}else{
+			S.to({file:'-1'});
+		}
+	}
+	
+	M.progress=function(){
 		// Finish all animations
 		for(var name in objects){
 			objects[name].el.dispatchEvent(new Event('animationend'));
@@ -92,7 +119,7 @@ S.modules.visualNovel=new function(){
 		
 		// If a continue notice exists, continue!
 		if(M.window.querySelector('.showpony-continue')){
-			M.progress();
+			M.readLine();
 			continueNotice.remove();
 			return;
 		}
@@ -100,7 +127,7 @@ S.modules.visualNovel=new function(){
 		// Continue if the timer was going
 		if(timer.remaining>0){
 			timer.stop();
-			M.progress();
+			M.readLine();
 			return;
 		}
 		
@@ -120,7 +147,7 @@ S.modules.visualNovel=new function(){
 		
 		// Continue if we don't wait at the end of the text
 		if(!wait){ //XXX
-			M.progress();
+			M.readLine();
 		}
 		else{
 			junction();
@@ -152,7 +179,7 @@ S.modules.visualNovel=new function(){
 				
 				runTo=keyframeSelect;
 				
-				M.progress(0);
+				M.readLine(0);
 				resolve();
 				return;
 			}
@@ -186,7 +213,7 @@ S.modules.visualNovel=new function(){
 				runTo=keyframeSelect;
 				
 				M.currentFile=S.currentFile=file;
-				M.progress(0);
+				M.readLine(0);
 				
 				if(S.files[file].buffered!==true){
 					S.files[file].buffered=true;
@@ -214,7 +241,7 @@ S.modules.visualNovel=new function(){
 		,'!'	:(a,b)=>	a!=b
 	};
 	
-	M.progress=function(inputNum=M.currentLine+1){
+	M.readLine=function(inputNum=M.currentLine+1){
 		// Go to either the specified line or the next one
 		M.currentLine=inputNum;
 		
@@ -226,7 +253,7 @@ S.modules.visualNovel=new function(){
 		
 		// Skip comments
 		if(/^\/\//.test(M.lines[M.currentLine])){
-			M.progress();
+			M.readLine();
 			return;
 		}
 		
@@ -255,15 +282,15 @@ S.modules.visualNovel=new function(){
 						,ifParse(vals[1])
 					);
 					
-					M.progress();
+					M.readLine();
 					break;
 				// Comparisons
 				default:
 					if(operations[type](
 						ifParse(S.data[name])
 						,ifParse(vals[1])
-					)) M.progress(M.lines.indexOf(vals[2]));
-					else M.progress();
+					)) M.readLine(M.lines.indexOf(vals[2]));
+					else M.readLine();
 					break;
 			}
 			
@@ -393,7 +420,7 @@ S.modules.visualNovel=new function(){
 			}
 			
 			// Continue without creating objects- we'll look at THAT once we've run through and added all the info to the target
-			M.progress();
+			M.readLine();
 			return;
 		}
 		
@@ -419,7 +446,7 @@ S.modules.visualNovel=new function(){
 		// Don't automatically continue on text updates or engine commands
 		if(type==='textbox' && command==='content') return;
 		
-		M.progress();
+		M.readLine();
 	}
 	
 	// If a value's a number, return it as one
@@ -428,7 +455,7 @@ S.modules.visualNovel=new function(){
 	}
 	
 	M.go=function(input){
-		M.progress(M.lines.indexOf(input));
+		M.readLine(M.lines.indexOf(input));
 	}
 	
 	M.end=function(){
@@ -437,13 +464,13 @@ S.modules.visualNovel=new function(){
 	
 	M.runEvent=function(input){
 		S.window.dispatchEvent(new CustomEvent(input));
-		M.progress();
+		M.readLine();
 	}
 
 	M.wait=function(input){
 		// Skip waiting if we're running through
 		if(runTo!==false){
-			M.progress();
+			M.readLine();
 			return;
 		}
 		
@@ -542,7 +569,7 @@ S.modules.visualNovel=new function(){
 			if(play) O.play();
 		}
 		
-		// TODO: don't have this call O.content here. This should follow the setup of other objects: content() should just automatically be called in the M.progress() function when this object is created
+		// TODO: don't have this call O.content here. This should follow the setup of other objects: content() should just automatically be called in the M.readLine() function when this object is created
 		O.content(input);
 		
 		O.play=function(){
@@ -916,8 +943,8 @@ S.modules.visualNovel=new function(){
 											// This might just be a continue button, so we need to check
 											if(this.dataset.var) S.data[this.dataset.var]=this.dataset.val;
 											
-											if(this.dataset.go) M.progress(M.lines.indexOf(this.dataset.go));
-											else M.progress();
+											if(this.dataset.go) M.readLine(M.lines.indexOf(this.dataset.go));
+											else M.readLine();
 											
 											// We don't want to run S.input here by clicking on a button
 											event.stopPropagation();
@@ -1045,7 +1072,7 @@ S.modules.visualNovel=new function(){
 				
 				// If we aren't waiting to continue, continue
 				if(!wait){ //XXX
-					M.progress();
+					M.readLine();
 				}else{
 					if(!O.el.querySelector('input')){
 						junction();
@@ -1062,18 +1089,10 @@ S.modules.visualNovel=new function(){
 	// What to do when we aren't sure whether to proceed automatically or wait for input
 	function junction(){
 		if(S.auto){
-			M.progress();
+			M.readLine();
 		}
 		else{
 			M.window.appendChild(continueNotice);
 		}
-	}
-	
-	M.previousKeyframe=function(){
-		// Go back a keyframe's length, so we get to the previous keyframe
-		var keyframeLength=S.files[S.currentFile].duration/keyframes.length;
-		
-		// /TODO: account for starting at the end of a previous KN file
-		S.to({time:'-'+keyframeLength});
 	}
 }();
