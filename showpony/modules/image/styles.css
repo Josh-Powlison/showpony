@@ -1,0 +1,16 @@
+.showpony-image-container{
+	height:100%;
+	width:100%;
+	overflow:auto;
+	
+	display:flex;
+	
+	cursor:pointer;
+}
+
+.showpony-image{
+	width:30rem;
+	
+	display:block;
+	margin:auto;
+}

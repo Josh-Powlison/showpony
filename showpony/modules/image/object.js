@@ -4,8 +4,11 @@ S.modules.<?php echo 'image'; ?>=new function(){
 	M.currentTime=null;
 	M.currentFile=null;
 	
-	M.window=document.createElement('img');
-	M.window.className='showpony-block';
+	M.window=document.createElement('div');
+	M.window.className='showpony-image-container';
+	M.image=document.createElement('img');
+	M.image.className='showpony-image';
+	M.window.appendChild(M.image);
 	
 	M.play=function(){
 		
@@ -25,8 +28,13 @@ S.modules.<?php echo 'image'; ?>=new function(){
 	
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
-			if(M.currentFile!==file) M.window.src=S.files[file].path;
+			if(M.currentFile!==file){
+				M.image.src=S.files[file].path;
+			}
 			else content.classList.remove('showpony-loading');
+			
+			// Go to a scroll point dependent on time
+			M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
 			
 			resolve();
 		});
@@ -70,12 +78,19 @@ S.modules.<?php echo 'image'; ?>=new function(){
 		}
 	}
 	
+	// Update time on scrolling
+	M.window.addEventListener('scroll',function(){
+		timeUpdate(Math.round(M.window.scrollTop/M.window.scrollHeight*(S.files[M.currentFile].duration)));
+	});
+	
 	/// BUFFERING ///
-	M.window.addEventListener('load',function(){
+	M.image.addEventListener('load',function(){
 		content.classList.remove('showpony-loading');
 		S.files[M.currentFile].buffered=true;
 		getTotalBuffered();
 		
 		if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
+		
+		M.window.scrollTop=M.window.scrollHeight*(M.currentTime/S.files[M.currentFile].duration);
 	});
 }();
