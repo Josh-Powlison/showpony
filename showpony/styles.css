@@ -289,7 +289,7 @@
 
 .showpony-button-comments{
 	background-image:url('showpony/icons/comments.svg');
-	background-color:red!important;
+	display:none;
 }
 
 .showpony-button-language{
