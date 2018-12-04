@@ -1059,12 +1059,6 @@ if(S.cover){
 	if(S.cover.image) cover.style.backgroundImage='url("'+S.cover.image+'")';
 	if(S.cover.content) cover.innerHTML='<p>'+S.cover.content+'</p>';
 	S.window.appendChild(cover);
-	
-	cover.addEventListener('click',function(){
-		this.remove();
-		cover=null;
-		S.play();
-	});
 }
 
 // And fill it up again!
@@ -1442,6 +1436,11 @@ S.progress=function(){
 
 // On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
 window.addEventListener('click',function(event){
+	if(event.target.classList.contains('showpony-cover')){
+		event.target.remove();
+		cover=null;
+		return;
+	}
 	
 	// If we just ended scrubbing, don't toggle the menu at all
 	if(scrubbing==='out'){
