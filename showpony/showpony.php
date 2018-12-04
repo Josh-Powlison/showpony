@@ -235,7 +235,7 @@ S.window.innerHTML=`
 	<div class="showpony-subtitles"></div>
 	<div class="showpony-overlay">
 		<canvas class="showpony-overlay-buffer" width="1000" height="1"></canvas>
-		<div class="showpony-progress" style="left: 14.5688%;"></div>
+		<div class="showpony-progress-bar" style="left:0%;"></div>
 		<p class="showpony-overlay-text"><span>0</span><span>0</span></p>
 		<div class="showpony-dropdowns">
 			<div class="showpony-dropdown showpony-dropdown-language"></div>
@@ -250,6 +250,9 @@ S.window.innerHTML=`
 			<button class="showpony-fullscreen-button" alt="Fullscreen" title="Fullscreen Toggle"></button>
 		</div>
 	</div>
+	<button class="showpony-progress"></button>
+	<button class="showpony-regress"></button>
+	<button class="showpony-pause"></button>
 `;
 
 S.buffered=[];
@@ -653,7 +656,7 @@ var content=			S.window.getElementsByClassName('showpony-content')[0];
 var subtitles=			S.window.getElementsByClassName('showpony-subtitles')[0];
 var overlay=			S.window.getElementsByClassName('showpony-overlay')[0];
 var overlayBuffer=		S.window.getElementsByClassName('showpony-overlay-buffer')[0];
-var progress=			S.window.getElementsByClassName('showpony-progress')[0];
+var progress=			S.window.getElementsByClassName('showpony-progress-bar')[0];
 var overlayText=		S.window.getElementsByClassName('showpony-overlay-text')[0];
 var fullscreenButton=	S.window.getElementsByClassName('showpony-fullscreen-button')[0];
 var captionsButton=		S.window.getElementsByClassName('showpony-captions-button')[0];
@@ -884,7 +887,13 @@ function userScrub(event=null,start=false){
 			
 		// You have to swipe farther than you move the cursor to adjust the position
 		if(scrubbing!==true){
-			if(input==='joystick' || Math.abs(scrubbing-pos)>screen.width/(input==='touch' ? 20 : 100)){ 
+			if(input==='joystick' || Math.abs(scrubbing-pos)>screen.width/(input==='touch' ? 20 : 100)){
+				// Don't wait to start a series of actions
+				clearTimeout(actionTimeout);
+				actionTimeout=null;
+				clearInterval(actionInterval);
+				actionInterval=null;
+				
 				scrubbing=true;
 				
 				// On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
@@ -1314,14 +1323,6 @@ if(supportedLanguages.length>1){
 		languageButtons.appendChild(buttonEl);
 	}
 	S.window.querySelector(".showpony-dropdown-language").appendChild(languageButtons);
-
-	S.window.querySelector('.showpony-button-language').addEventListener('click',function(){
-		if(S.window.querySelector('.showpony-dropdown-language').classList.toggle('showpony-visible')){
-			// Added
-		}else{
-			// Removed
-		}
-	});
 }else{
 	S.window.querySelector('.showpony-button-language').remove();
 }
@@ -1376,14 +1377,6 @@ if(supportedSubtitles.length>0){
 		subtitleButtons.appendChild(buttonEl);
 	}
 	S.window.querySelector(".showpony-dropdown-subtitles").appendChild(subtitleButtons);
-
-	S.window.querySelector('.showpony-button-subtitles').addEventListener('click',function(){
-		if(S.window.querySelector('.showpony-dropdown-subtitles').classList.toggle('showpony-visible')){
-			// Added
-		}else{
-			// Removed
-		}
-	});
 }else{
 	S.window.querySelector('.showpony-button-subtitles').remove();
 }
@@ -1453,14 +1446,6 @@ function addBookmark(obj){
 // TODO: allow renaming bookmarks
 addBookmark({name:'Local',system:'local',type:'default'});
 
-S.window.querySelector('.showpony-button-bookmark').addEventListener('click',function(){
-	if(S.window.querySelector('.showpony-dropdown-bookmark').classList.toggle('showpony-visible')){
-		// Added
-	}else{
-		// Removed
-	}
-});
-
 /////////////////
 
 var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i')).exec(window.location.href);
@@ -1478,6 +1463,10 @@ document.currentScript.insertAdjacentElement('afterend',S.window);
 ///////////////////////////////////////
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
+
+var regress=S.window.querySelector('.showpony-regress')
+var progressBtn=S.window.querySelector('.showpony-progress');
+var pause=S.window.querySelector('.showpony-pause')
 
 // Allow using querystrings for navigation
 window.addEventListener(
@@ -1538,7 +1527,7 @@ S.window.addEventListener(
 
 // Scrolling only works on fullscreen
 S.window.addEventListener('wheel',function(event){
-	if(event.ctrlKey || !S.fullscreen) return;
+	/*if(event.ctrlKey || !S.fullscreen) return;
 	
 	if(S.paused){
 		if(event.deltaY>0) S.to({time:'+10'});
@@ -1549,29 +1538,91 @@ S.window.addEventListener('wheel',function(event){
 				S.visualNovel.previousKeyframe();
 			}
 		}
-	}
+	}*/
 });
 
-// We need to set this as a variable to remove it later on
 // This needs to be click- otherwise, you could click outside of Showpony, release inside, and the menu would toggle. This results in messy scenarios when you're using the UI.
-var windowClick=function(event){
+
+S.regress=function(){
+	S.modules[S.currentModule].regress();
+}
+
+S.progress=function(){
+	S.modules[S.currentModule].progress();
+}
+
+// On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
+window.addEventListener('click',function(){
 	// If we just ended scrubbing, don't toggle the menu at all
 	if(scrubbing==='out'){
 		scrubbing=false;
 		return;
 	}
 	
-	event.stopPropagation();
+	//event.stopPropagation();
 	
-	if(event.target===overlay) S.toggle();
-};
-
-// On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
-window.addEventListener('click',windowClick);
+	if(scrubbing===true) return;
+	
+	if(actionInterval!==null){
+		clearTimeout(actionTimeout);
+		actionTimeout=null;
+		clearInterval(actionInterval);
+		actionInterval=null;
+		return;
+	}
+	
+	console.log('CLICK EVENT',S.name,actionInterval);
+	clearTimeout(actionTimeout);
+	actionTimeout=null;
+	
+	// One event listener for all of the buttons
+	switch(event.target){
+		case regress:
+			S.regress();
+			break;
+		case progressBtn:
+			S.progress();
+			break;
+		case pause:
+			S.toggle();
+			break;
+		case fullscreenButton:
+			S.fullscreenToggle();
+			break;
+		case S.window.querySelector('.showpony-button-bookmark'):
+			if(S.window.querySelector('.showpony-dropdown-bookmark').classList.toggle('showpony-visible')){
+				// Added
+			}else{
+				// Removed
+			}
+			break;
+		case S.window.querySelector('.showpony-button-language'):
+			if(S.window.querySelector('.showpony-dropdown-language').classList.toggle('showpony-visible')){
+				// Added
+			}else{
+				// Removed
+			}
+			break;
+		case S.window.querySelector('.showpony-button-subtitles'):
+			if(S.window.querySelector('.showpony-dropdown-subtitles').classList.toggle('showpony-visible')){
+				// Added
+			}else{
+				// Removed
+			}
+			break;
+		default:
+			break;
+	}
+});
 
 window.addEventListener('mouseup',function(event){
 	// Allow left-click only
 	if(event.button!==0) return;
+	
+	clearTimeout(actionTimeout);
+	clearInterval(actionInterval);
+	actionTimeout=null;
+	actionInterval=null;
 	
 	// If we're not scrubbing, set scrubbing to false and return
 	if(scrubbing!==true){
@@ -1586,15 +1637,44 @@ window.addEventListener('mouseup',function(event){
 });
 
 // On mousedown, we prepare to move the cursor (but not over overlay buttons)
-overlay.addEventListener('mousedown',function(event){
+S.window.addEventListener('mousedown',function(event){
 	// Allow left-click only
 	if(event.button!==0) return;
 	
-	if(event.target===this){
-		scrubbing=event.clientX;
-		window.getSelection().removeAllRanges();
+	console.log(event.target);
+	
+	// One event listener for all of the buttons
+	switch(event.target){
+		case regress:
+			actionTimeout=setTimeout(function(){
+				actionInterval=setInterval(function(){
+					S.to({time:'-5'});
+				},50);
+			},500);
+			break;
+		case progressBtn:
+			actionTimeout=setTimeout(function(){
+				actionInterval=setInterval(function(){
+					S.to({time:'+5'});
+				},50);
+			},500);
+			break;
+		case pause:
+			// S.toggle();
+			break;
+		case fullscreenButton:
+			// S.fullscreenToggle();
+		default:
+			break;
 	}
+	
+	// Scrubbing will be considered here
+	scrubbing=event.clientX;
+	window.getSelection().removeAllRanges();
 });
+
+var actionTimeout=null;
+var actionInterval=null;
 
 // On touch end, don't keep moving the bar to the user's touch
 overlay.addEventListener('touchend',userScrub);
@@ -1604,134 +1684,7 @@ window.addEventListener('mousemove',function(event){userScrub(event,true);});
 window.addEventListener('touchmove',function(event){userScrub(event,true);});
 
 // Menu buttons
-fullscreenButton.addEventListener('click',S.fullscreenToggle);
-
 content.addEventListener('click',S.input);
-
-// TODO: merge all basic click events into here; it will MUCH more convenient, and use fewer resources
-/*S.window.addEventListener('mousedown',function(event){
-	switch(event.button){
-		// Left button
-		case 0:
-			//if(!S.paused) S.input();
-			//if(S.paused) S.toggle();
-			break;
-		// Middle button
-		case 1:
-			break;
-		// Right button
-		case 2:
-			event.stopPropagation();
-			event.preventDefault();
-			S.toggle();
-			break;
-	}
-});*/
-
-// Toggling the menu
-
-S.window.addEventListener('contextmenu',function(event){
-	event.preventDefault();
-	event.stopPropagation();
-	S.toggle();
-});
-
-/*S.window.addEventListener('touchend',function(event){
-	if(event.touches.length>1){
-		
-	}
-});*/
-
-/*
-	// Right button
-		case 2:
-			event.stopPropagation();
-			event.preventDefault();
-			S.toggle();
-			break;
-	*/
-
-// Update the scrub bar when scrolling
-pageTurn.addEventListener('scroll',function(event){
-	event.stopPropagation();
-	
-	if(S.infiniteScroll){
-		// if(content.classList.contains('showpony-loading')) return;
-		
-		console.log(sticky);
-		
-		// Set current time to percent scrolled
-		if(!scrubbing && sticky===false){
-			var parts=pageTurn.children;
-			for(var i=0;i<parts.length;i++){
-				// If we're beyond a part
-				if(pageTurn.scrollTop>parts[i].offsetTop+parts[i].offsetHeight) continue;
-				
-				S.currentFile=parseInt(parts[i].dataset.file);
-				
-				timeUpdate(S.files[S.currentFile].duration*((pageTurn.scrollTop-parts[i].offsetTop)/parts[i].offsetHeight));
-				
-				break;
-			}
-		}
-		
-		// If 1 page height away from bottom
-		if(this.scrollTop>=this.scrollHeight-this.clientHeight*2){
-			for(var i=S.currentFile+1;i<S.files.length;i++){
-				
-				var check=content.querySelector('[data-file="'+i+'"]');
-				
-				// Not started loading
-				if(!check){
-					pageTurn.insertAdjacentHTML('beforeend','<div data-file="'+i+'"></div>');
-					S.to({file:i});
-					return;
-				}
-				
-				// Keep the loop going if it has text
-				if(!check.innerHTML){
-					return;
-				}
-			}
-		}
-		
-		// If 1 page height away from top
-		if(this.scrollTop<=this.clientHeight){
-			for(var i=S.currentFile-1;i>=0;i--){
-				console.log(i);
-				
-				var check=content.querySelector('[data-file="'+i+'"]');
-				
-				// Not started loading
-				if(!check){
-					pageTurn.insertAdjacentHTML('afterbegin','<div data-file="'+i+'"></div>');
-					S.to({file:i});
-					return;
-				}
-				
-				// Keep the loop going if it has text
-				if(!check.innerHTML){
-					return;
-				}
-			}
-		}
-		
-		sticky=false;
-	}else{
-		// Set current time to percent scrolled
-		timeUpdate(S.files[S.currentFile].duration*(this.scrollTop/this.scrollHeight));
-		
-		// If at top
-		if(this.scrollTop<=0){
-			S.to({time:'-1'});
-		}
-		
-		// If at bottom
-		if(this.scrollTop>=this.scrollHeight-this.scrollTop){
-			S.to({file:'+1'});
-		}
-	}
-});
 
 // Gamepad support
 

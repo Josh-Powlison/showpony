@@ -58,6 +58,43 @@
 }
 
 /*/////////////////////////////////////
+////////////////BUTTONS////////////////
+/////////////////////////////////////*/
+
+.showpony-regress
+,.showpony-progress
+,.showpony-pause{
+	width:50%;
+	border:none;
+	position:absolute;
+	z-index:1;
+	opacity:.5;
+	display:block;
+}
+
+.showpony-regress{
+	left:0;
+	height:100%;
+	background:red;
+}
+
+.showpony-progress{
+	right:0;
+	height:100%;
+	background:green;
+}
+
+.showpony-pause{
+	height:50%;
+	left:25%;
+	right:25%;
+	bottom:0;
+	margin:auto;
+	
+	background:yellow;
+}
+
+/*/////////////////////////////////////
 /////////////////MENU//////////////////
 /////////////////////////////////////*/
 
@@ -84,16 +121,16 @@
 	-webkit-user-select:none;
 	user-select:none;
 	
-	/* For now, we'll disable the menu when it's not active. */
 	pointer-events:none;
 	
 	font-family: 'ShowponyUI';
 	font-size: 1rem;
+	
+	z-index:1;
 }
 
 .showpony-paused .showpony-overlay{
 	opacity:.75;
-	pointer-events:auto;
 }
 
 .showpony-overlay-buffer{
@@ -106,7 +143,7 @@
 }
 
 /*Menu scrub bar*/
-.showpony-progress{
+.showpony-progress-bar{
 	position:absolute;
 	width:.5em;
 	height:100%;
