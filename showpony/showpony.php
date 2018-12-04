@@ -1528,10 +1528,12 @@ window.addEventListener('click',function(event){
 function checkCollision(x=0,y=0,element){
 	var bounds=element.getBoundingClientRect();
 	
-	if(x<bounds.left)	return false;
-	if(x>bounds.right)	return false;
+	// If element is collapsed or outside of x and y, return
+	if(bounds.width===0 || bounds.height===0) return false;
 	if(y<bounds.top)	return false;
 	if(y>bounds.bottom)	return false;
+	if(x<bounds.left)	return false;
+	if(x>bounds.right)	return false;
 	
 	return true;
 }
