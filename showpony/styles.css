@@ -275,6 +275,14 @@
 	background-image:url('showpony/icons/bookmark.svg');
 }
 
+.showpony-bookmark{
+	display:flex;
+}
+
+.showpony-bookmark-delete{
+	width:1em;
+}
+
 .showpony-paused .showpony-buttons button{
 	pointer-events:auto;
 }

@@ -1374,7 +1374,6 @@ if(supportedSubtitles.length>0){
 }
 
 // Bookmarks
-
 function toggleBookmark(){
 	// Remove selected class from previous selected item
 	var previous=S.window.querySelector('.showpony-dropdown-bookmark .showpony-selected');
@@ -1382,33 +1381,62 @@ function toggleBookmark(){
 		previous.classList.remove('showpony-selected');
 	}
 	
-	console.log(previous,S.saves.system,this.dataset.value);
+	console.log(previous,S.saves.system,this.dataset.name);
 
-	// Set subtitles to null if clicking on the same item
-	if(S.saves.currentSave===this.dataset.value){
+	// Set to null if clicking on the same item
+	if(S.saves.currentSave===this.dataset.name
+		&& S.saves.system===this.dataset.system
+	){
 		S.saves.system=null;
 		S.saves.currentSave=null;
 		return;
 	}
 	
 	this.classList.add('showpony-selected');
-	S.saves.system='local';
-	S.saves.currentSave=this.dataset.value;
+	S.saves.system=this.dataset.system;
+	S.saves.currentSave=this.dataset.name;
 }
 
-var currentBookmarks=Object.keys(S.saves.local);
-var bookmarkButtons=document.createDocumentFragment();
-for(var i=0;i<currentBookmarks.length;i++){
-	var buttonEl=document.createElement('button');
-	buttonEl.innerText=currentBookmarks[i];
-	buttonEl.dataset.value=currentBookmarks[i];
-	buttonEl.addEventListener('click',toggleBookmark);
+// var bookmarkList=Object.keys(S.saves.local);
+// for(var i=0;i<bookmarkList.length;i++){
+	// addBookmark({
+		// name:bookmarkList[i]
+		// ,system:'local'
+		// ,type:'default'
+	// });
+// }
+
+function addBookmark(obj){
+	var bookmarkEl=document.createElement('div');
+	bookmarkEl.className='showpony-bookmark';
 	
-	if(S.saves.currentSave===currentBookmarks[i]) buttonEl.className='showpony-selected';
+	var nameEl=document.createElement('button');
+	nameEl.className='showpony-bookmark-name';
+	nameEl.innerText=obj.name;
+	nameEl.dataset.name=obj.name;
+	nameEl.dataset.system=obj.system;
+	nameEl.addEventListener('click',toggleBookmark);
 	
-	bookmarkButtons.appendChild(buttonEl);
+	if(
+		S.saves.currentSave===obj.name
+		&& S.saves.system===obj.system
+	) nameEl.classList.add('showpony-selected');
+	
+	bookmarkEl.appendChild(nameEl);
+	
+	// if(obj.type!=='new'){
+		// var deleteEl=document.createElement('button');
+		// deleteEl.className='showpony-bookmark-delete';
+		// deleteEl.innerHTML='X';
+		// bookmarkEl.appendChild(deleteEl);
+	// }
+	
+	S.window.querySelector(".showpony-dropdown-bookmark").appendChild(bookmarkEl);
 }
-S.window.querySelector(".showpony-dropdown-bookmark").appendChild(bookmarkButtons);
+
+// For now, we'll just support this bookmark
+// TODO: allow renaming bookmarks
+addBookmark({name:'Local',system:'local',type:'default'});
 
 S.window.querySelector('.showpony-button-bookmark').addEventListener('click',function(){
 	if(S.window.querySelector('.showpony-dropdown-bookmark').classList.toggle('showpony-visible')){
