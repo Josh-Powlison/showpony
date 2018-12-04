@@ -18,10 +18,6 @@ S.modules.<?php echo 'image'; ?>=new function(){
 		
 	}
 	
-	M.input=function(){
-		S.to({file:'+1'});
-	}
-	
 	M.regress=function(){
 		S.to({file:'-1'});
 	}

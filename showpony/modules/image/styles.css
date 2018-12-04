@@ -4,8 +4,6 @@
 	overflow:auto;
 	
 	display:flex;
-	
-	cursor:pointer;
 }
 
 .showpony-image{
@@ -13,4 +11,6 @@
 	
 	display:block;
 	margin:auto;
+	
+	pointer-events:none;
 }

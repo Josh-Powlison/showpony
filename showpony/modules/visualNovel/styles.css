@@ -28,6 +28,8 @@
 	break-word:normal;
 	overflow-wrap:break-word;
 	white-space:nowrap;
+	
+	pointer-events:auto;
 }
 
 .showpony-textbox::-webkit-scrollbar{

@@ -15,11 +15,6 @@ S.modules.audio=new function(){
 		M.window.pause();
 	}
 	
-	M.input=function(){
-		S.toggle();
-	}
-	
-	
 	M.regress=function(){
 		S.to({time:'-10'});
 	}

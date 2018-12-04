@@ -641,12 +641,6 @@ else{
 	}
 }
 
-// When the viewer inputs to Showpony (click, space, general action)
-S.input=function(){
-	if(S.paused) S.play();
-	else S.modules[S.currentModule].input();
-}
-
 ///////////////////////////////////////
 ///////////PRIVATE VARIABLES///////////
 ///////////////////////////////////////
@@ -1092,7 +1086,7 @@ function gamepadControls(){
 	
 	// Register inputs
 	if(S.gamepad.menu==2) S.toggle();
-	if(S.gamepad.input==2) S.input();
+	if(S.gamepad.input==2) S.progress();
 	if(S.gamepad.dpadL==2) S.to({time:'-10'});
 	if(S.gamepad.dpadR==2) S.to({time:'+10'});
 	if(S.gamepad.end==2) S.to({time:'end'});
@@ -1507,8 +1501,8 @@ S.window.addEventListener(
 		if(event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) return;
 		
 		switch(event.key){
-			case ' ':				S.input();				break;
-			case 'Enter':			S.input();				break;
+			case ' ':				S.progress();			break;
+			case 'Enter':			S.progress();			break;
 			case 'ArrowLeft':		S.to({time:'-10'});		break;
 			case 'ArrowRight':		S.to({time:'+10'});		break;
 			case 'Home':			S.to({time:'start'});	break;
@@ -1682,9 +1676,6 @@ overlay.addEventListener('touchend',userScrub);
 // On dragging
 window.addEventListener('mousemove',function(event){userScrub(event,true);});
 window.addEventListener('touchmove',function(event){userScrub(event,true);});
-
-// Menu buttons
-content.addEventListener('click',S.input);
 
 // Gamepad support
 

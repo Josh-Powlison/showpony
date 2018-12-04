@@ -27,10 +27,6 @@ S.modules.text=new function(){
 	
 	M.pause=function(){}
 	
-	M.input=function(){
-		// S.to({file:'+1'});
-	}
-	
 	M.regress=function(){
 		S.to({file:'-1'});
 	}
