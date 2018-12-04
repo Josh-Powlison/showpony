@@ -9,6 +9,7 @@ const ROOT=__DIR__;
 const DEFAULT_STORIES_PATH='files/';
 const DEFAULT_LANGUAGE='en';
 const DEFAULT_PROGRESS_DISPLAY='time';		// 'time' or 'file'
+const PRELOAD_BYTES=1*1048576;				// How many file bytes to preload
 const RELEASE_DATES=1;						// How many upcoming files to show release dates for
 const HIDDEN_FILENAME_STARTING_CHAR='~';	// Change in .htaccess too, to block direct URL access
 

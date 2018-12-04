@@ -352,8 +352,8 @@ S.to=function(obj={}){
 		timeUpdate(obj.time);
 		
 		// We can preload up to this amount
-		var preloadAmount=2097152; // 2 MB
-		
+		var preloadAmount=<?php echo PRELOAD_BYTES; ?>;
+
 		// Don't allow preloading upcoming files if scrubbing
 		if(scrubbing) preloadAmount=0;
 		
@@ -366,7 +366,7 @@ S.to=function(obj={}){
 			if(preloadAmount<=0) break;
 			
 			// Otherwise, preload
-			if(S.files[i].buffered===false){
+			if(Array.isArray(S.files[i].buffered) && S.files[i].buffered.length===0){
 				S.files[i].buffered='buffering';
 				
 				fetch(S.files[i].path).then(()=>{
@@ -376,6 +376,7 @@ S.to=function(obj={}){
 			}
 		}
 		
+		console.log('SCRUBBING VALUE',scrubbing);
 		updateHistory(obj.history);
 	});
 }
