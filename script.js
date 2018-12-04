@@ -8,19 +8,6 @@ document.getElementById("example-list").addEventListener("change",function(){
 	chooseStory(this.value);
 });
 
-// Buttons
-document.getElementById('button-previous').addEventListener('click',function(){
-	showponies[currentShowpony].to({time:'-10'});
-});
-
-document.getElementById('button-next').addEventListener('click',function(){
-	showponies[currentShowpony].to({time:'+10'});
-});
-
-document.getElementById('button-toggle').addEventListener('click',function(){
-	showponies[currentShowpony].toggle();
-});
-
 // Add event listeners to them all
 for(var key in showponies){
 	showponies[key].window.addEventListener('timeupdate',function(event){
@@ -46,8 +33,15 @@ for(var key in showponies){
 	});
 }
 
+// Initial setup for Showponies
+var keys=Object.keys(showponies);
+for(var i=0;i<keys.length;i++){
+	document.getElementById(keys[i]).dataset.waspaused='true';
+}
+
 //Choose the right input value
 function chooseStory(id){
+	console.log('RUN chooseStory');
 	
 	//Set the dropdown's value
 	if(document.getElementById("example-list").value!==id){ 
@@ -56,13 +50,12 @@ function chooseStory(id){
 	
 	var keys=Object.keys(showponies);
 	for(var i=0;i<keys.length;i++){
+		
 		if(keys[i]==id){
 			if(document.getElementById(keys[i]).classList.contains("hidden")){
 				document.getElementById(keys[i]).classList.remove("hidden");
 				
-				console.log(document.getElementById(keys[i]).dataset.wasPaused=='false');
-				
-				if(document.getElementById(keys[i]).dataset.wasPaused=='false'){
+				if(document.getElementById(keys[i]).dataset.waspaused=='false'){
 					showponies[keys[i]].play();
 				}else{
 					showponies[keys[i]].pause();
@@ -70,14 +63,14 @@ function chooseStory(id){
 			}
 			
 			//Update URL and history
-			history.replaceState(null,null,location.href.replace(/#[^$?]+/,'')+"#"+keys[i]);
+			history.replaceState(null,null,location.href.replace(/#[^$?]+|$/,"#"+keys[i]));
 		}else{
 			if(!document.getElementById(keys[i]).classList.contains("hidden")){
 				document.getElementById(keys[i]).classList.add("hidden");
 				
-				document.getElementById(keys[i]).dataset.wasPaused=showponies[keys[i]].window.classList.contains("showpony-paused");
+				document.getElementById(keys[i]).dataset.waspaused=showponies[keys[i]].paused ? 'true' : 'false';
 				
-				if(showponies[keys[i]].currentFile>-1) showponies[keys[i]].pause();
+				showponies[keys[i]].pause();
 			}
 		}
 	}
