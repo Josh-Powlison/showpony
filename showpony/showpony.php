@@ -237,9 +237,6 @@ S.window.innerHTML=`
 		<button class="showpony-progress"></button>
 		<button class="showpony-regress"></button>
 		<button class="showpony-pause"></button>
-		<canvas class="showpony-overlay-buffer" width="1000" height="1"></canvas>
-		<div class="showpony-progress-bar" style="left:0%;"></div>
-		<p class="showpony-overlay-text"><span>0</span><span>0</span></p>
 		<div class="showpony-dropdowns">
 			<div class="showpony-dropdown showpony-dropdown-language"></div>
 			<div class="showpony-dropdown showpony-dropdown-subtitles"></div>
@@ -252,6 +249,11 @@ S.window.innerHTML=`
 			<button class="showpony-button-bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
 			<button class="showpony-fullscreen-button" alt="Fullscreen" title="Fullscreen Toggle"></button>
 		</div>
+	</div>
+	<div class="showpony-scrub">
+		<canvas class="showpony-overlay-buffer" width="1000" height="1"></canvas>
+		<div class="showpony-progress-bar" style="left:0%;"></div>
+		<p class="showpony-overlay-text"><span>0</span><span>0</span></p>
 	</div>
 `;
 
@@ -785,6 +787,7 @@ function userScrub(event=null,start=false){
 				actionInterval=null;
 				
 				scrubbing=true;
+				S.window.classList.add('showpony-hold');
 				
 				// On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
 				if(checkBuffered(S.duration*scrubPercent)){
@@ -912,8 +915,6 @@ S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 				
 				filesArray.push(grouping);
 			}
-			
-			console.log('ALL SUBTITLES',filesArray);
 			
 			S.subtitles[newSubtitles]=filesArray;
 			
@@ -1130,7 +1131,7 @@ S.load=function(){
 			break;
 	}
 	
-	console.log('LOADING '+S.saveName,S.saves);
+	// console.log('LOADING '+S.saveName,S.saves);
 }
 
 S.save=function(){
@@ -1159,7 +1160,7 @@ S.save=function(){
 	}
 	
 	localStorage.setItem(S.saveName,JSON.stringify(S.saves));
-	console.log('SAVING '+S.saveName,S.saves);
+	// console.log('SAVING '+S.saveName,S.saves);
 }
 
 var start=S.duration-(S.files[S.files.length-1].duration);
@@ -1278,8 +1279,6 @@ function toggleBookmark(){
 	if(previous){
 		previous.classList.remove('showpony-selected');
 	}
-	
-	console.log(previous,S.saves.system,this.dataset.name);
 
 	// Set to null if clicking on the same item
 	if(S.saves.currentSave===this.dataset.name
@@ -1463,9 +1462,13 @@ window.addEventListener('click',function(event){
 		return;
 	}
 	
-	console.log('CLICK EVENT',S.name,actionInterval);
 	clearTimeout(actionTimeout);
 	actionTimeout=null;
+	
+	if(S.window.classList.contains('showpony-hold')){
+		S.window.classList.remove('showpony-hold');
+		return;
+	}
 	
 	// One event listener for all of the buttons
 	switch(event.target){
@@ -1502,6 +1505,7 @@ window.addEventListener('click',function(event){
 		
 			// Pause
 			if(checkCollision(event.clientX,event.clientY,pause)){
+				console.log('RUN PAUSE');
 				S.toggle();
 				break;
 			}
@@ -1552,6 +1556,7 @@ window.addEventListener('mouseup',function(event){
 	userScrub(event);
 	
 	scrubbing='out';
+	S.window.classList.remove('showpony-hold');
 });
 
 // On mousedown, we prepare to move the cursor (but not over overlay buttons)
@@ -1559,7 +1564,7 @@ S.window.addEventListener('mousedown',function(event){
 	// Allow left-click only
 	if(event.button!==0) return;
 	
-	console.log(event.target);
+	// console.log(event.target);
 	
 	// One event listener for all of the buttons
 	switch(event.target){
@@ -1572,13 +1577,16 @@ S.window.addEventListener('mousedown',function(event){
 		
 			// Pause
 			if(checkCollision(event.clientX,event.clientY,pause)){
-				//S.toggle();
+				actionTimeout=setTimeout(function(){
+					S.window.classList.add('showpony-hold');
+				},500);
 				break;
 			}
 			
 			// Progress
 			if(checkCollision(event.clientX,event.clientY,progressBtn)){
 				actionTimeout=setTimeout(function(){
+					S.window.classList.add('showpony-hold');
 					actionInterval=setInterval(function(){
 						S.to({time:'+5'});
 					},50);
@@ -1589,6 +1597,7 @@ S.window.addEventListener('mousedown',function(event){
 			// Regress
 			if(checkCollision(event.clientX,event.clientY,regress)){
 				actionTimeout=setTimeout(function(){
+					S.window.classList.add('showpony-hold');
 					actionInterval=setInterval(function(){
 						S.to({time:'-5'});
 					},50);
@@ -1631,7 +1640,7 @@ window.addEventListener('gamepadconnected',function(e){
 		,axisMax:1
 	};
 	
-	console.log('Connected!',checkGamepad);
+	// console.log('Connected!',checkGamepad);
 	
 	if(checkGamepad===null){
 		checkGamepad=setInterval(gamepadControls,Math.floor(1000/framerate));

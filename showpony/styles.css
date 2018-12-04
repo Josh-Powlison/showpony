@@ -165,6 +165,38 @@
 }
 
 /*Menu scrub bar*/
+.showpony-scrub{
+	position:absolute;
+	top:0;
+	left:0;
+	right:0;
+	bottom:0;
+	
+	opacity:0;
+	color:#000;
+	
+	-ms-user-select:none;
+	-moz-user-select:none;
+	-webkit-user-select:none;
+	user-select:none;
+	
+	pointer-events:none;
+	
+	font-family: 'ShowponyUI';
+	font-size: 1rem;
+	
+	z-index:2;
+}
+
+.showpony-paused .showpony-scrub{
+	opacity:.75;
+}
+
+.showpony-hold:not(.showpony-paused) .showpony-scrub{
+	background-color:#fff;
+	opacity:.5;
+}
+
 .showpony-progress-bar{
 	position:absolute;
 	width:.5em;
@@ -214,8 +246,6 @@
 	cursor:pointer;
 	object-fit:contain;
 }
-
-
 
 .showpony-buttons{
 	position:absolute;
