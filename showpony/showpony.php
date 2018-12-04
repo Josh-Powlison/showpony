@@ -488,6 +488,14 @@ if(S.infiniteScroll || S.files[obj.file].module==='text'){
 S.play=function(){
 	if(S.paused===false) return;
 	
+	// Close dropdowns
+	var dropdowns=S.window.querySelectorAll('.showpony-dropdown.showpony-visible');
+	if(dropdowns){
+		for(var i=0;i<dropdowns.length;i++){
+			dropdowns[i].classList.remove('showpony-visible')
+		}
+	}
+	
 	S.window.classList.remove('showpony-paused');
 	S.paused=false;
 	S.modules[S.currentModule].play();
