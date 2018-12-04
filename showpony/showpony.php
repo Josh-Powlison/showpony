@@ -1398,10 +1398,10 @@ S.window.addEventListener(
 		switch(event.key){
 			case ' ':				S.progress();			break;
 			case 'Enter':			S.progress();			break;
-			case 'ArrowLeft':		S.to({time:'-10'});		break;
-			case 'ArrowRight':		S.to({time:'+10'});		break;
-			case 'Home':			S.to({time:'start'});	break;
-			case 'End':				S.to({time:'end'});		break;
+			case 'ArrowLeft':		S.regress();			break;
+			case 'ArrowRight':		S.progress();			break;
+			// case 'Home':			S.to({time:'start'});	break;
+			// case 'End':				S.to({time:'end'});		break;
 			case 'MediaPrevious':	S.to({file:'-1'});		break;
 			case 'MediaNext':		S.to({file:'+1'});		break;
 			case 'MediaPlayPause':	S.toggle();				break;
@@ -1442,7 +1442,6 @@ S.progress=function(){
 
 // On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
 window.addEventListener('click',function(event){
-	console.log('Hey! Click read on ',event.target);
 	
 	// If we just ended scrubbing, don't toggle the menu at all
 	if(scrubbing==='out'){
