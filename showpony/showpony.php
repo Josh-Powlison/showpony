@@ -745,7 +745,10 @@ function scrub(inputPercent=null,loadFile=false){
     var remaining=infoMake((S.duration-timeInTotal) / 60)+':'+infoMake((S.duration-timeInTotal) % 60,2);
 	<?php } ?>
     
-    var info = '<span>'+completed+'</span><span>'+remaining+'</span>';
+	var title='';
+	if((S.files[newPart].title)) title='<span>'+S.files[newPart].title+'</span>';
+	
+    var info = '<span>'+completed+'</span>'+title+'<span>'+remaining+'</span>';
 	
 	if(info!==overlayText.innerHTML) overlayText.innerHTML=info;
 	
