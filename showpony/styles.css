@@ -61,37 +61,58 @@
 ////////////////BUTTONS////////////////
 /////////////////////////////////////*/
 
+.showpony-paused .showpony-regress
+,.showpony-paused .showpony-progress
+,.showpony-paused .showpony-pause{
+}
+
 .showpony-regress
 ,.showpony-progress
 ,.showpony-pause{
-	width:50%;
 	border:none;
+	
 	position:absolute;
-	z-index:1;
-	opacity:.5;
 	display:block;
+	width:50%;
+	bottom:0%;
+	
+	box-sizing:border-box;
+	
+	pointer-events:none;
+	
+	background-color:#fff;
+	background-repeat:no-repeat;
+	background-size:4em;
+	background-position:50% 25%;
 }
 
 .showpony-regress{
-	left:0;
+	left:0%;
 	height:100%;
-	background:red;
+	
+	border-right:.125em solid #c3c3c3;
+	
+	background-image:url('showpony/icons/regress.svg');
 }
 
 .showpony-progress{
-	right:0;
+	right:0%;
 	height:100%;
-	background:green;
+	
+	border-left:.125em solid #c3c3c3;
+	
+	background-image:url('showpony/icons/progress.svg');
 }
 
 .showpony-pause{
 	height:50%;
 	left:25%;
-	right:25%;
 	bottom:0;
-	margin:auto;
 	
-	background:yellow;
+	border:.25em solid #c3c3c3;
+	border-bottom:none;
+	
+	background-image:url('showpony/icons/pause.svg');
 }
 
 /*/////////////////////////////////////
@@ -131,6 +152,7 @@
 
 .showpony-paused .showpony-overlay{
 	opacity:.75;
+	pointer-events:auto;
 }
 
 .showpony-overlay-buffer{

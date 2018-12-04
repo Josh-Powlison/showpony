@@ -234,6 +234,9 @@ S.window.innerHTML=`
 	<div class="showpony-content"></div>
 	<div class="showpony-subtitles"></div>
 	<div class="showpony-overlay">
+		<button class="showpony-progress"></button>
+		<button class="showpony-regress"></button>
+		<button class="showpony-pause"></button>
 		<canvas class="showpony-overlay-buffer" width="1000" height="1"></canvas>
 		<div class="showpony-progress-bar" style="left:0%;"></div>
 		<p class="showpony-overlay-text"><span>0</span><span>0</span></p>
@@ -250,9 +253,6 @@ S.window.innerHTML=`
 			<button class="showpony-fullscreen-button" alt="Fullscreen" title="Fullscreen Toggle"></button>
 		</div>
 	</div>
-	<button class="showpony-progress"></button>
-	<button class="showpony-regress"></button>
-	<button class="showpony-pause"></button>
 `;
 
 S.buffered=[];
@@ -1546,7 +1546,9 @@ S.progress=function(){
 }
 
 // On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
-window.addEventListener('click',function(){
+window.addEventListener('click',function(event){
+	console.log('Hey! Click read on ',event.target);
+	
 	// If we just ended scrubbing, don't toggle the menu at all
 	if(scrubbing==='out'){
 		scrubbing=false;
@@ -1571,15 +1573,6 @@ window.addEventListener('click',function(){
 	
 	// One event listener for all of the buttons
 	switch(event.target){
-		case regress:
-			S.regress();
-			break;
-		case progressBtn:
-			S.progress();
-			break;
-		case pause:
-			S.toggle();
-			break;
 		case fullscreenButton:
 			S.fullscreenToggle();
 			break;
@@ -1605,9 +1598,44 @@ window.addEventListener('click',function(){
 			}
 			break;
 		default:
+			// Some elements have pointer-events none, but their collisions still matter. We'll see if we're within those buttons here.
+		
+			// Don't read clicks if the user's clicking an input or button
+			if(event.target.tagName==='INPUT') break;
+			if(event.target.tagName==='BUTTON') break;
+		
+			// Pause
+			if(checkCollision(event.clientX,event.clientY,pause)){
+				S.toggle();
+				break;
+			}
+			
+			// Progress
+			if(checkCollision(event.clientX,event.clientY,progressBtn)){
+				S.progress();
+				break;
+			}
+			
+			// Regress
+			if(checkCollision(event.clientX,event.clientY,regress)){
+				S.regress();
+				break;
+			}
+			
 			break;
 	}
 });
+
+function checkCollision(x=0,y=0,element){
+	var bounds=element.getBoundingClientRect();
+	
+	if(x<bounds.left)	return false;
+	if(x>bounds.right)	return false;
+	if(y<bounds.top)	return false;
+	if(y>bounds.bottom)	return false;
+	
+	return true;
+}
 
 window.addEventListener('mouseup',function(event){
 	// Allow left-click only
@@ -1639,26 +1667,40 @@ S.window.addEventListener('mousedown',function(event){
 	
 	// One event listener for all of the buttons
 	switch(event.target){
-		case regress:
-			actionTimeout=setTimeout(function(){
-				actionInterval=setInterval(function(){
-					S.to({time:'-5'});
-				},50);
-			},500);
-			break;
-		case progressBtn:
-			actionTimeout=setTimeout(function(){
-				actionInterval=setInterval(function(){
-					S.to({time:'+5'});
-				},50);
-			},500);
-			break;
-		case pause:
-			// S.toggle();
-			break;
-		case fullscreenButton:
-			// S.fullscreenToggle();
 		default:
+			// Some elements have pointer-events none, but their collisions still matter. We'll see if we're within those buttons here.
+		
+			// Don't read clicks if the user's clicking an input or button
+			if(event.target.tagName==='INPUT') break;
+			if(event.target.tagName==='BUTTON') break;
+		
+			// Pause
+			if(checkCollision(event.clientX,event.clientY,pause)){
+				//S.toggle();
+				break;
+			}
+			
+			// Progress
+			if(checkCollision(event.clientX,event.clientY,progressBtn)){
+				actionTimeout=setTimeout(function(){
+					actionInterval=setInterval(function(){
+						S.to({time:'+5'});
+					},50);
+				},500);
+				break;
+			}
+			
+			// Regress
+			if(checkCollision(event.clientX,event.clientY,regress)){
+				actionTimeout=setTimeout(function(){
+					actionInterval=setInterval(function(){
+						S.to({time:'-5'});
+					},50);
+				},500);
+				break;
+				break;
+			}
+			
 			break;
 	}
 	
