@@ -711,6 +711,15 @@ function scrub(inputPercent=null,loadFile=false){
 	// Move the progress bar
 	progress.style.left=(inputPercent*100)+'%';
 	
+	var newPart=0;
+	var timeCheck=timeInTotal;
+	// Based on time, get the right file
+	for(newPart;newPart<S.files.length;newPart++){
+		if(timeCheck<S.files[newPart].duration) break; // We've reached the file
+		
+		timeCheck-=S.files[newPart].duration;
+	}
+	
 	<?php
 	// If all the of the files are media that don't need time tracked, show progress with files, not time
 	if(($_GET['progress-display'] ?? DEFAULT_PROGRESS_DISPLAY)==='file'){
@@ -718,14 +727,6 @@ function scrub(inputPercent=null,loadFile=false){
 	/// INFO TEXT WITH FILE ///
 	function infoMake(input){
 		return String(input).padStart((String(S.files.length).length),'0');
-	}
-	
-	var newPart=0;
-	// Based on time, get the right file
-	for(newPart;newPart<S.files.length;newPart++){
-		if(timeInTotal<S.files[newPart].duration) break; // We've reached the file
-		
-		timeInTotal-=S.files[newPart].duration;
 	}
 	
     var completed=infoMake(newPart+1);
