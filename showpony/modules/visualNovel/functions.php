@@ -1,5 +1,8 @@
 <?php
 
+// Comment out the below line for other media to take priority. Defaults to 'file'.
+$displayType='time';
+
 function visualNovelUnhideChildren($input){
 	// visualNovel includes files on specific lines
 	

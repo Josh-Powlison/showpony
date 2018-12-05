@@ -158,10 +158,7 @@ foreach(scandir($language) as &$file){
 	// If the module isn't supported, skip over it
 	if($fileInfo['module']===null) continue;
 	
-	// Load module functions
-	foreach(array_keys($media) as $moduleName){
-		require_once ROOT.'/modules/'.$moduleName.'/functions.php';
-	}
+	require_once ROOT.'/modules/'.$fileInfo['module'].'/functions.php';
 	
 	// If this file has been unhid, unhide related files
 	if($unhid){
@@ -230,7 +227,6 @@ S.name='<?php echo toCamelCase($name); ?>';
 S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 S.paused=false;
 S.modules={};
-S.media=<?php echo json_encode($media,JSON_NUMERIC_CHECK)?>;
 S.message=<?php echo json_encode($message); ?>;
 S.auto=false; // false, or float between 0 and 10
 S.path='<?php echo $stories_path; ?>';
@@ -725,7 +721,7 @@ function scrub(inputPercent=null,loadFile=false){
 	}
 	
 	<?php
-	if(($_GET['progress-display'] ?? DEFAULT_PROGRESS_DISPLAY)==='file'){
+	if($displayType==='file'){
 	?>
 		
     var completed=infoFile(newPart+1);
