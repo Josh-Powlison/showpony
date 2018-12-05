@@ -29,6 +29,10 @@
 	animation-play-state:paused !important; /*Disables general animations and text animations, so we freeze while loading*/
 }
 
+.s-paused .s-content{
+	pointer-events:none;
+}
+
 .s-cover{
 	width:100%;
 	height:100%;

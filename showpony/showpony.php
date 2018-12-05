@@ -1520,6 +1520,9 @@ S.window.addEventListener('mousedown',function(event){
 	// One event listener for all of the buttons
 	switch(event.target){
 		default:
+			// Ignore if grabbing a scrollbar
+			if(event.offsetX>event.target.clientWidth || event.offsetY>event.target.clientHeight) return;
+		
 			// Some elements have pointer-events none, but their collisions still matter. We'll see if we're within those buttons here.
 		
 			// Don't read clicks if the user's clicking an input or button
