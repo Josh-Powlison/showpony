@@ -28,6 +28,9 @@ session_start();
 
 require 'settings.php';
 
+// TESTING ADMIN
+// $_SESSION['showpony_admin']=false;
+
 // POST VALUES FOR TESTING
 
 $stories_path=$_GET['path'] ?? DEFAULT_STORIES_PATH;
@@ -138,10 +141,11 @@ foreach(scandir($language) as &$file){
 		,'extension'	=>	pathinfo($language.'/'.$file,PATHINFO_EXTENSION)
 		,'mimeType'		=>	mime_content_type($language.'/'.$file)
 		,'name'			=>	$file
-		,'path'			=>	$stories_path.$language.'/'.$file
+		,'path'			=>	$hidden ? 'showpony/get-hidden-file.php?file='.$stories_path.$language.'/'.$file  : $stories_path.$language.'/'.$file
 		,'size'			=>	filesize($language.'/'.$file)
 		,'subtitles'	=>	false
 		,'title'		=>	$match[2] ?? null
+		,'hidden'		=>	$hidden
 	];
 	
 	// Get the module based on FILE_DATA_GET_MODULE- first ext, then full mime, then partial mime, then default
