@@ -698,7 +698,7 @@ function infoFile(input){
 	return String(input).padStart((String(S.files.length).length),'0');
 }
 
-// Update the scrubber's position
+// This updates the scrub bar's position
 function scrub(inputPercent=null,loadFile=false){
 	// "sticky" is an infinite scroll-related variable
 	// if(sticky!==false) return;
@@ -727,7 +727,7 @@ function scrub(inputPercent=null,loadFile=false){
 	var newPart=0;
 	var timeCheck=timeInTotal;
 	// Based on time, get the right file
-	for(newPart;newPart<S.files.length;newPart++){
+	for(newPart;newPart<S.files.length-1;newPart++){
 		if(timeCheck<S.files[newPart].duration) break; // We've reached the file
 		
 		timeCheck-=S.files[newPart].duration;
@@ -760,7 +760,7 @@ function scrub(inputPercent=null,loadFile=false){
 	if(info!==document.title && scrubbing===false) document.title=completed+' - '+remaining;
 }
 
-// Handles starting, running, and ending scrubbing
+// When the user scrubs, this function runs
 function userScrub(event=null,start=false){
 	var input;
 	
