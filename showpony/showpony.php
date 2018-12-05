@@ -686,6 +686,16 @@ function getTotalBuffered(){
 
 var scrubLoad=null;
 
+function infoTime(time){
+	return (S.duration>3600 ? String(time / 3600|0).padStart(String((S.duration / 3600)|0).length,'0')+':' : '')
+		+String(time / 60 % 60|0).padStart(2,'0')+':'
+		+String(time % 60|0).padStart(2,'0');
+}
+
+function infoFile(input){
+	return String(input).padStart((String(S.files.length).length),'0');
+}
+
 // Update the scrubber's position
 function scrub(inputPercent=null,loadFile=false){
 	// "sticky" is an infinite scroll-related variable
@@ -722,28 +732,19 @@ function scrub(inputPercent=null,loadFile=false){
 	}
 	
 	<?php
-	// If all the of the files are media that don't need time tracked, show progress with files, not time
 	if(($_GET['progress-display'] ?? DEFAULT_PROGRESS_DISPLAY)==='file'){
-		?>
-	/// INFO TEXT WITH FILE ///
-	function infoMake(input){
-		return String(input).padStart((String(S.files.length).length),'0');
-	}
+	?>
+		
+    var completed=infoFile(newPart+1);
+    var remaining=infoFile(S.files.length-(newPart+1));
 	
-    var completed=infoMake(newPart+1);
-    var remaining=infoMake(S.files.length-(newPart+1));
 	<?php
-	// Show progress with time if any of the files' progress is heavily measured by time
 	}else{
 	?>
-	/// INFO TEXT WITH TIME ///
-	function infoMake(input,pad=(String((S.duration / 60)|0).length)){
-		// |0 is a shorter way to floor floats.
-		return String((input)|0).padStart(pad,'0');
-	}
 	
-    var completed=infoMake(timeInTotal / 60)+':'+infoMake(timeInTotal % 60,2);
-    var remaining=infoMake((S.duration-timeInTotal) / 60)+':'+infoMake((S.duration-timeInTotal) % 60,2);
+	var completed=infoTime(timeInTotal);
+	var remaining=infoTime(S.duration-timeInTotal);
+	
 	<?php } ?>
     
 	var title='';
