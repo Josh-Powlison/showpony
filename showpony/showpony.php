@@ -1548,6 +1548,8 @@ window.addEventListener('mouseup',function(event){
 	// Allow left-click only
 	if(event.button!==0) return;
 	
+	if(cover) return;
+	
 	clearTimeout(actionTimeout);
 	clearInterval(actionInterval);
 	actionTimeout=null;
@@ -1570,8 +1572,8 @@ window.addEventListener('mouseup',function(event){
 S.window.addEventListener('mousedown',function(event){
 	// Allow left-click only
 	if(event.button!==0) return;
-	
-	// console.log(event.target);
+
+	if(cover) return;
 	
 	// One event listener for all of the buttons
 	switch(event.target){
