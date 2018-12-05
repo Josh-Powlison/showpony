@@ -352,9 +352,9 @@ S.to=function(obj={}){
 		
 		// We can preload up to this amount
 		var preloadAmount=<?php echo PRELOAD_BYTES; ?>;
-
+		
 		// Don't allow preloading upcoming files if scrubbing
-		if(scrubbing) preloadAmount=0;
+		if(S.paused) preloadAmount=0;
 		
 		// Preload upcoming files
 		for(let i=obj.file;i<S.files.length;i++){
