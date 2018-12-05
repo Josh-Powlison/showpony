@@ -35,10 +35,11 @@ S.modules.<?php echo 'image'; ?>=new function(){
 			if(M.currentFile!==file){
 				M.image.src=S.files[file].path;
 			}
-			else content.classList.remove('showpony-loading');
-			
-			// Go to a scroll point dependent on time
-			M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
+			else{
+				content.classList.remove('showpony-loading');
+				// Go to a scroll point dependent on time
+				M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
+			}
 			
 			resolve();
 		});
