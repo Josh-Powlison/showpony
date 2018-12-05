@@ -568,6 +568,8 @@ var checkGamepad=null;
 
 var pos=0;
 
+var searchParams=new URLSearchParams(window.location.search);
+
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
 ///////////////////////////////////////
@@ -589,9 +591,8 @@ function timeUpdate(time){
 	if(scrubbing!==true) scrub(null,false);
 	
 	// Update the querystring
-	var searchParams=new URLSearchParams(window.location.search);
-    searchParams.set(S.query, S.currentTime|0);
-    history.pushState(null,'',window.location.pathname + '?' + searchParams.toString());
+	searchParams.set(S.query, S.currentTime|0);
+    history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
 	
 	// Run custom event for checking time
 	S.window.dispatchEvent(
@@ -1298,8 +1299,8 @@ addBookmark({name:'Local',system:'local',type:'default'});
 
 /////////////////
 
-var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i')).exec(window.location.href);
-if(page) start=parseInt(page[0].split('=')[1]);
+var page=searchParams.get(S.query);
+if(page) start=page;
 
 // Pause the Showpony
 S.pause();
@@ -1322,15 +1323,12 @@ var pause=S.window.querySelector('.s-pause')
 window.addEventListener(
 	'popstate'
 	,function(){
-		var page=(new RegExp('(\\?|&)'+S.query+'[^&#]+','i').exec(window.location.href));
+		var time=searchParams.get(S.query);
 		
-		// If we found a page
-		if(page){
-			page=parseInt(page[0].split('=')[1]);
-			
-			if(page===S.currentTime) return;
+		if(time){
+			if(time===S.currentTime) return;
 		
-			S.to({time:page});
+			S.to({time:time});
 		}
 	}
 );
