@@ -433,7 +433,7 @@ if(S.window.requestFullscreen){
 	S.fullscreenExit=function(){
 		if(!document.fullscreenElement) return;
 		
-		document.fullscreenExit();
+		document.exitFullscreen();
 		S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
 	}
 	
