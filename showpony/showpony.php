@@ -244,6 +244,7 @@ S.window.innerHTML=`
 		<div class="s-progress-bar" style="left:0%;"></div>
 		<canvas class="s-overlay-buffer" width="1000" height="1"></canvas>
 		<p class="s-overlay-text"><span>0</span><span>0</span></p>
+		<p class="s-upcoming-file"></p>
 		<div class="s-buttons s-hide-on-hold">
 			<button class="s-button s-button-comments" alt="Comments" title="Comments"></button>
 			<button class="s-button s-button-language" alt="Language" title="Language"></button>
@@ -736,15 +737,38 @@ function scrub(inputPercent=null,loadFile=false){
 	
 	<?php } ?>
     
-	var title='';
-	if((S.files[newPart].title)) title='<span>'+S.files[newPart].title+'</span>';
+    var info = '<p>'+completed+'</p><p>';
+	if((S.files[newPart].title)) info+=S.files[newPart].title;
+	info+='</p><p>'+remaining+'</p>';
 	
-    var info = '<span>'+completed+'</span>'+title+'<span>'+remaining+'</span>';
+	// Add info about upcoming parts if not added already
+	if(!S.window.querySelector('.s-upcoming-file').innerHTML
+		&& newPart===S.files.length-1 && S.upcomingFiles.length){
+		var upcoming='';
+		for(var i=0;i<S.upcomingFiles.length;i++){
+			upcoming+='Next Update: '+new Intl.DateTimeFormat(
+				undefined //Uses the default locale
+				,{
+					formatMatcher:'best fit'
+					,year:'numeric'
+					,month:'numeric'
+					,day:'numeric'
+					,hour:'numeric'
+					,minute:'numeric'
+					,second:'numeric'
+					,timeZoneName:'short'
+				}
+			).format(new Date(S.upcomingFiles[i])*1000);;
+			
+			if(i<S.upcomingFiles.length-1) upcoming+='<br>';
+		}
+		S.window.querySelector('.s-upcoming-file').innerHTML=upcoming;
+	}
 	
 	if(info!==overlayText.innerHTML) overlayText.innerHTML=info;
 	
 	// We don't want to over-update the title, so we stick with when we're not scrubbing.
-	if(info!==document.title && scrubbing===false) document.title=completed+' - '+remaining;
+	if(info!==document.title) document.title=completed+' - '+remaining;
 }
 
 // When the user scrubs, this function runs

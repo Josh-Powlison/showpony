@@ -207,6 +207,7 @@
 	
 	display:flex;
 	justify-content:space-between;
+	text-align:center;
 	
 	font-size:2em;
 	margin:0;
@@ -216,8 +217,21 @@
 	pointer-events:none;
 }
 
-.s-overlay-text span{
+.s-overlay-text p{
 	background:#fff;
+	margin:0;
+}
+
+.s-upcoming-file{
+	font-size:1em;
+	position:relative;
+	margin:0 auto;
+	display:block;
+	text-align:center;
+	top:4em;
+	
+	background-color:#fff;
+	pointer-events:none;
 }
 
 .s-content{
