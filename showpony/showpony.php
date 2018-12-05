@@ -270,7 +270,6 @@ S.subtitles={};
 S.currentLanguage='<?php echo $language; ?>';
 
 S.data={};
-S.saveId='<?php echo substr($_GET['title'] ?? $stories_path ?? gethostname(),0,20); ?>';
 
 S.gamepad=null;
 
