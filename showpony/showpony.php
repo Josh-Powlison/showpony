@@ -1502,6 +1502,7 @@ window.addEventListener('click',function(event){
 			// Don't read clicks if the user's clicking an input or button
 			if(event.target.tagName==='INPUT') break;
 			if(event.target.tagName==='BUTTON') break;
+			if(event.target.tagName==='A') break;
 		
 			// Pause
 			if(checkCollision(event.clientX,event.clientY,pause)){
