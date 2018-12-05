@@ -773,8 +773,9 @@ function userScrub(event=null,start=false){
 	}
 	
 	var scrubPercent=(pos-S.window.getBoundingClientRect().left)/(S.window.getBoundingClientRect().width);
-	if(scrubPercent<0) scrubPercent=0;
-	if(scrubPercent>1) scrubPercent=1;
+	const scrubSnap=.0025; // We give ourselves a little snap near the edges
+	if(scrubPercent<0+scrubSnap) scrubPercent=0;
+	if(scrubPercent>1-scrubSnap) scrubPercent=1;
 	
 	if(start){
 		if(scrubbing===false){
