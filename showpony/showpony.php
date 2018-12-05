@@ -562,8 +562,6 @@ var scrubbing=false;
 
 var cover=document.createElement('div');
 cover.className='s-cover';
-var pageTurn=document.createElement('div');
-pageTurn.className='s-page-turn';
 
 var sticky=false;
 
@@ -1061,8 +1059,6 @@ function gamepadButton(gamepad,number,type){
 ///////////////////////////////////////
 /////////////////START/////////////////
 ///////////////////////////////////////
-
-// Make sure setup is made of multiple Promises that can run asyncronously- and that they do!
 
 content.classList.add('s-loading');
 
