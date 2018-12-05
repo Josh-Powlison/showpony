@@ -239,6 +239,7 @@ S.upcomingFiles=<?php echo json_encode($releaseDates); ?>;
 S.window.innerHTML=`
 	<style class="s-style" type="text/css"></style>
 	<div class="s-content"></div>
+	<?php if(file_exists('cover.jpg')) echo '<img class="s-cover" src="',$stories_path,'cover.jpg">'; ?>
 	<div class="s-subtitles"></div>
 	<div class="s-overlay">
 		<button class="s-progress s-hide-on-hold"></button>
@@ -270,13 +271,6 @@ S.currentLanguage='<?php echo $language; ?>';
 
 S.data={};
 S.saveId='<?php echo substr($_GET['title'] ?? $stories_path ?? gethostname(),0,20); ?>';
-S.cover={<?php
-	echo 'content:"',$_GET['title'] ?? 'Play','"';
-	// Pass a cover if one is found
-	if(file_exists('cover.jpg')){
-		echo ',image:"',$stories_path,'cover.jpg"';
-	}
-?>};
 
 S.gamepad=null;
 
@@ -557,9 +551,6 @@ var captionsButton=		S.window.getElementsByClassName('s-captions-button')[0];
 
 var scrubbing=false;
 
-var cover=document.createElement('div');
-cover.className='s-cover';
-
 var sticky=false;
 
 // Showpony framerate- which is connected not to animations, etc, but to gamepad use and games
@@ -796,6 +787,10 @@ function userScrub(event=null,start=false){
 				clearInterval(actionInterval);
 				actionInterval=null;
 				
+				if(S.window.querySelector('.s-cover') && checkCollision(event.clientX,event.clientY,S.window)){
+					S.window.querySelector('.s-cover').remove();
+				}
+				
 				scrubbing=true;
 				S.window.classList.add('s-hold');
 			}
@@ -1023,12 +1018,6 @@ function gamepadButton(gamepad,number,type){
 ///////////////////////////////////////
 
 content.classList.add('s-loading');
-
-if(S.cover){
-	if(S.cover.image) cover.style.backgroundImage='url("'+S.cover.image+'")';
-	if(S.cover.content) cover.innerHTML='<p>'+S.cover.content+'</p>';
-	S.window.appendChild(cover);
-}
 
 // And fill it up again!
 S.window.appendChild(styles);
@@ -1401,19 +1390,11 @@ S.progress=function(){
 
 // On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
 window.addEventListener('click',function(event){
-	if(cover && checkCollision(event.clientX,event.clientY,S.window)){
-		cover.remove();
-		cover=null;
-		return;
-	}
-	
 	// If we just ended scrubbing, don't toggle the menu at all
 	if(scrubbing==='out'){
 		scrubbing=false;
 		return;
 	}
-	
-	//event.stopPropagation();
 	
 	if(scrubbing===true) return;
 	
@@ -1467,7 +1448,7 @@ window.addEventListener('click',function(event){
 			if(event.target.tagName==='BUTTON') break;
 			if(event.target.tagName==='A') break;
 			if(event.target.classList.contains('s-dropdown')) return;
-		
+			
 			// Pause
 			if(checkCollision(event.clientX,event.clientY,pause)){
 				console.log('RUN PAUSE');
@@ -1508,8 +1489,6 @@ window.addEventListener('mouseup',function(event){
 	// Allow left-click only
 	if(event.button!==0) return;
 	
-	if(cover) return;
-	
 	clearTimeout(actionTimeout);
 	clearInterval(actionInterval);
 	actionTimeout=null;
@@ -1532,8 +1511,7 @@ window.addEventListener('mouseup',function(event){
 S.window.addEventListener('mousedown',function(event){
 	// Allow left-click only
 	if(event.button!==0) return;
-
-	if(cover) return;
+	
 	if(event.target.classList.contains('s-dropdown')) return;
 	if(event.target.tagName==='INPUT') return;
 	if(event.target.tagName==='BUTTON') return;
@@ -1547,6 +1525,10 @@ S.window.addEventListener('mousedown',function(event){
 			// Don't read clicks if the user's clicking an input or button
 			if(event.target.tagName==='INPUT') break;
 			if(event.target.tagName==='BUTTON') break;
+		
+			if(S.window.querySelector('.s-cover')){
+				S.window.querySelector('.s-cover').remove();
+			}
 		
 			// Pause
 			if(checkCollision(event.clientX,event.clientY,pause)){
