@@ -79,10 +79,13 @@ foreach(scandir($language) as &$file){
 	// If the file was hidden, and is unhid later, we'll set this to true
 	$unhid=false;
 	
+	// Get file info
+	preg_match('/(\d{4}-\d\d-\d\d(?:\s\d\d(?::|;)\d\d(?::|;)\d\d)?)?\s?(?:\((.+)\))\s?([^\.]+)?/',$file,$match);
+	
 	// Ignore files that have dates in their filenames set to later
-	if(preg_match('/\d{4}-\d\d-\d\d(\s\d\d(:|;)\d\d(:|;)\d\d)?/',$file,$date)){ // Get the posting date from the file's name; if there is one:
+	if($match[1]){ // Get the posting date from the file's name; if there is one:
 		// If the time is previous to now (replacing ; with : for Windows filename compatibility)
-		$date=str_replace(';',':',$date[0]).' UTC';
+		$date=str_replace(';',':',$match[1]).' UTC';
 		
 		// Check if the file should be live based on the date passed
 		if(strtotime($date)<=time()){
@@ -131,14 +134,14 @@ foreach(scandir($language) as &$file){
 	$fileInfo=[
 		'buffered'		=>	[]
 		,'date'			=>	$date
-		,'duration'		=>	preg_match('/[^\s)]+(?=\.[^.]+$)/',$file,$match) ? $match[0] : 10
+		,'duration'		=>	$match[3] ?? 10
 		,'extension'	=>	pathinfo($language.'/'.$file,PATHINFO_EXTENSION)
 		,'mimeType'		=>	mime_content_type($language.'/'.$file)
 		,'name'			=>	$file
 		,'path'			=>	$stories_path.$language.'/'.$file
 		,'size'			=>	filesize($language.'/'.$file)
 		,'subtitles'	=>	false
-		,'title'		=>	preg_match('/([^()])+(?=\))/',$file,$match) ? $match[0] : null
+		,'title'		=>	$match[2] ?? null
 	];
 	
 	// Get the module based on FILE_DATA_GET_MODULE- first ext, then full mime, then partial mime, then default
