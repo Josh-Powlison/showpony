@@ -7,22 +7,6 @@ S.modules.text=new function(){
 	M.window=document.createElement('div');
 	M.window.className='showpony-text';
 	
-	var prevButton=document.createElement('button');
-	prevButton.className='showpony-text-prev';
-	prevButton.addEventListener('click',function(){
-		var file=M.currentFile-1;
-		var time=0;
-		if(file>=0) time=S.files[file].duration-1;
-		S.to({file:file,time:time});
-	});
-	
-	var nextButton=document.createElement('button');
-	nextButton.className='showpony-text-next';
-	nextButton.addEventListener('click',function(){
-		var file=M.currentFile+1;
-		S.to({file:file});
-	});
-	
 	M.play=function(){}
 	
 	M.pause=function(){}
@@ -58,10 +42,6 @@ S.modules.text=new function(){
 				
 				// Put in the text
 				M.window.innerHTML=text;
-				
-				// Put in the buttons (as needed)
-				if(file>0) M.window.insertBefore(prevButton,M.window.firstChild);
-				if(file<S.files.length-1) M.window.appendChild(nextButton);
 				
 				// Scroll to spot
 				M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
