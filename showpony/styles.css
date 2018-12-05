@@ -2,7 +2,7 @@
 ////////////////GENERAL////////////////
 /////////////////////////////////////*/
 
-.showpony{
+.s{
 	background-color:#000;
 	overflow:hidden;
 	position:relative;
@@ -11,7 +11,7 @@
 }
 
 /*Loading Setup*/
-.showpony-loading::after{
+.s-loading::after{
 	content:" ";
 	display:block;
 	position:absolute;
@@ -24,12 +24,12 @@
 }
 
 /*Automatic loading with these, and disable animations*/
-.showpony-loading,.showpony-loading *
-,.showpony-paused .showpony-content, .showpony-paused  .showpony-content *{
+.s-loading,.s-loading *
+,.s-paused .s-content, .s-paused  .s-content *{
 	animation-play-state:paused !important; /*Disables general animations and text animations, so we freeze while loading*/
 }
 
-.showpony-cover{
+.s-cover{
 	z-index:2;
 	position:absolute;
 	width:100%;
@@ -44,7 +44,7 @@
 	color:white;
 }
 
-.showpony-cover>p{
+.s-cover>p{
 	background-color:rgba(0,0,0,0.5);
 	box-sizing:border-box;
 	padding:1em;
@@ -53,7 +53,7 @@
 	text-align:center;
 }
 
-.showpony-cover>p:hover{
+.s-cover>p:hover{
 	transform:scale(1.1);
 }
 
@@ -61,14 +61,14 @@
 ////////////////BUTTONS////////////////
 /////////////////////////////////////*/
 
-.showpony-paused .showpony-regress
-,.showpony-paused .showpony-progress
-,.showpony-paused .showpony-pause{
+.s-paused .s-regress
+,.s-paused .s-progress
+,.s-paused .s-pause{
 }
 
-.showpony-regress
-,.showpony-progress
-,.showpony-pause{
+.s-regress
+,.s-progress
+,.s-pause{
 	border:none;
 	
 	position:absolute;
@@ -86,7 +86,7 @@
 	background-position:50% 25%;
 }
 
-.showpony-regress{
+.s-regress{
 	left:0%;
 	height:100%;
 	
@@ -95,7 +95,7 @@
 	background-image:url('showpony/icons/regress.svg');
 }
 
-.showpony-progress{
+.s-progress{
 	right:0%;
 	height:100%;
 	
@@ -104,7 +104,7 @@
 	background-image:url('showpony/icons/progress.svg');
 }
 
-.showpony-pause{
+.s-pause{
 	height:50%;
 	left:25%;
 	bottom:0;
@@ -126,7 +126,7 @@
 	font-style:normal;
 }
 
-.showpony-overlay{
+.s-overlay{
 	position:absolute;
 	top:0;
 	left:0;
@@ -148,13 +148,13 @@
 	font-size: 1rem;
 }
 
-.showpony-paused .showpony-overlay{
+.s-paused .s-overlay{
 	opacity:.75;
 	pointer-events:auto;
 }
 
 /*Menu scrub bar*/
-.showpony-scrub{
+.s-scrub{
 	position:absolute;
 	top:0;
 	left:0;
@@ -175,15 +175,15 @@
 	font-size: 1rem;
 }
 
-.showpony-hold:not(.showpony-paused) .showpony-overlay{
+.s-hold:not(.s-paused) .s-overlay{
 	opacity:.5;
 }
 
-.showpony-hold:not(.showpony-paused) .showpony-hide-on-hold{
+.s-hold:not(.s-paused) .s-hide-on-hold{
 	display:none;
 }
 
-.showpony-overlay-buffer{
+.s-overlay-buffer{
 	position:absolute;
 	width:100%;
 	height:1em;
@@ -194,7 +194,7 @@
 	pointer-events:none;
 }
 
-.showpony-progress-bar{
+.s-progress-bar{
 	position:absolute;
 	width:.5em;
 	height:100%;
@@ -206,7 +206,7 @@
 	pointer-events:none;
 }
 
-.showpony-overlay-text{
+.s-overlay-text{
 	position:absolute;
 	width:100%;
 	
@@ -221,11 +221,11 @@
 	pointer-events:none;
 }
 
-.showpony-overlay-text span{
+.s-overlay-text span{
 	background:#fff;
 }
 
-.showpony-content{
+.s-content{
 	width:100%;
 	height:100%;
 	position:absolute;
@@ -239,16 +239,7 @@
 	z-index:0;
 }
 
-.showpony-block{
-	left:0;
-	top:0;
-	width:100%;
-	height:100%;
-	cursor:pointer;
-	object-fit:contain;
-}
-
-.showpony-buttons{
+.s-buttons{
 	position:absolute;
 	bottom:0;
 	width:100%;
@@ -260,7 +251,7 @@
 	pointer-events:none;
 }
 
-.showpony-buttons button{
+.s-buttons button{
 	width:7.5em;
 	height:7.5em;
 	
@@ -275,11 +266,11 @@
 	background-size:contain;
 }
 
-.showpony-buttons button:active{
+.s-buttons button:active{
 	filter:invert(1);
 }
 
-.showpony-dropdowns{
+.s-dropdowns{
 	left:0;
 	top:0;
 	right:0;
@@ -293,7 +284,7 @@
 	pointer-events:none;
 }
 
-.showpony-dropdown{
+.s-dropdown{
 	font-size:2em;
 	width:10em;
 	max-width:90%;
@@ -328,7 +319,7 @@
 	border-left:solid #fff .1em;
 }
 
-.showpony-dropdown button{
+.s-dropdown button{
 	font-size:1em;
 	width:100%;
 	padding:0 .25em;
@@ -346,62 +337,62 @@
 	box-shadow:none;
 }
 
-.showpony-dropdown button:hover
-,.showpony-dropdown .showpony-selected{
+.s-dropdown button:hover
+,.s-dropdown .s-selected{
 	background-color:#000;
 	color:#fff;
 }
 
-.showpony-dropdown.showpony-visible{
+.s-dropdown.s-visible{
 	display:block;
 }
 
-.showpony-dropdown-language{
+.s-dropdown-language{
 	background-image:url('showpony/icons/language.svg');
 }
 
-.showpony-dropdown-subtitles{
+.s-dropdown-subtitles{
 	background-image:url('showpony/icons/subtitles.svg');
 }
 
-.showpony-dropdown-bookmark{
+.s-dropdown-bookmark{
 	background-image:url('showpony/icons/bookmark.svg');
 }
 
-.showpony-bookmark{
+.s-bookmark{
 	display:flex;
 }
 
-.showpony-bookmark-delete{
+.s-bookmark-delete{
 	width:1em;
 }
 
-.showpony-paused .showpony-buttons button{
+.s-paused .s-buttons button{
 	pointer-events:auto;
 }
 
-.showpony-button-comments{
+.s-button-comments{
 	background-image:url('showpony/icons/comments.svg');
 	display:none;
 }
 
-.showpony-button-language{
+.s-button-language{
 	background-image:url('showpony/icons/language.svg');
 }
 
-.showpony-button-subtitles{
+.s-button-subtitles{
 	background-image:url('showpony/icons/subtitles.svg');
 }
 
-.showpony-button-bookmark{
+.s-button-bookmark{
 	background-image:url('showpony/icons/bookmark.svg');
 }
 
-.showpony-fullscreen-button{
+.s-fullscreen-button{
 	background-image:url('showpony/icons/fullscreen.svg');
 }
 
-.showpony-captions-button{
+.s-captions-button{
 	display:none;
 }
 
@@ -417,7 +408,7 @@
 }
 
 /*If fullscreen isn't supported, this is applied to the element*/
-.showpony-fullscreen-alt{
+.s-fullscreen-alt{
 	position:fixed !important;
 	top:0;
 	left:0;
@@ -430,15 +421,15 @@
 }
 
 /*Control goes on html to prevent scrolling*/
-.showpony-fullscreen-control{
+.s-fullscreen-control{
 	overflow:hidden;
 }
 
-.showpony-fullscreen-alt:focus{
+.s-fullscreen-alt:focus{
 	outline:none;
 }
 
-.showpony-fullscreen-control body{
+.s-fullscreen-control body{
 	background-color: black;
 }
 
@@ -446,14 +437,14 @@
 ///////////////SUBTITLES///////////////
 /////////////////////////////////////*/
 
-.showpony-subtitles{
+.s-subtitles{
 	position:absolute;
 	width:100%;
 	height:100%;
 	pointer-events:none;
 }
 
-.showpony-sub{
+.s-sub{
 	position:absolute;
 	background-color:rgba(0,0,0,0.5);
 	color:white;

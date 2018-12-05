@@ -5,9 +5,9 @@ S.modules.<?php echo 'image'; ?>=new function(){
 	M.currentFile=null;
 	
 	M.window=document.createElement('div');
-	M.window.className='showpony-image-container';
+	M.window.className='m-img-window';
 	M.image=document.createElement('img');
-	M.image.className='showpony-image';
+	M.image.className='m-img';
 	M.window.appendChild(M.image);
 	
 	M.play=function(){
@@ -36,7 +36,7 @@ S.modules.<?php echo 'image'; ?>=new function(){
 				M.image.src=S.files[file].path;
 			}
 			else{
-				content.classList.remove('showpony-loading');
+				content.classList.remove('s-loading');
 				// Go to a scroll point dependent on time
 				M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
 			}
@@ -90,7 +90,7 @@ S.modules.<?php echo 'image'; ?>=new function(){
 	
 	/// BUFFERING ///
 	M.image.addEventListener('load',function(){
-		content.classList.remove('showpony-loading');
+		content.classList.remove('s-loading');
 		S.files[M.currentFile].buffered=true;
 		getTotalBuffered();
 		

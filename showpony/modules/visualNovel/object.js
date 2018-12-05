@@ -1,6 +1,3 @@
-/// TODO: fix general bugs
-/// TODO: condense and optimize (I suspect we can get this down by a large amount)
-
 S.modules.visualNovel=new function(){
 	const M=this;
 	
@@ -10,12 +7,12 @@ S.modules.visualNovel=new function(){
 	M.lines=null;
 	
 	M.window=document.createElement('div');
-	M.window.className='showpony-visual-novel';
+	M.window.className='m-vn-visual-novel';
 	
 	var runTo=false;
 	
 	var continueNotice=document.createElement('div');
-	continueNotice.className='showpony-continue';
+	continueNotice.className='m-vn-continue';
 	
 	var wait=false; //XXX
 	
@@ -113,12 +110,12 @@ S.modules.visualNovel=new function(){
 		for(var name in objects){
 			objects[name].el.dispatchEvent(new Event('animationend'));
 		}
-		content.classList.add('showpony-loading');
+		content.classList.add('s-loading');
 		M.window.offsetHeight; // Trigger reflow to flush CSS changes
-		content.classList.remove('showpony-loading');
+		content.classList.remove('s-loading');
 		
 		// If a continue notice exists, continue!
-		if(M.window.querySelector('.showpony-continue')){
+		if(M.window.querySelector('.m-vn-continue')){
 			M.readLine();
 			continueNotice.remove();
 			return;
@@ -132,7 +129,7 @@ S.modules.visualNovel=new function(){
 		}
 		
 		// Display all letters
-		M.window.querySelectorAll('.showpony-char').forEach(function(key){
+		M.window.querySelectorAll('.m-vn-char').forEach(function(key){
 			// Skip creating animation, and display the letter
 			key.style.animationDelay=null;
 			var classes=key.className;
@@ -172,7 +169,7 @@ S.modules.visualNovel=new function(){
 				
 				// If this is the current keyframe, resolve
 				if(keyframeSelect===M.currentLine){
-					content.classList.remove('showpony-loading');
+					content.classList.remove('s-loading');
 					resolve();
 					return;
 				}
@@ -349,7 +346,7 @@ S.modules.visualNovel=new function(){
 			runTo=false;
 			
 			M.window.offsetHeight; // Trigger reflow to flush CSS changes
-			content.classList.remove('showpony-loading');
+			content.classList.remove('s-loading');
 		}
 		
 		/*
@@ -616,7 +613,7 @@ S.modules.visualNovel=new function(){
 		O.type='background';
 		
 		O.el=document.createElement('div');
-		O.el.className='showpony-background';
+		O.el.className='m-vn-background';
 		O.el.dataset.name=input;
 		O.name=input;
 		M.window.appendChild(O.el);
@@ -639,7 +636,7 @@ S.modules.visualNovel=new function(){
 		O.type='character';
 		
 		O.el=document.createElement('div');
-		O.el.className='showpony-character';
+		O.el.className='m-vn-character';
 		O.el.dataset.name=input;
 		O.name=input;
 		
@@ -668,7 +665,7 @@ S.modules.visualNovel=new function(){
 				if(!O.el.children[layer].querySelector('div[data-image="'+image+'"]')){
 					// Add a layer image
 					var thisImg=document.createElement('div');
-					thisImg.className='showpony-character-image';
+					thisImg.className='m-vn-character-image';
 					thisImg.dataset.image=image;
 					thisImg.style.backgroundImage='url("<?php echo $stories_path; ?>resources/characters/'+O.name.split('#')[0]+'/'+image+'")';
 					
@@ -706,7 +703,7 @@ S.modules.visualNovel=new function(){
 		O.name=input;
 		
 		O.el=document.createElement('p');
-		O.el.className='showpony-nameplate';
+		O.el.className='m-vn-nameplate';
 		O.el.dataset.name=input;
 		M.window.appendChild(O.el);
 		
@@ -728,7 +725,7 @@ S.modules.visualNovel=new function(){
 		O.name=input;
 		
 		O.el=document.createElement('form');
-		O.el.className='showpony-textbox';
+		O.el.className='m-vn-textbox';
 		O.el.dataset.name=input;
 		O.el.addEventListener('submit',function(event){
 			event.preventDefault();
@@ -736,12 +733,12 @@ S.modules.visualNovel=new function(){
 		M.window.appendChild(O.el);
 		
 		O.empty=function(){
-			O.el.classList.add('showpony-textbox-hidden');
+			O.el.classList.add('m-vn-textbox-hidden');
 		}
 		
 		O.content=function(input='NULL: No text was passed.'){
-			O.el.classList.remove('showpony-textbox-hidden');
-			O.el.classList.remove('showpony-textbox-form-inactive');
+			O.el.classList.remove('m-vn-textbox-hidden');
+			O.el.classList.remove('m-vn-textbox-form-inactive');
 			
 			wait=true; // Assume we're waiting at the end time //XXX
 			
@@ -775,7 +772,7 @@ S.modules.visualNovel=new function(){
 			var charElementDefault=document.createElement('span');
 			
 			var charElement=document.createElement('span');
-			charElement.className='showpony-char-container';
+			charElement.className='m-vn-char-container';
 			var baseWaitTime=defaultBaseWaitTime;
 			var constant=defaultConstant;
 			
@@ -833,7 +830,7 @@ S.modules.visualNovel=new function(){
 								// Revert the attributes to their previous values
 								var attributes=nestedAttributes[tag].pop();
 							
-								if(attributes.on===false) charElement.classList.remove('showpony-char-'+tag);
+								if(attributes.on===false) charElement.classList.remove('m-vn-char-'+tag);
 								break;
 							case 'speed':
 								// Revert the attributes to their previous values
@@ -873,7 +870,7 @@ S.modules.visualNovel=new function(){
 							case 'shout':
 							case 'sing':
 							case 'fade':
-								charElement.classList.add('showpony-char-'+tag);
+								charElement.classList.add('m-vn-char-'+tag);
 								
 								nestedAttributes[tag].push({
 									on:true
@@ -938,7 +935,7 @@ S.modules.visualNovel=new function(){
 										newElement.addEventListener('click',function(event){
 											if(!O.el.checkValidity()) return;
 											
-											O.el.classList.add('showpony-textbox-form-inactive');
+											O.el.classList.add('m-vn-textbox-form-inactive');
 											
 											// This might just be a continue button, so we need to check
 											if(this.dataset.var) S.data[this.dataset.var]=this.dataset.val;
@@ -1004,11 +1001,11 @@ S.modules.visualNovel=new function(){
 					var thisChar=charElement.cloneNode(false);
 					
 					let showChar=document.createElement('span')			// Display animation character (appear, shout, etc), parent to animChar
-					showChar.className='showpony-char';
+					showChar.className='m-vn-char';
 					let animChar=document.createElement('span')			// Perpetual animation character (singing, shaking...)
-					animChar.className='showpony-char-anim';
+					animChar.className='m-vn-char-anim';
 					let hideChar=document.createElement('span');		// Hidden char for positioning
-					hideChar.className='showpony-char-placeholder';
+					hideChar.className='m-vn-char-placeholder';
 					
 					// Spaces
 					// and Ending! (needs this to wrap lines correctly on Firefox)
@@ -1047,11 +1044,11 @@ S.modules.visualNovel=new function(){
 					if(!S.paused && runTo===false) showChar.style.animationDelay=totalWait+'s';
 					
 					// Set animation timing for animChar, based on the type of animation
-					if(thisChar.classList.contains('showpony-char-sing')){
+					if(thisChar.classList.contains('m-vn-char-sing')){
 						animChar.style.animationDelay=-(letters.length*.1)+'s';
 					}
 					
-					if(thisChar.classList.contains('showpony-char-shake')){
+					if(thisChar.classList.contains('m-vn-char-shake')){
 						animChar.style.animationDelay=-(letters.length/3)+'s';
 					}
 					

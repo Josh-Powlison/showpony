@@ -5,7 +5,7 @@ S.modules.audio=new function(){
 	M.currentFile=null;
 	
 	M.window=document.createElement('audio');
-	M.window.className='showpony-block';
+	M.window.className='m-audio';
 	
 	M.play=function(){
 		M.window.play();
@@ -80,7 +80,7 @@ S.modules.audio=new function(){
 	});
 
 	M.window.addEventListener('canplay',function(){
-		content.classList.remove('showpony-loading');
+		content.classList.remove('s-loading');
 		// Consider how much has already been loaded; this isn't run on first chunk loaded
 		M.window.dispatchEvent(new CustomEvent('progress'));
 	});

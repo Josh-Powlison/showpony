@@ -46,7 +46,7 @@ S.modules.text=new function(){
 			// If this is the current file
 			if(M.currentFile===file){
 				pageTurn.scrollTop=pageTurn.scrollHeight*(M.currentTime/S.files[M.currentFile].duration);
-				content.classList.remove('showpony-loading');
+				content.classList.remove('s-loading');
 				resolve();
 			}
 			
@@ -67,7 +67,7 @@ S.modules.text=new function(){
 				M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
 				
 				// Stop loading
-				content.classList.remove('showpony-loading');
+				content.classList.remove('s-loading');
 				
 				if(S.files[file].buffered!==true){
 					S.files[file].buffered=true;

@@ -183,9 +183,9 @@ header('Content-type: application/javascript');
 ?>'use strict';
 
 // Add styles if not added already
-if(!document.getElementById('showpony-styles')){
+if(!document.getElementById('s-styles')){
 	var styles=document.createElement('style');
-	styles.id='showpony-styles';
+	styles.id='s-styles';
 	styles.innerHTML=`<?php
 		addslashes(readfile(ROOT.'/styles.css'));
 	?>`;
@@ -199,9 +199,9 @@ foreach(array_keys($media) as $moduleName){
 	
 ?>
 // Add <?php echo $moduleName; ?> styles if not added already
-if(!document.getElementById('showpony-<?php echo $moduleName; ?>-styles')){
+if(!document.getElementById('s-<?php echo $moduleName; ?>-styles')){
 	var styles=document.createElement('style');
-	styles.id='showpony-<?php echo $moduleName; ?>-styles';
+	styles.id='s-<?php echo $moduleName; ?>-styles';
 	styles.innerHTML=`<?php
 		addslashes(readfile(ROOT.'/modules/'.$moduleName.'/styles.css'));
 	?>`;
@@ -219,7 +219,7 @@ const S=this;
 ///////////////////////////////////////
 
 S.window=document.createElement('div');
-S.window.className='showpony';
+S.window.className='s';
 S.window.tabIndex=0;
 S.files=<?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
 S.name='<?php echo toCamelCase($name); ?>';
@@ -233,27 +233,27 @@ S.path='<?php echo $stories_path; ?>';
 S.upcomingFiles=<?php echo json_encode($releaseDates); ?>;
 
 S.window.innerHTML=`
-	<style class="showpony-style" type="text/css"></style>
-	<div class="showpony-content"></div>
-	<div class="showpony-subtitles"></div>
-	<div class="showpony-overlay">
-		<button class="showpony-progress showpony-hide-on-hold"></button>
-		<button class="showpony-regress showpony-hide-on-hold"></button>
-		<button class="showpony-pause showpony-hide-on-hold"></button>
-		<div class="showpony-progress-bar" style="left:0%;"></div>
-		<canvas class="showpony-overlay-buffer" width="1000" height="1"></canvas>
-		<p class="showpony-overlay-text"><span>0</span><span>0</span></p>
-		<div class="showpony-buttons showpony-hide-on-hold">
-			<button class="showpony-button-comments" alt="Comments" title="Comments"></button>
-			<button class="showpony-button-language" alt="Language" title="Language"></button>
-			<button class="showpony-button-subtitles" alt="Subtitles" title="Subtitles"></button>
-			<button class="showpony-button-bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
-			<button class="showpony-fullscreen-button" alt="Fullscreen" title="Fullscreen Toggle"></button>
+	<style class="s-style" type="text/css"></style>
+	<div class="s-content"></div>
+	<div class="s-subtitles"></div>
+	<div class="s-overlay">
+		<button class="s-progress s-hide-on-hold"></button>
+		<button class="s-regress s-hide-on-hold"></button>
+		<button class="s-pause s-hide-on-hold"></button>
+		<div class="s-progress-bar" style="left:0%;"></div>
+		<canvas class="s-overlay-buffer" width="1000" height="1"></canvas>
+		<p class="s-overlay-text"><span>0</span><span>0</span></p>
+		<div class="s-buttons s-hide-on-hold">
+			<button class="s-button-comments" alt="Comments" title="Comments"></button>
+			<button class="s-button-language" alt="Language" title="Language"></button>
+			<button class="s-button-subtitles" alt="Subtitles" title="Subtitles"></button>
+			<button class="s-button-bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
+			<button class="s-fullscreen-button" alt="Fullscreen" title="Fullscreen Toggle"></button>
 		</div>
-		<div class="showpony-dropdowns showpony-hide-on-hold">
-			<div class="showpony-dropdown showpony-dropdown-language"></div>
-			<div class="showpony-dropdown showpony-dropdown-subtitles"></div>
-			<div class="showpony-dropdown showpony-dropdown-bookmark"></div>
+		<div class="s-dropdowns s-hide-on-hold">
+			<div class="s-dropdown s-dropdown-language"></div>
+			<div class="s-dropdown s-dropdown-subtitles"></div>
+			<div class="s-dropdown s-dropdown-bookmark"></div>
 		</div>
 	</div>
 `;
@@ -300,7 +300,7 @@ foreach(array_keys($media) as $moduleName){
 
 // Go to another file
 S.to=function(obj={}){
-	content.classList.add('showpony-loading');
+	content.classList.add('s-loading');
 	
 	/// GET TIME AND FILE ///
 	
@@ -391,14 +391,14 @@ S.play=function(){
 	if(S.paused===false) return;
 	
 	// Close dropdowns
-	var dropdowns=S.window.querySelectorAll('.showpony-dropdown.showpony-visible');
+	var dropdowns=S.window.querySelectorAll('.s-dropdown.s-visible');
 	if(dropdowns){
 		for(var i=0;i<dropdowns.length;i++){
-			dropdowns[i].classList.remove('showpony-visible')
+			dropdowns[i].classList.remove('s-visible')
 		}
 	}
 	
-	S.window.classList.remove('showpony-paused');
+	S.window.classList.remove('s-paused');
 	S.paused=false;
 	S.modules[S.currentModule].play();
 	S.window.dispatchEvent(new CustomEvent('play'));
@@ -407,7 +407,7 @@ S.play=function(){
 S.pause=function(){
 	if(S.paused===true) return;
 	
-	S.window.classList.add('showpony-paused');
+	S.window.classList.add('s-paused');
 	S.paused=true;
 	if(S.currentModule) S.modules[S.currentModule].pause();
 	S.window.dispatchEvent(new CustomEvent('pause'));
@@ -502,10 +502,10 @@ else if(S.window.mozRequestFullScreen){
 // No fullscreen support fullscreen (like for iOS Safari)
 else{
 	S.fullscreenEnter=function(){
-		if(S.window.classList.contains('showpony-fullscreen-alt')) return;
+		if(S.window.classList.contains('s-fullscreen-alt')) return;
 		
-		S.window.classList.add('showpony-fullscreen-alt');
-		document.getElementsByTagName('html')[0].classList.add('showpony-fullscreen-control');
+		S.window.classList.add('s-fullscreen-alt');
+		document.getElementsByTagName('html')[0].classList.add('s-fullscreen-control');
 		
 		S.window.dataset.prevz=S.window.style.zIndex || 'initial';
 		
@@ -521,10 +521,10 @@ else{
 	}
 	
 	S.fullscreenExit=function(){
-		if(!S.window.classList.contains('showpony-fullscreen-alt')) return;
+		if(!S.window.classList.contains('s-fullscreen-alt')) return;
 		
-		S.window.classList.remove('showpony-fullscreen-alt');
-		document.getElementsByTagName('html')[0].classList.remove('showpony-fullscreen-control');
+		S.window.classList.remove('s-fullscreen-alt');
+		document.getElementsByTagName('html')[0].classList.remove('s-fullscreen-control');
 		
 		// Get the original z-index value
 		S.window.style.zIndex=S.window.dataset.prevz;
@@ -535,7 +535,7 @@ else{
 	}
 	
 	S.fullscreenToggle=function(){
-		if(S.window.classList.contains('showpony-fullscreen-alt')) S.fullscreenExit();
+		if(S.window.classList.contains('s-fullscreen-alt')) S.fullscreenExit();
 		else S.fullscreenEnter();
 	}
 }
@@ -544,22 +544,22 @@ else{
 ///////////PRIVATE VARIABLES///////////
 ///////////////////////////////////////
 
-var styles=				S.window.getElementsByClassName('showpony-style')[0];
-var content=			S.window.getElementsByClassName('showpony-content')[0];
-var subtitles=			S.window.getElementsByClassName('showpony-subtitles')[0];
-var overlay=			S.window.getElementsByClassName('showpony-overlay')[0];
-var overlayBuffer=		S.window.getElementsByClassName('showpony-overlay-buffer')[0];
-var progress=			S.window.getElementsByClassName('showpony-progress-bar')[0];
-var overlayText=		S.window.getElementsByClassName('showpony-overlay-text')[0];
-var fullscreenButton=	S.window.getElementsByClassName('showpony-fullscreen-button')[0];
-var captionsButton=		S.window.getElementsByClassName('showpony-captions-button')[0];
+var styles=				S.window.getElementsByClassName('s-style')[0];
+var content=			S.window.getElementsByClassName('s-content')[0];
+var subtitles=			S.window.getElementsByClassName('s-subtitles')[0];
+var overlay=			S.window.getElementsByClassName('s-overlay')[0];
+var overlayBuffer=		S.window.getElementsByClassName('s-overlay-buffer')[0];
+var progress=			S.window.getElementsByClassName('s-progress-bar')[0];
+var overlayText=		S.window.getElementsByClassName('s-overlay-text')[0];
+var fullscreenButton=	S.window.getElementsByClassName('s-fullscreen-button')[0];
+var captionsButton=		S.window.getElementsByClassName('s-captions-button')[0];
 
 var scrubbing=false;
 
 var cover=document.createElement('div');
-cover.className='showpony-cover';
+cover.className='s-cover';
 var pageTurn=document.createElement('div');
-pageTurn.className='showpony-page-turn';
+pageTurn.className='s-page-turn';
 
 var sticky=false;
 
@@ -794,7 +794,7 @@ function userScrub(event=null,start=false){
 				actionInterval=null;
 				
 				scrubbing=true;
-				S.window.classList.add('showpony-hold');
+				S.window.classList.add('s-hold');
 				
 				// On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
 				if(checkBuffered(S.duration*scrubPercent)){
@@ -1060,7 +1060,7 @@ function gamepadButton(gamepad,number,type){
 
 // Make sure setup is made of multiple Promises that can run asyncronously- and that they do!
 
-content.classList.add('showpony-loading');
+content.classList.add('s-loading');
 
 if(S.cover){
 	if(S.cover.image) cover.style.backgroundImage='url("'+S.cover.image+'")';
@@ -1187,9 +1187,9 @@ var supportedLanguages=<?php
 if(supportedLanguages.length>1){
 	function toggleLanguage(){
 		// Remove selected class from previous selected item
-		var previous=S.window.querySelector('.showpony-dropdown-language .showpony-selected');
+		var previous=S.window.querySelector('.s-dropdown-language .s-selected');
 		if(previous){
-			previous.classList.remove('showpony-selected');
+			previous.classList.remove('s-selected');
 		}
 		
 		// Set language to null if clicking on the same item
@@ -1198,7 +1198,7 @@ if(supportedLanguages.length>1){
 			return;
 		}
 		
-		this.classList.add('showpony-selected');
+		this.classList.add('s-selected');
 		// S.displaySubtitles(this.dataset.value);
 	}
 
@@ -1209,13 +1209,13 @@ if(supportedLanguages.length>1){
 		buttonEl.dataset.value=supportedLanguages[i]['short'];
 		buttonEl.addEventListener('click',toggleLanguage);
 		
-		if(S.currentLanguage===supportedLanguages[i]['short']) buttonEl.className='showpony-selected';
+		if(S.currentLanguage===supportedLanguages[i]['short']) buttonEl.className='s-selected';
 		
 		languageButtons.appendChild(buttonEl);
 	}
-	S.window.querySelector(".showpony-dropdown-language").appendChild(languageButtons);
+	S.window.querySelector(".s-dropdown-language").appendChild(languageButtons);
 }else{
-	S.window.querySelector('.showpony-button-language').remove();
+	S.window.querySelector('.s-button-language').remove();
 }
 
 var supportedSubtitles=<?php
@@ -1241,9 +1241,9 @@ var supportedSubtitles=<?php
 if(supportedSubtitles.length>0){
 	function toggleSubtitle(){
 		// Remove selected class from previous selected item
-		var previous=S.window.querySelector('.showpony-dropdown-subtitles .showpony-selected');
+		var previous=S.window.querySelector('.s-dropdown-subtitles .s-selected');
 		if(previous){
-			previous.classList.remove('showpony-selected');
+			previous.classList.remove('s-selected');
 		}
 		
 		// Set subtitles to null if clicking on the same item
@@ -1252,7 +1252,7 @@ if(supportedSubtitles.length>0){
 			return;
 		}
 		
-		this.classList.add('showpony-selected');
+		this.classList.add('s-selected');
 		S.displaySubtitles(this.dataset.value);
 	}
 
@@ -1263,21 +1263,21 @@ if(supportedSubtitles.length>0){
 		buttonEl.dataset.value=supportedSubtitles[i]['short'];
 		buttonEl.addEventListener('click',toggleSubtitle);
 		
-		if(S.currentSubtitles===supportedSubtitles[i]['short']) buttonEl.className='showpony-selected';
+		if(S.currentSubtitles===supportedSubtitles[i]['short']) buttonEl.className='s-selected';
 		
 		subtitleButtons.appendChild(buttonEl);
 	}
-	S.window.querySelector(".showpony-dropdown-subtitles").appendChild(subtitleButtons);
+	S.window.querySelector(".s-dropdown-subtitles").appendChild(subtitleButtons);
 }else{
-	S.window.querySelector('.showpony-button-subtitles').remove();
+	S.window.querySelector('.s-button-subtitles').remove();
 }
 
 // Bookmarks
 function toggleBookmark(){
 	// Remove selected class from previous selected item
-	var previous=S.window.querySelector('.showpony-dropdown-bookmark .showpony-selected');
+	var previous=S.window.querySelector('.s-dropdown-bookmark .s-selected');
 	if(previous){
-		previous.classList.remove('showpony-selected');
+		previous.classList.remove('s-selected');
 	}
 
 	// Set to null if clicking on the same item
@@ -1289,7 +1289,7 @@ function toggleBookmark(){
 		return;
 	}
 	
-	this.classList.add('showpony-selected');
+	this.classList.add('s-selected');
 	S.saves.system=this.dataset.system;
 	S.saves.currentSave=this.dataset.name;
 }
@@ -1305,10 +1305,10 @@ function toggleBookmark(){
 
 function addBookmark(obj){
 	var bookmarkEl=document.createElement('div');
-	bookmarkEl.className='showpony-bookmark';
+	bookmarkEl.className='s-bookmark';
 	
 	var nameEl=document.createElement('button');
-	nameEl.className='showpony-bookmark-name';
+	nameEl.className='s-bookmark-name';
 	nameEl.innerText=obj.name;
 	nameEl.dataset.name=obj.name;
 	nameEl.dataset.system=obj.system;
@@ -1317,18 +1317,18 @@ function addBookmark(obj){
 	if(
 		S.saves.currentSave===obj.name
 		&& S.saves.system===obj.system
-	) nameEl.classList.add('showpony-selected');
+	) nameEl.classList.add('s-selected');
 	
 	bookmarkEl.appendChild(nameEl);
 	
 	// if(obj.type!=='new'){
 		// var deleteEl=document.createElement('button');
-		// deleteEl.className='showpony-bookmark-delete';
+		// deleteEl.className='s-bookmark-delete';
 		// deleteEl.innerHTML='X';
 		// bookmarkEl.appendChild(deleteEl);
 	// }
 	
-	S.window.querySelector(".showpony-dropdown-bookmark").appendChild(bookmarkEl);
+	S.window.querySelector(".s-dropdown-bookmark").appendChild(bookmarkEl);
 }
 
 // For now, we'll just support this bookmark
@@ -1353,9 +1353,9 @@ document.currentScript.insertAdjacentElement('afterend',S.window);
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
 
-var regress=S.window.querySelector('.showpony-regress')
-var progressBtn=S.window.querySelector('.showpony-progress');
-var pause=S.window.querySelector('.showpony-pause')
+var regress=S.window.querySelector('.s-regress')
+var progressBtn=S.window.querySelector('.s-progress');
+var pause=S.window.querySelector('.s-pause')
 
 // Allow using querystrings for navigation
 window.addEventListener(
@@ -1469,8 +1469,8 @@ window.addEventListener('click',function(event){
 	clearTimeout(actionTimeout);
 	actionTimeout=null;
 	
-	if(S.window.classList.contains('showpony-hold')){
-		S.window.classList.remove('showpony-hold');
+	if(S.window.classList.contains('s-hold')){
+		S.window.classList.remove('s-hold');
 		return;
 	}
 	
@@ -1479,22 +1479,22 @@ window.addEventListener('click',function(event){
 		case fullscreenButton:
 			S.fullscreenToggle();
 			break;
-		case S.window.querySelector('.showpony-button-bookmark'):
-			if(S.window.querySelector('.showpony-dropdown-bookmark').classList.toggle('showpony-visible')){
+		case S.window.querySelector('.s-button-bookmark'):
+			if(S.window.querySelector('.s-dropdown-bookmark').classList.toggle('s-visible')){
 				// Added
 			}else{
 				// Removed
 			}
 			break;
-		case S.window.querySelector('.showpony-button-language'):
-			if(S.window.querySelector('.showpony-dropdown-language').classList.toggle('showpony-visible')){
+		case S.window.querySelector('.s-button-language'):
+			if(S.window.querySelector('.s-dropdown-language').classList.toggle('s-visible')){
 				// Added
 			}else{
 				// Removed
 			}
 			break;
-		case S.window.querySelector('.showpony-button-subtitles'):
-			if(S.window.querySelector('.showpony-dropdown-subtitles').classList.toggle('showpony-visible')){
+		case S.window.querySelector('.s-button-subtitles'):
+			if(S.window.querySelector('.s-dropdown-subtitles').classList.toggle('s-visible')){
 				// Added
 			}else{
 				// Removed
@@ -1563,7 +1563,7 @@ window.addEventListener('mouseup',function(event){
 	userScrub(event);
 	
 	scrubbing='out';
-	S.window.classList.remove('showpony-hold');
+	S.window.classList.remove('s-hold');
 });
 
 // On mousedown, we prepare to move the cursor (but not over overlay buttons)
@@ -1585,7 +1585,7 @@ S.window.addEventListener('mousedown',function(event){
 			// Pause
 			if(checkCollision(event.clientX,event.clientY,pause)){
 				actionTimeout=setTimeout(function(){
-					S.window.classList.add('showpony-hold');
+					S.window.classList.add('s-hold');
 				},500);
 				break;
 			}
@@ -1593,7 +1593,7 @@ S.window.addEventListener('mousedown',function(event){
 			// Progress
 			if(checkCollision(event.clientX,event.clientY,progressBtn)){
 				actionTimeout=setTimeout(function(){
-					S.window.classList.add('showpony-hold');
+					S.window.classList.add('s-hold');
 					actionInterval=setInterval(function(){
 						S.to({time:'+5'});
 					},50);
@@ -1604,7 +1604,7 @@ S.window.addEventListener('mousedown',function(event){
 			// Regress
 			if(checkCollision(event.clientX,event.clientY,regress)){
 				actionTimeout=setTimeout(function(){
-					S.window.classList.add('showpony-hold');
+					S.window.classList.add('s-hold');
 					actionInterval=setInterval(function(){
 						S.to({time:'-5'});
 					},50);

@@ -1,4 +1,4 @@
-.showpony-image-container{
+.m-img-window{
 	height:100%;
 	width:100%;
 	overflow:auto;
@@ -6,7 +6,7 @@
 	display:flex;
 }
 
-.showpony-image{
+.m-img{
 	width:30rem;
 	
 	display:block;

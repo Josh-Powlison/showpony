@@ -5,7 +5,7 @@ S.modules.template=new function(){
 	M.currentFile=null;
 	
 	M.window=document.createElement('div'); // Or other element
-	M.window.className='showpony-block'; // Or other class
+	M.window.className='m-temp'; // Or other class
 	
 	M.play=function(){
 		// How the medium plays. Can remain empty
