@@ -1085,7 +1085,7 @@ S.window.appendChild(overlay);
 
 // Priority: Newest > Default Start
 
-var start=null;
+var start=0;
 S.saveName=S.name+'Data';
 S.saveSystem=false;
 // S.saveSystem=false;
@@ -1162,7 +1162,6 @@ S.save=function(){
 	// console.log('SAVING '+S.saveName,S.saves);
 }
 
-var start=S.duration-(S.files[S.files.length-1].duration);
 S.load();
 
 /////////////////
