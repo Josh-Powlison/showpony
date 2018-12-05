@@ -6,7 +6,7 @@ error_reporting(E_ALL);
 ini_set('display_errors',1);
 
 const ROOT=__DIR__;
-const DEFAULT_STORIES_PATH='files/';
+const DEFAULT_PATH='files/';
 const DEFAULT_LANGUAGE='en';
 const PRELOAD_BYTES=1*1048576;				// How many file bytes to preload
 const RELEASE_DATES=1;						// How many upcoming files to show release dates for

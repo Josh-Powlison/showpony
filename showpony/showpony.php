@@ -33,7 +33,7 @@ require 'settings.php';
 
 // POST VALUES FOR TESTING
 
-$stories_path=$_GET['path'] ?? DEFAULT_STORIES_PATH;
+$stories_path=DEFAULT_PATH.($_GET['path']);
 $language=$_GET['lang'] ?? DEFAULT_LANGUAGE;
 
 // Get the query from the paths
