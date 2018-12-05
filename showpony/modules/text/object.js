@@ -45,7 +45,7 @@ S.modules.text=new function(){
 			
 			// If this is the current file
 			if(M.currentFile===file){
-				pageTurn.scrollTop=pageTurn.scrollHeight*(M.currentTime/S.files[M.currentFile].duration);
+				M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
 				content.classList.remove('s-loading');
 				resolve();
 			}
