@@ -308,13 +308,13 @@
 	background-size:3em;
 }
 
-.showpony *::-webkit-scrollbar{
+.s *::-webkit-scrollbar{
 	width:1em;
 	background-color:#fff;
 	cursor:auto;
 }
 
-.showpony *::-webkit-scrollbar-thumb{
+.s *::-webkit-scrollbar-thumb{
 	background-color:#000;
 	border-left:solid #fff .1em;
 }
