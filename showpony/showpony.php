@@ -248,11 +248,11 @@ S.window.innerHTML=`
 		<canvas class="s-overlay-buffer" width="1000" height="1"></canvas>
 		<p class="s-overlay-text"><span>0</span><span>0</span></p>
 		<div class="s-buttons s-hide-on-hold">
-			<button class="s-button-comments" alt="Comments" title="Comments"></button>
-			<button class="s-button-language" alt="Language" title="Language"></button>
-			<button class="s-button-subtitles" alt="Subtitles" title="Subtitles"></button>
-			<button class="s-button-bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
-			<button class="s-fullscreen-button" alt="Fullscreen" title="Fullscreen Toggle"></button>
+			<button class="s-button s-button-comments" alt="Comments" title="Comments"></button>
+			<button class="s-button s-button-language" alt="Language" title="Language"></button>
+			<button class="s-button s-button-subtitles" alt="Subtitles" title="Subtitles"></button>
+			<button class="s-button s-button-bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
+			<button class="s-button s-fullscreen-button" alt="Fullscreen" title="Fullscreen Toggle"></button>
 		</div>
 		<div class="s-dropdowns s-hide-on-hold">
 			<div class="s-dropdown s-dropdown-language"></div>
@@ -1507,6 +1507,7 @@ window.addEventListener('click',function(event){
 			if(event.target.tagName==='INPUT') break;
 			if(event.target.tagName==='BUTTON') break;
 			if(event.target.tagName==='A') break;
+			if(event.target.classList.contains('s-dropdown')) return;
 		
 			// Pause
 			if(checkCollision(event.clientX,event.clientY,pause)){
@@ -1574,6 +1575,10 @@ S.window.addEventListener('mousedown',function(event){
 	if(event.button!==0) return;
 
 	if(cover) return;
+	if(event.target.classList.contains('s-dropdown')) return;
+	if(event.target.tagName==='INPUT') return;
+	if(event.target.tagName==='BUTTON') return;
+	if(event.target.tagName==='A') return;
 	
 	// One event listener for all of the buttons
 	switch(event.target){
