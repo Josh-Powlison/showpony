@@ -385,9 +385,6 @@ S.to=function(obj={}){
 				});
 			}
 		}
-		
-		// console.log('SCRUBBING VALUE',scrubbing);
-		updateHistory(obj.history);
 	});
 }
 
@@ -591,7 +588,10 @@ function timeUpdate(time){
 	
 	if(scrubbing!==true) scrub(null,false);
 	
-	updateHistory('replace');
+	// Update the querystring
+	var searchParams=new URLSearchParams(window.location.search);
+    searchParams.set(S.query, S.currentTime|0);
+    history.pushState(null,'',window.location.pathname + '?' + searchParams.toString());
 	
 	// Run custom event for checking time
 	S.window.dispatchEvent(
@@ -797,12 +797,6 @@ function userScrub(event=null,start=false){
 				
 				scrubbing=true;
 				S.window.classList.add('s-hold');
-				
-				// On starting to scrub, we save a bookmark of where we were- kinda weird, but this allows us to return later.
-				if(checkBuffered(S.duration*scrubPercent)){
-					// Add a new state on releasing
-					updateHistory('add');
-				}
 			}
 			else return;
 		}
@@ -828,39 +822,6 @@ function userScrub(event=null,start=false){
 		
 		// scrubbing needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
 		scrubbing=false;
-	}
-}
-
-function updateHistory(action='add'){
-	// If using queries with time, adjust query on time update
-	var newURL=document.location.href;
-	var newQuery='';
-	
-	// Choose whether to add an ampersand or ?
-	// Choose a ? if one doesn't exist or it exists behind the query
-	newQuery=(newURL.indexOf('?')===-1 || new RegExp('\\?(?='+S.query+'=)').test(newURL)) ? '?' : '&';
-	
-	newQuery+=S.query+'='+(Math.floor(S.currentTime));
-	
-	// Replace either the case or the end
-	newURL=newURL.replace(new RegExp('(((\\?|&)'+S.query+')=?[^&#]+)|(?=#)|$'),newQuery);
-	
-	// console.log('updating',obj.history,location.href,newURL);
-	
-	if(location.href!==newURL){
-		// console.log('We are gonna ',action);
-		switch(action){
-			case 'replace':
-				history.replaceState({},'',newURL);
-				break;
-			case 'revisit':
-				// Nothing needs to be done
-				break;
-			case 'add':
-			default:
-				history.pushState({},'',newURL);
-				break;
-		}
 	}
 }
 
@@ -1342,7 +1303,7 @@ if(page) start=parseInt(page[0].split('=')[1]);
 
 // Pause the Showpony
 S.pause();
-S.to({time:start,history:'replace'});
+S.to({time:start});
 
 // We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
 
@@ -1369,7 +1330,7 @@ window.addEventListener(
 			
 			if(page===S.currentTime) return;
 		
-			S.to({time:page,history:'revisit'});
+			S.to({time:page});
 		}
 	}
 );
