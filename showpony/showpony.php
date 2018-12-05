@@ -227,7 +227,7 @@ S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 S.paused=false;
 S.modules={};
 S.media=<?php echo json_encode($media,JSON_NUMERIC_CHECK)?>;
-S.message='<?php echo addslashes($message); ?>';
+S.message=<?php echo json_encode($message); ?>;
 S.auto=false; // false, or float between 0 and 10
 S.path='<?php echo $stories_path; ?>';
 S.upcomingFiles=<?php echo json_encode($releaseDates); ?>;
