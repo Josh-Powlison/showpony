@@ -16,7 +16,8 @@ S.modules.audio=new function(){
 	}
 	
 	M.regress=function(){
-		S.to({time:'-10'});
+		if(M.currentTime<10) S.to({file:'-1',time:'end'});
+		else S.to({time:'-10'});
 	}
 	
 	M.progress=function(){
@@ -31,13 +32,15 @@ S.modules.audio=new function(){
 	
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
+			if(time==='end') time=S.files[file].duration-5;
+			
 			// Change the file if it'd be a new one
 			if(M.currentFile!==file) M.window.src=S.files[file].path;
 			
 			// If we're not paused, play
 			if(!S.paused) M.play();
 			
-			resolve();
+			resolve({file:file,time:time});
 		});
 	}
 	

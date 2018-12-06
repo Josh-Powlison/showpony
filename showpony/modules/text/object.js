@@ -12,7 +12,8 @@ S.modules.text=new function(){
 	M.pause=function(){}
 	
 	M.regress=function(){
-		S.to({file:'-1'});
+		if(S.currentFile>0) S.to({file:'-1',time:'end'});
+		else S.to({time:0});
 	}
 	
 	M.progress=function(){
@@ -25,13 +26,17 @@ S.modules.text=new function(){
 	
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
+			console.log(time);
+			if(time==='end') time=S.files[file].duration;
+			console.log(time);
+			
 			var src=S.files[file].path;
 			
 			// If this is the current file
 			if(M.currentFile===file){
 				M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
 				content.classList.remove('s-loading');
-				resolve();
+				resolve({time:time,file:file});
 			}
 			
 			fetch(src,{credentials:'include'})
@@ -56,7 +61,7 @@ S.modules.text=new function(){
 				
 				if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
 				
-				resolve();
+				resolve({time:time,file:file});
 			});
 		});
 	}

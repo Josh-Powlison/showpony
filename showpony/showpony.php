@@ -300,25 +300,28 @@ S.to=function(obj={}){
 	
 	// Special values
 	if(obj.file==='last') obj.file=S.files.length-1;
-	if(obj.time==='end') obj.time=S.duration-10;
 	
-	// Relative adjustments if the values have - or +. If both are relative, file will be relative and time will instead be absolute to avoid strange behavior.
+	// Relative adjustment
 	if(/-|\+/.test(obj.file)) obj.file=S.currentFile+parseInt(obj.file);
-	else if(/-|\+/.test(obj.time)) obj.time=S.currentTime+timeToSeconds(obj.time);
-	
-	obj.time=timeToSeconds(obj.time);
-	
-	// Minimal time and file values are 0
 	obj.file=Math.max(0,obj.file || 0);
-	obj.time=Math.max(0,parseFloat(obj.time) || 0);
 	
-	// Based on time, get the right file
-	for(obj.file;obj.file<S.files.length;obj.file++){
-		if(obj.time<S.files[obj.file].duration) break; // We've reached the file
+	// If we're not going to the end, adjust time values; 'end' gets passed to the modules
+	if(obj.time!=='end'){
+		// Relative adjustment
+		if(/-|\+/.test(obj.time)) obj.time=S.currentTime+timeToSeconds(obj.time);
+		obj.time=timeToSeconds(obj.time);
 		
-		obj.time-=S.files[obj.file].duration;
+		// Minimal time and file values are 0
+		obj.time=Math.max(0,parseFloat(obj.time) || 0);
+		
+		// Based on time, get the right file
+		for(obj.file;obj.file<S.files.length;obj.file++){
+			if(obj.time<S.files[obj.file].duration) break; // We've reached the file
+			
+			obj.time-=S.files[obj.file].duration;
+		}
 	}
-	
+		
 	// If we're past the end, go to the very end
 	if(obj.file>=S.files.length){
 		obj.file=S.files.length-1;
@@ -344,7 +347,7 @@ S.to=function(obj={}){
 	// Load the file
 	if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
 	
-	S.modules[S.currentModule].src(obj.file,obj.time).then(()=>{
+	S.modules[S.currentModule].src(obj.file,obj.time).then((obj)=>{
 		// TODO: condense or remove parts from below. I can't help but think this should all be called in the object.js files, and not touched at all here.
 		S.currentFile=S.modules[S.currentModule].currentFile=obj.file;
 		S.modules[S.currentModule].timeUpdate(obj.time);
@@ -570,7 +573,7 @@ function timeUpdate(time){
 	}
 	
 	// Get the current time in the midst of the entire Showpony
-	S.currentTime=S.modules[S.currentModule].currentTime
+	S.currentTime=S.modules[S.currentModule].currentTime;
 	for(let i=0;i<S.currentFile;i++) S.currentTime+=S.files[i].duration;
 	
 	S.displaySubtitles();

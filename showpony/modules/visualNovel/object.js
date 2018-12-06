@@ -101,7 +101,7 @@ S.modules.visualNovel=new function(){
 			runTo=keyframes[keyframeIndex];
 			M.readLine(0);
 		}else{
-			S.to({file:'-1'});
+			S.to({file:'-1',time:'end'});
 		}
 	}
 	
@@ -157,6 +157,8 @@ S.modules.visualNovel=new function(){
 	
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
+			if(time==='end') time=S.files[file].duration;
+			
 			// Visual Novel engine resets
 			timer.stop();
 			
@@ -170,14 +172,14 @@ S.modules.visualNovel=new function(){
 				// If this is the current keyframe, resolve
 				if(keyframeSelect===M.currentLine){
 					content.classList.remove('s-loading');
-					resolve();
+					resolve({file:file,time:time});
 					return;
 				}
 				
 				runTo=keyframeSelect;
 				
 				M.readLine(0);
-				resolve();
+				resolve({file:file,time:time});
 				return;
 			}
 			
@@ -217,7 +219,7 @@ S.modules.visualNovel=new function(){
 					getTotalBuffered();
 				}
 				
-				resolve();
+				resolve({file:file,time:time});
 			});
 		});
 	}
