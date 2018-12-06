@@ -207,6 +207,9 @@ S.modules.visualNovel=new function(){
 					}
 					
 					if(/^(\t+)/.test(M.lines[i])){
+						// See if it's part of a tag
+						// Anything with a space we'll ignore; you should only have self-closing tags or closing tags at the end of the line
+						
 						// See if the line ends with an unescaped >; if so, don't add the line
 						if(M.lines[i][M.lines[i].length-1]==='>'){
 							var skip=1;
