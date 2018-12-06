@@ -171,7 +171,12 @@ function readFolder($folder){
 			,'path'			=>	$hidden ? 'showpony/get-hidden-file.php?file='.$stories_path.$folder.'/'.$file  : $stories_path.$folder.'/'.$file
 			,'size'			=>	filesize($folder.'/'.$file)
 			,'subtitles'	=>	false
-			,'title'		=>	$title ?? null
+			,'title'		=>	str_replace(
+				// Dissallowed in Windows files: \ / : * ? " < > |
+				['[bs]','[fs]','[c]','[a]','[q]','[dq]','[lt]','[gt]','[b]']
+				,['\\','/',':','*','?','"','<','>','|']
+				,$title
+			) ?? null
 			,'hidden'		=>	$hidden ?? false
 		];
 		
