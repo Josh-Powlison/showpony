@@ -185,8 +185,7 @@ function readFolder($folder){
 		// If the module isn't supported, skip over it
 		if($fileInfo['module']===null) continue;
 		
-		require_once ROOT.'/modules/'.$fileInfo['module'].'/functions.php';
-		
+		/*
 		// If this file has been unhid, unhide related files
 		if($unhid){
 			// Unhide subtitles
@@ -194,7 +193,7 @@ function readFolder($folder){
 			
 			// Unhide children files
 			call_user_func($fileInfo['module'].'UnhideChildren',$folder.'/'.$file);
-		}
+		}*/
 		
 		// Add to the items in the module, or set to 1 if it doesn't exist yet
 		if(isset($media[$fileInfo['module']])) $media[$fileInfo['module']]++;
@@ -206,6 +205,11 @@ function readFolder($folder){
 }
 
 readFolder($language);
+
+// Load modules
+foreach(array_keys($media) as $moduleName){
+	require ROOT.'/modules/'.$moduleName.'/functions.php';
+}
 
 // Pass any echoed statements or errors to the response object
 $message=ob_get_clean();
