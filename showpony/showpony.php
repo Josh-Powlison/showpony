@@ -734,53 +734,61 @@ function scrub(inputPercent=null,loadFile=false){
 	if(inputPercent<0) inputPercent=0;
 	if(inputPercent>1) inputPercent=1;
 	
-	var timeInTotal=S.duration*inputPercent;
-	
-	/// LOADING THE SELECTED FILE ///
-	if(loadFile){
-		clearTimeout(scrubLoad);
-		if(checkBuffered(timeInTotal) || scrubbing===false) S.to({time:timeInTotal});
-		else{
-			// Load the file if we sit in the same spot for a moment
-			scrubLoad=setTimeout(S.to,400,{time:timeInTotal});
-		}
-	}
-	
 	// Move the progress bar
 	progress.style.left=(inputPercent*100)+'%';
 	
-	var newPart=0;
-	var timeCheck=timeInTotal;
-	// Based on time, get the right file
-	for(newPart;newPart<S.files.length-1;newPart++){
-		if(timeCheck<S.files[newPart].duration) break; // We've reached the file
+	// If scrubbing, estimate the new time
+	if(scrubbing===true || scrubbing==='out'){
+		var time=S.duration*inputPercent;
 		
-		timeCheck-=S.files[newPart].duration;
+		/// LOADING THE SELECTED FILE ///
+		if(loadFile){
+			clearTimeout(scrubLoad);
+			if(checkBuffered(time) || scrubbing===false) S.to({time:time});
+			else{
+				// Load the file if we sit in the same spot for a moment
+				scrubLoad=setTimeout(S.to,400,{time:time});
+			}
+		}
+		
+		var file=0;
+		var timeCheck=time;
+		// Based on time, get the right file
+		for(file;file<S.files.length-1;file++){
+			if(timeCheck<S.files[file].duration) break; // We've reached the file
+			
+			timeCheck-=S.files[file].duration;
+		}
+	}
+	// Otherwise, get it based off current values
+	else{
+		var time=S.currentTime;
+		var file=S.currentFile;
 	}
 	
 	<?php
 	if($displayType==='file'){
 	?>
 		
-    var completed=infoFile(newPart+1);
-    var remaining=infoFile(S.files.length-(newPart+1));
+    var completed=infoFile(file+1);
+    var remaining=infoFile(S.files.length-(file+1));
 	
 	<?php
 	}else{
 	?>
 	
-	var completed=infoTime(timeInTotal);
-	var remaining=infoTime(S.duration-timeInTotal);
+	var completed=infoTime(time);
+	var remaining=infoTime(S.duration-time);
 	
 	<?php } ?>
     
     var info = '<p>'+completed+'</p><p>';
-	if((S.files[newPart].title)) info+=S.files[newPart].title;
+	if((S.files[file].title)) info+=S.files[file].title;
 	info+='</p><p>'+remaining+'</p>';
 	
 	// Add info about upcoming parts if not added already
 	if(!S.window.querySelector('.s-upcoming-file').innerHTML
-		&& newPart===S.files.length-1 && S.upcomingFiles.length){
+		&& file===S.files.length-1 && S.upcomingFiles.length){
 		var upcoming='';
 		for(var i=0;i<S.upcomingFiles.length;i++){
 			upcoming+='Next Update: '+new Intl.DateTimeFormat(
@@ -861,13 +869,13 @@ function userScrub(event=null,start=false){
 		// Drag on the menu to go to any part
 		
 		if(scrubbing===true){
-			scrubbing=false;
-		
 			// If we don't preload while scrubbing, load the file now that we've stopped scrubbing
 			if(!checkBuffered(S.duration*scrubPercent)){
 				// Load the file our pointer's on
 				scrub(scrubPercent,true);
 			}
+			
+			scrubbing=false;
 			
 			return true; // Exit the function
 		}
