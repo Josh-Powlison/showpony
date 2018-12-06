@@ -26,9 +26,7 @@ S.modules.text=new function(){
 	
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
-			console.log(time);
 			if(time==='end') time=S.files[file].duration;
-			console.log(time);
 			
 			var src=S.files[file].path;
 			

@@ -34,7 +34,6 @@ S.modules.<?php echo 'image'; ?>=new function(){
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
 			if(time==='end') time=M.currentTime=S.files[file].duration;
-			console.log(time);
 			
 			if(M.currentFile!==file){
 				M.image.src=S.files[file].path;
