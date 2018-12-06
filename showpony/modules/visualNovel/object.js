@@ -79,29 +79,26 @@ S.modules.visualNovel=new function(){
 	}
 	
 	M.regress=function(){
-		// console.log(M.currentLine);
-		
-		var keyframeIndex=keyframes.indexOf(M.currentLine)-1;
+		var keyframeIndex=keyframes.indexOf(M.currentLine);
 		
 		if(keyframeIndex===-1){
 			keyframeIndex=0;
 			for(var i=M.currentLine;i>0;i--){
-				// console.log('KEYFRAME INDEX OF',keyframes.indexOf(i));
-				if(keyframes.indexOf(i)){
-					keyframeIndex=keyframes.indexOf(i)-1;
+				if(keyframes.indexOf(i)!==-1){
+					keyframeIndex=keyframes.indexOf(i);
 					break;
 				}
 			}
+		}else{
+			keyframeIndex--;
 		}
 		
 		if(keyframeIndex>0){
-			
-			// console.log('KEYFRAMES | GO TO FRAME',keyframes,keyframes[keyframeIndex]);
-			
 			runTo=keyframes[keyframeIndex];
 			M.readLine(0);
 		}else{
-			S.to({file:'-1',time:'end'});
+			if(M.currentFile>0) S.to({file:'-1',time:'end'});
+			else S.to({time:0});
 		}
 	}
 	
@@ -201,7 +198,25 @@ S.modules.visualNovel=new function(){
 				
 				// Regular text lines and waits can be keyframes
 				for(let i=1;i<M.lines.length;i++){
-					if(/^(\t+|engine\.wait$)/.test(M.lines[i])) keyframes.push(i);
+					if(/^engine\.wait$/.test(M.lines[i])){
+						keyframes.push(i);
+						continue;
+					}
+					
+					if(/^(\t+)/.test(M.lines[i])){
+						// See if the line ends with an unescaped >; if so, don't add the line
+						if(M.lines[i][M.lines[i].length-1]==='>'){
+							var skip=1;
+							var j=M.lines[i].length-2;
+							while(M.lines[i][j]==='\\'){
+								skip*=-1;
+								j--;
+							}
+							if(skip===1) continue;
+						}
+						
+						keyframes.push(i);
+					}
 				}
 				
 				// Get the keyframe
