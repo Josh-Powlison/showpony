@@ -93,7 +93,7 @@ S.modules.visualNovel=new function(){
 			keyframeIndex--;
 		}
 		
-		if(keyframeIndex>0){
+		if(keyframeIndex>=0){
 			runTo=keyframes[keyframeIndex];
 			M.readLine(0);
 		}else{
@@ -161,17 +161,20 @@ S.modules.visualNovel=new function(){
 			
 			// If this is the current file
 			if(M.currentFile===file){
+				
 				// Get the keyframe
 				var keyframeSelect=Math.round(keyframes.length*(time/S.files[M.currentFile].duration));
 				if(keyframeSelect>=keyframes.length) keyframeSelect=keyframes[keyframes.length-1];
 				else keyframeSelect=keyframes[keyframeSelect];
 				
+				console.log(keyframeSelect);
+				
 				// If this is the current keyframe, resolve
-				if(keyframeSelect===M.currentLine){
-					content.classList.remove('s-loading');
-					resolve({file:file,time:time});
-					return;
-				}
+				// if(keyframeSelect===M.currentLine){
+					// content.classList.remove('s-loading');
+					// resolve({file:file,time:time});
+					// return;
+				// }
 				
 				runTo=keyframeSelect;
 				
@@ -193,11 +196,11 @@ S.modules.visualNovel=new function(){
 				// Get all non-blank lines
 				M.lines=text.match(/.+(?=\S).+/g);
 				
-				// Get keyframes from the text- beginning, end, (? ->)and waiting points
-				keyframes=[0];
+				// Get keyframes from the waiting points in the text
+				keyframes=[];
 				
 				// Regular text lines and waits can be keyframes
-				for(let i=1;i<M.lines.length;i++){
+				for(let i=0;i<M.lines.length;i++){
 					if(/^engine\.wait$/.test(M.lines[i])){
 						keyframes.push(i);
 						continue;

@@ -21,7 +21,8 @@ S.modules.audio=new function(){
 	}
 	
 	M.progress=function(){
-		S.to({time:'+10'});
+		if(M.currentTime>S.files[M.currentFile].duration-10) S.to({file:'+1'});
+		else S.to({time:'+10'});
 	}
 	
 	M.timeUpdate=function(time=0){
