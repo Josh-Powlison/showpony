@@ -164,7 +164,7 @@ function readFolder($folder){
 		$fileInfo=[
 			'buffered'		=>	[]
 			,'date'			=>	$date
-			,'duration'		=>	$match[3] ?? 10
+			,'duration'		=>	$match[3] ?? DEFAULT_FILE_DURATION
 			,'extension'	=>	pathinfo($folder.'/'.$file,PATHINFO_EXTENSION)
 			,'mimeType'		=>	mime_content_type($folder.'/'.$file)
 			,'name'			=>	$file
