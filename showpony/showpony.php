@@ -501,7 +501,7 @@ function getTotalBuffered(){
 		var buffer=false;
 		
 		if(S.files[i].buffered===true){
-			buffer=[time,time+S.files[i].duration];
+			buffer=[time,parseFloat(time+S.files[i].duration)];
 			
 			if(buffer){
 				// Combine buffered arrays, if we're moving forward
@@ -513,8 +513,8 @@ function getTotalBuffered(){
 			// Get working for multiple contained buffers
 			for(let ii=0;ii<S.files[i].buffered.length;ii++){
 				buffer=[
-					time+S.files[i].buffered[ii][0]
-					,time+S.files[i].buffered[ii][1]
+					time+parseFloat(S.files[i].buffered[ii][0])
+					,time+parseFloat(S.files[i].buffered[ii][1])
 				];
 				
 				// Combine buffered arrays, if we're moving forward
@@ -523,7 +523,7 @@ function getTotalBuffered(){
 			}
 		}
 		
-		time+=S.files[i].duration;
+		time+=parseFloat(S.files[i].duration);
 	}
 	
 	if(buffered.length===1 && buffered[0][0]===0 && buffered[0][1]>=S.duration) buffered=true;
@@ -537,7 +537,6 @@ function getTotalBuffered(){
 	overlayBuffer.height=1;
 	var ctx=overlayBuffer.getContext('2d');
 	ctx.clearRect(0,0,rectRes,1);
-	//ctx.fillStyle='#000';
 	
 	// Update info on dropdown
 	if(S.buffered===true){
