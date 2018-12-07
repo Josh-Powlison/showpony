@@ -449,9 +449,7 @@ function timeUpdate(time){
 	
 	// Get the current time in the midst of the entire Showpony
 	S.currentTime=parseFloat(S.modules[S.currentModule].currentTime);
-	console.log('TIME',S.currentTime);
 	for(let i=0;i<S.currentFile;i++) S.currentTime+=parseFloat(S.files[i].duration);
-	console.log('TIME',S.currentTime);
 	
 	S.displaySubtitles();
 	
@@ -988,8 +986,6 @@ S.load=function(){
 		default:
 			break;
 	}
-	
-	// console.log('LOADING '+S.saveName,S.saves);
 }
 
 S.save=function(){
@@ -1018,7 +1014,6 @@ S.save=function(){
 	}
 	
 	localStorage.setItem(S.saveName,JSON.stringify(S.saves));
-	// console.log('SAVING '+S.saveName,S.saves);
 }
 
 S.load();
@@ -1086,7 +1081,6 @@ S.changeLanguage=function(newLanguage=<?php echo json_encode($language); ?>){
 			S.to({time:start});
 			start=null;
 		}else{
-			console.log(S.currentTime);
 			S.to({time:S.currentTime});
 		}
 	});
@@ -1375,7 +1369,6 @@ window.addEventListener('click',function(event){
 			
 			// Pause
 			if(checkCollision(event.clientX,event.clientY,pause)){
-				console.log('RUN PAUSE');
 				S.toggle();
 				break;
 			}
@@ -1521,8 +1514,6 @@ window.addEventListener('gamepadconnected',function(e){
 		,axisMin:.25
 		,axisMax:1
 	};
-	
-	// console.log('Connected!',checkGamepad);
 	
 	if(checkGamepad===null){
 		checkGamepad=setInterval(gamepadControls,Math.floor(1000/framerate));
