@@ -5,3 +5,21 @@
 	height:100%;
 	object-fit:contain;
 }
+
+.m-video-subtitle{
+	position:absolute;
+	background-color:rgba(0,0,0,0.5);
+	color:white;
+	overflow:auto;
+	font-size:2rem;
+	padding:1rem;
+	box-sizing:border-box;
+	margin:0;
+	pointer-events:auto;
+	
+	left:10%;
+	right:10%;
+	bottom:10%;
+	min-height:20%;
+	max-height:40%;
+}

@@ -63,7 +63,7 @@ S.modules.video=new function(){
 				subtitles.innerHTML='';
 			
 				var block=document.createElement('p');
-				block.className='showpony-sub';
+				block.className='m-video-subtitle';
 				block.innerHTML=phrases[keys[i]].content;
 				
 				subtitles.appendChild(block);
