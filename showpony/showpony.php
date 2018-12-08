@@ -111,7 +111,6 @@ S.window.innerHTML=`
 	<style class="s-style" type="text/css"></style>
 	<div class="s-content"></div>
 	<?php if(file_exists('cover.jpg')) echo '<img class="s-cover" src="',$stories_path,'cover.jpg">'; ?>
-	<div class="s-subtitles"></div>
 	<div class="s-overlay">
 		<button class="s-progress s-hide-on-hold"></button>
 		<button class="s-regress s-hide-on-hold"></button>
@@ -415,7 +414,6 @@ else{
 
 var styles=				S.window.getElementsByClassName('s-style')[0];
 var content=			S.window.getElementsByClassName('s-content')[0];
-var subtitles=			S.window.getElementsByClassName('s-subtitles')[0];
 var overlay=			S.window.getElementsByClassName('s-overlay')[0];
 var overlayBuffer=		S.window.getElementsByClassName('s-overlay-buffer')[0];
 var progress=			S.window.getElementsByClassName('s-progress-bar')[0];
@@ -450,8 +448,6 @@ function timeUpdate(time){
 	// Get the current time in the midst of the entire Showpony
 	S.currentTime=parseFloat(S.modules[S.currentModule].currentTime);
 	for(let i=0;i<S.currentFile;i++) S.currentTime+=parseFloat(S.files[i].duration);
-	
-	S.displaySubtitles();
 	
 	if(scrubbing!==true) scrub(null,false);
 	
@@ -728,13 +724,8 @@ function userScrub(event=null,start=false){
 S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 	S.currentSubtitles=newSubtitles;
 	
-	if(newSubtitles===null){
-		subtitles.innerHTML='';
-		return;
-	}
-	
 	// Display the subtitles if they're loaded in
-	if(S.subtitles[newSubtitles]){
+	if(S.subtitles[newSubtitles] || newSubtitles===null){
 		S.modules[S.currentModule].displaySubtitles();
 	// Otherwise, load them
 	}else{
@@ -923,12 +914,6 @@ function gamepadButton(gamepad,number,type){
 
 content.classList.add('s-loading');
 
-// And fill it up again!
-S.window.appendChild(styles);
-S.window.appendChild(content);
-S.window.appendChild(subtitles);
-S.window.appendChild(overlay);
-
 /////////////////////
 //Get Hey Bard account
 /////////////////////
@@ -976,7 +961,7 @@ S.load=function(){
 			
 			S.data=loadFile.data;
 			S.currentLanguage=loadFile.language;
-			S.displaySubtitles(loadFile.subtitles);
+			S.currentSubtitles=loadFile.subtitles;
 			start=loadFile.bookmark;
 			
 			// S.to({time:loadFile.bookmark});
@@ -1038,16 +1023,13 @@ var supportedLanguages=<?php
 
 if(supportedLanguages.length>1){
 	function toggleLanguage(){
+		// Ignore clicking on same button again
+		if(S.currentLanguage===this.dataset.value) return;
+		
 		// Remove selected class from previous selected item
 		var previous=S.window.querySelector('.s-dropdown-language .s-selected');
 		if(previous){
 			previous.classList.remove('s-selected');
-		}
-		
-		// Set language to null if clicking on the same item
-		if(S.currentLanguage===this.dataset.value){
-			S.changeLanguage(<?php echo json_encode($language); ?>);
-			return;
 		}
 		
 		this.classList.add('s-selected');

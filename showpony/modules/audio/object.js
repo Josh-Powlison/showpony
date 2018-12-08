@@ -4,15 +4,23 @@ S.modules.audio=new function(){
 	M.currentTime=null;
 	M.currentFile=null;
 	
-	M.window=document.createElement('audio');
-	M.window.className='m-audio';
+	M.window=document.createElement('div');
+	M.window.className='m-audio-window';
+	
+	M.audio=document.createElement('audio');
+	M.audio.className='m-audio';
+	M.window.appendChild(M.audio);
+	
+	M.subtitles=document.createElement('p');
+	M.subtitles.className='m-audio-subtitles';
+	M.window.appendChild(M.subtitles);
 	
 	M.play=function(){
-		M.window.play();
+		M.audio.play();
 	}
 	
 	M.pause=function(){
-		M.window.pause();
+		M.audio.pause();
 	}
 	
 	M.regress=function(){
@@ -26,7 +34,7 @@ S.modules.audio=new function(){
 	}
 	
 	M.timeUpdate=function(time=0){
-		M.currentTime=M.window.currentTime=time;
+		M.currentTime=M.audio.currentTime=time;
 	}
 	
 	M.goToTime=0;
@@ -36,7 +44,7 @@ S.modules.audio=new function(){
 			if(time==='end') time=S.files[file].duration-5;
 			
 			// Change the file if it'd be a new one
-			if(M.currentFile!==file) M.window.src=S.files[file].path;
+			if(M.currentFile!==file) M.audio.src=S.files[file].path;
 			
 			// If we're not paused, play
 			if(!S.paused) M.play();
@@ -46,62 +54,56 @@ S.modules.audio=new function(){
 	}
 	
 	M.displaySubtitles=function(){
-		subtitles.style.cssText=null;
-		var currentTime=M.window.currentTime;
+		if(S.currentSubtitles===null){
+			M.subtitles.style.display='none';
+			return;
+		}
 		
 		var phrases=S.subtitles[S.currentSubtitles][M.currentFile];
 		var keys=Object.keys(phrases);
 		for(var i=0;i<keys.length;i++){
 			
-			// Continue if we're before the start
-			if(M.currentTime<timeToSeconds(phrases[keys[i]].start)) continue;
+			// Break if we're before the start- all next subtitles wlil be past too
+			if(M.currentTime<timeToSeconds(phrases[keys[i]].start)) break;
 			
 			// Continue if we're after the end
 			if(M.currentTime>timeToSeconds(phrases[keys[i]].end)) continue;
 			
-			if(subtitles.children.length===0 || subtitles.children[0].innerHTML!==phrases[keys[i]].content){
-				subtitles.innerHTML='';
-			
-				var block=document.createElement('p');
-				block.className='m-audio-subtitle';
-				block.innerHTML=phrases[keys[i]].content;
-				
-				subtitles.appendChild(block);
-			}
-			
+			M.subtitles.innerHTML=phrases[keys[i]].content;
+			M.subtitles.style.display='';
 			return;
 		}
 		
-		subtitles.innerHTML='';
+		M.subtitles.style.display='none';
 	}
 	
 	// Allow playing videos using Showpony in iOS
-	M.window.setAttribute('playsinline','');
+	M.audio.setAttribute('playsinline','');
 
 	// Fix for Safari not going to the right time
-	M.window.addEventListener('loadeddata',function(){
-		M.currentTime=M.window.currentTime=M.goToTime;
+	M.audio.addEventListener('loadeddata',function(){
+		M.currentTime=M.audio.currentTime=M.goToTime;
 	});
 
-	M.window.addEventListener('canplay',function(){
+	M.audio.addEventListener('canplay',function(){
 		content.classList.remove('s-loading');
 		// Consider how much has already been loaded; this isn't run on first chunk loaded
 		M.window.dispatchEvent(new CustomEvent('progress'));
 	});
 
-	M.window.addEventListener('canplaythrough',function(){
+	M.audio.addEventListener('canplaythrough',function(){
 		// Consider how much has already been loaded; this isn't run on first chunk loaded
 		M.window.dispatchEvent(new CustomEvent('progress'));
 	});
 
 	// Buffering
-	M.window.addEventListener('progress',function(){
+	M.audio.addEventListener('progress',function(){
 		var bufferedValue=[];
-		var timeRanges=M.window.buffered;
+		var timeRanges=M.audio.buffered;
 		
 		for(var i=0;i<timeRanges.length;i++){
 			// If it's the first value, and it's everything
-			if(i===0 && timeRanges.start(0)==0 && timeRanges.end(0)==M.window.duration){
+			if(i===0 && timeRanges.start(0)==0 && timeRanges.end(0)==M.audio.duration){
 				bufferedValue=true;
 				break;
 			}
@@ -115,17 +117,18 @@ S.modules.audio=new function(){
 	});
 	
 	// When we finish playing an audio file
-	M.window.addEventListener('ended',function(){
+	M.audio.addEventListener('ended',function(){
 		// Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
 		if(!S.paused) S.to({file:'+1'});
 	});
 
 	// On moving through time, update info and title
-	M.window.addEventListener('timeupdate',function(){
-		M.currentTime=M.window.currentTime;
+	M.audio.addEventListener('timeupdate',function(){
+		M.currentTime=M.audio.currentTime;
 		
 		// Consider how much has already been loaded; this isn't run on first chunk loaded
 		this.dispatchEvent(new CustomEvent('progress'));
 		timeUpdate();
+		S.displaySubtitles();
 	});
 }();

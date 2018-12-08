@@ -1,12 +1,17 @@
-.m-video{
+.m-video-window{
 	left:0;
 	top:0;
+	width:100%;
+	height:100%;
+}
+
+.m-video{
 	width:100%;
 	height:100%;
 	object-fit:contain;
 }
 
-.m-video-subtitle{
+.m-video-subtitles{
 	position:absolute;
 	background-color:rgba(0,0,0,0.5);
 	color:white;

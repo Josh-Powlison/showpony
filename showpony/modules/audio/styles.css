@@ -1,12 +1,11 @@
-.m-audio{
+.m-audio-window{
 	left:0;
 	top:0;
 	width:100%;
 	height:100%;
-	object-fit:contain;
 }
 
-.m-audio-subtitle{
+.m-audio-subtitles{
 	position:absolute;
 	background-color:rgba(0,0,0,0.5);
 	color:white;
