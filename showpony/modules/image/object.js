@@ -6,9 +6,18 @@ S.modules.<?php echo 'image'; ?>=new function(){
 	
 	M.window=document.createElement('div');
 	M.window.className='m-img-window';
+	
+	M.container=document.createElement('div');
+	M.container.className='m-img-container';
+	M.window.appendChild(M.container);
+
 	M.image=document.createElement('img');
 	M.image.className='m-img';
-	M.window.appendChild(M.image);
+	M.container.appendChild(M.image);
+
+	M.subtitles=document.createElement('div');
+	M.subtitles.className='m-img-subtitles';
+	M.container.appendChild(M.subtitles);
 	
 	M.play=function(){
 		
@@ -49,28 +58,21 @@ S.modules.<?php echo 'image'; ?>=new function(){
 	}
 	
 	M.displaySubtitles=function(){
-		subtitles.innerHTML='';
+		if(S.currentSubtitles===null){
+			M.subtitles.innerHTML='';
+			return;
+		}
 		
-		subtitles.width=M.window.naturalWidth;
-		subtitles.height=M.window.naturalHeight;
-		
-		var height=content.getBoundingClientRect().height;
-		var width=content.getBoundingClientRect().width;
-		var shrinkPercent=height/M.window.naturalHeight;
-		
-		var newHeight=M.window.naturalHeight*shrinkPercent;
-		var newWidth=M.window.naturalHeight*shrinkPercent;
-
-		subtitles.style.height=newHeight+'px';
-		subtitles.style.width=newWidth+'px';
-		
-		subtitles.style.left=(width-newWidth)/2+'px';
+		M.subtitles.dataset.file=M.currentFile;
+		M.subtitles.innerHTML='';
 		
 		var phrases=S.subtitles[S.currentSubtitles][M.currentFile];
 		var keys=Object.keys(phrases);
 		for(var i=0;i<keys.length;i++){
+			if(phrases[keys[i]].content==='') continue;
+			
 			var block=document.createElement('p');
-			block.className='showpony-sub';
+			block.className='m-img-subtitle';
 			
 			block.innerHTML=phrases[keys[i]].content;
 			
@@ -82,7 +84,7 @@ S.modules.<?php echo 'image'; ?>=new function(){
 			block.style.top=start[1]+'%';
 			block.style.bottom=(100-end[1])+'%';
 			
-			subtitles.appendChild(block);
+			M.subtitles.appendChild(block);
 		}
 	}
 	
@@ -93,12 +95,13 @@ S.modules.<?php echo 'image'; ?>=new function(){
 	
 	/// BUFFERING ///
 	M.image.addEventListener('load',function(){
-		content.classList.remove('s-loading');
 		S.files[M.currentFile].buffered=true;
 		getTotalBuffered();
 		
 		if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
 		
 		M.window.scrollTop=M.window.scrollHeight*(M.currentTime/S.files[M.currentFile].duration);
+		S.displaySubtitles();
+		content.classList.remove('s-loading');
 	});
 }();
