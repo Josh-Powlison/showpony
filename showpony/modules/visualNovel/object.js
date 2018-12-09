@@ -955,20 +955,30 @@ S.modules.visualNovel=new function(){
 								for(let ii=0;ii<attributes.length;ii++){
 									if(attributes[ii][4]) setConstant=true;
 									else{
-										if(attributes[ii][1]==='constant') setConstant=(attributes[ii][3]==='false' ? false : true);
-										else if(attributes[ii][1]==='rate') setRate=parseFloat(attributes[ii][3]);
-										else if(attributes[ii][1]==='basetime') setBaseTime=attributes[ii][3];
+										switch(attributes[ii][1]){
+											case 'constant':
+												setConstant=(attributes[ii][3]==='false' ? false : true);
+												break;
+											case 'rate':
+												setRate=attributes[ii][3];
+												break;
+											case 'basetime':
+												setBaseTime=attributes[ii][3];
+												break;
+										}
 									}
 								}
 								
 								constant=setConstant;
 								
-								if(setBaseTime==='default') setBaseTime=defaultBaseWaitTime;
-								else setBaseTime=parseFloat(setBaseTime);
+								if(setBaseTime!==null){
+									if(setBaseTime==='default') baseWaitTime=defaultBaseWaitTime;
+									else baseWaitTime=parseFloat(setBaseTime);
+								}
 								
-								// Use either the new base time or the rate, whichever exists
-								if(setBaseTime!==null) baseWaitTime=setBaseTime;
-								else if(setRate!==null) baseWaitTime*=setRate;
+								if(setRate!==null){
+									baseWaitTime*=setRate;
+								}
 								
 								break;
 							case 'br':
