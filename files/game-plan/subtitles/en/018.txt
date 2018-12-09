@@ -1,0 +1,24 @@
+16,2 --> 29,17
+It's settled, then!
+
+45,13 --> 66,27
+Sonia Greenwood, 13455 Paradise St.
+Bring lots of art!
+
+38.13,28.91 --> 49.79,35.39
+Huh?
+
+46.65,41.17 --> 62.61,52.8
+Yeah! Be sure to bring lots of your work!
+
+33.49,57.24 --> 45.16,60.33
+But...!
+
+47.8,63.14 --> 65.09,73.65
+You're not busy, are you?
+
+33.49,72.25 --> 45.16,82
+Er, no, but...
+
+45.16,81.36 --> 62.61,92.05
+Great! See you then!

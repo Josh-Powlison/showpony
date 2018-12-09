@@ -1,0 +1,32 @@
+80.08,3.65 --> 93.28,18.02
+You're so quiet!
+Hehe...
+
+34.76,3.96 --> 50.38,13.05
+Do you remember me?
+
+22.88,13.67 --> 40.04,29.91
+Yeah, you're Sonia Greenwood. Everyone knows who you are.
+
+81.62,60.29 --> 98.67,72
+My reputation has preceded me...
+
+40.37,52.6 --> 62.26,64.76
+When you act like that, it's no surprise...
+
+67.87,72.1 --> 87.34,78.16
+Anyway...
+
+75.31,81.89 --> 92.03,94.56
+I just wanted to say hi! You look lonely.
+
+62.26,85.93 --> 73.48,95.44
+I do?
+
+19.25,57.03 --> 34.76,72.1
+Sure! You want to hang out sometime, play a few games?
+
+4.29,81.89 --> 29.59,100
+...maybe.
+I have art lessons in the evening sometimes. You might think they were pretty boring.
+
