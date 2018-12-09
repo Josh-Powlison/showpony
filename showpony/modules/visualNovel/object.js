@@ -5,6 +5,7 @@ S.modules.visualNovel=new function(){
 	M.currentFile=null;
 	M.currentLine=null;
 	M.lines=null;
+	M.loading=0; // Tracks how many items are currently loading
 	
 	M.window=document.createElement('div');
 	M.window.className='m-vn-visual-novel';
@@ -111,9 +112,9 @@ S.modules.visualNovel=new function(){
 		for(var name in objects){
 			objects[name].el.dispatchEvent(new Event('animationend'));
 		}
-		content.classList.add('s-loading');
+		loadingTracker(1);
 		M.window.offsetHeight; // Trigger reflow to flush CSS changes
-		content.classList.remove('s-loading');
+		loadingTracker();
 		
 		// If a continue notice exists, continue!
 		if(M.window.querySelector('.m-vn-continue')){
@@ -173,13 +174,14 @@ S.modules.visualNovel=new function(){
 				
 				// If this is the current keyframe, resolve
 				// if(keyframeSelect===M.currentLine){
-					// content.classList.remove('s-loading');
+					// loadingTracker();
 					// resolve({file:file,time:time});
 					// return;
 				// }
 				
 				runTo=keyframeSelect;
 				
+				content.classList.remove('s-loading');
 				M.readLine(0);
 				S.displaySubtitles();
 				resolve({file:file,time:time});
@@ -202,13 +204,15 @@ S.modules.visualNovel=new function(){
 				// Get keyframes from the waiting points in the text
 				keyframes=[];
 				
-				// Regular text lines and waits can be keyframes
+				// Go through each line
 				for(let i=0;i<M.lines.length;i++){
+					// Look for keyframes
 					if(/^engine\.wait$/.test(M.lines[i])){
 						keyframes.push(i);
 						continue;
 					}
 					
+					// Text lines
 					if(/^(\t+)/.test(M.lines[i])){
 						// See if it's part of a tag
 						// Anything with a space we'll ignore; you should only have self-closing tags or closing tags at the end of the line
@@ -236,6 +240,7 @@ S.modules.visualNovel=new function(){
 				runTo=keyframeSelect;
 				
 				M.currentFile=S.currentFile=file;
+				content.classList.remove('s-loading');
 				M.readLine(0);
 				
 				if(S.files[file].buffered!==true){
@@ -359,6 +364,8 @@ S.modules.visualNovel=new function(){
 		// Run through if we're running to a point; if we're there or beyond though, stop running through
 		if(runTo!==false && M.currentLine>=runTo){
 			
+			loadingTracker(1);
+			
 			// Delete unnecessary target info
 			delete target['engine'];
 			
@@ -408,7 +415,7 @@ S.modules.visualNovel=new function(){
 			runTo=false;
 			
 			M.window.offsetHeight; // Trigger reflow to flush CSS changes
-			content.classList.remove('s-loading');
+			loadingTracker();
 		}
 		
 		/*
@@ -598,6 +605,18 @@ S.modules.visualNovel=new function(){
 		});
 	}
 	
+	function loadingTracker(increase=-1){
+		if(increase.target) increase=-1;
+		M.loading+=increase;
+
+		if(M.loading>0){
+			content.classList.add('s-loading');
+		}else{
+			content.classList.remove('s-loading');
+		}
+	}
+	
+	// Right now, we don't worry about whether or not audio is fully loaded; we don't track that. So audio could be long, and streamed; or even hitch a bit, and we wouldn't prevent the player from running through the KN/VN.
 	M.audio=function(input){
 		const O=this;
 		O.type='audio';
@@ -623,6 +642,7 @@ S.modules.visualNovel=new function(){
 			var play=false;
 			if(!O.el.paused) play=true;
 			
+			// loadingTracker(1);
 			O.el.src='<?php echo $stories_path; ?>resources/audio/'+name+'.'+extension;
 			
 			if(play) O.play();
@@ -671,6 +691,8 @@ S.modules.visualNovel=new function(){
 			M.displaySubtitles();
 		});
 		
+		// O.el.addEventListener('load',loadingTracker);
+		
 		objectAddCommonFunctions(O);
 	}
 	
@@ -691,7 +713,13 @@ S.modules.visualNovel=new function(){
 			if(extension.length>1) extension=extension[1];
 			else extension='jpg';
 			
-			O.el.style.backgroundImage='url("<?php echo $stories_path; ?>resources/backgrounds/'+name+'.'+extension+'")';
+			// Load the image and track loading
+			var img=new Image();
+			loadingTracker(1);
+			img.src='<?php echo $stories_path; ?>resources/backgrounds/'+name+'.'+extension;
+			img.addEventListener('load',loadingTracker);
+			
+			O.el.style.backgroundImage='url("'+img.src+'")';
 		}
 		
 		objectAddCommonFunctions(O);
@@ -733,7 +761,14 @@ S.modules.visualNovel=new function(){
 					var thisImg=document.createElement('div');
 					thisImg.className='m-vn-character-image';
 					thisImg.dataset.image=image;
-					thisImg.style.backgroundImage='url("<?php echo $stories_path; ?>resources/characters/'+O.name.split('#')[0]+'/'+image+'")';
+					
+					// Load the image and track loading
+					var img=new Image();
+					loadingTracker(1);
+					img.src='<?php echo $stories_path; ?>resources/characters/'+O.name.split('#')[0]+'/'+image;
+					img.addEventListener('load',loadingTracker);
+					
+					thisImg.style.backgroundImage='url("'+img.src+'")';
 					
 					O.el.children[layer].appendChild(thisImg);
 					
@@ -1046,7 +1081,7 @@ S.modules.visualNovel=new function(){
 					letters+=input[i];
 				
 					// Handle punctuation- at spaces we check, if constant isn't true
-					if(i!==input.length && (input[i]===' ') && !constant){
+					if(input[i]===' ' && !constant && i!==input.length){
 						var testLetter=letters.length-2;
 						
 						/*
@@ -1069,6 +1104,9 @@ S.modules.visualNovel=new function(){
 								break;
 							case ',':
 								waitTime*=10;
+								break;
+							default:
+								// No punctuation found
 								break;
 						}
 					}
