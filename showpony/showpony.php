@@ -47,11 +47,6 @@ require 'get-file-list.php';
 // Get the query from the paths
 $name=preg_match('/[^\/]+(?=\/?$)/',$stories_path,$match) ? $match[0] : 'story';
 
-// Load modules
-foreach(array_keys($media) as $moduleName){
-	require ROOT.'/modules/'.$moduleName.'/functions.php';
-}
-
 // Pass any echoed statements or errors to the response object
 $message=ob_get_clean();
 

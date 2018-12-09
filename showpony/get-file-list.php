@@ -7,6 +7,8 @@ $media=[];
 $files=[];
 $releaseDates=[];
 $success=true;
+$unhideSubtitles=[];
+$unhideSubfiles=[];
 
 // Go to the story's file directory
 chdir('../'.$stories_path);
@@ -32,6 +34,8 @@ function readFolder($folder){
 	global $media;
 	global $files;
 	global $releaseDates;
+	global $unhideSubtitles;
+	global $unhideSubfiles;
 	global $success;
 	
 	// Get the section's title
@@ -143,15 +147,11 @@ function readFolder($folder){
 		// If the module isn't supported, skip over it
 		if($fileInfo['module']===null) continue;
 		
-		/*
 		// If this file has been unhid, unhide related files
 		if($unhid){
-			// Unhide subtitles
-			unhideFile('subtitles/'.$folder.'/'.$fileInfo['title'].'.vtt');
-			
-			// Unhide children files
-			call_user_func($fileInfo['module'].'UnhideChildren',$folder.'/'.$file);
-		}*/
+			$unhideSubtitles[]=count($files)+1;
+			$unhideSubfiles[]=[$fileInfo['module'],$folder.'/'.$file];
+		}
 		
 		// Add to the items in the module, or set to 1 if it doesn't exist yet
 		if(isset($media[$fileInfo['module']])) $media[$fileInfo['module']]++;
@@ -163,5 +163,27 @@ function readFolder($folder){
 }
 
 readFolder($language);
+
+// Load modules
+foreach(array_keys($media) as $moduleName){
+	require ROOT.'/modules/'.$moduleName.'/functions.php';
+}
+
+// Unhide subtitles
+if(file_exists('subtitles')){
+	foreach(scandir('subtitles') as $subtitleFolder){
+		if($subtitleFolder[0]=='.') continue;
+		
+		foreach($unhideSubtitles as $fileNumber){
+			unhideFile('subtitles/'.$subtitleFolder.'/'.str_pad($fileNumber,4,'0',STR_PAD_LEFT).'.vtt');
+		}
+	}
+}
+
+// Unhide children files
+foreach($unhideSubfiles as $subfile){
+	// die('SUBFILES TO UNHIDE '.json_encode($subfile));
+	call_user_func($subfile[0].'UnhideChildren',$subfile[1]);
+}
 
 ?>
