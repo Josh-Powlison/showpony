@@ -63,7 +63,7 @@ S.modules.audio=new function(){
 		var keys=Object.keys(phrases);
 		for(var i=0;i<keys.length;i++){
 			
-			// Break if we're before the start- all next subtitles wlil be past too
+			// Break if we're before the start- all next subtitles will be past too
 			if(M.currentTime<timeToSeconds(phrases[keys[i]].start)) break;
 			
 			// Continue if we're after the end

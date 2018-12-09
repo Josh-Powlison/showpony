@@ -722,10 +722,10 @@ function userScrub(event=null,start=false){
 }
 
 S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
-	S.currentSubtitles=newSubtitles;
 	
 	// Display the subtitles if they're loaded in
 	if(S.subtitles[newSubtitles] || newSubtitles===null){
+		S.currentSubtitles=newSubtitles;
 		S.modules[S.currentModule].displaySubtitles();
 	// Otherwise, load them
 	}else{
@@ -764,13 +764,14 @@ S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 						
 						// The first line is a name; otherwise, it's content
 						if(k===0){
-							name=chunk[k];
+							name=chunk[k].replace(/\s+/,'');
 						}else{
 							// Add a <br> tag if this is an additional line
 							if(phrase.content.length) phrase.content+='<br>';
 							phrase.content+=chunk[k];
 						}
 					}
+					
 					grouping[name]=phrase;
 				}
 				
@@ -778,7 +779,7 @@ S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 			}
 			
 			S.subtitles[newSubtitles]=filesArray;
-			
+			S.currentSubtitles=newSubtitles;
 			S.modules[S.currentModule].displaySubtitles();
 		})
 		.catch(response=>{

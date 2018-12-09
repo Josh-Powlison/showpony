@@ -9,6 +9,10 @@ S.modules.visualNovel=new function(){
 	M.window=document.createElement('div');
 	M.window.className='m-vn-visual-novel';
 	
+	M.subtitles=document.createElement('p');
+	M.subtitles.className='m-vn-subtitles';
+	M.window.appendChild(M.subtitles);
+	
 	var runTo=false;
 	
 	var continueNotice=document.createElement('div');
@@ -167,8 +171,6 @@ S.modules.visualNovel=new function(){
 				if(keyframeSelect>=keyframes.length) keyframeSelect=keyframes[keyframes.length-1];
 				else keyframeSelect=keyframes[keyframeSelect];
 				
-				console.log(keyframeSelect);
-				
 				// If this is the current keyframe, resolve
 				// if(keyframeSelect===M.currentLine){
 					// content.classList.remove('s-loading');
@@ -179,6 +181,7 @@ S.modules.visualNovel=new function(){
 				runTo=keyframeSelect;
 				
 				M.readLine(0);
+				S.displaySubtitles();
 				resolve({file:file,time:time});
 				return;
 			}
@@ -240,13 +243,49 @@ S.modules.visualNovel=new function(){
 					getTotalBuffered();
 				}
 				
+				S.displaySubtitles();
 				resolve({file:file,time:time});
 			});
 		});
 	}
 	
 	M.displaySubtitles=function(){
-		// /NOTHING YET!
+		// When an audio file updates its time, display subtitles for it
+		if(S.currentSubtitles===null){
+			M.subtitles.style.display='none';
+			return;
+		}
+		
+		var text='';
+		
+		var phrases=S.subtitles[S.currentSubtitles][M.currentFile];
+		var keys=Object.keys(phrases);
+		for(var i=0;i<keys.length;i++){
+			
+			// Get time in overall VN; time in element; 
+			if(/^\d+$/.test(keys[i])) var checkTime=M.currentTime;
+			else if(objects[keys[i]] && objects[keys[i]].type==='audio' && objects[keys[i]].playing){
+				var checkTime=objects[keys[i]].el.currentTime;
+			}else continue;
+			
+			// Continue if we're before the start- upcoming subtitles might be fore elements
+			if(checkTime<timeToSeconds(phrases[keys[i]].start)) continue;
+			
+			// Continue if we're after the end
+			if(checkTime>timeToSeconds(phrases[keys[i]].end)) continue;
+			
+			M.subtitles.innerHTML=phrases[keys[i]].content;
+			M.subtitles.style.display='';
+			return;
+		}
+		
+		if(text){
+			M.subtitles.innerHTML=phrase.content;
+			M.subtitles.style.display='';
+		}
+		else{
+			M.subtitles.style.display='none';
+		}
 	}
 	
 	var operations={
@@ -626,6 +665,10 @@ S.modules.visualNovel=new function(){
 		
 		O.el.addEventListener('ended',function(){
 			if(!O.el.loop) O.playing=false;
+		});
+		
+		O.el.addEventListener('timeupdate',function(){
+			M.displaySubtitles();
 		});
 		
 		objectAddCommonFunctions(O);
