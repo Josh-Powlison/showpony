@@ -453,7 +453,7 @@ function timeUpdate(time){
 	S.currentTime=parseFloat(S.modules[S.currentModule].currentTime);
 	for(let i=0;i<S.currentFile;i++) S.currentTime+=parseFloat(S.files[i].duration);
 	
-	if(scrubbing!==true) scrub(null,false);
+	if(scrubbing!==true && scrubbing!=='out') scrub(null,false);
 	
 	// Update the querystring
 	searchParams.set(S.query, S.currentTime|0);
@@ -583,8 +583,9 @@ function scrub(inputPercent=null,loadFile=false){
 		
 		/// LOADING THE SELECTED FILE ///
 		if(loadFile){
+			console.log('Hello',scrubbing);
 			clearTimeout(scrubLoad);
-			if(checkBuffered(time) || scrubbing===false) S.to({time:time});
+			if(checkBuffered(time) || scrubbing==='out') S.to({time:time});
 			else{
 				// Load the file if we sit in the same spot for a moment
 				scrubLoad=setTimeout(S.to,400,{time:time});
@@ -647,7 +648,8 @@ function scrub(inputPercent=null,loadFile=false){
 			
 			if(i<S.upcomingFiles.length-1) upcoming+='<br>';
 		}
-		S.window.querySelector('.s-upcoming-file').innerHTML=upcoming;
+		
+		S.window.querySelector('.s-upcoming-file').innerHTML='<p>'+upcoming+'</p>';
 	}
 	
 	if(info!==overlayText.innerHTML) overlayText.innerHTML=info;
@@ -683,7 +685,7 @@ function userScrub(event=null,start=false){
 		}
 			
 		// You have to swipe farther than you move the cursor to adjust the position
-		if(scrubbing!==true){
+		if(scrubbing!==true && scrubbing!=='out'){
 			if(input==='joystick' || Math.abs(scrubbing-pos)>screen.width/(input==='touch' ? 20 : 100)){
 				// Don't wait to start a series of actions
 				clearTimeout(actionTimeout);
@@ -708,8 +710,7 @@ function userScrub(event=null,start=false){
 	}else{
 		// Drag on the menu to go to any part
 		
-		if(scrubbing===true){
-			// If we don't preload while scrubbing, load the file now that we've stopped scrubbing
+		if(scrubbing===true || scrubbing==='out'){
 			if(!checkBuffered(S.duration*scrubPercent)){
 				// Load the file our pointer's on
 				scrub(scrubPercent,true);
@@ -871,7 +872,7 @@ function gamepadControls(){
 	if(S.gamepad.analogLPress===-2){
 		overlay.style.opacity=''; // Hide the overlay
 		// If we're not scrubbing, set scrubbing to false and return
-		if(scrubbing!==true){
+		if(scrubbing!==true && scrubbing!=='out'){
 			scrubbing=false;
 		}else{
 			userScrub(S.gamepad.analogL);
@@ -1295,7 +1296,7 @@ S.progress=function(){
 	S.modules[S.currentModule].progress();
 }
 
-// On clicking, we open the menu- on the overlay. But we need to be able to disable moving the bar outside the overlay, so we still activate menu here.
+// We need to be able to disable moving the bar outside the overlay, so we set this event listener on the browser window, not just the Showpony window.
 window.addEventListener('click',function(event){
 	// If we just ended scrubbing, don't toggle the menu at all
 	if(scrubbing==='out'){
@@ -1401,7 +1402,7 @@ window.addEventListener('mouseup',function(event){
 	actionInterval=null;
 	
 	// If we're not scrubbing, set scrubbing to false and return
-	if(scrubbing!==true){
+	if(scrubbing!==true && scrubbing!=='out'){
 		scrubbing=false;
 		return;
 	}
