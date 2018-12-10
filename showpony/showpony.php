@@ -121,8 +121,8 @@ S.window.innerHTML=`
 		<button class="s-pause s-hide-on-hold"></button>
 		<div class="s-progress-bar" style="left:0%;"></div>
 		<canvas class="s-overlay-buffer" width="1000" height="1"></canvas>
-		<p class="s-overlay-text"><span>0</span><span>0</span></p>
-		<p class="s-upcoming-file"></p>
+		<div class="s-overlay-text"></div>
+		<div class="s-upcoming-file"></div>
 		<div class="s-buttons s-hide-on-hold">
 			<button class="s-button s-button-comments" alt="Comments" title="Comments"></button>
 			<button class="s-button s-button-language" alt="Language" title="Language"></button>
