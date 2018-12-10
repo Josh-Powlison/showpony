@@ -39,7 +39,8 @@ $name=preg_match('/[^\/]+(?=\/?$)/',$stories_path,$match) ? $match[0] : 'story';
 $saveName=toCamelCase($name).'Data';
 
 // 0 is save system; 1 is save name; 2 is language
-$data=explode('&',$_COOKIE[$saveName] ?? '&&');
+if(!empty($_COOKIE[$saveName])) $data=explode('&',$_COOKIE[$saveName]);
+else $data=[null,null,null];
 
 $language=$_GET['lang'] ?? $data[2] ?? DEFAULT_LANGUAGE;
 

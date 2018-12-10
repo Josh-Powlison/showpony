@@ -15,8 +15,8 @@ $unhideSubtitles=[];
 $unhideSubfiles=[];
 
 if(!file_exists('../'.$stories_path)){
-	http_response_code(404);
-	die('404: Story folder don\'t exist!');
+	http_response_code(500);
+	die('500: Story folder doesn\'t exist!');
 }
 
 // Go to the story's file directory
@@ -52,8 +52,8 @@ function readFolder($folder){
 	$sectionTitle=$sectionTitle[1] ?? null;
 	
 	if(!file_exists($folder)){
-		http_response_code(404);
-		die('404: A story folder doesn\'t exist in that language!');
+		http_response_code(500);
+		die('500: A story folder doesn\'t exist in that language!');
 	}
 	
 	// Run through the files

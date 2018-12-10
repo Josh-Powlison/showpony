@@ -9,8 +9,8 @@ $stories_path=$_GET['path'] ?? DEFAULT_STORIES_PATH;
 $language=$_GET['lang'] ?? DEFAULT_LANGUAGE;
 
 if(!file_exists('../'.$stories_path.'/subtitles/'.$language)){
-	http_response_code(404);
-	die('404: Subtitles don\'t exist in that language!');
+	http_response_code(500);
+	die('500: Subtitles don\'t exist in that language!');
 }
 
 chdir('../'.$stories_path.'/subtitles/'.$language);
