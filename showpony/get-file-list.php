@@ -1,5 +1,12 @@
 <?php
 
+if(!empty($_GET['return'])){
+	require 'settings.php';
+
+	$stories_path=DEFAULT_PATH.($_GET['path'] ?? '');
+	$language=$_GET['lang'] ?? DEFAULT_LANGUAGE;
+}
+
 $media=[];
 $files=[];
 $releaseDates=[];
@@ -181,6 +188,10 @@ if(file_exists('subtitles')){
 foreach($unhideSubfiles as $subfile){
 	// die('SUBFILES TO UNHIDE '.json_encode($subfile));
 	call_user_func($subfile[0].'UnhideChildren',$subfile[1]);
+}
+
+if(!empty($_GET['return'])){
+	die(json_encode($files));
 }
 
 ?>

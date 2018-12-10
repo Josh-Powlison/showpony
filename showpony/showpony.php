@@ -1066,7 +1066,7 @@ if(supportedLanguages.length>1){
 S.changeLanguage=function(newLanguage=<?php echo json_encode($language); ?>){
 	if(S.currentLanguage===newLanguage) return;
 	
-	fetch('showpony/get-language-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
+	fetch('showpony/get-file-list.php?return=true&path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
 	.then(response=>{return response.json();})
 	.then(json=>{
 		S.files=json;
