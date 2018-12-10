@@ -432,7 +432,7 @@ S.modules.visualNovel=new function(){
 		
 		// Determine type
 		var type='character';
-		if(vals.length===1) type='background';
+		if(vals.length===1) type='image';
 		if(/play|pause|stop|loop/.test(command)) type='audio';
 		if(/go|end|runEvent|wait/.test(command)) type='engine';
 		
@@ -696,12 +696,12 @@ S.modules.visualNovel=new function(){
 		objectAddCommonFunctions(O);
 	}
 	
-	M.background=function(input){
+	M.image=function(input){
 		const O=this;
-		O.type='background';
+		O.type='image';
 		
 		O.el=document.createElement('div');
-		O.el.className='m-vn-background';
+		O.el.className='m-vn-image';
 		O.el.dataset.name=input;
 		O.name=input;
 		M.window.appendChild(O.el);
@@ -716,7 +716,7 @@ S.modules.visualNovel=new function(){
 			// Load the image and track loading
 			var img=new Image();
 			loadingTracker(1);
-			img.src='<?php echo $stories_path; ?>resources/backgrounds/'+name+'.'+extension;
+			img.src='<?php echo $stories_path; ?>resources/images/'+name+'.'+extension;
 			img.addEventListener('load',loadingTracker);
 			
 			O.el.style.backgroundImage='url("'+img.src+'")';
