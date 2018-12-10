@@ -1027,7 +1027,7 @@ var supportedLanguages=<?php
 
 		$languages[]=[
 			'short'	=>	$file
-			,'long'	=>	Locale::getDisplayLanguage($file)
+			,'long'	=>	extension_loaded('intl') ? (Locale::getDisplayLanguage($file)) : $file
 		];
 	}
 	
@@ -1093,7 +1093,7 @@ var supportedSubtitles=<?php
 			
 			$subtitles[]=[
 				'short'	=>	$file
-				,'long'	=>	Locale::getDisplayLanguage($file)
+				,'long'	=>	extension_loaded('intl') ? (Locale::getDisplayLanguage($file)) : $file
 			];
 		}
 	}
