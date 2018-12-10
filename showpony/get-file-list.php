@@ -51,11 +51,6 @@ function readFolder($folder){
 	preg_match('/\(([^\/]+)\)$/',$folder,$sectionTitle);
 	$sectionTitle=$sectionTitle[1] ?? null;
 	
-	if(!file_exists($folder)){
-		http_response_code(500);
-		die('500: A story folder doesn\'t exist in that language!');
-	}
-	
 	// Run through the files
 	foreach(scandir($folder) as &$file){
 		// Ignore hidden files and folders
@@ -173,6 +168,16 @@ function readFolder($folder){
 		
 		// Add the file to the array
 		$files[]=$fileInfo;
+	}
+}
+
+// If the language requested doesn't exist, set it to the DEFAULT_LANGUAGE
+if(!file_exists($language)){
+	if(!file_exists(DEFAULT_LANGUAGE)){
+		http_response_code(500);
+		die('500: A story folder doesn\'t exist in that language!');
+	}else{
+		$language=DEFAULT_LANGUAGE;
 	}
 }
 
