@@ -1,8 +1,5 @@
 <?php
 
-$stories_path=DEFAULT_PATH.($_GET['path'] ?? '');
-$language=$_GET['lang'] ?? DEFAULT_LANGUAGE;
-
 $media=[];
 $files=[];
 $releaseDates=[];

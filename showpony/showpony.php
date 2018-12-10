@@ -31,6 +31,18 @@ require 'settings.php';
 // TESTING ADMIN
 // $_SESSION['showpony_admin']=false;
 
+$stories_path=DEFAULT_PATH.($_GET['path'] ?? '');
+
+// Get the query from the paths
+$name=preg_match('/[^\/]+(?=\/?$)/',$stories_path,$match) ? $match[0] : 'story';
+
+$saveName=toCamelCase($name).'Data';
+
+// 0 is save system; 1 is save name; 2 is language
+$info=explode('&',$_COOKIE[$saveName] ?? '&&');
+
+$language=$_GET['lang'] ?? $info[2] ?? DEFAULT_LANGUAGE;
+
 function toCamelCase($input){
 	return lcfirst(
 		str_replace('-','',
@@ -43,9 +55,6 @@ function toCamelCase($input){
 ob_start();
 
 require 'get-file-list.php';
-
-// Get the query from the paths
-$name=preg_match('/[^\/]+(?=\/?$)/',$stories_path,$match) ? $match[0] : 'story';
 
 // Pass any echoed statements or errors to the response object
 $message=ob_get_clean();
@@ -93,13 +102,13 @@ S.window=document.createElement('div');
 S.window.className='s';
 S.window.tabIndex=0;
 S.files=<?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
-S.name='<?php echo toCamelCase($name); ?>';
+S.name=<?php echo json_encode(toCamelCase($name)); ?>;
 S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 S.paused=false;
 S.modules={};
 S.message=<?php echo json_encode($message); ?>;
 S.auto=false; // false, or float between 0 and 10
-S.path='<?php echo $stories_path; ?>';
+S.path=<?php echo json_encode($stories_path); ?>;
 S.upcomingFiles=<?php echo json_encode($releaseDates); ?>;
 
 S.window.innerHTML=`
@@ -924,14 +933,11 @@ content.classList.add('s-loading');
 // Priority: Newest > Default Start
 
 var start=0;
-S.saveName=S.name+'Data';
-S.saveSystem=false;
-// S.saveSystem=false;
-// S.saveSystem='remote';
-
+S.saveName=<?php echo json_encode($saveName); ?>;
 
 S.saves={
 	currentSave:'bookmark1'
+	,language:S.currentLanguage
 	,local:{}
 	,system:null //|| 'local' || 'HeyBard' || etc
 	,timestamp:Date.now()
@@ -995,6 +1001,15 @@ S.save=function(){
 	}
 	
 	localStorage.setItem(S.saveName,JSON.stringify(S.saves));
+	
+	// Some information is saved to cookies so PHP can access them. We compress it for simplicity and using minimal cookie space.
+	document.cookie=S.saveName+'='
+		+encodeURIComponent(
+			S.saves.system
+			+'&'+S.currentSave
+			+'&'+S.currentLanguage
+		)
+	;
 }
 
 S.load();
@@ -1049,18 +1064,14 @@ if(supportedLanguages.length>1){
 }
 
 S.changeLanguage=function(newLanguage=<?php echo json_encode($language); ?>){
-	S.currentLanguage=newLanguage;
+	if(S.currentLanguage===newLanguage) return;
 	
 	fetch('showpony/get-language-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
 	.then(response=>{return response.json();})
 	.then(json=>{
 		S.files=json;
-		if(start){
-			S.to({time:start});
-			start=null;
-		}else{
-			S.to({time:S.currentTime});
-		}
+		S.currentLanguage=newLanguage;
+		S.to({time:S.currentTime});
 	});
 }
 
@@ -1183,13 +1194,13 @@ addBookmark({name:'Local',system:'local',type:'default'});
 
 /////////////////
 
-S.changeLanguage(S.currentLanguage);
-
 var page=searchParams.get(S.query);
 if(page) start=page;
 
 // Pause the Showpony
 S.pause();
+S.to({time:start});
+start=null;
 
 // We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
 
