@@ -727,7 +727,6 @@ function userScrub(event=null,start=false){
 }
 
 S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
-	
 	// Display the subtitles if they're loaded in
 	if(S.subtitles[newSubtitles] || newSubtitles===null){
 		S.currentSubtitles=newSubtitles;
@@ -788,7 +787,8 @@ S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 			S.modules[S.currentModule].displaySubtitles();
 		})
 		.catch(response=>{
-			console.log(response);
+			S.currentSubtitles=null;
+			alert('Subtitles not found!');
 		});
 	}
 }
