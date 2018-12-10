@@ -14,6 +14,11 @@ $success=true;
 $unhideSubtitles=[];
 $unhideSubfiles=[];
 
+if(!file_exists('../'.$stories_path)){
+	http_response_code(404);
+	die('404: Story folder don\'t exist!');
+}
+
 // Go to the story's file directory
 chdir('../'.$stories_path);
 
@@ -45,6 +50,11 @@ function readFolder($folder){
 	// Get the section's title
 	preg_match('/\(([^\/]+)\)$/',$folder,$sectionTitle);
 	$sectionTitle=$sectionTitle[1] ?? null;
+	
+	if(!file_exists($folder)){
+		http_response_code(404);
+		die('404: A story folder doesn\'t exist in that language!');
+	}
 	
 	// Run through the files
 	foreach(scandir($folder) as &$file){
