@@ -39,9 +39,9 @@ $name=preg_match('/[^\/]+(?=\/?$)/',$stories_path,$match) ? $match[0] : 'story';
 $saveName=toCamelCase($name).'Data';
 
 // 0 is save system; 1 is save name; 2 is language
-$info=explode('&',$_COOKIE[$saveName] ?? '&&');
+$data=explode('&',$_COOKIE[$saveName] ?? '&&');
 
-$language=$_GET['lang'] ?? $info[2] ?? DEFAULT_LANGUAGE;
+$language=$_GET['lang'] ?? $data[2] ?? DEFAULT_LANGUAGE;
 
 function toCamelCase($input){
 	return lcfirst(
