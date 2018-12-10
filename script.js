@@ -8,30 +8,9 @@ document.getElementById("example-list").addEventListener("change",function(){
 	chooseStory(this.value);
 });
 
-// Add event listeners to them all
-for(var key in showponies){
-	showponies[key].window.addEventListener('timeupdate',function(event){
-		if(this===showponies[currentShowpony].window){
-			document.querySelector('[data-value="currentTime"]').innerHTML=event.detail.time;
-			
-			document.querySelector('[data-value="currentFile"]').innerHTML=event.detail.file;
-		}
-	});
-	
-	showponies[key].window.addEventListener('play',function(event){
-		if(this===showponies[currentShowpony].window){
-			document.querySelector('[data-value="paused"]').innerHTML=showponies[currentShowpony].paused;
-			// document.querySelector('[data-obj-print-value="paused"]').innerHTML='<em>'+(showponies[currentShowpony].paused ? 'true' : 'false')+'</em>';
-		}
-	});
-	
-	showponies[key].window.addEventListener('pause',function(event){
-		if(this===showponies[currentShowpony].window){
-			document.querySelector('[data-value="paused"]').innerHTML=showponies[currentShowpony].paused;
-			// document.querySelector('[data-obj-print-value="paused"]').innerHTML=='<em>'+(showponies[currentShowpony].paused ? 'true' : 'false')+'</em>';
-		}
-	});
-}
+document.getElementById('refreshPrint').addEventListener('click',function(){
+	printer.print(showponies[currentShowpony]);
+});
 
 // Initial setup for Showponies
 var keys=Object.keys(showponies);
@@ -81,7 +60,7 @@ function chooseStory(id){
 }
 
 var printer=new ObjPrint({
-window:document.getElementById("code")
+window:document.getElementById("properties")
 ,explanationWindow:document.getElementById("propertyExplanation")
 ,properties:{
 	'auto':								'Whether the Showpony will automatically progress. Defaults to <em>false</em>.'
