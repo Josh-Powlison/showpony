@@ -1073,6 +1073,10 @@ S.changeLanguage=function(newLanguage=<?php echo json_encode($language); ?>){
 	.then(json=>{
 		S.files=json;
 		S.currentLanguage=newLanguage;
+		
+		// Need to set this to -1 to reload the current file
+		S.modules[S.currentModule].currentFile=-1;
+		
 		S.to({time:S.currentTime});
 	});
 }
