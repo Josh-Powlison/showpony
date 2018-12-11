@@ -373,38 +373,60 @@ S.modules.visualNovel=new function(){
 			
 			// Get rid of objects that aren't in target
 			for(var name in objects){
-				if(!target[name] || target[name].type!==objects[name].type){
-					objects[name].remove();
+				//Get the parent's name
+				var parentName=/[^\.]+/.exec(name);
+				if(parentName!==null) parentName=parentName[0];
+				else parentName=name;
+				
+				if(objects[parentName] && (!target[parentName] || target[parentName].type!==objects[parentName].type)){
+					objects[parentName].remove();
 				}
 				
 			};
 			
 			// Go through each target; add nonexisting elements and update styles
 			for(var name in target){
+				//Get the parent's name
+				var parentName=/[^\.]+/.exec(name);
+				if(parentName!==null) parentName=parentName[0];
+				else parentName=name;
+				
 				// Make the remaining objects
-				if(typeof(objects[name])==='undefined'){
-					objects[name]=new M[target[name].type](name);
+				if(typeof(objects[parentName])==='undefined'){
+					objects[parentName]=new M[target[parentName].type](parentName);
+				}
+				
+				// console.log('INFO HERE',parentName,objects[name],
+				
+				// Get the main object or subobject
+				var thisObject=objects[parentName];
+				var subObjects=name.split('.');
+				for(var i=1;i<subObjects.length;i++){
+					thisObject=thisObject[subObjects[i]];
 				}
 				
 				// Reset the object's custom CSS
-				objects[name].style();
+				thisObject.style();
 				
 				// Go through the object's functions and reset them to their base or passed values
 				for(var command in target[name]){
 					// Skip over "remove" function- we don't want to run that one :P
 					if(command==='remove') continue;
 					
+					// Type is saved for creating the object, but isn't useful here
+					if(command==='type') continue;
+					
 					// If playing but shouldn't loop: stop, don't play
 					if(command==='play' && (!target[name].loop || target[name].loop==='false')){
-						objects[name].stop();
+						thisObject.stop();
 						continue;
 					}
 					
-					if(typeof(objects[name][command])==='function'){
+					if(typeof(thisObject[command])==='function'){
 						if(typeof(target[name][command])==='undefined'){
-							objects[name][command]();
+							thisObject[command]();
 						}else{
-							objects[name][command](target[name][command]);
+							thisObject[command](target[name][command]);
 						}
 					}
 				}
@@ -426,9 +448,11 @@ S.modules.visualNovel=new function(){
 		*/
 		
 		// Determine command
-		var command=/\..+/.exec(vals[0]);
+		var command=/\.[^\.]+$/.exec(vals[0]);
 		if(!command) command='content';
 		else command=command[0].replace('.','');
+		
+		console.log('COMMAND',command);
 		
 		// Determine type
 		var type='character';
@@ -437,12 +461,21 @@ S.modules.visualNovel=new function(){
 		if(/go|end|runEvent|wait/.test(command)) type='engine';
 		
 		// Determine name
-		var name=/^[^\.\t]+/.exec(vals[0]);
-		if(name) name=name[0]
-		else{
-			name='textbox';
+		if(vals[0]===''){
+			var name='textbox';
 			type='textbox';
+		}else{
+			// Get rid of the final command (if one exists)
+			var name=vals[0].replace(/\.[^\.]+$/,'');
 		}
+		
+		console.log('NAME',name);
+		
+		var parentName=/[^\.]+/.exec(name);
+		if(parentName!==null) parentName=parentName[0];
+		else parentName=name;
+		
+		console.log('INFO',name,command,vals);
 		
 		// If we're running through to a point, add the info to the target
 		if(runTo!==false && type!=='engine'){
@@ -492,17 +525,31 @@ S.modules.visualNovel=new function(){
 		
 		if(type==='engine'){
 			// Engine command
-			M[command](vals[1]);
-			return;
+			var thisObject=M;
 		}else{
 			// If an object with the name doesn't exist, make it!
-			if(!objects[name]){
-				objects[name]=new M[type](name);
+			if(!objects[parentName]){
+				objects[parentName]=new M[type](parentName);
 			}
 			
-			// Object command
-			objects[name][command](vals[1]);
+			var thisObject=objects[parentName];
 		}
+		
+		// Get the main object or subobject
+		var subObjects=name.split('.');
+		for(var i=1;i<subObjects.length;i++){
+			if(thisObject[subObjects[i]].type){
+				thisObject=thisObject[subObjects[i]];
+				continue;
+			}
+			
+			break;
+		}
+		
+		thisObject[command](vals[1]);
+		
+		// Don't continue if ran an engine function
+		if(type==='engine') return;
 		
 		// Update the scrubbar if the frame we're on is a keyframe
 		if(runTo===false && keyframes.includes(M.currentLine)){
@@ -735,6 +782,54 @@ S.modules.visualNovel=new function(){
 		O.name=input;
 		
 		M.window.appendChild(O.el);
+		
+		O.layer=function(input){
+			const L=this;
+			L.type='layer';
+			
+			L.el=document.createElement('div');
+			L.el.dataset.name=input;
+			L.name=input;
+			
+			objects[O.name+'.'+L.name]=L;
+			
+			O.el.appendChild(L.el);
+			
+			L.content=function(input,preloading=false){
+				// If the image doesn't exist, add it!
+				if(!L.el.querySelector('div[data-image="'+input+'"]')){
+					// Add a layer image
+					var thisImg=document.createElement('div');
+					thisImg.className='m-vn-character-image';
+					thisImg.dataset.image=input;
+					
+					// Load the image and track loading
+					var img=new Image();
+					loadingTracker(1);
+					img.src='<?php echo $stories_path; ?>resources/characters/'+O.name.split('#')[0]+'/'+input;
+					img.addEventListener('load',loadingTracker);
+					
+					thisImg.style.backgroundImage='url("'+img.src+'")';
+					
+					L.el.appendChild(thisImg);
+				}
+				
+				// If we're not preloading, show the right image!
+				if(!preloading){
+					// Set the matching images' opacity to 1, and all the others to 0 (visibility:hidden, display:none would result in flashing images on some browsers)
+					var images=L.el.children;
+					for(let i=0;i<images.length;i++){
+						if(images[i].dataset.image===input){
+							 images[i].style.opacity=1;
+						}else{
+							images[i].style.opacity=0;
+						}
+					}
+				}
+			}
+			
+			objectAddCommonFunctions(L);
+		}
 
 		O.content=function(input,preloading=false){
 			// Character level
@@ -752,40 +847,10 @@ S.modules.visualNovel=new function(){
 				
 				// If the layer doesn't exist, add it!
 				if(!O.el.children[layer]){
-					O.el.appendChild(document.createElement('div'));
+					O['layer'+i]=new O.layer(O.name+'Layer'+i);
 				}
 				
-				// If the image doesn't exist, add it!
-				if(!O.el.children[layer].querySelector('div[data-image="'+image+'"]')){
-					// Add a layer image
-					var thisImg=document.createElement('div');
-					thisImg.className='m-vn-character-image';
-					thisImg.dataset.image=image;
-					
-					// Load the image and track loading
-					var img=new Image();
-					loadingTracker(1);
-					img.src='<?php echo $stories_path; ?>resources/characters/'+O.name.split('#')[0]+'/'+image;
-					img.addEventListener('load',loadingTracker);
-					
-					thisImg.style.backgroundImage='url("'+img.src+'")';
-					
-					O.el.children[layer].appendChild(thisImg);
-					
-					if(preloading) thisImg.style.opacity=0;
-				}
-				
-				if(preloading) continue;
-				
-				// Set the matching images' opacity to 1, and all the others to 0 (visibility:hidden, display:none would result in flashing images on some browsers)
-				var images=O.el.children[layer].children;
-				for(let ii=0;ii<images.length;ii++){
-					if(images[ii].dataset.image===image){
-						 images[ii].style.opacity=1;
-					}else{
-						images[ii].style.opacity=0;
-					}
-				}
+				O['layer'+i].content(image);
 			}
 		}
 		
