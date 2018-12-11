@@ -1406,6 +1406,9 @@ window.addEventListener('mouseup',function(event){
 	actionTimeout=null;
 	actionInterval=null;
 	
+    scrubbing=false;
+    
+    /*
 	// If we're not scrubbing, set scrubbing to false and return
 	if(scrubbing!==true && scrubbing!=='out'){
 		scrubbing=false;
@@ -1417,6 +1420,7 @@ window.addEventListener('mouseup',function(event){
 	
 	scrubbing='out';
 	S.window.classList.remove('s-hold');
+    */
 });
 
 // On mousedown, we prepare to move the cursor (but not over overlay buttons)
