@@ -388,6 +388,7 @@ S.modules.visualNovel=new function(){
 				
 				// Reset the object's custom CSS
 				objects[name].style();
+				objects[name].class();
 				
 				// Go through the object's functions and reset them to their base or passed values
 				for(var command in target[name]){
@@ -592,6 +593,11 @@ S.modules.visualNovel=new function(){
 				
 				O.el.style.animation=animationSpeed[0].split(':')[1]+'s forwards '+cssName;
 			}
+		}
+		
+		var baseClass=O.el.className;
+		O.class=function(className=''){
+			O.el.className=baseClass+' '+className;
 		}
 		
 		// Add the animation end function
