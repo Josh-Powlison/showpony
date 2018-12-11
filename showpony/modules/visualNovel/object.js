@@ -1056,6 +1056,9 @@ S.modules.visualNovel=new function(){
 											
 											// We don't want to run S.input here by clicking on a button
 											event.stopPropagation();
+											
+											// Focus again on the window so keyboard shortcuts work
+											S.window.focus();
 										});
 									}else{
 										// Set data to the defaults of these, in case the user just clicks through
