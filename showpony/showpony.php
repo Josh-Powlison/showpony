@@ -1275,22 +1275,6 @@ S.window.addEventListener(
 	}
 );
 
-// Scrolling only works on fullscreen
-S.window.addEventListener('wheel',function(event){
-	/*if(event.ctrlKey || !S.fullscreen) return;
-	
-	if(S.paused){
-		if(event.deltaY>0) S.to({time:'+10'});
-		if(event.deltaY<0) S.to({time:'-10'});
-	}else{
-		if(S.currentModule==='visualNovel'){
-			if(event.deltaY<0){
-				S.visualNovel.previousKeyframe();
-			}
-		}
-	}*/
-});
-
 // This needs to be click- otherwise, you could click outside of Showpony, release inside, and the menu would toggle. This results in messy scenarios when you're using the UI.
 
 S.regress=function(){

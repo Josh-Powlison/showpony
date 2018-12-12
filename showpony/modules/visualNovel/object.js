@@ -388,6 +388,7 @@ S.modules.visualNovel=new function(){
 				
 				// Reset the object's custom CSS
 				objects[name].style();
+				objects[name].class();
 				
 				// Go through the object's functions and reset them to their base or passed values
 				for(var command in target[name]){
@@ -592,6 +593,11 @@ S.modules.visualNovel=new function(){
 				
 				O.el.style.animation=animationSpeed[0].split(':')[1]+'s forwards '+cssName;
 			}
+		}
+		
+		var baseClass=O.el.className;
+		O.class=function(className=''){
+			O.el.className=baseClass+' '+className;
 		}
 		
 		// Add the animation end function
@@ -1056,6 +1062,9 @@ S.modules.visualNovel=new function(){
 											
 											// We don't want to run S.input here by clicking on a button
 											event.stopPropagation();
+											
+											// Focus again on the window so keyboard shortcuts work
+											S.window.focus();
 										});
 									}else{
 										// Set data to the defaults of these, in case the user just clicks through
