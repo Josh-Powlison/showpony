@@ -233,19 +233,19 @@ S.to=function(obj={}){
 		S.modules[S.currentModule].goToTime=obj.time;
 		timeUpdate(obj.time);
 		
-		// We can preload up to this amount
-		var preloadAmount=<?php echo PRELOAD_BYTES; ?>;
+		/// PRELOAD ///
+		if(scrubbing) return;
 		
-		// Don't allow preloading upcoming files if scrubbing
-		if(S.paused) preloadAmount=0;
+		// We can preload up to this amount
+		var preloadBytes=<?php echo PRELOAD_BYTES; ?>;
 		
 		// Preload upcoming files
 		for(let i=obj.file;i<S.files.length;i++){
 			// Check if we can preload this
-			preloadAmount-=S.files[obj.file].size;
+			preloadBytes-=S.files[obj.file].size;
 			
 			// If not, exit
-			if(preloadAmount<=0) break;
+			if(preloadBytes<=0) break;
 			
 			// Otherwise, preload
 			if(Array.isArray(S.files[i].buffered) && S.files[i].buffered.length===0){
