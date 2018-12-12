@@ -1,5 +1,5 @@
 S.modules.template=new function(){
-	const M=this; // The media Player
+	const M=this;
 	
 	M.currentTime=null;
 	M.currentFile=null;
@@ -8,21 +8,24 @@ S.modules.template=new function(){
 	M.window.className='m-temp'; // Or other class
 	
 	M.play=function(){
-		// How the medium plays. Can remain empty
+		// How the module plays. Can remain empty
 	}
 	
 	M.pause=function(){
+		// How the module pauses. Can remain empty
+	}
+	
+	M.regress=function(){
 		// How the medium pauses. Can remain empty
 	}
 	
-	// What happens when the user activates story input (clicking, spacebar, etc)
-	M.input=function(){
-		S.toggle(); // Toggles the menu
+	M.progress=function(){
+		
 	}
 	
 	// Update the time in the current file. May happen automatically, on scrolling, etc
 	M.timeUpdate=function(time=0){
-		M.currentTime=M.window.currentTime=time;
+		M.currentTime=time;
 	}
 	
 	M.src=function(file=0,time=0){
