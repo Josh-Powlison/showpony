@@ -8,7 +8,7 @@ S.modules.visualNovel=new function(){
 	M.loading=0; // Tracks how many items are currently loading
 	
 	M.window=document.createElement('div');
-	M.window.className='m-vn-visual-novel';
+	M.window.className='m-vn';
 	
 	M.subtitles=document.createElement('p');
 	M.subtitles.className='m-vn-subtitles';
@@ -366,7 +366,9 @@ S.modules.visualNovel=new function(){
 			
 			loadingTracker(1);
 			
-			// Delete unnecessary target info
+			// Reset the engine and delete unnecessary engine target info
+			M.style(target.engine ? target.engine.style : '');
+			M.class(target.engine ? target.engine.class : '');
 			delete target['engine'];
 			
 			// Adjust everything based on the list
@@ -445,8 +447,11 @@ S.modules.visualNovel=new function(){
 			type='textbox';
 		}
 		
+		if(name==='engine') type='engine';
+		
 		// If we're running through to a point, add the info to the target
-		if(runTo!==false && type!=='engine'){
+		if(runTo!==false && !/^(?:go|end|runEvent|wait)$/.test(command)){
+			
 			if(!target[name]){
 				target[name]={
 					'type':type
@@ -493,8 +498,7 @@ S.modules.visualNovel=new function(){
 		
 		if(type==='engine'){
 			// Engine command
-			M[command](vals[1]);
-			return;
+			if(!M[command](vals[1])) return;
 		}else{
 			// If an object with the name doesn't exist, make it!
 			if(!objects[name]){
@@ -564,6 +568,11 @@ S.modules.visualNovel=new function(){
 	function objectAddCommonFunctions(O){
 		// Remove element
 		O.remove=function(){
+			if(O.type==='engine'){
+				console.log('Error: Can\'t remove the Visual Novel engine!');
+				return;
+			}
+			
 			O.el.remove();
 			delete objects[O.name];
 		}
@@ -593,11 +602,15 @@ S.modules.visualNovel=new function(){
 				
 				O.el.style.animation=animationSpeed[0].split(':')[1]+'s forwards '+cssName;
 			}
+			
+			return true;
 		}
 		
 		var baseClass=O.el.className;
 		O.class=function(className=''){
 			O.el.className=baseClass+' '+className;
+			
+			return true;
 		}
 		
 		// Add the animation end function
@@ -621,6 +634,15 @@ S.modules.visualNovel=new function(){
 			content.classList.remove('s-loading');
 		}
 	}
+	
+	// Read window as "engine" object
+	M.type='engine';
+	
+	M.el=M.window;
+	M.window.dataset.name='engine';
+	M.name='engine';
+	
+	objectAddCommonFunctions(M);
 	
 	// Right now, we don't worry about whether or not audio is fully loaded; we don't track that. So audio could be long, and streamed; or even hitch a bit, and we wouldn't prevent the player from running through the KN/VN.
 	M.audio=function(input){
