@@ -1196,7 +1196,7 @@ function addBookmark(obj){
 
 // For now, we'll just support this bookmark
 // TODO: allow renaming bookmarks
-addBookmark({name:'Local',system:'local',type:'default'});
+addBookmark({name:'Autosave',system:'local',type:'default'});
 
 /////////////////
 
