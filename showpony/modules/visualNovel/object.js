@@ -452,6 +452,13 @@ S.modules.visualNovel=new function(){
 		// If we're running through to a point, add the info to the target
 		if(runTo!==false && !/^(?:go|end|runEvent|wait)$/.test(command)){
 			
+			// Remove the element if requested
+			if(command==='remove'){
+				delete target[name];
+				M.readLine();
+				return;
+			}
+			
 			if(!target[name]){
 				target[name]={
 					'type':type
@@ -568,11 +575,6 @@ S.modules.visualNovel=new function(){
 	function objectAddCommonFunctions(O){
 		// Remove element
 		O.remove=function(){
-			if(O.type==='engine'){
-				console.log('Error: Can\'t remove the Visual Novel engine!');
-				return;
-			}
-			
 			O.el.remove();
 			delete objects[O.name];
 		}
