@@ -1301,7 +1301,8 @@ function checkCollision(x=0,y=0,element){
 
 window.addEventListener('mouseup',function(event){
     // If the click was started outside of showpony, ignore it
-    if (typeof clickStart === 'undefined') return;
+    if (!clickStart) return;
+    clickStart = false;
     
 	// Allow left-click only
 	if(event.button!==0) return;
