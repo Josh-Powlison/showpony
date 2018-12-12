@@ -1217,6 +1217,9 @@ document.currentScript.insertAdjacentElement('afterend',S.window);
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
 
+// Whether a click was started inside showpony
+var clickStart = false;
+
 var regress=S.window.querySelector('.s-regress')
 var progressBtn=S.window.querySelector('.s-progress');
 var pause=S.window.querySelector('.s-pause')
@@ -1275,8 +1278,6 @@ S.window.addEventListener(
 	}
 );
 
-// This needs to be click- otherwise, you could click outside of Showpony, release inside, and the menu would toggle. This results in messy scenarios when you're using the UI.
-
 S.regress=function(){
 	S.modules[S.currentModule].regress();
 }
@@ -1299,6 +1300,9 @@ function checkCollision(x=0,y=0,element){
 }
 
 window.addEventListener('mouseup',function(event){
+    // If the click was started outside of showpony, ignore it
+    if (typeof clickStart === 'undefined') return;
+    
 	// Allow left-click only
 	if(event.button!==0) return;
 	
@@ -1309,6 +1313,8 @@ window.addEventListener('mouseup',function(event){
     
     scrubbing=false;
     
+    // Ignore scrollbar
+    if(event.offsetX>event.target.clientWidth || event.offsetY>event.target.clientHeight) return;
     
 	if(S.window.classList.contains('s-hold')){
 		S.window.classList.remove('s-hold');
@@ -1376,6 +1382,9 @@ window.addEventListener('mouseup',function(event){
 
 // On mousedown, we prepare to move the cursor (but not over overlay buttons)
 S.window.addEventListener('mousedown',function(event){
+    // Click was started inside showpony
+    clickStart = true;
+    
 	// Allow left-click only
 	if(event.button!==0) return;
 	
@@ -1384,7 +1393,7 @@ S.window.addEventListener('mousedown',function(event){
 	if(event.target.tagName==='INPUT') return;
 	if(event.target.tagName==='BUTTON') return;
 	if(event.target.tagName==='A') return;
-		
+    
     // Ignore if grabbing a scrollbar
     if(event.offsetX>event.target.clientWidth || event.offsetY>event.target.clientHeight) return;
 
@@ -1392,7 +1401,6 @@ S.window.addEventListener('mousedown',function(event){
     if(S.window.querySelector('.s-cover')){
         S.window.querySelector('.s-cover').remove();
     }
-
     
 	// One event listener for all of the buttons
     // Pause
