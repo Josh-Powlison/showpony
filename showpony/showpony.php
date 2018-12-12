@@ -1285,34 +1285,36 @@ S.progress=function(){
 	S.modules[S.currentModule].progress();
 }
 
-// We need to be able to disable moving the bar outside the overlay, so we set this event listener on the browser window, not just the Showpony window.
-window.addEventListener('click',function(event){
-    /*
-    // TODO(Brian 11dec18): if this event doesn't fire when scrolling is complete, remove this
-	// If we just ended scrubbing, don't toggle the menu at all
-	if(scrubbing==='out'){
-		scrubbing=false;
-		return;
-	}
-	*/
+function checkCollision(x=0,y=0,element){
+	var bounds=element.getBoundingClientRect();
+	
+	// If element is collapsed or outside of x and y, return
+	if(bounds.width===0 || bounds.height===0) return false;
+	if(y<bounds.top)	return false;
+	if(y>bounds.bottom)	return false;
+	if(x<bounds.left)	return false;
+	if(x>bounds.right)	return false;
+	
+	return true;
+}
+
+window.addEventListener('mouseup',function(event){
+	// Allow left-click only
+	if(event.button!==0) return;
+	
+    clearTimeout(actionTimeout);
+    actionTimeout=null;
+    clearInterval(actionInterval);
+    actionInterval=null;
     
-	if(scrubbing===true) return;
-	
-	if(actionInterval!==null){
-		clearTimeout(actionTimeout);
-		actionTimeout=null;
-		clearInterval(actionInterval);
-		actionInterval=null;
-		return;
-	}
-	
-	clearTimeout(actionTimeout);
-	actionTimeout=null;
-	
+    scrubbing=false;
+    
+    
 	if(S.window.classList.contains('s-hold')){
 		S.window.classList.remove('s-hold');
 		return;
 	}
+    
 	
 	// One event listener for all of the buttons
 	switch(event.target){
@@ -1369,45 +1371,7 @@ window.addEventListener('click',function(event){
 			
 			break;
 	}
-});
-
-function checkCollision(x=0,y=0,element){
-	var bounds=element.getBoundingClientRect();
-	
-	// If element is collapsed or outside of x and y, return
-	if(bounds.width===0 || bounds.height===0) return false;
-	if(y<bounds.top)	return false;
-	if(y>bounds.bottom)	return false;
-	if(x<bounds.left)	return false;
-	if(x>bounds.right)	return false;
-	
-	return true;
-}
-
-window.addEventListener('mouseup',function(event){
-	// Allow left-click only
-	if(event.button!==0) return;
-	
-	clearTimeout(actionTimeout);
-	clearInterval(actionInterval);
-	actionTimeout=null;
-	actionInterval=null;
-	
-    scrubbing=false;
     
-    /*
-	// If we're not scrubbing, set scrubbing to false and return
-	if(scrubbing!==true && scrubbing!=='out'){
-		scrubbing=false;
-		return;
-	}
-	
-	// Scrub the bar
-	userScrub(event);
-	
-	scrubbing='out';
-	S.window.classList.remove('s-hold');
-    */
 });
 
 // On mousedown, we prepare to move the cursor (but not over overlay buttons)
@@ -1415,60 +1379,44 @@ S.window.addEventListener('mousedown',function(event){
 	// Allow left-click only
 	if(event.button!==0) return;
 	
+    // Do nothing if the user clicked certain elements
 	if(event.target.classList.contains('s-dropdown')) return;
 	if(event.target.tagName==='INPUT') return;
 	if(event.target.tagName==='BUTTON') return;
 	if(event.target.tagName==='A') return;
-	
+		
+    // Ignore if grabbing a scrollbar
+    if(event.offsetX>event.target.clientWidth || event.offsetY>event.target.clientHeight) return;
+
+    // Remove the cover image when this is the first time interacting with showpony
+    if(S.window.querySelector('.s-cover')){
+        S.window.querySelector('.s-cover').remove();
+    }
+
+    
 	// One event listener for all of the buttons
-	switch(event.target){
-		default:
-			// Ignore if grabbing a scrollbar
-			if(event.offsetX>event.target.clientWidth || event.offsetY>event.target.clientHeight) return;
-		
-			// Some elements have pointer-events none, but their collisions still matter. We'll see if we're within those buttons here.
-		
-			// Don't read clicks if the user's clicking an input or button
-			if(event.target.tagName==='INPUT') break;
-			if(event.target.tagName==='BUTTON') break;
-		
-			if(S.window.querySelector('.s-cover')){
-				S.window.querySelector('.s-cover').remove();
-			}
-		
-			// Pause
-			if(checkCollision(event.clientX,event.clientY,pause)){
-				actionTimeout=setTimeout(function(){
-					S.window.classList.add('s-hold');
-				},500);
-				break;
-			}
-			
-			// Progress
-			if(checkCollision(event.clientX,event.clientY,progressBtn)){
-				actionTimeout=setTimeout(function(){
-					S.window.classList.add('s-hold');
-					actionInterval=setInterval(function(){
-						S.to({time:'+5'});
-					},50);
-				},500);
-				break;
-			}
-			
-			// Regress
-			if(checkCollision(event.clientX,event.clientY,regress)){
-				actionTimeout=setTimeout(function(){
-					S.window.classList.add('s-hold');
-					actionInterval=setInterval(function(){
-						S.to({time:'-5'});
-					},50);
-				},500);
-				break;
-				break;
-			}
-			
-			break;
-	}
+    // Pause
+    if(checkCollision(event.clientX,event.clientY,pause)){
+        actionTimeout=setTimeout(function(){
+            S.window.classList.add('s-hold');
+        },500);
+    } else if(checkCollision(event.clientX,event.clientY,progressBtn)){
+        // Progress
+        actionTimeout=setTimeout(function(){
+            S.window.classList.add('s-hold');
+            actionInterval=setInterval(function(){
+                S.to({time:'+5'});
+            },50);
+        },500);
+    } else if(checkCollision(event.clientX,event.clientY,regress)){
+        // Regress
+        actionTimeout=setTimeout(function(){
+            S.window.classList.add('s-hold');
+            actionInterval=setInterval(function(){
+                S.to({time:'-5'});
+            },50);
+        },500);
+    }
 	
 	// Scrubbing will be considered here
 	scrubbing=event.clientX;
