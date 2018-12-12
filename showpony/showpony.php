@@ -1303,12 +1303,15 @@ S.progress=function(){
 
 // We need to be able to disable moving the bar outside the overlay, so we set this event listener on the browser window, not just the Showpony window.
 window.addEventListener('click',function(event){
+    /*
+    // TODO(Brian 11dec18): if this event doesn't fire when scrolling is complete, remove this
 	// If we just ended scrubbing, don't toggle the menu at all
 	if(scrubbing==='out'){
 		scrubbing=false;
 		return;
 	}
-	
+	*/
+    
 	if(scrubbing===true) return;
 	
 	if(actionInterval!==null){
