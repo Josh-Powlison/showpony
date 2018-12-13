@@ -323,42 +323,53 @@ S.modules.visualNovel=new function(){
 		
 		var vals=M.lines[M.currentLine];
 		
-		// Replace all variables (including variables inside variables) with the right name
+		// Replace all variables (including variables inside variables) with the right component
 		var match;
 		while(match=/[^\[]+(?=\])/g.exec(vals)) vals=vals.replace('['+match[0]+']',S.data[match[0]]);
 		
-		vals=vals.split(/(?:\s{3,}|\t+)/);
+		vals=/(^[^\t\.\+\-=!]+)?(?:\.([^\t]+)|([+\-=!]+))?\t*(.+$)?/.exec(vals);
+		
+		var component=vals[1];
+		var command=vals[2];
+		var operation=vals[3];
+		var parameter=vals[4];
+		
+		if(!component) component='textbox';
+		if(!command) command='content';
+		if(!operation) operation=null;
+		if(!parameter) parameter=null;
 		
 		// Operations
-		var type=/[+=\-<>!]+$/.exec(vals[0]);
-		if(type){
-			type=type[0];
-			// Remove type from variable name
-			var name=vals[0].replace(type,'');
-			
-			switch(type){
-				// Operations
-				case '=':
-				case '+':
-				case '-':
-					S.data[name]=operations[type](
-						ifParse(S.data[name])
-						,ifParse(vals[1])
-					);
-					
-					M.readLine();
-					break;
-				// Comparisons
-				default:
-					if(operations[type](
-						ifParse(S.data[name])
-						,ifParse(vals[1])
-					)) M.readLine(M.lines.indexOf(vals[2]));
-					else M.readLine();
-					break;
-			}
-			
-			return;
+		switch(operation){
+			case '=':
+			case '+':
+			case '-':
+				S.data[component]=operations[operation](
+					ifParse(S.data[component])
+					,ifParse(parameter)
+				);
+				
+				M.readLine();
+				
+				return;
+				break;
+			case '==':
+			case '<':
+			case '>':
+			case '<=':
+			case '>=':
+			case '!':
+				// if(operations[operation](
+					// ifParse(S.data[component])
+					// ,ifParse(parameter)
+				// )) M.readLine(M.lines.indexOf(vals[2]));
+				// else M.readLine();
+				
+				return;
+				break;
+			default:
+				// Continue; no operation found
+				break;
 		}
 		
 		// Run through if we're running to a point; if we're there or beyond though, stop running through
@@ -367,47 +378,47 @@ S.modules.visualNovel=new function(){
 			loadingTracker(1);
 			
 			// Reset the engine and delete unnecessary engine target info
-			M.style(target.engine ? target.engine.style : '');
-			M.class(target.engine ? target.engine.class : '');
+			M.style(target.engine ? target.engine.style : null);
+			M.class(target.engine ? target.engine.class : null);
 			delete target['engine'];
 			
 			// Adjust everything based on the list
 			
 			// Get rid of objects that aren't in target
-			for(var name in objects){
-				if(!target[name] || target[name].type!==objects[name].type){
-					objects[name].remove();
+			for(var component in objects){
+				if(!target[component]){
+					objects[component].remove();
 				}
 				
 			};
 			
 			// Go through each target; add nonexisting elements and update styles
-			for(var name in target){
+			for(var component in target){
 				// Make the remaining objects
-				if(typeof(objects[name])==='undefined'){
-					objects[name]=new M[target[name].type](name);
+				if(typeof(objects[component])==='undefined'){
+					objects[component]=new M[target[component].type](component);
 				}
 				
 				// Reset the object's custom CSS
-				objects[name].style();
-				objects[name].class();
+				objects[component].style();
+				objects[component].class();
 				
 				// Go through the object's functions and reset them to their base or passed values
-				for(var command in target[name]){
+				for(var command in target[component]){
 					// Skip over "remove" function- we don't want to run that one :P
 					if(command==='remove') continue;
 					
 					// If playing but shouldn't loop: stop, don't play
-					if(command==='play' && (!target[name].loop || target[name].loop==='false')){
-						objects[name].stop();
+					if(command==='play' && (!target[component].loop || target[component].loop==='false')){
+						objects[component].stop();
 						continue;
 					}
 					
-					if(typeof(objects[name][command])==='function'){
-						if(typeof(target[name][command])==='undefined'){
-							objects[name][command]();
+					if(typeof(objects[component][command])==='function'){
+						if(typeof(target[component][command])==='undefined'){
+							objects[component][command]();
 						}else{
-							objects[name][command](target[name][command]);
+							objects[component][command](target[component][command]);
 						}
 					}
 				}
@@ -421,80 +432,61 @@ S.modules.visualNovel=new function(){
 			loadingTracker();
 		}
 		
-		/*
-		object.command		value
-		variableOperation	value
-		
-		type is assumed
-		*/
-		
-		// Determine command
-		var command=/\..+/.exec(vals[0]);
-		if(!command) command='content';
-		else command=command[0].replace('.','');
-		
 		// Determine type
 		var type='character';
-		if(vals.length===1) type='image';
 		if(/play|pause|stop|loop/.test(command)) type='audio';
 		if(/go|end|runEvent|wait/.test(command)) type='engine';
 		
-		// Determine name
-		var name=/^[^\.\t]+/.exec(vals[0]);
-		if(name) name=name[0]
-		else{
-			name='textbox';
-			type='textbox';
-		}
-		
-		if(name==='engine') type='engine';
+		if(component==='textbox') type='textbox';
+		if(component==='nameplate') type='nameplate';
+		if(component==='engine') type='engine';
 		
 		// If we're running through to a point, add the info to the target
 		if(runTo!==false && !/^(?:go|end|runEvent|wait)$/.test(command)){
 			
 			// Remove the element if requested
 			if(command==='remove'){
-				delete target[name];
+				delete target[component];
 				M.readLine();
 				return;
 			}
 			
-			if(!target[name]){
-				target[name]={
+			if(!target[component]){
+				target[component]={
 					'type':type
 				};
 			}
 			
 			// Add styles; everything else is replaced
 			if(command==='style'){
-				if(!target[name].style) target[name].style='';
+				if(!target[component].style) target[component].style='';
 				
 				// Styles are appended; later ones will override earlier ones. Time is removed here; we don't want to affect that here.
-				target[name].style+=vals[1].replace(/time:[^;]+;?/i,'');
+				target[component].style+=parameter.replace(/time:[^;]+;?/i,'');
 			}else{
 				// Append textbox content if it starts with a "+" this time
-				if(target[name].type==='textbox' && command==='content' && vals[1][0]==='+'){
-					target[name][command]+=vals[1].replace(/^\+/,'');
+				if(target[component].type==='textbox' && command==='content' && parameter[0]==='+'){
+					target[component][command]+=parameter.replace(/^\+/,'');
 				}
 				// Update values
 				else{
 					// When it comes to conflicting commands, choose only the latest
 					switch(command){
 						case 'play':
-							delete target[name].pause;
-							delete target[name].stop;
+							delete target[component].pause;
+							delete target[component].stop;
 							break;
 						case 'pause':
-							delete target[name].play;
-							delete target[name].stop;
+							delete target[component].play;
+							delete target[component].stop;
 							break;
 						case 'stop':
-							delete target[name].play;
-							delete target[name].pause;
+							delete target[component].play;
+							delete target[component].pause;
 							break;
 					}
 					
-					target[name][command]=vals[1];
+					target[component][command]=parameter;
 				}
 			}
 			
@@ -505,15 +497,15 @@ S.modules.visualNovel=new function(){
 		
 		if(type==='engine'){
 			// Engine command
-			if(!M[command](vals[1])) return;
+			if(!M[command](parameter)) return;
 		}else{
 			// If an object with the name doesn't exist, make it!
-			if(!objects[name]){
-				objects[name]=new M[type](name);
+			if(!objects[component]){
+				objects[component]=new M[type](component);
 			}
 			
 			// Object command
-			objects[name][command](vals[1]);
+			objects[component][command](parameter);
 		}
 		
 		// Update the scrubbar if the frame we're on is a keyframe
@@ -610,6 +602,8 @@ S.modules.visualNovel=new function(){
 		
 		var baseClass=O.el.className;
 		O.class=function(className=''){
+			if(className===null) className='';
+			
 			O.el.className=baseClass+' '+className;
 			
 			return true;
@@ -795,7 +789,7 @@ S.modules.visualNovel=new function(){
 					// Load the image and track loading
 					var img=new Image();
 					loadingTracker(1);
-					img.src='<?php echo $stories_path; ?>resources/characters/'+O.name.split('#')[0]+'/'+image;
+					img.src='<?php echo $stories_path; ?>resources/images/'+O.name.split('#')[0]+'/'+image;
 					img.addEventListener('load',loadingTracker);
 					
 					thisImg.style.backgroundImage='url("'+img.src+'")';

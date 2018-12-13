@@ -97,27 +97,30 @@
 	margin:0;
 }
 
-.m-vn-image{
+.m-vn-image
+,.m-vn-character{
 	width:100%;
+	position:absolute;
+	pointer-events:none;
+	bottom:0%;
+	left:0%;
+}
+
+.m-vn-image{
 	height:100%;
-	z-index:0;
-	position:absolute; /*The background flickers when switching between parts if the background is the same with this on. If we run into problems later on with background positioning, we may need to turn this back on.*/
 	background-position:50% 50%;
 	background-repeat:no-repeat;
 	background-size:cover;
-	
-	pointer-events:none; /*Sometimes backgrounds are in front of scrollable elements. We need to not let that mess things up.*/
 }
 
 .m-vn-character{
-	width:100%;
 	height:90%;
-	bottom:0%;
-	left:0%;
+}
+
+.m-vn-character div{
+	width:100%;
+	height:100%;
 	position:absolute;
-	z-index:5;
-	
-	pointer-events:none; /*Sometimes characters are in front of scrollable elements. We need to not let that mess things up.*/
 }
 
 .m-vn-character-image{
@@ -126,11 +129,30 @@
 	background-size:contain;
 	opacity:1;
 }
-.m-vn-character div{
-	width:100%;
-	height:100%;
-	position:absolute;
-}
+
+/*
+
+Differences between character and image styles
+
+All that's really important is cover vs contain- having an entirely different object for the two seems silly, actually.
+
+
+
+image:
+-background-size:cover;
+-background-position:50% 50%;
+-height:100%;
+
+characters:
+-background-size:contain;
+-background-position:50% -20%;
+-height:90%;
+
+
+
+What if, based on the extension, we assumed character or background?
+
+*/
 
 .m-vn-continue{
 	color:white;
