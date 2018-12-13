@@ -32,11 +32,16 @@ forest			/images/forest.jpg
 forest.class	background
 forest.style	bottom:100%;
 
+sing=			<span class="sing"><canimation offset="10">
+/sing=			</canimation></span>
+shake=			<span class="shake"><canimation offset="3">
+/shake=			</canimation></span>
+
 //foresttw			forest.jpg
 
 		Welcome to our test! [shout]Aren't you excited?!?![/shout] I am! [fade]This will fade in fancily. OoooooooOOooOoOoh...[/fade]
 		
-		<span class="sing">Singing...</span>
+		[sing]Singing...[/sing] This is normal though. [shake]This is shaky...[/shake]
 		
 		<span style="font-size:.5em;">This text is small and should have smaller leading than the text that is much larger. But it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't.</span> It has the same leading as this normal-sized text that is much larger.
 		

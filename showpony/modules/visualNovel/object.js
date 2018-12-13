@@ -918,8 +918,7 @@ S.modules.visualNovel=new function(){
 			// Tracks nested attributes
 			var nestedAttributes={
 				speed:[]
-				,shake:[]
-				,sing:[]
+				,canimation:[]
 			};
 
 			// The total time we're waiting until x happens
@@ -960,12 +959,9 @@ S.modules.visualNovel=new function(){
 						var tag=values.substr(1);
 						
 						switch(tag){
-							case 'shake':
-							case 'sing':
+							case 'canimation':
 								// Revert the attributes to their previous values
-								var attributes=nestedAttributes[tag].pop();
-							
-								if(attributes.on===false) charElement.classList.remove('m-vn-letter-'+tag);
+								var attributes=nestedAttributes.canimation.pop();
 								break;
 							case 'speed':
 								// Revert the attributes to their previous values
@@ -996,18 +992,15 @@ S.modules.visualNovel=new function(){
 						
 						var match;
 						while((match=regex.exec(values))!==null){
-						  if(tag) attributes.push(match);
-						  else tag=match[0];
+							if(tag) attributes.push(match);
+							else tag=match[0];
 						}
 						
 						switch(tag){
-							case 'shake':
-							case 'sing':
-								charElement.classList.add(tag);
-								
-								nestedAttributes[tag].push({
-									on:true
-								});
+							case 'canimation':
+								if(attributes[0][1]==='offset'){
+									nestedAttributes.canimation.push(parseFloat(attributes[0][3]));
+								}
 								break;
 							case 'speed':
 								// Save the previous speed values
@@ -1196,12 +1189,11 @@ S.modules.visualNovel=new function(){
 					if(!S.paused && runTo===false) showChar.style.animationDelay=totalWait+'s';
 					
 					// Set animation timing for animChar, based on the type of animation
-					if(thisChar.classList.contains('sing')){
-						animChar.style.animationDelay=-(letters.length/10)+'s';
-					}
+					var canimation=nestedAttributes.canimation;
+					canimation=canimation[canimation.length-1];
 					
-					if(thisChar.classList.contains('shake')){
-						animChar.style.animationDelay=-(letters.length/3)+'s';
+					if(canimation!==null){
+						animChar.style.animationDelay=-(letters.length/parseFloat(canimation))+'s';
 					}
 					
 					// Build the char and add it to the parent (which may be a document fragment)
