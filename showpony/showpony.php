@@ -346,32 +346,6 @@ else if(S.window.webkitRequestFullscreen){
 		else S.fullscreen=false;
 	});
 }
-// Firefox fullscreen
-else if(S.window.mozRequestFullScreen){
-	S.fullscreenEnter=function(){
-		if(document.mozFullScreenElement) return;
-		
-		S.window.mozRequestFullScreen();
-		S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
-	}
-	
-	S.fullscreenExit=function(){
-		if(!document.mozFullScreenElement) return;
-		
-		document.mozCancelFullScreen();
-		S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
-	}
-	
-	S.fullscreenToggle=function(){
-		if(document.mozFullScreenElement) S.fullscreenExit();
-		else S.fullscreenEnter();
-	}
-	
-	document.addEventListener('mozfullscreenchange',function(){
-		if(document.mozFullScreenElement===S.window) S.fullscreen=true;
-		else S.fullscreen=false;
-	});
-}
 // No fullscreen support fullscreen (like for iOS Safari)
 else{
 	S.fullscreenEnter=function(){
