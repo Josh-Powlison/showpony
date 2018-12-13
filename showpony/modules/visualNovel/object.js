@@ -343,8 +343,6 @@ S.modules.visualNovel=new function(){
 		
 		vals=/(^[^\t\.\+\-=<>!]+)?(?:\.([^\t]+)|([+\-=<>!]+))?\t*(.+$)?/.exec(vals);
 		
-		// console.log('VALUES',vals);
-		
 		var component=vals[1];
 		var command=vals[2];
 		var operation=vals[3];
@@ -456,12 +454,13 @@ S.modules.visualNovel=new function(){
 		
 		// Determine type
 		var type='character';
-		if(/play|pause|stop|loop/.test(command)) type='audio';
 		if(/go|end|runEvent|wait/.test(command)) type='engine';
+		else if(/\.mp3/.test(parameter)) type='audio';
 		
 		if(component==='textbox') type='textbox';
-		if(component==='nameplate') type='nameplate';
-		if(component==='engine') type='engine';
+		else if(component==='nameplate') type='nameplate';
+		else if(component==='engine') type='engine';
+		
 		
 		// If we're running through to a point, add the info to the target
 		if(runTo!==false && !/^(?:go|end|runEvent|wait)$/.test(command)){
@@ -478,38 +477,44 @@ S.modules.visualNovel=new function(){
 				};
 			}
 			
+			
 			// Add styles; everything else is replaced
 			if(command==='style'){
 				if(!target[component].style) target[component].style='';
 				
 				// Styles are appended; later ones will override earlier ones. Time is removed here; we don't want to affect that here.
 				target[component].style+=parameter.replace(/time:[^;]+;?/i,'');
-			}else{
-				// Append textbox content if it starts with a "+" this time
-				if(target[component].type==='textbox' && command==='content' && parameter[0]==='+'){
-					target[component][command]+=parameter.replace(/^\+/,'');
-				}
-				// Update values
-				else{
-					// When it comes to conflicting commands, choose only the latest
-					switch(command){
-						case 'play':
-							delete target[component].pause;
-							delete target[component].stop;
-							break;
-						case 'pause':
-							delete target[component].play;
-							delete target[component].stop;
-							break;
-						case 'stop':
-							delete target[component].play;
-							delete target[component].pause;
-							break;
-					}
-					
-					target[component][command]=parameter;
-				}
+				
+				return true;
 			}
+			
+			// Append textbox content if it starts with a "+" this time
+			if(target[component].type==='textbox'
+				&& command==='content'
+				&& parameter[0]==='+'
+			){
+				target[component][command]+=parameter.replace(/^\+/,'');
+				
+				return true;
+			}
+			
+			// When it comes to conflicting commands, choose only the latest
+			switch(command){
+				case 'play':
+					delete target[component].pause;
+					delete target[component].stop;
+					break;
+				case 'pause':
+					delete target[component].play;
+					delete target[component].stop;
+					break;
+				case 'stop':
+					delete target[component].play;
+					delete target[component].pause;
+					break;
+			}
+			
+			target[component][command]=parameter;
 			
 			// Continue without creating objects- we'll look at THAT once we've run through and added all the info to the target
 			return true;
@@ -670,27 +675,18 @@ S.modules.visualNovel=new function(){
 		O.playing=false;
 		
 		O.content=function(input){
-			if(Array.isArray(input)) input=input[0];
-			var name=input.split('#')[0];
-			var extension=name.split('.');
-			name=extension[0];
-			if(extension.length>1) extension=extension[1];
-			else extension='mp3';
+			if(!/\..+/.test(input)) input+='.mp3';
+			var name=input;
 			
-			// Play the track automatically if it needs to be played
-			var play=false;
-			if(!O.el.paused) play=true;
+			if(O.el.dataset.file===name) return true;
+			
+			O.el.dataset.file=name;
 			
 			// loadingTracker(1);
-			O.el.src='<?php echo $stories_path; ?>resources/'+O.filepath+name+'.'+extension;
-			
-			if(play) O.play();
+			O.el.src='<?php echo $stories_path; ?>resources/'+O.filepath+input;
 			
 			return true;
 		}
-		
-		// TODO: don't have this call O.content here. This should follow the setup of other objects: content() should just automatically be called in the M.readLine() function when this object is created
-		O.content(input);
 		
 		O.play=function(){
 			O.playing=true;
@@ -746,8 +742,6 @@ S.modules.visualNovel=new function(){
 			M.displaySubtitles();
 		});
 		
-		// O.el.addEventListener('load',loadingTracker);
-		
 		objectAddCommonFunctions(O);
 	}
 	
@@ -760,7 +754,7 @@ S.modules.visualNovel=new function(){
 		O.el.dataset.name=input;
 		O.name=input;
 		
-		O.filepath='images/'+O.name.split('#')[0]+'/';
+		O.filepath='images/'+O.name+'/';
 		
 		var preloading=false;
 		
@@ -803,7 +797,7 @@ S.modules.visualNovel=new function(){
 					// Add a layer image
 					var img=document.createElement('img');
 					img.className='m-vn-character-image';
-					img.dataset.image=image;
+					img.dataset.file=image;
 					
 					loadingTracker(1);
 					img.addEventListener('load',loadingTracker);
@@ -823,7 +817,7 @@ S.modules.visualNovel=new function(){
 				// Set the matching images' opacity to 1, and all the others to 0 (visibility:hidden, display:none would result in flashing images on some browsers)
 				var images=O.el.children[layer].children;
 				for(let ii=0;ii<images.length;ii++){
-					if(images[ii].dataset.image===image){
+					if(images[ii].dataset.file===image){
 						 images[ii].style.opacity=1;
 					}else{
 						images[ii].style.opacity=0;

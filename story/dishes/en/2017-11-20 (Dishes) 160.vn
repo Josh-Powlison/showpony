@@ -1,5 +1,6 @@
 		Dishes:  a story of redemption
 
+theme		theme.mp3
 theme.loop	true
 theme.play
 
@@ -18,8 +19,6 @@ shout=	<span class="shout">
 
 fade=	<span class="fade">
 /fade=	</span>
-
-
 
 ben				habit
 ben.class		character
