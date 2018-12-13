@@ -3,40 +3,67 @@
 theme.loop	true
 theme.play
 
-forest
-forest.style	bottom:100%;
 susan=	<span style="color:magenta">Susan</span>::
 ben=	<span style="color:aqua">Ben</span>::
 player=	<span style="color:green">[playerName]</span>::
 playerAndBen=	<span style="color:aqua">Ben</span> & <span style="color:green">[playerName]</span>::
 
-ben			habit
-ben.style	left:25%;bottom:-100%;
-susan		angry
+slow=	<speed rate="2">
+/slow=	</speed>
+fast=	<speed rate=".25">
+/fast=	</speed>
+
+shout=	<span class="shout">
+/shout=	</span>
+
+fade=	<span class="fade">
+/fade=	</span>
+
+
+
+ben				habit
+ben.class		character
+ben.style		left:25%;bottom:-100%;
+
+susan			angry
+susan.class		character
 susan.style	left:-100%;height:80%;
 
-		Welcome to our test!
+forest			/images/forest.jpg
+forest.class	background
+forest.style	bottom:100%;
+
+//foresttw			forest.jpg
+
+		Welcome to our test! [shout]Aren't you excited?!?![/shout] I am! [fade]This will fade in fancily. OoooooooOOooOoOoh...[/fade]
+		
+		<span class="sing">Singing...</span>
 		
 		<span style="font-size:.5em;">This text is small and should have smaller leading than the text that is much larger. But it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't.</span> It has the same leading as this normal-sized text that is much larger.
 		
-		<span style="display:block;text-align:center;">What is your name?</span><br><input data-var="playerName" placeholder="Your Name" required><input type="submit" value="Confirm">
+//		<span style="display:block;text-align:center;">What is your name?</span><br><input data-var="playerName" placeholder="Your Name" required><input type="submit" value="Confirm">
+		
 //theme.stop
 
-textbox.empty
+//textbox.empty
 		
 engine.wait		.1
+
 
 forest.style	time:1s;bottom:0%;
 ben.style		time:1s;bottom:0%;
 engine.wait		3
 
+
 //theme.play
 		[ben]Aren't the woods beautiful, [playerName]?~ And the way the light comes through the leaves and rests gently upon your face...
 ben		shock
-		Ben talks like this when he's avoiding something. "This is a 't"e's'"t'!''"""""''''""'"'"'" There should be a pause there.
-		
+		Ben talks like this when he's avoiding something. [slow]Slow text... lol this is so slow omgoshilacious.[/slow] [fast]This is so fast though zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip![/fast]
+
 ben		frown
 		[ben]<speed constant rate="0">...I never want to go back.</speed> <speed rate="5">Can you imagine?</speed>
+
+
 ben		angry
 		[ben]I don't want to face what's waiting for us.
 ben		sad
@@ -55,12 +82,14 @@ susan.style		time:1s;left:-25%;
 		[susan]<shout>No,</shout> <em>I</em> did the dishes yesterday, it's <em>your</em> turn to do them and we need to get them done <speed rate="4"><shout>right now!</shout></speed>
 
 		Susan's leaving out a <em>very</em> important detail:
-
+		
 		[ben]Yeah, but we have twice as many dishes to wash because you did such a bad job yesterday.
 
+susan.remove
+		
 		[susan]<sing>I don't make the rules, Ben.</sing>
 
-		[susan][playerName], you've said nothing. Don't you feel any remorse? <input type="button" data-go="//YES" value="Yes"> <input type="button" data-go="//NO" value="No">
+//		[susan][playerName], you've said nothing. Don't you feel any remorse? <input type="button" data-go="//YES" value="Yes"> <input type="button" data-go="//NO" value="No">
 
 //YES
 

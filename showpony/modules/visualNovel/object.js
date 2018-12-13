@@ -43,7 +43,7 @@ S.modules.visualNovel=new function(){
 			
 			O.id=window.setTimeout(function(){
 				O.remaining=0;
-				M.readLine();
+				M.run();
 			},duration);
 		}
 		
@@ -100,7 +100,7 @@ S.modules.visualNovel=new function(){
 		
 		if(keyframeIndex>=0){
 			runTo=keyframes[keyframeIndex];
-			M.readLine(0);
+			M.run(0);
 		}else{
 			if(M.currentFile>0) S.to({file:'-1',time:'end'});
 			else S.to({time:0});
@@ -118,7 +118,7 @@ S.modules.visualNovel=new function(){
 		
 		// If a continue notice exists, continue!
 		if(M.window.querySelector('.m-vn-continue')){
-			M.readLine();
+			M.run();
 			continueNotice.remove();
 			return;
 		}
@@ -126,7 +126,7 @@ S.modules.visualNovel=new function(){
 		// Continue if the timer was going
 		if(timer.remaining>0){
 			timer.stop();
-			M.readLine();
+			M.run();
 			return;
 		}
 		
@@ -146,7 +146,7 @@ S.modules.visualNovel=new function(){
 		
 		// Continue if we don't wait at the end of the text
 		if(!wait){ //XXX
-			M.readLine();
+			M.run();
 		}
 		else{
 			junction();
@@ -182,7 +182,7 @@ S.modules.visualNovel=new function(){
 				runTo=keyframeSelect;
 				
 				content.classList.remove('s-loading');
-				M.readLine(0);
+				M.run(0);
 				S.displaySubtitles();
 				resolve({file:file,time:time});
 				return;
@@ -219,13 +219,22 @@ S.modules.visualNovel=new function(){
 						
 						// See if the line ends with an unescaped >; if so, don't add the line
 						if(M.lines[i][M.lines[i].length-1]==='>'){
-							var skip=1;
-							var j=M.lines[i].length-2;
-							while(M.lines[i][j]==='\\'){
-								skip*=-1;
-								j--;
+							//See if it's an ending tag
+							var test=document.createElement('div');
+							test.innerHTML=M.lines[i];
+							var text=test.innerText;
+							
+							
+							//If it's not an ending tag
+							if(text[text.length-1]==='>'){
+								var skip=1;
+								var j=M.lines[i].length-2;
+								while(M.lines[i][j]==='\\'){
+									skip*=-1;
+									j--;
+								}
+								if(skip===1) continue;
 							}
-							if(skip===1) continue;
 						}
 						
 						keyframes.push(i);
@@ -241,7 +250,7 @@ S.modules.visualNovel=new function(){
 				
 				M.currentFile=S.currentFile=file;
 				content.classList.remove('s-loading');
-				M.readLine(0);
+				M.run(0);
 				
 				if(S.files[file].buffered!==true){
 					S.files[file].buffered=true;
@@ -305,29 +314,36 @@ S.modules.visualNovel=new function(){
 		,'!'	:(a,b)=>	a!=b
 	};
 	
-	M.readLine=function(inputNum=M.currentLine+1){
-		// Go to either the specified line or the next one
-		M.currentLine=inputNum;
-		
-		// If we've ended manually or reached the end, stop running immediately and end it all
-		if(M.currentLine>=M.lines.length){
-			S.to({file:'+1'});
-			return;
-		}
-		
+	/// TO DO: stop filling up the stack so high; instead, keep running readLine() while it returns true. This way we aren't increasing the stack so heavily
+	M.run=function(line=M.currentLine+1){
+		M.currentLine=line;
+
+		while(M.readLine(M.currentLine)){
+			M.currentLine=M.currentLine+1;
+			
+			// If we've ended manually or reached the end, stop running immediately and end it all
+			if(M.currentLine>=M.lines.length){
+				S.to({file:'+1'});
+				break;
+			}
+		};
+	}
+	
+	M.readLine=function(line){
 		// Skip comments
-		if(/^\/\//.test(M.lines[M.currentLine])){
-			M.readLine();
-			return;
+		if(/^\/\//.test(M.lines[line])){
+			return true;
 		}
 		
-		var vals=M.lines[M.currentLine];
+		var vals=M.lines[line];
 		
 		// Replace all variables (including variables inside variables) with the right component
 		var match;
 		while(match=/[^\[]+(?=\])/g.exec(vals)) vals=vals.replace('['+match[0]+']',S.data[match[0]]);
 		
-		vals=/(^[^\t\.\+\-=!]+)?(?:\.([^\t]+)|([+\-=!]+))?\t*(.+$)?/.exec(vals);
+		vals=/(^[^\t\.\+\-=<>!]+)?(?:\.([^\t]+)|([+\-=<>!]+))?\t*(.+$)?/.exec(vals);
+		
+		// console.log('VALUES',vals);
 		
 		var component=vals[1];
 		var command=vals[2];
@@ -349,9 +365,7 @@ S.modules.visualNovel=new function(){
 					,ifParse(parameter)
 				);
 				
-				M.readLine();
-				
-				return;
+				return true;
 				break;
 			case '==':
 			case '<':
@@ -359,11 +373,16 @@ S.modules.visualNovel=new function(){
 			case '<=':
 			case '>=':
 			case '!':
-				// if(operations[operation](
-					// ifParse(S.data[component])
-					// ,ifParse(parameter)
-				// )) M.readLine(M.lines.indexOf(vals[2]));
-				// else M.readLine();
+				// If returns true, read the next line
+				if(operations[operation](
+					ifParse(S.data[component])
+					,ifParse(parameter)
+				)) return true;
+				// Otherwise, skip it
+				else{
+					line+=1;
+					return true;
+				}
 				
 				return;
 				break;
@@ -373,7 +392,7 @@ S.modules.visualNovel=new function(){
 		}
 		
 		// Run through if we're running to a point; if we're there or beyond though, stop running through
-		if(runTo!==false && M.currentLine>=runTo){
+		if(runTo!==false && line>=runTo){
 			
 			loadingTracker(1);
 			
@@ -385,41 +404,44 @@ S.modules.visualNovel=new function(){
 			// Adjust everything based on the list
 			
 			// Get rid of objects that aren't in target
-			for(var component in objects){
-				if(!target[component]){
-					objects[component].remove();
+			for(var compObject in objects){
+				if(!target[compObject]){
+					objects[compObject].remove();
 				}
 				
 			};
 			
 			// Go through each target; add nonexisting elements and update styles
-			for(var component in target){
+			for(var compTarget in target){
 				// Make the remaining objects
-				if(typeof(objects[component])==='undefined'){
-					objects[component]=new M[target[component].type](component);
+				if(typeof(objects[compTarget])==='undefined'){
+					objects[compTarget]=new M[target[compTarget].type](compTarget);
+				}
+				// Reset the object's custom CSS (if it already existed)
+				else{
+					objects[compTarget].style(null);
+					objects[compTarget].class(null);
 				}
 				
-				// Reset the object's custom CSS
-				objects[component].style();
-				objects[component].class();
-				
 				// Go through the object's functions and reset them to their base or passed values
-				for(var command in target[component]){
+				for(var commTarget in target[compTarget]){
 					// Skip over "remove" function- we don't want to run that one :P
-					if(command==='remove') continue;
+					if(commTarget==='remove') continue;
 					
 					// If playing but shouldn't loop: stop, don't play
-					if(command==='play' && (!target[component].loop || target[component].loop==='false')){
-						objects[component].stop();
+					if(commTarget==='play' && (!target[compTarget].loop || target[compTarget].loop==='false')){
+						objects[compTarget].stop();
 						continue;
 					}
 					
-					if(typeof(objects[component][command])==='function'){
-						if(typeof(target[component][command])==='undefined'){
-							objects[component][command]();
+					if(typeof(objects[compTarget][commTarget])==='function'){
+						if(typeof(target[compTarget][commTarget])==='undefined'){
+							objects[compTarget][commTarget]();
 						}else{
-							objects[component][command](target[component][command]);
+							objects[compTarget][commTarget](target[compTarget][commTarget]);
 						}
+					}else{
+						objects[compTarget][commTarget]=target[compTarget][commTarget];
 					}
 				}
 			}
@@ -447,8 +469,7 @@ S.modules.visualNovel=new function(){
 			// Remove the element if requested
 			if(command==='remove'){
 				delete target[component];
-				M.readLine();
-				return;
+				return true;
 			}
 			
 			if(!target[component]){
@@ -491,32 +512,20 @@ S.modules.visualNovel=new function(){
 			}
 			
 			// Continue without creating objects- we'll look at THAT once we've run through and added all the info to the target
-			M.readLine();
-			return;
-		}
-		
-		if(type==='engine'){
-			// Engine command
-			if(!M[command](parameter)) return;
-		}else{
-			// If an object with the name doesn't exist, make it!
-			if(!objects[component]){
-				objects[component]=new M[type](component);
-			}
-			
-			// Object command
-			objects[component][command](parameter);
+			return true;
 		}
 		
 		// Update the scrubbar if the frame we're on is a keyframe
-		if(runTo===false && keyframes.includes(M.currentLine)){
-			timeUpdate((keyframes.indexOf(M.currentLine)/keyframes.length)*S.files[M.currentFile].duration);
+		if(runTo===false && keyframes.includes(line)){
+			timeUpdate((keyframes.indexOf(line)/keyframes.length)*S.files[M.currentFile].duration);
 		}
-				
-		// Don't automatically continue on text updates or engine commands
-		if(type==='textbox' && command==='content') return;
 		
-		M.readLine();
+		// Engine command
+		if(type==='engine') return M[command](parameter);
+		
+		// Object command
+		if(!objects[component]) objects[component]=new M[type](component);
+		return objects[component][command](parameter);
 	}
 	
 	// If a value's a number, return it as one
@@ -525,23 +534,24 @@ S.modules.visualNovel=new function(){
 	}
 	
 	M.go=function(input){
-		M.readLine(M.lines.indexOf(input));
+		M.currentLine=M.lines.indexOf(input);
+		return true;
 	}
 	
 	M.end=function(){
 		S.to({file:'+1'});
+		return false;
 	}
 	
 	M.runEvent=function(input){
 		S.window.dispatchEvent(new CustomEvent(input));
-		M.readLine();
+		return true;
 	}
 
 	M.wait=function(input){
 		// Skip waiting if we're running through
 		if(runTo!==false){
-			M.readLine();
-			return;
+			return true;
 		}
 		
 		if(input){
@@ -556,6 +566,8 @@ S.modules.visualNovel=new function(){
 		if(S.paused) timer.pause();
 		
 		// Don't automatically go to the next line
+		
+		return false;
 	}
 
 	// STYLE and REMOVE are the same for every instance.
@@ -569,6 +581,8 @@ S.modules.visualNovel=new function(){
 		O.remove=function(){
 			O.el.remove();
 			delete objects[O.name];
+			
+			return true;
 		}
 		
 		var localStyle=document.createElement('style');
@@ -581,7 +595,7 @@ S.modules.visualNovel=new function(){
 			if(style===null){
 				O.el.style.cssText='';
 				localStyle.innerHTML='';
-				return;
+				return true;
 			}
 			
 			var animationSpeed=/time:[^s;$]+/i.exec(style);
@@ -603,7 +617,6 @@ S.modules.visualNovel=new function(){
 		var baseClass=O.el.className;
 		O.class=function(className=''){
 			if(className===null) className='';
-			
 			O.el.className=baseClass+' '+className;
 			
 			return true;
@@ -651,6 +664,8 @@ S.modules.visualNovel=new function(){
 		O.name=input;
 		M.window.appendChild(O.el);
 		
+		O.filepath='audio/';
+		
 		// Checks if was playing outside of pausing the Showpony
 		O.playing=false;
 		
@@ -667,9 +682,11 @@ S.modules.visualNovel=new function(){
 			if(!O.el.paused) play=true;
 			
 			// loadingTracker(1);
-			O.el.src='<?php echo $stories_path; ?>resources/audio/'+name+'.'+extension;
+			O.el.src='<?php echo $stories_path; ?>resources/'+O.filepath+name+'.'+extension;
 			
 			if(play) O.play();
+			
+			return true;
 		}
 		
 		// TODO: don't have this call O.content here. This should follow the setup of other objects: content() should just automatically be called in the M.readLine() function when this object is created
@@ -678,33 +695,47 @@ S.modules.visualNovel=new function(){
 		O.play=function(){
 			O.playing=true;
 			if(!S.paused) O.el.play();
+			
+			return true;
 		}
 		
 		O.pause=function(){
 			O.playing=false;
 			O.el.pause();
+			
+			return true;
 		}
 		
 		O.stop=function(){
 			O.playing=false;
 			O.el.pause();
 			O.el.currentTime=0;
+			
+			return true;
 		}
 		
 		O.loop=function(input=false){
 			O.el.loop=(input=="false" ? false : true);
+			
+			return true;
 		}
 		
 		O.volume=function(input=1){
 			O.el.volume=input;
+			
+			return true;
 		}
 		
 		O.speed=function(input=1){
 			O.el.playbackRate=input;
+			
+			return true;
 		}
 		
 		O.time=function(input=0){
 			O.el.currentTime=input;
+			
+			return true;
 		}
 		
 		O.el.addEventListener('ended',function(){
@@ -720,35 +751,6 @@ S.modules.visualNovel=new function(){
 		objectAddCommonFunctions(O);
 	}
 	
-	M.image=function(input){
-		const O=this;
-		O.type='image';
-		
-		O.el=document.createElement('div');
-		O.el.className='m-vn-image';
-		O.el.dataset.name=input;
-		O.name=input;
-		M.window.appendChild(O.el);
-
-		O.content=function(input=O.name){
-			var name=input.split('#')[0];
-			var extension=name.split('.');
-			name=extension[0];
-			if(extension.length>1) extension=extension[1];
-			else extension='jpg';
-			
-			// Load the image and track loading
-			var img=new Image();
-			loadingTracker(1);
-			img.src='<?php echo $stories_path; ?>resources/images/'+name+'.'+extension;
-			img.addEventListener('load',loadingTracker);
-			
-			O.el.style.backgroundImage='url("'+img.src+'")';
-		}
-		
-		objectAddCommonFunctions(O);
-	}
-	
 	M.character=function(input){
 		const O=this;
 		O.type='character';
@@ -758,9 +760,26 @@ S.modules.visualNovel=new function(){
 		O.el.dataset.name=input;
 		O.name=input;
 		
+		O.filepath='images/'+O.name.split('#')[0]+'/';
+		
+		var preloading=false;
+		
 		M.window.appendChild(O.el);
 
 		O.content=function(input,preloading=false){
+			// Preload the files when we first display one
+			if(preloading===false){
+				var preloading='ongoing';
+				
+				// Preload images
+				for(let i=0;i<M.lines.length;i++){
+					var value=new RegExp(O.name+'(\s{3,}|\t+)(.+$)').exec(M.lines[i]);
+					if(value) O.content(value[2],true);
+				}
+				
+				preloading='complete';
+			}
+			
 			// Character level
 			// Get the image names passed (commas separate layers)
 			var imageNames=input.split(',');
@@ -780,26 +799,26 @@ S.modules.visualNovel=new function(){
 				}
 				
 				// If the image doesn't exist, add it!
-				if(!O.el.children[layer].querySelector('div[data-image="'+image+'"]')){
+				if(!O.el.children[layer].querySelector('img[data-image="'+image+'"]')){
 					// Add a layer image
-					var thisImg=document.createElement('div');
-					thisImg.className='m-vn-character-image';
-					thisImg.dataset.image=image;
+					var img=document.createElement('img');
+					img.className='m-vn-character-image';
+					img.dataset.image=image;
 					
-					// Load the image and track loading
-					var img=new Image();
 					loadingTracker(1);
-					img.src='<?php echo $stories_path; ?>resources/images/'+O.name.split('#')[0]+'/'+image;
 					img.addEventListener('load',loadingTracker);
+					img.addEventListener('error',loadingTracker);
 					
-					thisImg.style.backgroundImage='url("'+img.src+'")';
+					// Can go to the root of the website, or from the current path
+					if(image[0]==='/') img.src='<?php echo $stories_path; ?>resources/'+image;
+					else img.src='<?php echo $stories_path; ?>resources/'+O.filepath+image;
 					
-					O.el.children[layer].appendChild(thisImg);
+					O.el.children[layer].appendChild(img);
 					
-					if(preloading) thisImg.style.opacity=0;
+					if(preloading==='complete') img.style.opacity=0;
 				}
 				
-				if(preloading) continue;
+				if(preloading!=='complete') continue;
 				
 				// Set the matching images' opacity to 1, and all the others to 0 (visibility:hidden, display:none would result in flashing images on some browsers)
 				var images=O.el.children[layer].children;
@@ -811,15 +830,11 @@ S.modules.visualNovel=new function(){
 					}
 				}
 			}
+			
+			if(preloading='complete') return true;
 		}
 		
 		objectAddCommonFunctions(O);
-		
-		// Preload images
-		for(let i=M.currentLine;i<M.lines.length;i++){
-			var value=new RegExp(O.name+'(\s{3,}|\t+)(.+$)').exec(M.lines[i]);
-			if(value) O.content(value[2],true);
-		}
 	}
 	
 	M.nameplate=function(input){
@@ -839,6 +854,8 @@ S.modules.visualNovel=new function(){
 			}else{
 				O.el.style.visibility='hidden';
 			}
+			
+			return true;
 		}
 		
 		objectAddCommonFunctions(O);
@@ -859,6 +876,8 @@ S.modules.visualNovel=new function(){
 		
 		O.empty=function(){
 			O.el.classList.add('m-vn-textbox-hidden');
+			
+			return true;
 		}
 		
 		O.content=function(input='NULL: No text was passed.'){
@@ -897,7 +916,7 @@ S.modules.visualNovel=new function(){
 			var charElementDefault=document.createElement('span');
 			
 			var charElement=document.createElement('span');
-			charElement.className='m-vn-char-container';
+			charElement.className='m-vn-letter-container';
 			var baseWaitTime=defaultBaseWaitTime;
 			var constant=defaultConstant;
 			
@@ -905,9 +924,7 @@ S.modules.visualNovel=new function(){
 			var nestedAttributes={
 				speed:[]
 				,shake:[]
-				,shout:[]
 				,sing:[]
-				,fade:[]
 			};
 
 			// The total time we're waiting until x happens
@@ -949,13 +966,11 @@ S.modules.visualNovel=new function(){
 						
 						switch(tag){
 							case 'shake':
-							case 'shout':
 							case 'sing':
-							case 'fade':
 								// Revert the attributes to their previous values
 								var attributes=nestedAttributes[tag].pop();
 							
-								if(attributes.on===false) charElement.classList.remove('m-vn-char-'+tag);
+								if(attributes.on===false) charElement.classList.remove('m-vn-letter-'+tag);
 								break;
 							case 'speed':
 								// Revert the attributes to their previous values
@@ -992,10 +1007,8 @@ S.modules.visualNovel=new function(){
 						
 						switch(tag){
 							case 'shake':
-							case 'shout':
 							case 'sing':
-							case 'fade':
-								charElement.classList.add('m-vn-char-'+tag);
+								charElement.classList.add(tag);
 								
 								nestedAttributes[tag].push({
 									on:true
@@ -1068,15 +1081,18 @@ S.modules.visualNovel=new function(){
 									// Update data based on this
 									if(newElement.type==='button' || newElement.type==='submit'){
 										newElement.addEventListener('click',function(event){
-											if(!O.el.checkValidity()) return;
+											if(!O.el.checkValidity()) return false;
 											
 											O.el.classList.add('m-vn-textbox-form-inactive');
 											
 											// This might just be a continue button, so we need to check
 											if(this.dataset.var) S.data[this.dataset.var]=this.dataset.val;
 											
-											if(this.dataset.go) M.readLine(M.lines.indexOf(this.dataset.go));
-											else M.readLine();
+											if(this.dataset.go){
+												M.currentLine=M.lines.indexOf(this.dataset.go);
+												return true;
+											}
+											else return true;
 											
 											// We don't want to run S.input here by clicking on a button
 											event.stopPropagation();
@@ -1144,9 +1160,9 @@ S.modules.visualNovel=new function(){
 					let showChar=document.createElement('span')			// Display animation character (appear, shout, etc), parent to animChar
 					showChar.className='m-vn-char';
 					let animChar=document.createElement('span')			// Perpetual animation character (singing, shaking...)
-					animChar.className='m-vn-char-anim';
+					animChar.className='m-vn-letter-anim';
 					let hideChar=document.createElement('span');		// Hidden char for positioning
-					hideChar.className='m-vn-char-placeholder';
+					hideChar.className='m-vn-letter-placeholder';
 					
 					// Spaces
 					// and Ending! (needs this to wrap lines correctly on Firefox)
@@ -1185,11 +1201,11 @@ S.modules.visualNovel=new function(){
 					if(!S.paused && runTo===false) showChar.style.animationDelay=totalWait+'s';
 					
 					// Set animation timing for animChar, based on the type of animation
-					if(thisChar.classList.contains('m-vn-char-sing')){
-						animChar.style.animationDelay=-(letters.length*.1)+'s';
+					if(thisChar.classList.contains('sing')){
+						animChar.style.animationDelay=-(letters.length/10)+'s';
 					}
 					
-					if(thisChar.classList.contains('m-vn-char-shake')){
+					if(thisChar.classList.contains('shake')){
 						animChar.style.animationDelay=-(letters.length/3)+'s';
 					}
 					
@@ -1210,7 +1226,7 @@ S.modules.visualNovel=new function(){
 				
 				// If we aren't waiting to continue, continue
 				if(!wait){ //XXX
-					M.readLine();
+					M.run();
 				}else{
 					if(!O.el.querySelector('input')){
 						junction();
@@ -1220,14 +1236,17 @@ S.modules.visualNovel=new function(){
 			
 			// Add the chars to the textbox
 			O.el.appendChild(fragment);
+			
+			return false;
 		}
+		
 		objectAddCommonFunctions(O);
 	}
 	
 	// What to do when we aren't sure whether to proceed automatically or wait for input
 	function junction(){
 		if(S.auto){
-			M.readLine();
+			M.run();
 		}
 		else{
 			M.window.appendChild(continueNotice);

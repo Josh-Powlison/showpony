@@ -97,62 +97,29 @@
 	margin:0;
 }
 
-.m-vn-image
-,.m-vn-character{
+.m-vn-character{
+	height:100%;
 	width:100%;
 	position:absolute;
+	
 	pointer-events:none;
-	bottom:0%;
-	left:0%;
 }
 
-.m-vn-image{
-	height:100%;
-	background-position:50% 50%;
-	background-repeat:no-repeat;
-	background-size:cover;
-}
-
-.m-vn-character{
-	height:90%;
-}
-
-.m-vn-character div{
+.m-vn-character>div{
 	width:100%;
 	height:100%;
 	position:absolute;
 }
 
 .m-vn-character-image{
-	background-position:50% -20%;
-	background-repeat:no-repeat;
-	background-size:contain;
+	width:100%;
+	height:100%;
+	position:absolute;
+	
 	opacity:1;
+	
+	object-fit:contain;
 }
-
-/*
-
-Differences between character and image styles
-
-All that's really important is cover vs contain- having an entirely different object for the two seems silly, actually.
-
-
-
-image:
--background-size:cover;
--background-position:50% 50%;
--height:100%;
-
-characters:
--background-size:contain;
--background-position:50% -20%;
--height:90%;
-
-
-
-What if, based on the extension, we assumed character or background?
-
-*/
 
 .m-vn-continue{
 	color:white;
@@ -183,7 +150,7 @@ What if, based on the extension, we assumed character or background?
 	}
 }
 
-.m-vn-char-container{
+.m-vn-letter-container{
 	visibility:hidden;
 	font-size:1em;
 	color:inherit;
@@ -196,64 +163,26 @@ What if, based on the extension, we assumed character or background?
 	display:inline-block;
 }
 
-.m-vn-char-anim{
+.m-vn-letter-anim{
 	position:relative;
 	display:inline-block;
 }
 
-.m-vn-char-placeholder{
+.m-vn-letter-placeholder{
 	visibility:hidden;
 }
 
-.m-vn-char-container>.m-vn-char{
-	animation:kn-display 1s linear;
+.m-vn-letter-container>.m-vn-char{
+	animation:m-vn-display 1s linear;
 	animation-fill-mode:forwards;
 }
 
-@keyframes kn-display{
+@keyframes m-vn-display{
 	0% {visibility:visible;}
 	100% {visibility:visible;}
 }
 
-.m-vn-char-shout>.m-vn-char{
-	animation:kn-shout .1s linear forwards;
-}
-
-@keyframes kn-shout{
-	0% {visibility:visible;transform:scale(2);}
-	100% {visibility:visible;transform:scale(1);}
-}
-
-.m-vn-char-fade>.m-vn-char{
-	animation:kn-fade .1s linear forwards;
-}
-
-@keyframes kn-fade{
-	0% {visibility:visible;opacity:0;}
-	100% {visibility:visible;opacity:1;}
-}
-
-.m-vn-char-sing .m-vn-char-anim{
-	animation:kn-sing 1.5s ease-in-out infinite;
-}
-
-@keyframes kn-sing{
-	0%{transform:translate(0,-.2em);}
-	50%{transform:translate(0,.2em);}
-	100%{transform:translate(0,-.2em);}
-}
-
-.m-vn-char-shake .m-vn-char-anim{
-	animation:kn-shake .2s linear infinite;
-}
-
-@keyframes kn-shake{
-	0%{transform:translate(.05em,.125em);}
-	25%{transform:translate(-.05em,-.125em);}
-	50%{transform:translate(-.05em,.125em);}
-	75%{transform:translate(.05em,-.125em);}
-	100%{transform:translate(.05em,.125em);}
-}
+/* SUBTITLES */
 
 .m-vn-subtitles{
 	position:absolute;
@@ -271,4 +200,62 @@ What if, based on the extension, we assumed character or background?
 	top:10%;
 	
 	z-index:100;
+}
+
+/* CUSTOM CLASSES */
+.character{
+	height:90%;
+	bottom:0%;
+}
+
+.background .m-vn-character-image{
+	object-fit:cover;
+	z-index:-1;
+}
+
+.cg .m-vn-character-image{
+	object-fit:cover;
+	z-index:1;
+}
+
+/* CUSTOM LETTER ANIMATIONS */
+
+.shout .m-vn-char{
+	animation:shout .1s linear forwards;
+}
+
+@keyframes shout{
+	0% {visibility:visible;transform:scale(2);}
+	100% {visibility:visible;transform:scale(1);}
+}
+
+.fade .m-vn-char{
+	animation:fade .1s linear forwards;
+}
+
+@keyframes fade{
+	0% {visibility:visible;opacity:0;}
+	100% {visibility:visible;opacity:1;}
+}
+
+.sing .m-vn-letter-anim{
+	animation:sing 1.5s ease-in-out infinite;
+}
+
+@keyframes sing{
+	0%{transform:translate(0,-.2em);}
+	50%{transform:translate(0,.2em);}
+	100%{transform:translate(0,-.2em);}
+}
+
+.shake .m-vn-letter-anim{
+	animation:shake .2s linear infinite;
+}
+
+@keyframes shake{
+	0%{transform:translate(.05em,.125em);}
+	25%{transform:translate(-.05em,-.125em);}
+	50%{transform:translate(-.05em,.125em);}
+	75%{transform:translate(.05em,-.125em);}
+	100%{transform:translate(.05em,.125em);}
 }
