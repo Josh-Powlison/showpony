@@ -781,7 +781,8 @@ S.modules.visualNovel=new function(){
 			// Layer level
 			// Go through each passed image and see if it exists
 			for(var i=0;i<imageNames.length;i++){
-				let layer=i+1;
+				// Layer is i+1 because 0 is the style tag
+				var layer=i+1;
 				
 				var image=imageNames[i];
 				// If no extension, assume png
