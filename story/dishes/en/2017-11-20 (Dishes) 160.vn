@@ -4,21 +4,27 @@ theme		theme.mp3
 theme.loop	true
 theme.play
 
-susan=	<span style="color:magenta">Susan</span>::
-ben=	<span style="color:aqua">Ben</span>::
-player=	<span style="color:green">[playerName]</span>::
-playerAndBen=	<span style="color:aqua">Ben</span> & <span style="color:green">[playerName]</span>::
+////// SPECIAL PROPERTIES //////
 
 slow=	<speed rate="2">
 /slow=	</speed>
 fast=	<speed rate=".25">
 /fast=	</speed>
+instant=	<speed rate="0">
+/instant=	</speed>
 
 shout=	<span class="shout">
 /shout=	</span>
 
 fade=	<span class="fade">
 /fade=	</span>
+
+BEN=			name	[instant]<span style="color:aqua">Ben</span>[/instant]>
+SUSAN=			name	[instant]<span style="color:aqua">Susan</span>[/instant]>
+ME=				name	[instant]<span style="color:aqua">Me</span>[/instant]>
+NONE=			name.empty
+
+////////////////////////////////
 
 ben				habit
 ben.class		character
@@ -36,6 +42,10 @@ sing=			<span class="sing"><canimation offset="10">
 /sing=			</canimation></span>
 shake=			<span class="shake"><canimation offset="3">
 /shake=			</canimation></span>
+
+engine.textbox	name
+name.class		name
+
 
 //foresttw			forest.jpg
 
@@ -60,50 +70,65 @@ engine.wait		3
 
 
 //theme.play
-		[ben]Aren't the woods beautiful, [playerName]?~ And the way the light comes through the leaves and rests gently upon your face...
+
+[BEN]
+		Aren't the woods beautiful, [playerName]?~ And the way the light comes through the leaves and rests gently upon your face...
+
+engine.textbox		thoughts
+thoughts.class		thoughts
+thoughts			Hey, wait a minute...
+
 ben		shock
-		Ben talks like this when he's avoiding something. [slow]Slow text... lol this is so slow omgoshilacious.[/slow] [fast]This is so fast though zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip zip![/fast]
 
+[NONE]
+		Ben talks like this when he's avoiding something.
+
+thoughts.empty
+
+[BEN]
 ben		frown
-		[ben]<speed constant rate="0">...I never want to go back.</speed> <speed rate="5">Can you imagine?</speed>
-
-
+		<speed constant rate="0">...I never want to go back.</speed> <speed rate="5">Can you imagine?</speed>
 ben		angry
-		[ben]I don't want to face what's waiting for us.
+		I don't want to face what's waiting for us.
 ben		sad
+
+[NONE]
 		(...can't blame him.)
+		
+[BEN]
 ben		scared
-		[ben]I don't want to...>
+		I don't want to...>
 ben		shy_blush
 
+[SUSAN]
 susan.style		time:1s;left:-25%;
-		[susan]<shout>There you are!</shout> What are you and [playerName] doing out here, it's <em>your</em> turn to do the dishes!!!!
+		<shout>There you are!</shout> What are you and [playerName] doing out here, it's <em>your</em> turn to do the dishes!!!!
 
-		[ben]<span style="font-size:.5em;">Crap, we've been caught...</span>
+		<span style="font-size:.5em;">Crap, we've been caught...</span>
 
 		+<br>Um... nothing, we'll get to them later.
 
-		[susan]<shout>No,</shout> <em>I</em> did the dishes yesterday, it's <em>your</em> turn to do them and we need to get them done <speed rate="4"><shout>right now!</shout></speed>
+		<shout>No,</shout> <em>I</em> did the dishes yesterday, it's <em>your</em> turn to do them and we need to get them done <speed rate="4"><shout>right now!</shout></speed>
 
 		Susan's leaving out a <em>very</em> important detail:
 		
-		[ben]Yeah, but we have twice as many dishes to wash because you did such a bad job yesterday.
+		Yeah, but we have twice as many dishes to wash because you did such a bad job yesterday.
 
 susan.remove
 		
-		[susan]<sing>I don't make the rules, Ben.</sing>
+		<sing>I don't make the rules, Ben.</sing>
 
-//		[susan][playerName], you've said nothing. Don't you feel any remorse? <input type="button" data-go="//YES" value="Yes"> <input type="button" data-go="//NO" value="No">
+//		[playerName], you've said nothing. Don't you feel any remorse? <input type="button" data-go="//YES" value="Yes"> <input type="button" data-go="//NO" value="No">
 
 //YES
 
-		[player]Absolutely. I deeply regret my actions and hope you'll accept my heartfelt apology.
+		Absolutely. I deeply regret my actions and hope you'll accept my heartfelt apology.
 
-		[susan]...
+		...
 
-		[susan]<speed constant>... .. ... ... . ... ... ..... . ...... . ... . .. .. .... . ......</speed>
+		<speed constant>... .. ... ... . ... ... ..... . ...... . ... . .. .. .... . ......</speed>
 
-		[susan]...to be honest, I wasn't expecting that answer.
+		...to be honest, I wasn't expecting that answer.
 
 		(Wait, did she actually buy that?)
 		
@@ -111,7 +136,7 @@ engine.go	//CONTINUE
 
 //NO
 
-		[susan]<shake>...</shake>
+		<shake>...</shake>
 
 		(Here comes the thunder...)
 
@@ -119,18 +144,18 @@ engine.go	//CONTINUE
 
 //CONTINUE
 
-		[susan]<shake><shout>You still need to actually do it though!</shout></shake>
+		<shake><shout>You still need to actually do it though!</shout></shake>
 
-		[ben]Fine, fine, we'll do it.
+		Fine, fine, we'll do it.
 
-		[susan]...
+		...
 
-		[susan]Alright, I'm going back inside. Every minute that you wait, I'm gonna lick a plate and place it on the pile.
+		Alright, I'm going back inside. Every minute that you wait, I'm gonna lick a plate and place it on the pile.
 
-		[playerAndBen]<shake><shout>!!!</shout></shake>
+		<shake><shout>!!!</shout></shake>
 
-		[susan]So you take your sweet time. You know Mom and Dad will make you->
+		So you take your sweet time. You know Mom and Dad will make you->
 
-		[ben]Okay, okay, we'll go!
+		Okay, okay, we'll go!
 
-		[player]Right away, little sis!
+		Right away, little sis!

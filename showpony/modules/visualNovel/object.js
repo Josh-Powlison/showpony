@@ -119,7 +119,6 @@ S.modules.visualNovel=new function(){
 		// If a continue notice exists, continue!
 		if(M.window.querySelector('.m-vn-continue')){
 			M.run();
-			continueNotice.remove();
 			return;
 		}
 		
@@ -142,7 +141,8 @@ S.modules.visualNovel=new function(){
 		});
 		
 		// If we're inputting, exit
-		if(objects.textbox.el.querySelector('input')) return;
+		/// TODO: Add this in for multiple textboxes
+		// if(objects.textbox.el.querySelector('input')) return;
 		
 		// Continue if we don't wait at the end of the text
 		if(!wait){ //XXX
@@ -317,6 +317,7 @@ S.modules.visualNovel=new function(){
 	/// TO DO: stop filling up the stack so high; instead, keep running readLine() while it returns true. This way we aren't increasing the stack so heavily
 	M.run=function(line=M.currentLine+1){
 		M.currentLine=line;
+		continueNotice.remove();
 
 		while(M.readLine(M.currentLine)){
 			M.currentLine=M.currentLine+1;
@@ -343,15 +344,10 @@ S.modules.visualNovel=new function(){
 		
 		vals=/(^[^\t\.\+\-=<>!]+)?(?:\.([^\t]+)|([+\-=<>!]+))?\t*(.+$)?/.exec(vals);
 		
-		var component=vals[1];
-		var command=vals[2];
-		var operation=vals[3];
-		var parameter=vals[4];
-		
-		if(!component) component='textbox';
-		if(!command) command='content';
-		if(!operation) operation=null;
-		if(!parameter) parameter=null;
+		var component	=typeof(vals[1])!=='undefined' ? vals[1] : 'textbox';
+		var command		=typeof(vals[2])!=='undefined' ? vals[2] : 'content';
+		var operation	=typeof(vals[3])!=='undefined' ? vals[3] : null;
+		var parameter	=typeof(vals[4])!=='undefined' ? vals[4] : null;
 		
 		// Operations
 		switch(operation){
@@ -389,6 +385,17 @@ S.modules.visualNovel=new function(){
 				break;
 		}
 		
+		// Determine type
+		if(objects[component]) var type=objects[component].type;
+		else{
+			var type='character';
+			if(/go|end|runEvent|wait/.test(command)) type='engine';
+			else if(/\.mp3/.test(parameter)) type='audio';
+			
+			if(component==='textbox') type='textbox';
+			else if(component==='engine') type='engine';
+		}
+		
 		// Run through if we're running to a point; if we're there or beyond though, stop running through
 		if(runTo!==false && line>=runTo){
 			
@@ -400,6 +407,7 @@ S.modules.visualNovel=new function(){
 			delete target['engine'];
 			
 			// Adjust everything based on the list
+			
 			
 			// Get rid of objects that aren't in target
 			for(var compObject in objects){
@@ -413,7 +421,7 @@ S.modules.visualNovel=new function(){
 			for(var compTarget in target){
 				// Make the remaining objects
 				if(typeof(objects[compTarget])==='undefined'){
-					objects[compTarget]=new M[target[compTarget].type](compTarget);
+					new M[target[compTarget].type](compTarget);
 				}
 				// Reset the object's custom CSS (if it already existed)
 				else{
@@ -452,16 +460,6 @@ S.modules.visualNovel=new function(){
 			loadingTracker();
 		}
 		
-		// Determine type
-		var type='character';
-		if(/go|end|runEvent|wait/.test(command)) type='engine';
-		else if(/\.mp3/.test(parameter)) type='audio';
-		
-		if(component==='textbox') type='textbox';
-		else if(component==='nameplate') type='nameplate';
-		else if(component==='engine') type='engine';
-		
-		
 		// If we're running through to a point, add the info to the target
 		if(runTo!==false && !/^(?:go|end|runEvent|wait)$/.test(command)){
 			
@@ -471,12 +469,31 @@ S.modules.visualNovel=new function(){
 				return true;
 			}
 			
-			if(!target[component]){
-				target[component]={
-					'type':type
-				};
+			// Creating elements with the engine
+			if(type==='engine'){
+				switch(command){
+					// Creating a new element
+					case 'audio':
+					case 'character':
+					case 'textbox':
+						if(!target[parameter]){
+							target[parameter]={
+								'type':command
+							};
+						}
+						
+						return true;
+						break;
+					default:
+						break;
+				}
+			}else{
+				if(!target[component]){
+					target[component]={
+						'type':type
+					};
+				}
 			}
-			
 			
 			// Add styles; everything else is replaced
 			if(command==='style'){
@@ -512,6 +529,12 @@ S.modules.visualNovel=new function(){
 					delete target[component].play;
 					delete target[component].pause;
 					break;
+				case 'empty':
+					delete target[component].content;
+					break;
+				case 'content':
+					delete target[component].empty;
+					break;
 			}
 			
 			target[component][command]=parameter;
@@ -526,10 +549,22 @@ S.modules.visualNovel=new function(){
 		}
 		
 		// Engine command
-		if(type==='engine') return M[command](parameter);
+		if(type==='engine'){
+			switch(command){
+				// Creating a new element
+				case 'audio':
+				case 'character':
+				case 'textbox':
+					if(!objects[parameter]) new M[command](parameter);
+					return true;
+				default:
+					return M[command](parameter);
+					break;
+			}
+		}
 		
 		// Object command
-		if(!objects[component]) objects[component]=new M[type](component);
+		if(!objects[component]) new M[type](component);
 		return objects[component][command](parameter);
 	}
 	
@@ -660,6 +695,7 @@ S.modules.visualNovel=new function(){
 	
 	// Right now, we don't worry about whether or not audio is fully loaded; we don't track that. So audio could be long, and streamed; or even hitch a bit, and we wouldn't prevent the player from running through the KN/VN.
 	M.audio=function(input){
+		objects[input]=this;
 		const O=this;
 		O.type='audio';
 		
@@ -668,6 +704,7 @@ S.modules.visualNovel=new function(){
 		O.el.dataset.name=input;
 		O.name=input;
 		M.window.appendChild(O.el);
+		
 		
 		O.filepath='audio/';
 		
@@ -746,6 +783,7 @@ S.modules.visualNovel=new function(){
 	}
 	
 	M.character=function(input){
+		objects[input]=this;
 		const O=this;
 		O.type='character';
 		
@@ -832,31 +870,8 @@ S.modules.visualNovel=new function(){
 		objectAddCommonFunctions(O);
 	}
 	
-	M.nameplate=function(input){
-		const O=this;
-		O.type='nameplate';
-		O.name=input;
-		
-		O.el=document.createElement('p');
-		O.el.className='m-vn-nameplate';
-		O.el.dataset.name=input;
-		M.window.appendChild(O.el);
-		
-		O.content=function(input){
-			if(input){
-				O.el.innerHTML=input;
-				O.el.style.visibility='visible';
-			}else{
-				O.el.style.visibility='hidden';
-			}
-			
-			return true;
-		}
-		
-		objectAddCommonFunctions(O);
-	}
-	
 	M.textbox=function(input){
+		objects[input]=this;
 		const O=this;
 		O.type='textbox';
 		O.name=input;
@@ -885,20 +900,6 @@ S.modules.visualNovel=new function(){
 			if(input[0]!=='+'){
 				O.el.innerHTML='';
 				O.el.scrollTop=0;
-				
-				// Split text by nameplate
-				if(!objects.nameplate){
-					objects.nameplate=new M.nameplate('nameplate');
-				}
-				
-				var matches=/(.+)::(.*)/.exec(input);
-				if(matches){
-					objects.nameplate.content(matches[1]);
-					input=matches[2];
-				}else{
-					objects.nameplate.content();
-				}
-				
 			}
 			else input=input.substr(1);
 			
@@ -1236,7 +1237,8 @@ S.modules.visualNovel=new function(){
 			M.run();
 		}
 		else{
-			M.window.appendChild(continueNotice);
+			// Don't add a continue notice if we ran through a textbox
+			if(runTo===false) M.window.appendChild(continueNotice);
 		}
 	}
 }();
