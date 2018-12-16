@@ -15,9 +15,13 @@ instant=	<speed rate="0">
 
 shout=	<span class="shout">
 /shout=	</span>
-
 fade=	<span class="fade">
 /fade=	</span>
+
+sing=			<span class="sing"><animation offset="10">
+/sing=			</animation></span>
+shake=			<span class="shake"><animation offset="3">
+/shake=			</animation></span>
 
 BEN=			name	[instant]<span style="color:aqua">Ben</span>[/instant]>
 SUSAN=			name	[instant]<span style="color:aqua">Susan</span>[/instant]>
@@ -38,11 +42,6 @@ forest			/images/forest.jpg
 forest.class	background
 forest.style	bottom:100%;
 
-sing=			<span class="sing"><canimation offset="10">
-/sing=			</canimation></span>
-shake=			<span class="shake"><canimation offset="3">
-/shake=			</canimation></span>
-
 engine.textbox	name
 name.class		name
 
@@ -53,7 +52,7 @@ name.class		name
 		
 		[sing]Singing...[/sing] This is normal though. [shake]This is shaky...[/shake]
 		
-		<span style="font-size:.5em;">This text is small and should have smaller leading than the text that is much larger. But it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't it doesn't.</span> It has the same leading as this normal-sized text that is much larger.
+		<div style="font-size:.5em;">This text is small and will have separate leading, because it's in a div, not a span.</div> This text will have its own leading.
 		
 //		<span style="display:block;text-align:center;">What is your name?</span><br><input data-var="playerName" placeholder="Your Name" required><input type="submit" value="Confirm">
 		
@@ -102,13 +101,13 @@ ben		shy_blush
 
 [SUSAN]
 susan.style		time:1s;left:-25%;
-		<shout>There you are!</shout> What are you and [playerName] doing out here, it's <em>your</em> turn to do the dishes!!!!
+		[shout]There you are![/shout] What are you and [playerName] doing out here, it's <em>your</em> turn to do the dishes!!!!
 
 		<span style="font-size:.5em;">Crap, we've been caught...</span>
 
 		+<br>Um... nothing, we'll get to them later.
 
-		<shout>No,</shout> <em>I</em> did the dishes yesterday, it's <em>your</em> turn to do them and we need to get them done <speed rate="4"><shout>right now!</shout></speed>
+		[shout]No,[/shout] <em>I</em> did the dishes yesterday, it's <em>your</em> turn to do them and we need to get them done <speed rate="4">[shout]right now![/shout]</speed>
 
 		Susan's leaving out a <em>very</em> important detail:
 		
@@ -116,7 +115,7 @@ susan.style		time:1s;left:-25%;
 
 susan.remove
 		
-		<sing>I don't make the rules, Ben.</sing>
+		[sing]I don't make the rules, Ben.[/sing]
 
 //		[playerName], you've said nothing. Don't you feel any remorse? <input type="button" data-go="//YES" value="Yes"> <input type="button" data-go="//NO" value="No">
 
@@ -144,7 +143,7 @@ engine.go	//CONTINUE
 
 //CONTINUE
 
-		<shake><shout>You still need to actually do it though!</shout></shake>
+		<shake>[shout]You still need to actually do it though![/shout]</shake>
 
 		Fine, fine, we'll do it.
 
@@ -152,7 +151,7 @@ engine.go	//CONTINUE
 
 		Alright, I'm going back inside. Every minute that you wait, I'm gonna lick a plate and place it on the pile.
 
-		<shake><shout>!!!</shout></shake>
+		<shake>[shout]!!![/shout]</shake>
 
 		So you take your sweet time. You know Mom and Dad will make you->
 

@@ -88,7 +88,6 @@
 
 .m-vn-letter-container{
 	visibility:hidden;
-	/* font-size:1em; */
 	position:relative;
 }
 
@@ -102,11 +101,6 @@
 .m-vn-letter-animation{
 	position:relative;
 	display:inline-block;
-}
-
-.m-vn-letter-placeholder{
-	/* visibility:visible; */
-	color:red;
 }
 
 @keyframes m-vn-display{
