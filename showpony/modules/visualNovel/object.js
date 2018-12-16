@@ -130,27 +130,26 @@ S.modules.visualNovel=new function(){
 		}
 		
 		// Display all letters
-		M.window.querySelectorAll('.m-vn-letter').forEach(function(key){
+		M.window.querySelectorAll('.m-vn-letter').forEach(function(letter){
 			// Skip creating animation, and display the letter
-			key.style.animationDelay=null;
-			var classes=key.className;
-			key.className=classes;
-			key.style.animation='initial';
-			key.firstChild.dispatchEvent(new CustomEvent('animationstart'));
-			key.style.visibility='visible';
+			letter.style.animationDelay=null;
+			var classes=letter.className;
+			letter.className=classes;
+			letter.style.animation='initial';
+			// letter.firstChild.dispatchEvent(new CustomEvent('animationstart'));
+			letter.style.visibility='visible';
+		});
+		
+		// Set all textboxes to state they're done
+		M.window.querySelectorAll('.m-vn-textbox').forEach(function(textbox){
+			textbox.dataset.done='true';
 		});
 		
 		// If we're inputting, exit
 		/// TODO: Add this in for multiple textboxes
 		// if(objects.textbox.el.querySelector('input')) return;
 		
-		// Continue if we don't wait at the end of the text
-		if(!wait){ //XXX
-			M.run();
-		}
-		else{
-			junction();
-		}
+		junction();
 	}
 
 	M.timeUpdate=function(time=0){
@@ -213,7 +212,10 @@ S.modules.visualNovel=new function(){
 					}
 					
 					// Text lines
-					if(/^(\t+)/.test(M.lines[i])){
+					if(/^\t+/.test(M.lines[i])){
+						// Ignore text lines that are appending
+						if(/^\t+\+/.test(M.lines[i])) continue;
+						
 						// See if it's part of a tag
 						// Anything with a space we'll ignore; you should only have self-closing tags or closing tags at the end of the line
 						
@@ -389,7 +391,7 @@ S.modules.visualNovel=new function(){
 		if(objects[component]) var type=objects[component].type;
 		else{
 			var type='character';
-			if(/go|end|runEvent|wait/.test(command)) type='engine';
+			if(/^(?:go|end|event|wait)$/.test(command)) type='engine';
 			else if(/\.mp3/.test(parameter)) type='audio';
 			
 			if(component==='textbox') type='textbox';
@@ -475,7 +477,7 @@ S.modules.visualNovel=new function(){
 		}
 		
 		// If we're running through to a point, add the info to the target
-		if(runTo!==false && !/^(?:go|end|runEvent|wait)$/.test(command)){
+		if(runTo!==false && !/^(?:go|end|event|wait)$/.test(command)){
 			
 			// Remove the element if requested
 			if(command==='remove'){
@@ -583,7 +585,7 @@ S.modules.visualNovel=new function(){
 		return false;
 	}
 	
-	M.runEvent=function(input){
+	M.event=function(input){
 		S.window.dispatchEvent(new CustomEvent(input));
 		return true;
 	}
@@ -879,6 +881,8 @@ S.modules.visualNovel=new function(){
 		O.el=document.createElement('form');
 		O.el.className='m-vn-textbox';
 		O.el.dataset.name=input;
+		O.el.dataset.state='hidden';
+		O.el.dataset.done='true';
 		O.el.addEventListener('submit',function(event){
 			event.preventDefault();
 		});
@@ -891,6 +895,7 @@ S.modules.visualNovel=new function(){
 		
 		O.content=function(input='NULL: No text was passed.'){
 			O.el.dataset.state='normal';
+			O.el.dataset.done='false';
 			
 			wait=true; // Assume we're waiting at the end time //XXX
 			
@@ -1210,14 +1215,10 @@ S.modules.visualNovel=new function(){
 			lastLetter.addEventListener('animationstart',function(event){
 				if(this!==event.target) return;
 				
-				// If we aren't waiting to continue, continue
-				if(!wait){ //XXX
-					M.run();
-				}else{
-					if(!O.el.querySelector('input')){
-						junction();
-					}
-				}
+				console.log("RUN ANIMATION START");
+				O.el.dataset.done='true';
+				
+				junction();
 			});
 			
 			// Add the chars to the textbox
@@ -1228,15 +1229,43 @@ S.modules.visualNovel=new function(){
 		
 		objectAddCommonFunctions(O);
 	}
+	/*
+	function lastLetterAppear(target){
+		if(this!==target) return;
+				
+		console.log("RUN ANIMATION START");
+		this.dataset.done='true';
+		
+		// If we aren't waiting to continue, continue
+		if(!wait){ //XXX
+			M.run();
+		}else{
+			if(!O.el.querySelector('input')){
+				junction();
+			}
+		}
+	}*/
 	
 	// What to do when we aren't sure whether to proceed automatically or wait for input
 	function junction(){
-		if(S.auto){
+		// If we aren't waiting to continue, continue
+		if(!wait){
 			M.run();
+		}else{
+			if(!M.window.querySelector('input')){
+				if(S.auto){
+					M.run();
+				}
+				else{
+					// Don't add a continue notice if we ran through a textbox
+					if(runTo===false && M.window.querySelectorAll('.m-vn-textbox').length===M.window.querySelectorAll('[data-done="true"]').length){
+						console.log("ADD CONTINUE NOTICE");
+						M.window.appendChild(continueNotice);
+					}
+				}
+			}
 		}
-		else{
-			// Don't add a continue notice if we ran through a textbox
-			if(runTo===false) M.window.appendChild(continueNotice);
-		}
+		
+		
 	}
 }();
