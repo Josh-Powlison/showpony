@@ -130,7 +130,7 @@ S.modules.visualNovel=new function(){
 		}
 		
 		// Display all letters
-		M.window.querySelectorAll('.m-vn-char').forEach(function(key){
+		M.window.querySelectorAll('.m-vn-letter').forEach(function(key){
 			// Skip creating animation, and display the letter
 			key.style.animationDelay=null;
 			var classes=key.className;
@@ -1152,9 +1152,9 @@ S.modules.visualNovel=new function(){
 					var thisChar=charElement.cloneNode(false);
 					
 					let showChar=document.createElement('span')			// Display animation character (appear, shout, etc), parent to animChar
-					showChar.className='m-vn-char';
+					showChar.className='m-vn-letter';
 					let animChar=document.createElement('span')			// Perpetual animation character (singing, shaking...)
-					animChar.className='m-vn-letter-anim';
+					animChar.className='m-vn-letter-animation';
 					let hideChar=document.createElement('span');		// Hidden char for positioning
 					hideChar.className='m-vn-letter-placeholder';
 					

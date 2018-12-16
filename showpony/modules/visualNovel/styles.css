@@ -3,6 +3,8 @@
 	width:100%;
 }
 
+/* Textbox */
+
 .m-vn-textbox{
 	width:100%;
 	background-color:rgba(0,0,0,.8);
@@ -84,6 +86,40 @@
 	opacity:.5;
 }
 
+.m-vn-letter-container{
+	visibility:hidden;
+	font-size:1em;
+	color:inherit;
+	font-weight:inherit;
+	font-style:inherit;
+}
+
+.m-vn-letter{
+	position:absolute;
+	display:inline-block;
+}
+
+.m-vn-letter-animation{
+	position:relative;
+	display:inline-block;
+}
+
+.m-vn-letter-placeholder{
+	visibility:hidden;
+}
+
+.m-vn-letter-container>.m-vn-letter{
+	animation:m-vn-display 1s linear forwards;
+	/* animation-fill-mode:; */
+}
+
+@keyframes m-vn-display{
+	0% {visibility:visible;}
+	100% {visibility:visible;}
+}
+
+/* Character */
+
 .m-vn-character{
 	height:100%;
 	width:100%;
@@ -107,6 +143,8 @@
 	
 	object-fit:contain;
 }
+
+/* Other */
 
 .m-vn-continue{
 	color:white;
@@ -135,38 +173,6 @@
 		transform:translate(-.5em,0);
 		visibility:visible;
 	}
-}
-
-.m-vn-letter-container{
-	visibility:hidden;
-	font-size:1em;
-	color:inherit;
-	font-weight:inherit;
-	font-style:inherit;
-}
-
-.m-vn-char{
-	position:absolute;
-	display:inline-block;
-}
-
-.m-vn-letter-anim{
-	position:relative;
-	display:inline-block;
-}
-
-.m-vn-letter-placeholder{
-	visibility:hidden;
-}
-
-.m-vn-letter-container>.m-vn-char{
-	animation:m-vn-display 1s linear;
-	animation-fill-mode:forwards;
-}
-
-@keyframes m-vn-display{
-	0% {visibility:visible;}
-	100% {visibility:visible;}
 }
 
 /* SUBTITLES */
@@ -235,7 +241,7 @@
 
 /* CUSTOM LETTER ANIMATIONS */
 
-.shout .m-vn-char{
+.shout .m-vn-letter{
 	animation:shout .1s linear forwards;
 }
 
@@ -244,7 +250,7 @@
 	100% {visibility:visible;transform:scale(1);}
 }
 
-.fade .m-vn-char{
+.fade .m-vn-letter{
 	animation:fade .1s linear forwards;
 }
 
@@ -253,7 +259,7 @@
 	100% {visibility:visible;opacity:1;}
 }
 
-.sing .m-vn-letter-anim{
+.sing .m-vn-letter-animation{
 	animation:sing 1.5s ease-in-out infinite;
 }
 
@@ -263,7 +269,7 @@
 	100%{transform:translate(0,-.2em);}
 }
 
-.shake .m-vn-letter-anim{
+.shake .m-vn-letter-animation{
 	animation:shake .2s linear infinite;
 }
 
