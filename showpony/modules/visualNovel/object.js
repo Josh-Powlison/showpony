@@ -556,22 +556,15 @@ S.modules.visualNovel=new function(){
 		}
 		
 		// Engine command
-		if(type==='engine'){
-			switch(command){
-				// Creating a new element
-				case 'audio':
-				case 'character':
-				case 'textbox':
-					if(!objects[parameter]) new M[command](parameter);
-					return true;
-				default:
-					return M[command](parameter);
-					break;
-			}
-		}
+		if(type==='engine') return M[command](parameter);
 		
-		// Object command
+		// Create the object if it doesn't exist
 		if(!objects[component]) new M[type](component);
+		
+		// If no command was passed, continue
+		if(command===null) return true;
+		
+		// Run the object command and go to the next line if it returns true
 		return objects[component][command](parameter);
 	}
 	
