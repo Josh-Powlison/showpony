@@ -73,13 +73,13 @@
 	margin:.25em;
 }
 
-.m-vn-textbox-hidden{
+.m-vn-textbox[data-state="hidden"]{
 	pointer-events:none;
 	display:none;
 }
 
-.m-vn-textbox-form-inactive input,
-.m-vn-textbox-form-inactive button{
+.m-vn-textbox-form[data-state="inactive"] input,
+.m-vn-textbox-form[data-state="inactive"] button{
 	pointer-events:none;
 	opacity:.5;
 }

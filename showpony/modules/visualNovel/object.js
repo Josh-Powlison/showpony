@@ -396,6 +396,21 @@ S.modules.visualNovel=new function(){
 			else if(component==='engine') type='engine';
 		}
 		
+		// Creating a new element using the engine command
+		if(type==='engine'){
+			switch(command){
+				case 'audio':
+				case 'textbox':
+				case 'character':
+					component=parameter;
+					type=command;
+					command=null;
+					break;
+				default:
+					break;
+			}
+		}
+		
 		// Run through if we're running to a point; if we're there or beyond though, stop running through
 		if(runTo!==false && line>=runTo){
 			
@@ -407,7 +422,6 @@ S.modules.visualNovel=new function(){
 			delete target['engine'];
 			
 			// Adjust everything based on the list
-			
 			
 			// Get rid of objects that aren't in target
 			for(var compObject in objects){
@@ -471,29 +485,20 @@ S.modules.visualNovel=new function(){
 			
 			// Creating elements with the engine
 			if(type==='engine'){
-				switch(command){
-					// Creating a new element
-					case 'audio':
-					case 'character':
-					case 'textbox':
-						if(!target[parameter]){
-							target[parameter]={
-								'type':command
-							};
-						}
-						
-						return true;
-						break;
-					default:
-						break;
-				}
 			}else{
 				if(!target[component]){
 					target[component]={
 						'type':type
 					};
+					
+					// Add necessary starting values based on what's passed
+					if(type==='audio') target[component].stop=null;
+					else if(type==='textbox') target[component].empty=null;
 				}
 			}
+			
+			// Ignore adding a command if there is none to return
+			if(command===null) return true;
 			
 			// Add styles; everything else is replaced
 			if(command==='style'){
@@ -534,6 +539,8 @@ S.modules.visualNovel=new function(){
 					break;
 				case 'content':
 					delete target[component].empty;
+					break;
+				default:
 					break;
 			}
 			
@@ -885,14 +892,12 @@ S.modules.visualNovel=new function(){
 		M.window.appendChild(O.el);
 		
 		O.empty=function(){
-			O.el.classList.add('m-vn-textbox-hidden');
-			
+			O.el.dataset.state='hidden';
 			return true;
 		}
 		
 		O.content=function(input='NULL: No text was passed.'){
-			O.el.classList.remove('m-vn-textbox-hidden');
-			O.el.classList.remove('m-vn-textbox-form-inactive');
+			O.el.dataset.state='normal';
 			
 			wait=true; // Assume we're waiting at the end time //XXX
 			
@@ -919,7 +924,7 @@ S.modules.visualNovel=new function(){
 			// Tracks nested attributes
 			var nestedAttributes={
 				speed:[]
-				,canimation:[]
+				,animation:[]
 			};
 
 			// The total time we're waiting until x happens
@@ -960,9 +965,9 @@ S.modules.visualNovel=new function(){
 						var tag=values.substr(1);
 						
 						switch(tag){
-							case 'canimation':
+							case 'animation':
 								// Revert the attributes to their previous values
-								var attributes=nestedAttributes.canimation.pop();
+								var attributes=nestedAttributes.animation.pop();
 								break;
 							case 'speed':
 								// Revert the attributes to their previous values
@@ -998,9 +1003,9 @@ S.modules.visualNovel=new function(){
 						}
 						
 						switch(tag){
-							case 'canimation':
+							case 'animation':
 								if(attributes[0][1]==='offset'){
-									nestedAttributes.canimation.push(parseFloat(attributes[0][3]));
+									nestedAttributes.animation.push(parseFloat(attributes[0][3]));
 								}
 								break;
 							case 'speed':
@@ -1072,7 +1077,7 @@ S.modules.visualNovel=new function(){
 										newElement.addEventListener('click',function(event){
 											if(!O.el.checkValidity()) return false;
 											
-											O.el.classList.add('m-vn-textbox-form-inactive');
+											O.el.dataset.state='inactive';
 											
 											// This might just be a continue button, so we need to check
 											if(this.dataset.var) S.data[this.dataset.var]=this.dataset.val;
@@ -1190,11 +1195,11 @@ S.modules.visualNovel=new function(){
 					if(!S.paused && runTo===false) showChar.style.animationDelay=totalWait+'s';
 					
 					// Set animation timing for animChar, based on the type of animation
-					var canimation=nestedAttributes.canimation;
-					canimation=canimation[canimation.length-1];
+					var animation=nestedAttributes.animation;
+					animation=animation[animation.length-1];
 					
-					if(canimation!==null){
-						animChar.style.animationDelay=-(letters.length/parseFloat(canimation))+'s';
+					if(!isNaN(animation)){
+						animChar.style.animationDelay=-(letters.length/parseFloat(animation))+'s';
 					}
 					
 					// Build the char and add it to the parent (which may be a document fragment)
