@@ -88,15 +88,15 @@
 
 .m-vn-letter-container{
 	visibility:hidden;
-	font-size:1em;
-	color:inherit;
-	font-weight:inherit;
-	font-style:inherit;
+	/* font-size:1em; */
+	position:relative;
 }
 
 .m-vn-letter{
 	position:absolute;
+	bottom:0;
 	display:inline-block;
+	animation:m-vn-display 1s linear forwards;
 }
 
 .m-vn-letter-animation{
@@ -105,12 +105,8 @@
 }
 
 .m-vn-letter-placeholder{
-	visibility:hidden;
-}
-
-.m-vn-letter-container>.m-vn-letter{
-	animation:m-vn-display 1s linear forwards;
-	/* animation-fill-mode:; */
+	/* visibility:visible; */
+	color:red;
 }
 
 @keyframes m-vn-display{
