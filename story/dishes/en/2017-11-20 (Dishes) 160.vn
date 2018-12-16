@@ -103,9 +103,9 @@ ben		shy_blush
 susan.style		time:1s;left:-25%;
 		[shout]There you are![/shout] What are you and [playerName] doing out here, it's <em>your</em> turn to do the dishes!!!!
 
-		<span style="font-size:.5em;">Crap, we've been caught...</span>
+		<div style="font-size:.5em;">Crap, we've been caught...<br></div>
 
-		+<br>Um... nothing, we'll get to them later.
+		+Um... nothing, we'll get to them later.
 
 		[shout]No,[/shout] <em>I</em> did the dishes yesterday, it's <em>your</em> turn to do them and we need to get them done <speed rate="4">[shout]right now![/shout]</speed>
 
