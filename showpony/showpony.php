@@ -527,6 +527,7 @@ function getTotalBuffered(){
 }
 
 var scrubLoad=null;
+var scrubLoadTime=null;
 
 function infoTime(time){
 	return (S.duration>3600 ? String(time / 3600|0).padStart(String((S.duration / 3600)|0).length,'0')+':' : '')
@@ -558,12 +559,13 @@ function scrub(inputPercent=null,loadFile=false){
 		
 		/// LOADING THE SELECTED FILE ///
 		if(loadFile){
-			console.log('Hello',scrubbing);
 			clearTimeout(scrubLoad);
+			scrubLoad=null;
 			if(checkBuffered(time) || scrubbing==='out') S.to({time:time});
 			else{
 				// Load the file if we sit in the same spot for a moment
-				scrubLoad=setTimeout(S.to,400,{time:time});
+				scrubLoadTime=time;
+				scrubLoad=setTimeout(S.to,400,{time:scrubLoadTime});
 			}
 		}
 		
@@ -1287,6 +1289,14 @@ window.addEventListener('mouseup',function(event){
     actionInterval=null;
     
     scrubbing=false;
+	
+	// If we were waiting to load on an interval, load immediately!
+	if(scrubLoad){
+		clearTimeout(scrubLoad);
+		scrubLoad=null;
+		console.log("CLEARED",scrubLoad);
+		S.to({time:scrubLoadTime});
+	}
     
     // Ignore scrollbar
     if(event.offsetX>event.target.clientWidth || event.offsetY>event.target.clientHeight) return;
