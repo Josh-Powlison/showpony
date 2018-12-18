@@ -152,10 +152,6 @@ S.modules.visualNovel=new function(){
 		junction();
 	}
 
-	M.timeUpdate=function(time=0){
-		M.currentTime=time;
-	}
-	
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
 			if(time==='end') time=S.files[file].duration;
@@ -554,7 +550,8 @@ S.modules.visualNovel=new function(){
 		
 		// Update the scrubbar if the frame we're on is a keyframe
 		if(runTo===false && keyframes.includes(line)){
-			timeUpdate((keyframes.indexOf(line)/keyframes.length)*S.files[M.currentFile].duration);
+			M.currentTime=(keyframes.indexOf(line)/keyframes.length)*S.files[M.currentFile].duration;
+			timeUpdate(M.currentTime);
 		}
 		
 		// Engine command

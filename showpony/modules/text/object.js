@@ -20,10 +20,6 @@ S.modules.text=new function(){
 		S.to({file:'+1'});
 	}
 	
-	M.timeUpdate=function(time=0){
-		M.currentTime=time;
-	}
-	
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
 			if(time==='end') time=S.files[file].duration;
@@ -70,6 +66,7 @@ S.modules.text=new function(){
 	
 	// Update time on scrolling
 	M.window.addEventListener('scroll',function(){
-		timeUpdate(Math.round(M.window.scrollTop/M.window.scrollHeight*(S.files[M.currentFile].duration)));
+		M.currentTime=Math.round(M.window.scrollTop/M.window.scrollHeight*(S.files[M.currentFile].duration));
+		timeUpdate(M.currentTime);
 	});
 }();

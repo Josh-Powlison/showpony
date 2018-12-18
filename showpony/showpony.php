@@ -228,10 +228,9 @@ S.to=function(obj={}){
 	
 	S.modules[S.currentModule].src(obj.file,obj.time).then((obj)=>{
 		// TODO: condense or remove parts from below. I can't help but think this should all be called in the object.js files, and not touched at all here.
-		S.currentFile=S.modules[S.currentModule].currentFile=obj.file;
-		S.modules[S.currentModule].timeUpdate(obj.time);
-		S.modules[S.currentModule].goToTime=obj.time;
-		timeUpdate(obj.time);
+		S.currentFile=S.modules[S.currentModule].currentFile;
+		S.modules[S.currentModule].currentTime=obj.time;
+		timeUpdate();
 		
 		/// PRELOAD ///
 		if(scrubbing) return;
@@ -416,14 +415,7 @@ var searchParams=new URLSearchParams(window.location.search);
 ///////////PRIVATE FUNCTIONS///////////
 ///////////////////////////////////////
 
-function timeUpdate(time){
-	if(!isNaN(time)){
-		// Don't exceed the file's duration
-		var duration=S.files[S.currentFile].duration;
-		if(time>duration) time=duration;
-		S.modules[S.currentModule].timeUpdate(time);
-	}
-	
+function timeUpdate(){
 	// Get the current time in the midst of the entire Showpony
 	S.currentTime=parseFloat(S.modules[S.currentModule].currentTime);
 	for(let i=0;i<S.currentFile;i++) S.currentTime+=parseFloat(S.files[i].duration);
@@ -1294,7 +1286,6 @@ window.addEventListener('mouseup',function(event){
 	if(scrubLoad){
 		clearTimeout(scrubLoad);
 		scrubLoad=null;
-		console.log("CLEARED",scrubLoad);
 		S.to({time:scrubLoadTime});
 	}
     

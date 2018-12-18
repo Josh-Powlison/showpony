@@ -23,11 +23,6 @@ S.modules.template=new function(){
 		
 	}
 	
-	// Update the time in the current file. May happen automatically, on scrolling, etc
-	M.timeUpdate=function(time=0){
-		M.currentTime=time;
-	}
-	
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
 			// Change the file if it'd be a new one

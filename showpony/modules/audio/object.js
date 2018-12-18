@@ -33,18 +33,14 @@ S.modules.audio=new function(){
 		else S.to({time:'+10'});
 	}
 	
-	M.timeUpdate=function(time=0){
-		M.currentTime=M.audio.currentTime=time;
-	}
-	
-	M.goToTime=0;
-	
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
 			if(time==='end') time=S.files[file].duration-5;
 			
 			// Change the file if it'd be a new one
 			if(M.currentFile!==file) M.audio.src=S.files[file].path;
+			
+			M.audio.currentTime=time;
 			
 			// If we're not paused, play
 			if(!S.paused) M.play();
@@ -82,7 +78,7 @@ S.modules.audio=new function(){
 
 	// Fix for Safari not going to the right time
 	M.audio.addEventListener('loadeddata',function(){
-		M.currentTime=M.audio.currentTime=M.goToTime;
+		M.audio.currentTime=M.currentTime;
 	});
 
 	M.audio.addEventListener('canplay',function(){

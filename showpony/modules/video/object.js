@@ -33,18 +33,14 @@ S.modules.video=new function(){
 		else S.to({time:'+10'});
 	}
 	
-	M.timeUpdate=function(time=0){
-		M.currentTime=M.video.currentTime=time;
-	}
-	
-	M.goToTime=0;
-	
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
 			if(time==='end') time=S.files[file].duration-5;
 			
 			// Change the file if it'd be a new one
 			if(M.currentFile!==file) M.video.src=S.files[file].path;
+			
+			M.video.currentTime=time;
 			
 			// If we're not paused, play
 			if(!S.paused) M.play();
@@ -82,7 +78,7 @@ S.modules.video=new function(){
 
 	// Fix for Safari not going to the right time
 	M.video.addEventListener('loadeddata',function(){
-		M.currentTime=M.video.currentTime=M.goToTime;
+		M.video.currentTime=M.currentTime;
 	});
 
 	M.video.addEventListener('canplay',function(){
