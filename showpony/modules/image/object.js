@@ -54,7 +54,7 @@ S.modules.<?php echo 'image'; ?>=new function(){
 	}
 	
 	M.displaySubtitles=function(){
-		if(S.currentSubtitles===null){
+		if(S.currentSubtitles===null || !S.subtitles[S.currentSubtitles][M.currentFile]){
 			M.subtitles.innerHTML='';
 			return;
 		}

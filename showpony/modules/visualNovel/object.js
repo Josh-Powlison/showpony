@@ -263,7 +263,7 @@ S.modules.visualNovel=new function(){
 	
 	M.displaySubtitles=function(){
 		// When an audio file updates its time, display subtitles for it
-		if(S.currentSubtitles===null){
+		if(S.currentSubtitles===null || !S.subtitles[S.currentSubtitles][M.currentFile]){
 			M.subtitles.style.display='none';
 			return;
 		}

@@ -50,7 +50,7 @@ S.modules.audio=new function(){
 	}
 	
 	M.displaySubtitles=function(){
-		if(S.currentSubtitles===null){
+		if(S.currentSubtitles===null || !S.subtitles[S.currentSubtitles][M.currentFile]){
 			M.subtitles.style.display='none';
 			return;
 		}

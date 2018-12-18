@@ -702,7 +702,7 @@ S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 		S.modules[S.currentModule].displaySubtitles();
 	// Otherwise, load them
 	}else{
-		fetch('showpony/get-subtitles.php?path=<?php echo $stories_path; ?>&lang='+newSubtitles)
+		fetch('showpony/get-subtitles.php?path=<?php echo $stories_path; ?>&lang='+newSubtitles+'&files='+S.files.length)
 		.then(response=>{return response.text();})
 		.then(text=>{
 			var filesArray=[];
