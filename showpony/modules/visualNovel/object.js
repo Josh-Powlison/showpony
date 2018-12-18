@@ -551,7 +551,7 @@ S.modules.visualNovel=new function(){
 		// Update the scrubbar if the frame we're on is a keyframe
 		if(runTo===false && keyframes.includes(line)){
 			M.currentTime=(keyframes.indexOf(line)/keyframes.length)*S.files[M.currentFile].duration;
-			timeUpdate(M.currentTime);
+			timeUpdate();
 		}
 		
 		// Engine command

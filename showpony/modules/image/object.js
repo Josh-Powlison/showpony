@@ -87,7 +87,7 @@ S.modules.<?php echo 'image'; ?>=new function(){
 	// Update time on scrolling
 	M.window.addEventListener('scroll',function(){
 		M.currentTime=Math.round(M.window.scrollTop/M.window.scrollHeight*(S.files[M.currentFile].duration));
-		timeUpdate(M.currentTime);
+		timeUpdate();
 	});
 	
 	/// BUFFERING ///
