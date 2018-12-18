@@ -40,9 +40,10 @@ $saveName=toCamelCase($name).'Data';
 
 // 0 is save system; 1 is save name; 2 is language
 if(!empty($_COOKIE[$saveName])) $data=explode('&',$_COOKIE[$saveName]);
-else $data=[null,null,null];
+else $data=[null,null,null,null];
 
 $language=$_GET['lang'] ?? $data[2] ?? DEFAULT_LANGUAGE;
+$subtitles=$data[3] ?? null;
 
 function toCamelCase($input){
 	return lcfirst(
@@ -153,7 +154,7 @@ S.gamepad=null;
 S.currentFile=null;
 S.currentTime=null;
 S.currentModule=null;
-S.currentSubtitles=null;
+S.currentSubtitles=<?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
 
 ///////////////////////////////////////
 ////////////////MODULES////////////////
@@ -978,6 +979,7 @@ S.save=function(){
 			S.saves.system
 			+'&'+S.currentSave
 			+'&'+S.currentLanguage
+			+'&'+S.currentSubtitles
 		)
 	;
 }
