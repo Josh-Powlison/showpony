@@ -228,7 +228,7 @@ S.to=function(obj={}){
 	
 	S.modules[S.currentModule].src(obj.file,obj.time).then((obj)=>{
 		// TODO: condense or remove parts from below. I can't help but think this should all be called in the object.js files, and not touched at all here.
-		S.currentFile=S.modules[S.currentModule].currentFile;
+		S.currentFile=S.modules[S.currentModule].currentFile=obj.file;
 		S.modules[S.currentModule].currentTime=obj.time;
 		timeUpdate();
 		
