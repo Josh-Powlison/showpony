@@ -62,6 +62,12 @@
 ,.s-paused .s-pause{
 }
 
+.s-regress.s-active
+,.s-progress.s-active
+,.s-pause.s-active{
+	background-color:#a2a2a2;
+}
+
 .s-regress
 ,.s-progress
 ,.s-pause{

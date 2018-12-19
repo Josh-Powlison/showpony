@@ -158,9 +158,9 @@ S.window.innerHTML		= `
 	<div class="s-content"></div>
 	<?php if(file_exists('cover.jpg')) echo '<img class="s-cover" src="',$stories_path,'cover.jpg">'; ?>
 	<div class="s-overlay">
-		<button class="s-progress s-hide-on-hold"></button>
-		<button class="s-regress s-hide-on-hold"></button>
-		<button class="s-pause s-hide-on-hold"></button>
+		<button class="s-progress"></button>
+		<button class="s-regress"></button>
+		<button class="s-pause"></button>
 		<div class="s-progress-bar" style="left:0%;"></div>
 		<canvas class="s-overlay-buffer" width="1000" height="1"></canvas>
 		<div class="s-overlay-text"></div>
@@ -357,7 +357,6 @@ S.load = function(){
 			S.currentLanguage=loadFile.language;
 			S.currentSubtitles=loadFile.subtitles;
 			
-			console.log("RETURNING BOOKMARK",loadFile.bookmark);
 			return loadFile.bookmark;
 			break;
 		case 'remote':
@@ -1228,6 +1227,9 @@ window.addEventListener('mouseup',function(event){
     actionTimeout=null;
     clearInterval(actionInterval);
     actionInterval=null;
+	
+	// Get rid of any active coloring
+	if(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
     
     scrubbing=false;
 	
@@ -1330,19 +1332,22 @@ S.window.addEventListener('mousedown',function(event){
 	// One event listener for all of the buttons
     // Pause
     if(checkCollision(event.clientX,event.clientY,pause)){
+		pause.classList.add('s-active');
         actionTimeout=setTimeout(function(){
             S.window.classList.add('s-hold');
         },500);
+	// Progress
     } else if(checkCollision(event.clientX,event.clientY,progressBtn)){
-        // Progress
+		progressBtn.classList.add('s-active');
         actionTimeout=setTimeout(function(){
             S.window.classList.add('s-hold');
             actionInterval=setInterval(function(){
                 S.to({time:'+5'});
             },50);
         },500);
+	// Regress
     } else if(checkCollision(event.clientX,event.clientY,regress)){
-        // Regress
+		regress.classList.add('s-active');
         actionTimeout=setTimeout(function(){
             S.window.classList.add('s-hold');
             actionInterval=setInterval(function(){
