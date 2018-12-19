@@ -114,7 +114,9 @@
 	border:.25em solid #c3c3c3;
 	border-bottom:none;
 	
-	background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath d='M0 0h12v30H0zM18 0h12v30H18z'/%3E%3C/svg%3E");
+	background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath d='M30 24.8V30H0v-5.2zM30 0v5.2H0V0zM30 12.4v5.2H0v-5.2z'/%3E%3C/svg%3E");
+	
+	/* background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath d='M0 0h12v30H0zM18 0h12v30H18z'/%3E%3C/svg%3E"); */
 }
 
 /*/////////////////////////////////////
