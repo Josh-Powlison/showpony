@@ -759,9 +759,6 @@ function userScrub(event=null,start=false){
 	// Only allow scrubbing when paused
 	if(!S.paused) return;
 	
-	// Remove active button, if one exists
-	if(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
-	
 	// General events
 	if(isNaN(event)){
 		// Mouse and touch work slightly differently
@@ -801,6 +798,9 @@ function userScrub(event=null,start=false){
 				
 				scrubbing=true;
 				S.window.classList.add('s-hold');
+				
+				// Remove active button, if one exists
+				if(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
 			}
 			else return;
 		}
