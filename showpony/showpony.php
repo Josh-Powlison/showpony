@@ -632,6 +632,9 @@ function scrub(inputPercent=null,loadFile=false){
 function userScrub(event=null,start=false){
 	var input;
 	
+	// Only allow scrubbing when paused
+	if(!S.paused) return;
+	
 	// General events
 	if(isNaN(event)){
 		// Mouse and touch work slightly differently
