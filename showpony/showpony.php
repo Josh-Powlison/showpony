@@ -714,8 +714,13 @@ S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 			for(var i=0;i<files.length;i++){
 				var grouping={};
 				
-				// Loop through sections (get rid of surrounding blanks
-				var sections=files[i].replace(/^\s+|\s+$/g,'').split(/(?:\n\s*){2,}/g);
+				// Loop through sections
+				
+				// (get rid of surrounding blanks)
+				var sections=files[i].replace(/^\s+|\s+$/g,'');
+				// Split between lines
+				// sections=sections.split(/(?:\n\s*){2,}/g);
+				sections=sections.split(/[\r\n]{4,}/g);
 				for(var j=0;j<sections.length;j++){
 					var name=j;
 					var phrase={
@@ -725,7 +730,7 @@ S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 					};
 					
 					// Loop through chunk
-					var chunk=sections[j].split(/\n\s*/g);
+					var chunk=sections[j].split(/[\r\n]{2,}/g);
 					for(var k=0;k<chunk.length;k++){
 						// Get time
 						if(/-->/.test(chunk[k])){
