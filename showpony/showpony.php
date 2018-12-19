@@ -659,7 +659,9 @@ function userScrub(event=null,start=false){
 			
 		// You have to swipe farther than you move the cursor to adjust the position
 		if(scrubbing!==true && scrubbing!=='out'){
-			if(input==='joystick' || Math.abs(scrubbing-pos)>screen.width/(input==='touch' ? 20 : 100)){
+			if(input==='joystick'
+				|| Math.abs(scrubbing-pos)>screen.width/34 // 34 is an arbitrary percentage of the screen that seems to feel good to trigger scrubbing
+			){
 				// Don't wait to start a series of actions
 				clearTimeout(actionTimeout);
 				actionTimeout=null;
