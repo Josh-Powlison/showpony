@@ -21,7 +21,7 @@ for($i=1;$i<$files+1;$i++){
 	$file=str_pad($i,4,'0',STR_PAD_LEFT).'.vtt';
 	if(file_exists($file)) readfile($file);
 	
-	if($i<$files-2) echo '|SPLIT|';
+	if($i<$files) echo '|SPLIT|';
 }
 
 ?>
