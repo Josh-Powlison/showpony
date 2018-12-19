@@ -31,19 +31,21 @@ require 'settings.php';
 // TESTING ADMIN
 // $_SESSION['showpony_admin']=false;
 
-$stories_path=DEFAULT_PATH.($_GET['path'] ?? '');
+$stories_path = DEFAULT_PATH.($_GET['path'] ?? '');
 
 // Get the query from the paths
-$name=preg_match('/[^\/]+(?=\/?$)/',$stories_path,$match) ? $match[0] : 'story';
+$name = preg_match('/[^\/]+(?=\/?$)/',$stories_path,$match) ? $match[0] : 'story';
 
-$saveName=toCamelCase($name).'Data';
+$saveName = toCamelCase($name).'Data';
 
 // 0 is save system; 1 is save name; 2 is language
-if(!empty($_COOKIE[$saveName])) $data=explode('&',$_COOKIE[$saveName]);
-else $data=[null,null,null,null];
+if(!empty($_COOKIE[$saveName])) $data = explode('&',$_COOKIE[$saveName]);
+else $data = [null,null,null,null];
 
-$language=$_GET['lang'] ?? $data[2] ?? DEFAULT_LANGUAGE;
-$subtitles=$data[3] ?? null;
+$save_system	= $data[0]		??	null;
+$current_save	= $data[1]		??	'Autosave';
+$language		= $_GET['lang']	??	$data[2]	?? DEFAULT_LANGUAGE;
+$subtitles		= $_GET['subs']	??	$data[3]	??	null;
 
 function toCamelCase($input){
 	return lcfirst(
@@ -59,7 +61,7 @@ ob_start();
 require 'get-file-list.php';
 
 // Pass any echoed statements or errors to the response object
-$message=ob_get_clean();
+$message = ob_get_clean();
 
 header('Content-type: application/javascript');
 ?>'use strict';
@@ -118,15 +120,34 @@ S.name					= <?php echo json_encode(toCamelCase($name)); ?>;
 S.path					= <?php echo json_encode($stories_path); ?>;
 S.paused				= false;
 S.query					= '<?php echo $name; ?>';
-S.saveName=<?php echo json_encode($saveName); ?>;
-S.saves={
-	currentSave:'bookmark1'
-	,language:S.currentLanguage
-	,local:{}
-	,system:null //|| 'local' || 'HeyBard' || etc
-	,timestamp:Date.now()
-}
+S.saveName				= <?php echo json_encode($saveName); ?>;
+S.saves					= {
+	currentSave	:<?php echo json_encode($current_save); ?>,
+	language	:<?php echo json_encode($language); ?>,
+	local		:{},
+	system		:<?php echo json_encode($save_system); ?>,
+	timestamp	:Date.now()
+};
 S.subtitles				= {};
+S.supportedSubtitles	= <?php
+	// Get subtitles
+	$subtitles=[];
+	if(file_exists('subtitles')){
+		foreach(scandir('subtitles') as $file){
+			// Ignore hidden files
+			if(!is_dir('subtitles/'.$file) || $file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
+
+			// TODO: add support for differentiating Closed Captions (maybe append with "cc", like "en-cc" "es-cc"
+			
+			$subtitles[]=[
+				'short'	=>	$file
+				,'long'	=>	extension_loaded('intl') ? (Locale::getDisplayLanguage($file)) : $file
+			];
+		}
+	}
+	
+	echo json_encode($subtitles);
+?>;
 S.upcomingFiles			= <?php echo json_encode($releaseDates); ?>;
 	
 S.window				= document.createElement('div');
@@ -176,12 +197,15 @@ const progressBtn		= S.window.getElementsByClassName('s-progress')[0];
 const regress			= S.window.getElementsByClassName('s-regress')[0];
 const styles			= S.window.getElementsByClassName('s-style')[0];
 
+var actionTimeout		= null;		// Used to start running constant mousedown functions, like fast-forward and rewind
+var actionInterval		= null;		// Used to run constant mousedown functions, like fast-forward and rewind
+var clickStart			= false;	// Whether a click was started inside Showpony
 var checkGamepad		= null;
 var framerate			= 60;		// Connected to gamepad use and games
-var pos					= 0;
-var scrubbing			= false;
+var pos					= 0;		// The current scrub position
+var scrubbing			= false;	// Our state of scrubbing
 var searchParams		= new URLSearchParams(window.location.search);
-var start				= 0;
+var start				= 0;		// Where we're starting the Showpony from
 
 ///////////////////////////////////////
 ////////////////MODULES////////////////
@@ -332,9 +356,9 @@ S.load = function(){
 			S.data=loadFile.data;
 			S.currentLanguage=loadFile.language;
 			S.currentSubtitles=loadFile.subtitles;
-			start=loadFile.bookmark;
 			
-			// S.to({time:loadFile.bookmark});
+			console.log("RETURNING BOOKMARK",loadFile.bookmark);
+			return loadFile.bookmark;
 			break;
 		case 'remote':
 			break;
@@ -374,7 +398,7 @@ S.save = function(){
 	document.cookie=S.saveName+'='
 		+encodeURIComponent(
 			S.saves.system
-			+'&'+S.currentSave
+			+'&'+S.saves.currentSave
 			+'&'+S.currentLanguage
 			+'&'+S.currentSubtitles
 		)
@@ -992,20 +1016,7 @@ function gamepadButton(gamepad,number,type){
 	}
 }
 
-///////////////////////////////////////
-/////////////////START/////////////////
-///////////////////////////////////////
-
-// Priority Saves: Newest > Default Start
-if(localStorage.getItem(S.saveName)===null){
-	localStorage.setItem(S.saveName,JSON.stringify(S.saves));
-}else{
-	S.saves=localStorage.getItem(S.saveName);
-}
-
-S.load();
-
-/////////////////
+////////////
 
 const supportedLanguages=<?php
 	// Get subtitles
@@ -1054,27 +1065,7 @@ if(supportedLanguages.length>1){
 	S.window.querySelector('.s-button-language').remove();
 }
 
-var supportedSubtitles=<?php
-	// Get subtitles
-	$subtitles=[];
-	if(file_exists('subtitles')){
-		foreach(scandir('subtitles') as $file){
-			// Ignore hidden files
-			if(!is_dir('subtitles/'.$file) || $file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
-
-			// TODO: add support for differentiating Closed Captions (maybe append with "cc", like "en-cc" "es-cc"
-			
-			$subtitles[]=[
-				'short'	=>	$file
-				,'long'	=>	extension_loaded('intl') ? (Locale::getDisplayLanguage($file)) : $file
-			];
-		}
-	}
-	
-	echo json_encode($subtitles);
-?>;
-
-if(supportedSubtitles.length>0){
+if(S.supportedSubtitles.length>0){
 	function toggleSubtitle(){
 		// Remove selected class from previous selected item
 		var previous=S.window.querySelector('.s-dropdown-subtitles .s-selected');
@@ -1093,13 +1084,13 @@ if(supportedSubtitles.length>0){
 	}
 
 	var subtitleButtons=document.createDocumentFragment();
-	for(var i=0;i<supportedSubtitles.length;i++){
+	for(var i=0;i<S.supportedSubtitles.length;i++){
 		var buttonEl=document.createElement('button');
-		buttonEl.innerText=supportedSubtitles[i]['long'];
-		buttonEl.dataset.value=supportedSubtitles[i]['short'];
+		buttonEl.innerText=S.supportedSubtitles[i]['long'];
+		buttonEl.dataset.value=S.supportedSubtitles[i]['short'];
 		buttonEl.addEventListener('click',toggleSubtitle);
 		
-		if(S.currentSubtitles===supportedSubtitles[i]['short']) buttonEl.className='s-selected';
+		if(S.currentSubtitles===S.supportedSubtitles[i]['short']) buttonEl.className='s-selected';
 		
 		subtitleButtons.appendChild(buttonEl);
 	}
@@ -1167,31 +1158,9 @@ function addBookmark(obj){
 	S.window.querySelector(".s-dropdown-bookmark").appendChild(bookmarkEl);
 }
 
-// For now, we'll just support this bookmark
-// TODO: allow renaming bookmarks
-addBookmark({name:'Autosave',system:'local',type:'default'});
-
-/////////////////
-
-var page=searchParams.get(S.query);
-if(page) start=page;
-
-// Pause the Showpony
-S.pause();
-S.to({time:start});
-start=null;
-
-// We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
-
-// Add the Showpony window to the document
-document.currentScript.insertAdjacentElement('afterend',S.window);
-
 ///////////////////////////////////////
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
-
-// Whether a click was started inside showpony
-var clickStart = false;
 
 // Allow using querystrings for navigation
 window.addEventListener(
@@ -1387,9 +1356,6 @@ S.window.addEventListener('mousedown',function(event){
 	window.getSelection().removeAllRanges();
 });
 
-var actionTimeout=null;
-var actionInterval=null;
-
 // On touch end, don't keep moving the bar to the user's touch
 overlay.addEventListener('touchend',userScrub);
 
@@ -1426,6 +1392,41 @@ window.addEventListener('gamepaddisconnected',function(e){
 	clearInterval(checkGamepad);
 	checkGamepad=null;
 });
+
+///////////////////////////////////////
+/////////////////START/////////////////
+///////////////////////////////////////
+
+// Priority Saves: Newest > Default Start
+if(localStorage.getItem(S.saveName)===null){
+	// Set defaults
+	localStorage.setItem(S.saveName,JSON.stringify({
+		currentSave	:'Autosave',
+		language	:<?php echo json_encode($language); ?>,
+		local		:{},
+		system		:null,
+		timestamp	:Date.now()
+	}));
+}else{
+	S.saves=JSON.parse(localStorage.getItem(S.saveName));
+}
+
+// For now, we'll just support this bookmark
+// TODO: allow renaming bookmarks
+addBookmark({name:'Autosave',system:'local',type:'default'});
+
+var start = searchParams.get(S.query);
+if(start === null || isNaN(start)) start = S.load();
+if(start === null || isNaN(start)) start = <?php echo DEFAULT_START; ?>;
+
+// Pause the Showpony
+S.pause();
+S.to({time:start});
+
+// We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
+
+// Add the Showpony window to the document
+document.currentScript.insertAdjacentElement('afterend',S.window);
 
 ///////////////////////////////////////
 /////////////////ADMIN/////////////////
