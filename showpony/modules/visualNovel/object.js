@@ -317,15 +317,9 @@ S.modules.visualNovel=new function(){
 		M.currentLine=line;
 		continueNotice.remove();
 
-		while(M.readLine(M.currentLine)){
-			M.currentLine=M.currentLine+1;
-			
-			// If we've ended manually or reached the end, stop running immediately and end it all
-			if(M.currentLine>=M.lines.length){
-				S.to({file:'+1'});
-				break;
-			}
-		};
+		while(M.currentLine<M.lines.length && M.readLine(M.currentLine)) M.currentLine++;
+
+		if(M.currentLine>=M.lines.length) S.to({file:'+1'});
 	}
 	
 	M.readLine=function(line){
