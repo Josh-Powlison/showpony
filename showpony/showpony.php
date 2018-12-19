@@ -549,8 +549,10 @@ function timeUpdate(){
 	if(scrubbing!==true && scrubbing!=='out') scrub(null,false);
 	
 	// Update the querystring
-	searchParams.set(S.queryBookmark, S.currentTime|0);
-	history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
+	if(scrubbing===false){
+		searchParams.set(S.queryBookmark, S.currentTime|0);
+		history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
+	}
 	
 	// Run custom event for checking time
 	S.window.dispatchEvent(
@@ -1235,6 +1237,12 @@ window.addEventListener('mouseup',function(event){
 	// Get rid of any active coloring
 	if(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
     
+	// Update the querystring
+	if(scrubbing){
+		searchParams.set(S.queryBookmark, S.currentTime|0);
+		history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
+	}
+	
     scrubbing=false;
 	
 	// If we were waiting to load on an interval, load immediately!
@@ -1440,6 +1448,7 @@ if(
 ) start = bookmarkSave;
 
 searchParams.delete(S.queryHardLink,null);
+history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
 if(start === null || isNaN(start)) start = <?php echo DEFAULT_START; ?>;
 
 // Pause the Showpony
