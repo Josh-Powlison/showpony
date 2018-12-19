@@ -1250,16 +1250,16 @@ S.modules.visualNovel=new function(){
 			M.run();
 		}else{
 			if(!M.window.querySelector('input')){
-				if(S.auto){
-					M.run();
-				}
-				else{
+				// if(S.auto){
+					// M.run();
+				// }
+				// else{
 					// Don't add a continue notice if we ran through a textbox
 					if(runTo===false && M.window.querySelectorAll('.m-vn-textbox').length===M.window.querySelectorAll('[data-done="true"]').length){
 						console.log("ADD CONTINUE NOTICE");
 						M.window.appendChild(continueNotice);
 					}
-				}
+				// }
 			}
 		}
 		

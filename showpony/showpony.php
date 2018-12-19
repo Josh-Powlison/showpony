@@ -92,28 +92,47 @@ if(!document.getElementById('s-<?php echo $moduleName; ?>-styles')){
 
 <?php } ?>
 
-var <?php echo toCamelCase($name); ?>=new function(){
+var <?php echo toCamelCase($name); ?>= new function(){
 
-const S=this;
+const S = this;
 
 ///////////////////////////////////////
 ///////////PUBLIC VARIABLES////////////
 ///////////////////////////////////////
 
-S.window=document.createElement('div');
-S.window.className='s';
-S.window.tabIndex=0;
-S.files=<?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
-S.name=<?php echo json_encode(toCamelCase($name)); ?>;
-S.duration=S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
-S.paused=false;
-S.modules={};
-S.message=<?php echo json_encode($message); ?>;
-S.auto=false; // false, or float between 0 and 10
-S.path=<?php echo json_encode($stories_path); ?>;
-S.upcomingFiles=<?php echo json_encode($releaseDates); ?>;
+S.files					= <?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
 
-S.window.innerHTML=`
+S.buffered				= [];
+S.currentFile			= null;
+S.currentLanguage		= <?php echo json_encode($language); ?>;
+S.currentModule			= null;
+S.currentSubtitles		= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
+S.currentTime			= null;
+S.data					= {};
+S.duration				= S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
+S.fullscreen			= false;
+S.gamepad				= null;
+S.message				= <?php echo json_encode($message); ?>;
+S.modules				= {};
+S.name					= <?php echo json_encode(toCamelCase($name)); ?>;
+S.path					= <?php echo json_encode($stories_path); ?>;
+S.paused				= false;
+S.query					= '<?php echo $name; ?>';
+S.saveName=<?php echo json_encode($saveName); ?>;
+S.saves={
+	currentSave:'bookmark1'
+	,language:S.currentLanguage
+	,local:{}
+	,system:null //|| 'local' || 'HeyBard' || etc
+	,timestamp:Date.now()
+}
+S.subtitles				= {};
+S.upcomingFiles			= <?php echo json_encode($releaseDates); ?>;
+	
+S.window				= document.createElement('div');
+S.window.className		= 's';
+S.window.tabIndex		= 0;
+S.window.innerHTML		= `
 	<style class="s-style" type="text/css"></style>
 	<div class="s-content"></div>
 	<?php if(file_exists('cover.jpg')) echo '<img class="s-cover" src="',$stories_path,'cover.jpg">'; ?>
@@ -140,21 +159,29 @@ S.window.innerHTML=`
 	</div>
 `;
 
-S.buffered=[];
-S.query='<?php echo $name; ?>';
-S.infiniteScroll=false;
-S.subtitles={};
-S.currentLanguage='<?php echo $language; ?>';
+///////////////////////////////////////
+///////////PRIVATE VARIABLES///////////
+///////////////////////////////////////
 
-S.data={};
+const captionsButton	= S.window.getElementsByClassName('s-captions-button')[0];
+const content			= S.window.getElementsByClassName('s-content')[0];
+content.classList.add('s-loading');
+const fullscreenButton	= S.window.getElementsByClassName('s-fullscreen-button')[0];
+const overlay			= S.window.getElementsByClassName('s-overlay')[0];
+const overlayBuffer		= S.window.getElementsByClassName('s-overlay-buffer')[0];
+const overlayText		= S.window.getElementsByClassName('s-overlay-text')[0];
+const pause				= S.window.getElementsByClassName('s-pause')[0];
+const progress			= S.window.getElementsByClassName('s-progress-bar')[0];
+const progressBtn		= S.window.getElementsByClassName('s-progress')[0];
+const regress			= S.window.getElementsByClassName('s-regress')[0];
+const styles			= S.window.getElementsByClassName('s-style')[0];
 
-S.gamepad=null;
-
-// null before we load
-S.currentFile=null;
-S.currentTime=null;
-S.currentModule=null;
-S.currentSubtitles=<?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
+var checkGamepad		= null;
+var framerate			= 60;		// Connected to gamepad use and games
+var pos					= 0;
+var scrubbing			= false;
+var searchParams		= new URLSearchParams(window.location.search);
+var start				= 0;
 
 ///////////////////////////////////////
 ////////////////MODULES////////////////
@@ -173,7 +200,7 @@ foreach(array_keys($media) as $moduleName){
 ///////////////////////////////////////
 
 // Go to another file
-S.to=function(obj={}){
+S.to = function(obj = {}){
 	content.classList.add('s-loading');
 	
 	/// GET TIME AND FILE ///
@@ -260,7 +287,7 @@ S.to=function(obj={}){
 	});
 }
 
-S.play=function(){
+S.play = function(){
 	if(S.paused===false) return;
 	
 	// Close dropdowns
@@ -277,7 +304,7 @@ S.play=function(){
 	S.window.dispatchEvent(new CustomEvent('play'));
 }
 
-S.pause=function(){
+S.pause = function(){
 	if(S.paused===true) return;
 	
 	S.window.classList.add('s-paused');
@@ -286,11 +313,89 @@ S.pause=function(){
 	S.window.dispatchEvent(new CustomEvent('pause'));
 }
 
-S.toggle=function(){
+S.toggle = function(){
 	S[S.paused ? 'play' : 'pause']();
 }
 
-S.fullscreen=false;
+S.load = function(){
+	S.saves=JSON.parse(localStorage.getItem(S.saveName));
+	
+	/// TODO: add remote bookmark support
+	
+	switch(S.saves.system){
+		case 'local':
+			var loadFile=S.saves.local[S.saves.currentSave];
+			
+			// If the load file can't be found, break
+			if(!loadFile) break;
+			
+			S.data=loadFile.data;
+			S.currentLanguage=loadFile.language;
+			S.currentSubtitles=loadFile.subtitles;
+			start=loadFile.bookmark;
+			
+			// S.to({time:loadFile.bookmark});
+			break;
+		case 'remote':
+			break;
+		default:
+			break;
+	}
+}
+
+S.save = function(){
+	// TODO: Don't save the bookmark if relevant data is the same
+	// if(
+		// oldValues!==null
+		// && newValues.bookmark===oldValues.bookmark
+		// && JSON.stringify(newValues.data)===JSON.stringify(oldValues.data) // objects can easily read different; stringifying them both ensures they'll read the same
+	// ) return;
+	
+	switch(S.saves.system){
+		case 'local':
+			// Update the save file before setting it
+			S.saves.local[S.saves.currentSave]={
+				bookmark:S.currentTime
+				,data:S.data
+				,language:S.currentLanguage
+				,subtitles:S.currentSubtitles
+				,timestamp:Date.now()
+			};
+			break;
+		case 'remote':
+			break;
+		default:
+			break;
+	}
+	
+	localStorage.setItem(S.saveName,JSON.stringify(S.saves));
+	
+	// Some information is saved to cookies so PHP can access them. We compress it for simplicity and using minimal cookie space.
+	document.cookie=S.saveName+'='
+		+encodeURIComponent(
+			S.saves.system
+			+'&'+S.currentSave
+			+'&'+S.currentLanguage
+			+'&'+S.currentSubtitles
+		)
+	;
+}
+
+S.changeLanguage = function(newLanguage=<?php echo json_encode($language); ?>){
+	if(S.currentLanguage===newLanguage) return;
+	
+	fetch('showpony/get-file-list.php?return=true&path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
+	.then(response=>{return response.json();})
+	.then(json=>{
+		S.files=json;
+		S.currentLanguage=newLanguage;
+		
+		// Need to set this to -1 to reload the current file
+		S.modules[S.currentModule].currentFile=-1;
+		
+		S.to({time:S.currentTime});
+	});
+}
 
 // Toggle fullscreen, basing the functions on the browser's abilities
 // Standards fullscreen
@@ -387,34 +492,30 @@ else{
 	}
 }
 
-///////////////////////////////////////
-///////////PRIVATE VARIABLES///////////
-///////////////////////////////////////
+S.regress = function(){
+	S.modules[S.currentModule].regress();
+}
 
-var styles=				S.window.getElementsByClassName('s-style')[0];
-var content=			S.window.getElementsByClassName('s-content')[0];
-var overlay=			S.window.getElementsByClassName('s-overlay')[0];
-var overlayBuffer=		S.window.getElementsByClassName('s-overlay-buffer')[0];
-var progress=			S.window.getElementsByClassName('s-progress-bar')[0];
-var overlayText=		S.window.getElementsByClassName('s-overlay-text')[0];
-var fullscreenButton=	S.window.getElementsByClassName('s-fullscreen-button')[0];
-var captionsButton=		S.window.getElementsByClassName('s-captions-button')[0];
-
-var scrubbing=false;
-
-var sticky=false;
-
-// Showpony framerate- which is connected not to animations, etc, but to gamepad use and games
-var framerate=60;
-var checkGamepad=null;
-
-var pos=0;
-
-var searchParams=new URLSearchParams(window.location.search);
+S.progress = function(){
+	S.modules[S.currentModule].progress();
+}
 
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
 ///////////////////////////////////////
+
+function checkCollision(x=0,y=0,element){
+	var bounds=element.getBoundingClientRect();
+	
+	// If element is collapsed or outside of x and y, return
+	if(bounds.width===0 || bounds.height===0) return false;
+	if(y<bounds.top)	return false;
+	if(y>bounds.bottom)	return false;
+	if(x<bounds.left)	return false;
+	if(x>bounds.right)	return false;
+	
+	return true;
+}
 
 function timeUpdate(){
 	// Get the current time in the midst of the entire Showpony
@@ -424,8 +525,8 @@ function timeUpdate(){
 	if(scrubbing!==true && scrubbing!=='out') scrub(null,false);
 	
 	// Update the querystring
-	searchParams.set(S.query, S.currentTime|0);
-    history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
+	// searchParams.set(S.query, S.currentTime|0);
+    // history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
 	
 	// Run custom event for checking time
 	S.window.dispatchEvent(
@@ -534,9 +635,6 @@ function infoFile(input){
 
 // This updates the scrub bar's position
 function scrub(inputPercent=null,loadFile=false){
-	// "sticky" is an infinite scroll-related variable
-	// if(sticky!==false) return;
-	
 	// If no inputPercent was set, get it!
 	if(inputPercent===null) inputPercent=S.currentTime/S.duration;
 	
@@ -898,107 +996,18 @@ function gamepadButton(gamepad,number,type){
 /////////////////START/////////////////
 ///////////////////////////////////////
 
-content.classList.add('s-loading');
-
-/////////////////////
-//Get Hey Bard account
-/////////////////////
-
-// User accounts and bookmarks always on
-
-// Local saving is simple- remote saving, we'll connect straight to the database with a special account (or come up with something else, but we'll get it in PHP)
-
-// Also- why not use local and remote in tandem? If disconnect, we'll save the value in local; and then upload it remotely. Rather than one, why not both so that we keep the info if we have trouble in one place?
-// We track Hey Bard time last visited; if we check that against the user's localStorage save time, we'll be golden!
-
-// Priority: Newest > Default Start
-
-var start=0;
-S.saveName=<?php echo json_encode($saveName); ?>;
-
-S.saves={
-	currentSave:'bookmark1'
-	,language:S.currentLanguage
-	,local:{}
-	,system:null //|| 'local' || 'HeyBard' || etc
-	,timestamp:Date.now()
-}
-
+// Priority Saves: Newest > Default Start
 if(localStorage.getItem(S.saveName)===null){
 	localStorage.setItem(S.saveName,JSON.stringify(S.saves));
 }else{
 	S.saves=localStorage.getItem(S.saveName);
 }
 
-S.load=function(){
-	S.saves=JSON.parse(localStorage.getItem(S.saveName));
-	
-	/// TODO: add remote bookmark support
-	
-	switch(S.saves.system){
-		case 'local':
-			var loadFile=S.saves.local[S.saves.currentSave];
-			
-			// If the load file can't be found, break
-			if(!loadFile) break;
-			
-			S.data=loadFile.data;
-			S.currentLanguage=loadFile.language;
-			S.currentSubtitles=loadFile.subtitles;
-			start=loadFile.bookmark;
-			
-			// S.to({time:loadFile.bookmark});
-			break;
-		case 'remote':
-			break;
-		default:
-			break;
-	}
-}
-
-S.save=function(){
-	// TODO: Don't save the bookmark if relevant data is the same
-	// if(
-		// oldValues!==null
-		// && newValues.bookmark===oldValues.bookmark
-		// && JSON.stringify(newValues.data)===JSON.stringify(oldValues.data) // objects can easily read different; stringifying them both ensures they'll read the same
-	// ) return;
-	
-	switch(S.saves.system){
-		case 'local':
-			// Update the save file before setting it
-			S.saves.local[S.saves.currentSave]={
-				bookmark:S.currentTime
-				,data:S.data
-				,language:S.currentLanguage
-				,subtitles:S.currentSubtitles
-				,timestamp:Date.now()
-			};
-			break;
-		case 'remote':
-			break;
-		default:
-			break;
-	}
-	
-	localStorage.setItem(S.saveName,JSON.stringify(S.saves));
-	
-	// Some information is saved to cookies so PHP can access them. We compress it for simplicity and using minimal cookie space.
-	document.cookie=S.saveName+'='
-		+encodeURIComponent(
-			S.saves.system
-			+'&'+S.currentSave
-			+'&'+S.currentLanguage
-			+'&'+S.currentSubtitles
-		)
-	;
-}
-
 S.load();
 
 /////////////////
 
-var supportedLanguages=<?php
+const supportedLanguages=<?php
 	// Get subtitles
 	$languages=[];
 	foreach(scandir('.') as $file){
@@ -1043,22 +1052,6 @@ if(supportedLanguages.length>1){
 	S.window.querySelector(".s-dropdown-language").appendChild(languageButtons);
 }else{
 	S.window.querySelector('.s-button-language').remove();
-}
-
-S.changeLanguage=function(newLanguage=<?php echo json_encode($language); ?>){
-	if(S.currentLanguage===newLanguage) return;
-	
-	fetch('showpony/get-file-list.php?return=true&path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
-	.then(response=>{return response.json();})
-	.then(json=>{
-		S.files=json;
-		S.currentLanguage=newLanguage;
-		
-		// Need to set this to -1 to reload the current file
-		S.modules[S.currentModule].currentFile=-1;
-		
-		S.to({time:S.currentTime});
-	});
 }
 
 var supportedSubtitles=<?php
@@ -1200,10 +1193,6 @@ document.currentScript.insertAdjacentElement('afterend',S.window);
 // Whether a click was started inside showpony
 var clickStart = false;
 
-var regress=S.window.querySelector('.s-regress')
-var progressBtn=S.window.querySelector('.s-progress');
-var pause=S.window.querySelector('.s-pause')
-
 // Allow using querystrings for navigation
 window.addEventListener(
 	'popstate'
@@ -1257,27 +1246,6 @@ S.window.addEventListener(
 		event.preventDefault();
 	}
 );
-
-S.regress=function(){
-	S.modules[S.currentModule].regress();
-}
-
-S.progress=function(){
-	S.modules[S.currentModule].progress();
-}
-
-function checkCollision(x=0,y=0,element){
-	var bounds=element.getBoundingClientRect();
-	
-	// If element is collapsed or outside of x and y, return
-	if(bounds.width===0 || bounds.height===0) return false;
-	if(y<bounds.top)	return false;
-	if(y>bounds.bottom)	return false;
-	if(x<bounds.left)	return false;
-	if(x>bounds.right)	return false;
-	
-	return true;
-}
 
 window.addEventListener('mouseup',function(event){
     // If the click was started outside of showpony, ignore it
