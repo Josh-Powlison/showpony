@@ -84,27 +84,20 @@ S.modules.visualNovel=new function(){
 	}
 	
 	M.regress=function(){
-		var keyframeIndex=keyframes.indexOf(M.currentLine);
-		
-		if(keyframeIndex===-1){
-			keyframeIndex=0;
-			for(var i=M.currentLine;i>0;i--){
-				if(keyframes.indexOf(i)!==-1){
-					keyframeIndex=keyframes.indexOf(i);
-					break;
-				}
+		// Get the correct keyframe
+		for(var i=M.currentLine-1;i>0;i--){
+			if(keyframes.indexOf(i)!==-1){
+				// Skip over comments
+				if(/^\s*\/\//.test(keyframes[keyframes.indexOf(i)])) continue;
+
+				runTo=keyframes[keyframes.indexOf(i)];
+				M.run(0);
+				return;
 			}
-		}else{
-			keyframeIndex--;
 		}
 		
-		if(keyframeIndex>=0){
-			runTo=keyframes[keyframeIndex];
-			M.run(0);
-		}else{
-			if(M.currentFile>0) S.to({file:'-1',time:'end'});
-			else S.to({time:0});
-		}
+		if(M.currentFile>0) S.to({file:'-1',time:'end'});
+		else S.to({time:0});
 	}
 	
 	M.progress=function(){
