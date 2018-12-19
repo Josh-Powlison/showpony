@@ -119,7 +119,8 @@ S.modules				= {};
 S.name					= <?php echo json_encode(toCamelCase($name)); ?>;
 S.path					= <?php echo json_encode($stories_path); ?>;
 S.paused				= false;
-S.query					= '<?php echo $name; ?>';
+S.queryBookmark			= <?php echo json_encode($name); ?>;
+S.queryHardLink			= <?php echo json_encode($name); ?>+'-hard-link';
 S.saveName				= <?php echo json_encode($saveName); ?>;
 S.saves					= {
 	currentSave	:<?php echo json_encode($current_save); ?>,
@@ -548,8 +549,9 @@ function timeUpdate(){
 	if(scrubbing!==true && scrubbing!=='out') scrub(null,false);
 	
 	// Update the querystring
-	// searchParams.set(S.query, S.currentTime|0);
-    // history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
+	searchParams.set(S.queryBookmark, S.currentTime|0);
+	searchParams.delete(S.queryHardLink,null);
+	history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
 	
 	// Run custom event for checking time
 	S.window.dispatchEvent(
@@ -1168,7 +1170,7 @@ function addBookmark(obj){
 window.addEventListener(
 	'popstate'
 	,function(){
-		var time=searchParams.get(S.query);
+		var time=searchParams.get(S.queryBookmark);
 		
 		if(time){
 			if(time===S.currentTime) return;
@@ -1423,8 +1425,24 @@ if(localStorage.getItem(S.saveName)===null){
 // TODO: allow renaming bookmarks
 addBookmark({name:'Autosave',system:'local',type:'default'});
 
-var start = searchParams.get(S.query);
-if(start === null || isNaN(start)) start = S.load();
+
+// POWER: Hard Link > Bookmark > Soft Link > Default
+
+// Hard Link
+var bookmarkLink	= searchParams.get(S.queryBookmark);
+var bookmarkSave	= S.load();
+
+// By default, use the link
+var start = bookmarkLink;
+
+// Use the save if the link is faulty, the link soft, or the save empty
+if(
+	(bookmarkLink === null || isNaN(bookmarkLink) || searchParams.get(S.queryHardLink) != 'true')
+	&& (bookmarkSave !==null && !isNaN(bookmarkSave))
+) start = bookmarkSave;
+
+console.log(searchParams.get('hard-link'));
+
 if(start === null || isNaN(start)) start = <?php echo DEFAULT_START; ?>;
 
 // Pause the Showpony
