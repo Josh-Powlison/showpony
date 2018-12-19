@@ -588,8 +588,8 @@ S.modules.visualNovel=new function(){
 	}
 
 	M.wait=function(input){
-		// Skip waiting if we're running through
-		if(runTo!==false){
+		// Skip waiting if we're running through, or we're paused
+		if(runTo!==false || S.paused){
 			return true;
 		}
 		
@@ -642,7 +642,7 @@ S.modules.visualNovel=new function(){
 			// Add back in to support multiple objects sharing the same file set
 			
 			// If running to or not requesting animation, add styles without implementing animation
-			if(animationSpeed===null || runTo!==false){
+			if(animationSpeed===null || runTo!==false || S.paused){
 				O.el.style.cssText+=style;
 			}else{
 				localStyle.innerHTML='@keyframes '+cssName+'{100%{'+style+'}}';
@@ -1168,7 +1168,7 @@ S.modules.visualNovel=new function(){
 								this.style.visibility='visible';
 								
 								// If running to a spot, ignore all of this
-								if(runTo!==false) return;
+								if(runTo!==false || S.paused) return;
 								
 								// If the letter's below the textbox
 								if(this.parentNode.getBoundingClientRect().bottom>O.el.getBoundingClientRect().bottom){
@@ -1212,7 +1212,7 @@ S.modules.visualNovel=new function(){
 			lastLetter.addEventListener('animationstart',function(event){
 				if(this!==event.target) return;
 				
-				console.log("RUN ANIMATION START");
+				// console.log("RUN ANIMATION START");
 				O.el.dataset.done='true';
 				
 				junction();
@@ -1256,7 +1256,7 @@ S.modules.visualNovel=new function(){
 				// else{
 					// Don't add a continue notice if we ran through a textbox
 					if(runTo===false && M.window.querySelectorAll('.m-vn-textbox').length===M.window.querySelectorAll('[data-done="true"]').length){
-						console.log("ADD CONTINUE NOTICE");
+						// console.log("ADD CONTINUE NOTICE");
 						M.window.appendChild(continueNotice);
 					}
 				// }
