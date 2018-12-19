@@ -155,7 +155,6 @@ S.window				= document.createElement('div');
 S.window.className		= 's';
 S.window.tabIndex		= 0;
 S.window.innerHTML		= `
-	<style class="s-style" type="text/css"></style>
 	<div class="s-content"></div>
 	<?php if(file_exists('cover.jpg')) echo '<img class="s-cover" src="',$stories_path,'cover.jpg">'; ?>
 	<div class="s-overlay">
@@ -196,7 +195,6 @@ const pause				= S.window.getElementsByClassName('s-pause')[0];
 const progress			= S.window.getElementsByClassName('s-progress-bar')[0];
 const progressBtn		= S.window.getElementsByClassName('s-progress')[0];
 const regress			= S.window.getElementsByClassName('s-regress')[0];
-const styles			= S.window.getElementsByClassName('s-style')[0];
 
 var actionTimeout		= null;		// Used to start running constant mousedown functions, like fast-forward and rewind
 var actionInterval		= null;		// Used to run constant mousedown functions, like fast-forward and rewind
