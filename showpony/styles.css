@@ -58,19 +58,6 @@
 	object-fit:cover;
 }
 
-.s-cover>p{
-	background-color:rgba(0,0,0,0.5);
-	box-sizing:border-box;
-	padding:1em;
-	transition:transform .25s;
-	transform:scale(1);
-	text-align:center;
-}
-
-.s-cover>p:hover{
-	transform:scale(1.1);
-}
-
 /*/////////////////////////////////////
 ////////////////BUTTONS////////////////
 /////////////////////////////////////*/
