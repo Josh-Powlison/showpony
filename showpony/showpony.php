@@ -550,7 +550,6 @@ function timeUpdate(){
 	
 	// Update the querystring
 	searchParams.set(S.queryBookmark, S.currentTime|0);
-	searchParams.delete(S.queryHardLink,null);
 	history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
 	
 	// Run custom event for checking time
@@ -1425,7 +1424,6 @@ if(localStorage.getItem(S.saveName)===null){
 // TODO: allow renaming bookmarks
 addBookmark({name:'Autosave',system:'local',type:'default'});
 
-
 // POWER: Hard Link > Bookmark > Soft Link > Default
 
 // Hard Link
@@ -1441,8 +1439,7 @@ if(
 	&& (bookmarkSave !==null && !isNaN(bookmarkSave))
 ) start = bookmarkSave;
 
-console.log(searchParams.get('hard-link'));
-
+searchParams.delete(S.queryHardLink,null);
 if(start === null || isNaN(start)) start = <?php echo DEFAULT_START; ?>;
 
 // Pause the Showpony
