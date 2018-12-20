@@ -1437,7 +1437,7 @@ S.window.addEventListener('mousedown',pointerDown);
 window.addEventListener('mouseup',pointerUp);
 
 S.window.addEventListener('touchstart',pointerDown);
-S.window.addEventListener('touchend',pointerUp);
+window.addEventListener('touchend',pointerUp);
 
 // On touch end, don't keep moving the bar to the user's touch
 // overlay.addEventListener('touchend',userScrub);
