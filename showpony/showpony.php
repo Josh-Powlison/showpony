@@ -1146,7 +1146,7 @@ function addBookmark(obj){
 		// Saving the page name in the URL/querystring
 		case 'url':
 			nameEl.addEventListener('click',function(){
-				searchParams.set(S.queryBookmark,S.currentTime);
+				searchParams.set(S.queryBookmark,S.currentTime|0);
 				
 				var temporaryInput = document.createElement('textarea');
 				temporaryInput.value = location.host + location.pathname + '?' + searchParams.toString() + location.hash;
