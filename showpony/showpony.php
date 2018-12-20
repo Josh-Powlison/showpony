@@ -1341,27 +1341,22 @@ window.addEventListener('mouseup',function(event){
 	// Some elements have pointer-events none, but their collisions still matter. We'll see if we're within those buttons here.
 
 	// Don't read clicks if the user's clicking an input or button
-	if(event.target.tagName==='INPUT') break;
-	if(event.target.tagName==='BUTTON') break;
-	if(event.target.tagName==='A') break;
+	if(event.target.tagName==='INPUT') return;
+	if(event.target.tagName==='BUTTON') return;
+	if(event.target.tagName==='A') return;
 	if(event.target.classList.contains('s-popup')) return;
 	
 	// Pause
 	if(checkCollision(event.clientX,event.clientY,pause) && buttonDown === 'pause'){
 		S.toggle();
-		break;
 	}
-	
 	// Progress
-	if(checkCollision(event.clientX,event.clientY,progress) && buttonDown === 'progress'){
+	else if(checkCollision(event.clientX,event.clientY,progress) && buttonDown === 'progress'){
 		S.progress();
-		break;
 	}
-	
 	// Regress
-	if(checkCollision(event.clientX,event.clientY,regress) && buttonDown === 'regress'){
+	else if(checkCollision(event.clientX,event.clientY,regress) && buttonDown === 'regress'){
 		S.regress();
-		break;
 	}
     
     buttonDown = '';
