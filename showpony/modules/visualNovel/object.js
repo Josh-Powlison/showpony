@@ -823,7 +823,7 @@ S.modules.visualNovel=new function(){
 				}
 				
 				// If the image doesn't exist, add it!
-				if(!O.el.children[layer].querySelector('img[data-image="'+image+'"]')){
+				if(!O.el.children[layer].querySelector('img[data-file="'+image+'"]')){
 					// Add a layer image
 					var img=document.createElement('img');
 					img.className='m-vn-character-image';
