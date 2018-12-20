@@ -119,8 +119,7 @@ S.modules				= {};
 S.name					= <?php echo json_encode(toCamelCase($name)); ?>;
 S.path					= <?php echo json_encode($stories_path); ?>;
 S.paused				= false;
-S.queryBookmark			= <?php echo json_encode($name); ?>;
-S.queryHardLink			= <?php echo json_encode($name); ?>+'-hard-link';
+S.queryBookmark			= <?php echo json_encode($name); ?>+'-bookmark';
 S.saveName				= <?php echo json_encode($saveName); ?>;
 S.saves					= {
 	currentSave	:<?php echo json_encode($current_save); ?>,
@@ -172,9 +171,10 @@ S.window.innerHTML		= `
 			<button class="s-button s-button-bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
 			<button class="s-button s-button-fullscreen" alt="Fullscreen" title="Fullscreen Toggle"></button>
 		</div>
-		<div class="s-dropdown s-dropdown-language"></div>
-		<div class="s-dropdown s-dropdown-subtitles"></div>
-		<div class="s-dropdown s-dropdown-bookmark"></div>
+		<div class="s-popup s-popup-language"></div>
+		<div class="s-popup s-popup-subtitles"></div>
+		<div class="s-popup s-popup-bookmark"></div>
+		<p class="s-popup s-notice"></p>
 	</div>
 `;
 
@@ -192,6 +192,7 @@ const pause				= S.window.getElementsByClassName('s-pause')[0];
 const scrubber			= S.window.getElementsByClassName('s-scrubber')[0];
 const progress			= S.window.getElementsByClassName('s-progress')[0];
 const regress			= S.window.getElementsByClassName('s-regress')[0];
+const notice			= S.window.getElementsByClassName('s-notice')[0];
 
 var actionTimeout		= null;		// Used to start running constant mousedown functions, like fast-forward and rewind
 var actionInterval		= null;		// Used to run constant mousedown functions, like fast-forward and rewind
@@ -218,6 +219,11 @@ foreach(array_keys($media) as $moduleName){
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
 ///////////////////////////////////////
+
+S.notice = function(message){
+	notice.innerHTML=message;
+	notice.classList.add('s-visible');
+}
 
 // Go to another file
 S.to = function(obj = {}){
@@ -275,7 +281,6 @@ S.to = function(obj = {}){
 	if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
 	
 	S.modules[S.currentModule].src(obj.file,obj.time).then((obj)=>{
-		// TODO: condense or remove parts from below. I can't help but think this should all be called in the object.js files, and not touched at all here.
 		S.currentFile=S.modules[S.currentModule].currentFile=obj.file;
 		S.modules[S.currentModule].currentTime=obj.time;
 		timeUpdate();
@@ -310,7 +315,7 @@ S.to = function(obj = {}){
 S.play = function(){
 	if(S.paused===false) return;
 	
-	// Close dropdowns
+	// Close popups
 	if(S.window.querySelector('.s-visible')) S.window.querySelector('.s-visible').classList.remove('s-visible');
 	
 	S.window.classList.remove('s-paused');
@@ -537,13 +542,7 @@ function timeUpdate(){
 	for(let i=0;i<S.currentFile;i++) S.currentTime+=parseFloat(S.files[i].duration);
 	
 	if(scrubbing!==true && scrubbing!=='out') scrub(null,false);
-	
-	// Update the querystring
-	if(scrubbing===false){
-		searchParams.set(S.queryBookmark, S.currentTime|0);
-		history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
-	}
-	
+
 	// Run custom event for checking time
 	S.window.dispatchEvent(
 		new CustomEvent(
@@ -621,7 +620,7 @@ function getTotalBuffered(){
 	var ctx=buffer.getContext('2d');
 	ctx.clearRect(0,0,rectRes,1);
 	
-	// Update info on dropdown
+	// Update info on popup
 	if(S.buffered===true){
 		ctx.fillRect(0,0,rectRes,1);
 	}else if(Array.isArray(S.buffered)){
@@ -885,7 +884,7 @@ S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 		})
 		.catch(response=>{
 			S.currentSubtitles=null;
-			alert('Subtitles not found!');
+			S.notice('Subtitles not found!');
 		});
 	}
 }
@@ -1035,7 +1034,7 @@ if(supportedLanguages.length>1){
 		if(S.currentLanguage===this.dataset.value) return;
 		
 		// Remove selected class from previous selected item
-		var previous=S.window.querySelector('.s-dropdown-language .s-selected');
+		var previous=S.window.querySelector('.s-popup-language .s-selected');
 		if(previous){
 			previous.classList.remove('s-selected');
 		}
@@ -1055,7 +1054,7 @@ if(supportedLanguages.length>1){
 		
 		languageButtons.appendChild(buttonEl);
 	}
-	S.window.querySelector(".s-dropdown-language").appendChild(languageButtons);
+	S.window.querySelector(".s-popup-language").appendChild(languageButtons);
 }else{
 	S.window.querySelector('.s-button-language').remove();
 }
@@ -1063,7 +1062,7 @@ if(supportedLanguages.length>1){
 if(S.supportedSubtitles.length>0){
 	function toggleSubtitle(){
 		// Remove selected class from previous selected item
-		var previous=S.window.querySelector('.s-dropdown-subtitles .s-selected');
+		var previous=S.window.querySelector('.s-popup-subtitles .s-selected');
 		if(previous){
 			previous.classList.remove('s-selected');
 		}
@@ -1089,7 +1088,7 @@ if(S.supportedSubtitles.length>0){
 		
 		subtitleButtons.appendChild(buttonEl);
 	}
-	S.window.querySelector(".s-dropdown-subtitles").appendChild(subtitleButtons);
+	S.window.querySelector(".s-popup-subtitles").appendChild(subtitleButtons);
 }else{
 	S.window.querySelector('.s-button-subtitles').remove();
 }
@@ -1097,7 +1096,7 @@ if(S.supportedSubtitles.length>0){
 // Bookmarks
 function toggleBookmark(){
 	// Remove selected class from previous selected item
-	var previous=S.window.querySelector('.s-dropdown-bookmark .s-selected');
+	var previous=S.window.querySelector('.s-popup-bookmark .s-selected');
 	if(previous){
 		previous.classList.remove('s-selected');
 	}
@@ -1134,12 +1133,38 @@ function addBookmark(obj){
 	nameEl.innerText=obj.name;
 	nameEl.dataset.name=obj.name;
 	nameEl.dataset.system=obj.system;
-	nameEl.addEventListener('click',toggleBookmark);
 	
-	if(
-		S.saves.currentSave===obj.name
-		&& S.saves.system===obj.system
-	) nameEl.classList.add('s-selected');
+	switch(obj.system){
+		// Saving the bookmark in localStorage
+		case 'local':
+			nameEl.addEventListener('click',toggleBookmark);
+			if(
+				S.saves.currentSave===obj.name
+				&& S.saves.system===obj.system
+			) nameEl.classList.add('s-selected');
+			break;
+		// Saving the page name in the URL/querystring
+		case 'url':
+			nameEl.addEventListener('click',function(){
+				searchParams.set(S.queryBookmark,S.currentTime);
+				
+				var temporaryInput = document.createElement('textarea');
+				temporaryInput.value = location.host + location.pathname + '?' + searchParams.toString() + location.hash;
+				
+				document.body.appendChild(temporaryInput);
+				
+				temporaryInput.select();
+				document.execCommand('copy');
+				temporaryInput.remove();
+				
+				S.notice("Copied the URL Bookmark to your clipboard.");
+				notice.focus();
+			});
+			break;
+		default:
+			S.notice('Save system not recognized!');
+			break;
+	}
 	
 	bookmarkEl.appendChild(nameEl);
 	
@@ -1150,7 +1175,7 @@ function addBookmark(obj){
 		// bookmarkEl.appendChild(deleteEl);
 	// }
 	
-	S.window.querySelector(".s-dropdown-bookmark").appendChild(bookmarkEl);
+	S.window.querySelector(".s-popup-bookmark").appendChild(bookmarkEl);
 }
 
 ///////////////////////////////////////
@@ -1226,12 +1251,6 @@ window.addEventListener('mouseup',function(event){
 	
 	// Get rid of any active coloring
 	if(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
-    
-	// Update the querystring
-	if(scrubbing){
-		searchParams.set(S.queryBookmark, S.currentTime|0);
-		history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
-	}
 	
     scrubbing=false;
 	
@@ -1257,19 +1276,22 @@ window.addEventListener('mouseup',function(event){
 			S.fullscreenToggle();
 			break;
 		case S.window.querySelector('.s-button-bookmark'):
-			if(S.window.querySelector('.s-visible:not(.s-dropdown-bookmark)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
+			if(S.window.querySelector('.s-visible:not(.s-popup-bookmark)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
 			
-			S.window.querySelector('.s-dropdown-bookmark').classList.toggle('s-visible');
+			S.window.querySelector('.s-popup-bookmark').classList.toggle('s-visible');
 			break;
 		case S.window.querySelector('.s-button-language'):
-			if(S.window.querySelector('.s-visible:not(.s-dropdown-language)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
+			if(S.window.querySelector('.s-visible:not(.s-popup-language)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
 		
-			S.window.querySelector('.s-dropdown-language').classList.toggle('s-visible');
+			S.window.querySelector('.s-popup-language').classList.toggle('s-visible');
 			break;
 		case S.window.querySelector('.s-button-subtitles'):
-			if(S.window.querySelector('.s-visible:not(.s-dropdown-subtitles)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
+			if(S.window.querySelector('.s-visible:not(.s-popup-subtitles)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
 		
-			S.window.querySelector('.s-dropdown-subtitles').classList.toggle('s-visible');
+			S.window.querySelector('.s-popup-subtitles').classList.toggle('s-visible');
+			break;
+		case S.window.querySelector('.s-notice'):
+			notice.classList.remove('s-visible');
 			break;
 		default:
 			// Some elements have pointer-events none, but their collisions still matter. We'll see if we're within those buttons here.
@@ -1278,7 +1300,7 @@ window.addEventListener('mouseup',function(event){
 			if(event.target.tagName==='INPUT') break;
 			if(event.target.tagName==='BUTTON') break;
 			if(event.target.tagName==='A') break;
-			if(event.target.classList.contains('s-dropdown')) return;
+			if(event.target.classList.contains('s-popup')) return;
 			
 			// Pause
 			if(checkCollision(event.clientX,event.clientY,pause)){
@@ -1312,7 +1334,8 @@ S.window.addEventListener('mousedown',function(event){
 	if(event.button!==0) return;
 	
     // Do nothing if the user clicked certain elements
-	if(event.target.classList.contains('s-dropdown')) return;
+	if(event.target.classList.contains('s-popup')) return;
+	if(event.target.classList.contains('s-notice')) return;
 	if(event.target.tagName==='INPUT') return;
 	if(event.target.tagName==='BUTTON') return;
 	if(event.target.tagName==='A') return;
@@ -1415,24 +1438,19 @@ if(localStorage.getItem(S.saveName)===null){
 // For now, we'll just support this bookmark
 // TODO: allow renaming bookmarks
 addBookmark({name:'Autosave',system:'local',type:'default'});
+addBookmark({name:'Get URL',system:'url',type:'get'});
 
 // POWER: Hard Link > Bookmark > Soft Link > Default
 
-// Hard Link
-var bookmarkLink	= searchParams.get(S.queryBookmark);
-var bookmarkSave	= S.load();
-
-// By default, use the link
-var start = bookmarkLink;
-
-// Use the save if the link is faulty, the link soft, or the save empty
-if(
-	(bookmarkLink === null || isNaN(bookmarkLink) || searchParams.get(S.queryHardLink) != 'true')
-	&& (bookmarkSave !==null && !isNaN(bookmarkSave))
-) start = bookmarkSave;
-
-searchParams.delete(S.queryHardLink,null);
+// Start with the URL Bookmark
+var start = searchParams.get(S.queryBookmark);
+searchParams.delete(S.queryBookmark);
 history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
+
+// Use the Save Bookmark if the URL Bookmark has nothing
+if(start === null || isNaN(start)) start = S.load();
+
+// Use the Default Bookmark if the Save Bookmark has nothing
 if(start === null || isNaN(start)) start = <?php echo DEFAULT_START; ?>;
 
 // Pause the Showpony
