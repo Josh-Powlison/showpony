@@ -182,6 +182,12 @@ S.window.innerHTML		= `
 ///////////PRIVATE VARIABLES///////////
 ///////////////////////////////////////
 
+// const commentsButton = S.window.getElementsByClassName('s-button-comments')[0];
+const languageButton = S.window.getElementsByClassName('s-button-language')[0];
+const subtitlesButton = S.window.getElementsByClassName('s-button-subtitles')[0];
+const bookmarkButton = S.window.getElementsByClassName('s-button-bookmark')[0];
+const fullscreenButton = S.window.getElementsByClassName('s-button-fullscreen')[0];
+
 const captionsButton	= S.window.getElementsByClassName('s-captions-button')[0];
 const content			= S.window.getElementsByClassName('s-content')[0];
 content.classList.add('s-loading');
@@ -1240,6 +1246,43 @@ S.window.addEventListener(
 	}
 );
 
+// if (commentsButton){
+    // document.getElementsByClassName('s-button-comments')[0].addEventListener('click', function(){
+        
+    // });    
+// }
+
+if (languageButton){
+    languageButton.addEventListener('click', function(){
+        while(S.window.querySelector('.s-visible:not(.s-popup-language)')) 
+            S.window.querySelector('.s-visible').classList.remove('s-visible');
+            
+        S.window.querySelector('.s-popup-language').classList.toggle('s-visible');
+    });    
+}
+if (subtitlesButton){
+    subtitlesButton.addEventListener('click', function(){
+        while(S.window.querySelector('.s-visible:not(.s-popup-subtitles)')) 
+            S.window.querySelector('.s-visible').classList.remove('s-visible');
+            
+        S.window.querySelector('.s-popup-subtitles').classList.toggle('s-visible');
+    });    
+}
+if (bookmarkButton){
+    bookmarkButton.addEventListener('click', function(){
+        while(S.window.querySelector('.s-visible:not(.s-popup-bookmark)')) 
+            S.window.querySelector('.s-visible').classList.remove('s-visible');
+                
+        S.window.querySelector('.s-popup-bookmark').classList.toggle('s-visible');
+    });    
+}
+if (fullscreenButton){
+    fullscreenButton.addEventListener('click', function(){
+        S.fullscreenToggle();
+    });
+}
+
+
 window.addEventListener('mouseup',function(event){
     // If the click was started outside of showpony, ignore it
     if (!clickStart) return;
@@ -1276,24 +1319,6 @@ window.addEventListener('mouseup',function(event){
 	
 	// One event listener for all of the buttons
 	switch(event.target){
-		case S.window.querySelector('.s-button-fullscreen'):
-			S.fullscreenToggle();
-			break;
-		case S.window.querySelector('.s-button-bookmark'):
-			while(S.window.querySelector('.s-visible:not(.s-popup-bookmark)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
-			
-			S.window.querySelector('.s-popup-bookmark').classList.toggle('s-visible');
-			break;
-		case S.window.querySelector('.s-button-language'):
-			while(S.window.querySelector('.s-visible:not(.s-popup-language)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
-		
-			S.window.querySelector('.s-popup-language').classList.toggle('s-visible');
-			break;
-		case S.window.querySelector('.s-button-subtitles'):
-			while(S.window.querySelector('.s-visible:not(.s-popup-subtitles)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
-		
-			S.window.querySelector('.s-popup-subtitles').classList.toggle('s-visible');
-			break;
 		case S.window.querySelector('.s-notice'):
 			notice.classList.remove('s-visible');
 			break;
