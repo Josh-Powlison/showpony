@@ -1177,7 +1177,7 @@ function addBookmark(obj){
 				var temporaryInput = document.createElement('textarea');
 				temporaryInput.value = url;
 				
-				document.body.appendChild(temporaryInput);
+				this.insertAdjacentElement('afterend',temporaryInput);
 				
 				temporaryInput.select();
 				document.execCommand('copy');
