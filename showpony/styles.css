@@ -363,6 +363,8 @@
 /////////////////////////////////////*/
 
 .s-notice{
+	word-break:break-word;
+	
 	color:#fff;
 	background-color:#000;
 	border:.125em solid #000;
