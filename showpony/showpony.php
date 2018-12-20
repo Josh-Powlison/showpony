@@ -174,7 +174,10 @@ S.window.innerHTML		= `
 		<div class="s-popup s-popup-language"></div>
 		<div class="s-popup s-popup-subtitles"></div>
 		<div class="s-popup s-popup-bookmark"></div>
-		<div class="s-popup s-notice"></div>
+		<div class="s-popup s-notice">
+			<div class="s-notice-text s-block-scrubbing"></div>
+			<button class="s-notice-close">Close Notice</button>
+		</div>
 	</div>
 `;
 
@@ -223,9 +226,12 @@ foreach(array_keys($media) as $moduleName){
 S.notice = function(message){
 	if(!S.paused) S.pause();
 	
+	var noticeText=notice.querySelector('.s-notice-text');
+	
 	// If a message is currently up, add new messages to the list rather than overwriting them
-	if(notice.classList.contains('s-visible')) notice.innerHTML += '<hr><p>'+message+'</p>';
-	else notice.innerHTML = '<p>'+message+'</p>';
+	if(notice.classList.contains('s-visible')) noticeText.innerHTML += '<hr class="s-block-scrubbing"><p class="s-block-scrubbing">'+message+'</p>';
+	else noticeText.innerHTML = '<p class="s-block-scrubbing">'+message+'</p>';
+	
 	notice.classList.add('s-visible');
 }
 
@@ -1161,8 +1167,9 @@ function addBookmark(obj){
 			nameEl.addEventListener('click',function(){
 				searchParams.set(S.queryBookmark,S.currentTime|0);
 				
+				var url = location.host + location.pathname + '?' + searchParams.toString() + location.hash;
 				var temporaryInput = document.createElement('textarea');
-				temporaryInput.value = location.host + location.pathname + '?' + searchParams.toString() + location.hash;
+				temporaryInput.value = url;
 				
 				document.body.appendChild(temporaryInput);
 				
@@ -1170,7 +1177,7 @@ function addBookmark(obj){
 				document.execCommand('copy');
 				temporaryInput.remove();
 				
-				S.notice("Copied the URL Bookmark to your clipboard.");
+				S.notice("Copied the link to your clipboard!");
 				notice.focus();
 			});
 			break;
@@ -1285,6 +1292,10 @@ window.addEventListener('mouseup',function(event){
 	
 	// One event listener for all of the buttons
 	switch(event.target){
+		case S.window.querySelector('.s-block-scrubbing'):
+		case S.window.querySelector('.s-notice'):
+			// Do nothing
+			break;
 		case S.window.querySelector('.s-button-fullscreen'):
 			S.fullscreenToggle();
 			break;
@@ -1303,7 +1314,7 @@ window.addEventListener('mouseup',function(event){
 		
 			S.window.querySelector('.s-popup-subtitles').classList.toggle('s-visible');
 			break;
-		case S.window.querySelector('.s-notice'):
+		case S.window.querySelector('.s-notice-close'):
 			notice.classList.remove('s-visible');
 			break;
 		default:
@@ -1349,6 +1360,7 @@ S.window.addEventListener('mousedown',function(event){
     // Do nothing if the user clicked certain elements
 	if(event.target.classList.contains('s-popup')) return;
 	if(event.target.classList.contains('s-notice')) return;
+	if(event.target.classList.contains('s-block-scrubbing')) return;
 	if(event.target.tagName==='INPUT') return;
 	if(event.target.tagName==='BUTTON') return;
 	if(event.target.tagName==='A') return;
@@ -1451,7 +1463,7 @@ if(localStorage.getItem(S.saveName)===null){
 // For now, we'll just support this bookmark
 // TODO: allow renaming bookmarks
 addBookmark({name:'Autosave',system:'local',type:'default'});
-addBookmark({name:'Get URL',system:'url',type:'get'});
+addBookmark({name:'Get Link',system:'url',type:'get'});
 
 // POWER: Hard Link > Bookmark > Soft Link > Default
 
