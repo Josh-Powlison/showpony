@@ -174,7 +174,7 @@ S.window.innerHTML		= `
 		<div class="s-popup s-popup-language"></div>
 		<div class="s-popup s-popup-subtitles"></div>
 		<div class="s-popup s-popup-bookmark"></div>
-		<p class="s-popup s-notice"></p>
+		<div class="s-popup s-notice"></div>
 	</div>
 `;
 
@@ -221,7 +221,9 @@ foreach(array_keys($media) as $moduleName){
 ///////////////////////////////////////
 
 S.notice = function(message){
-	notice.innerHTML=message;
+	// If a message is currently up, add new messages to the list rather than overwriting them
+	if(notice.classList.contains('s-visible')) notice.innerHTML += '<hr><p>'+message+'</p>';
+	else notice.innerHTML = '<p>'+message+'</p>';
 	notice.classList.add('s-visible');
 }
 
