@@ -1296,7 +1296,7 @@ function pointerDown(event){
 	// Allow left-click only
 	if(pointer.button && pointer.button!==0) return;
 	
-	event.preventDefault();
+	// event.preventDefault();
 	
 	if(S.name==='gamePlan') console.log("PRESSED DOWN",event);
 	
