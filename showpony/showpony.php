@@ -768,6 +768,9 @@ function scrub(inputPercent=null,loadFile=false){
 
 // When the user scrubs, this function runs
 function userScrub(event=null,start=false){
+	// Don't scrub if touching with 2 or more fingers at once
+	if(event.touches && event.touches.length>1) return;
+	
 	var input;
 	
 	// Only allow scrubbing when paused
@@ -1305,24 +1308,28 @@ S.window.querySelector('.s-notice-close').addEventListener('click',function(){
 // TODO: put this somewhere sensible, or decide that here is fine
 var buttonDown = '';
 
-// On mousedown, we prepare to move the cursor (but not over overlay buttons)
-S.window.addEventListener('mousedown',function(event){
-    // Click was started inside showpony
+function pointerDown(event){
+	var pointer;
+	
+	if(event.touches) pointer=event.touches[0];
+	else pointer=event;
+	
+	// Click was started inside showpony
     clickStart = true;
     
 	// Allow left-click only
-	if(event.button!==0) return;
+	if(pointer.button!==0) return;
 	
     // Do nothing if the user clicked certain elements
-	if(event.target.classList.contains('s-popup')) return;
-	if(event.target.classList.contains('s-notice')) return;
-	if(event.target.classList.contains('s-block-scrubbing')) return;
-	if(event.target.tagName==='INPUT') return;
-	if(event.target.tagName==='BUTTON') return;
-	if(event.target.tagName==='A') return;
+	if(pointer.target.classList.contains('s-popup')) return;
+	if(pointer.target.classList.contains('s-notice')) return;
+	if(pointer.target.classList.contains('s-block-scrubbing')) return;
+	if(pointer.target.tagName==='INPUT') return;
+	if(pointer.target.tagName==='BUTTON') return;
+	if(pointer.target.tagName==='A') return;
     
     // Ignore if grabbing a scrollbar
-    if(event.offsetX>event.target.clientWidth || event.offsetY>event.target.clientHeight) return;
+    if(pointer.offsetX>pointer.target.clientWidth || pointer.offsetY>pointer.target.clientHeight) return;
 
     // Remove the cover image when this is the first time interacting with showpony
     if(S.window.querySelector('.s-cover')){
@@ -1331,14 +1338,14 @@ S.window.addEventListener('mousedown',function(event){
     
 	// One event listener for all of the buttons
     // Pause
-    if(checkCollision(event.clientX,event.clientY,pause)){
+    if(checkCollision(pointer.clientX,pointer.clientY,pause)){
         buttonDown = 'pause';
 		pause.classList.add('s-active');
         actionTimeout=setTimeout(function(){
             S.window.classList.add('s-hold');
         },500);
 	// Progress
-    } else if(checkCollision(event.clientX,event.clientY,progress)){
+    } else if(checkCollision(pointer.clientX,pointer.clientY,progress)){
         buttonDown = 'progress';
 		progress.classList.add('s-active');
         actionTimeout=setTimeout(function(){
@@ -1348,7 +1355,7 @@ S.window.addEventListener('mousedown',function(event){
             },50);
         },500);
 	// Regress
-    } else if(checkCollision(event.clientX,event.clientY,regress)){
+    } else if(checkCollision(pointer.clientX,pointer.clientY,regress)){
         buttonDown = 'regress';
 		regress.classList.add('s-active');
         actionTimeout=setTimeout(function(){
@@ -1360,17 +1367,22 @@ S.window.addEventListener('mousedown',function(event){
     }
 	
 	// Scrubbing will be considered here
-	scrubbing=event.clientX;
+	scrubbing=pointer.clientX;
 	window.getSelection().removeAllRanges();
-});
+}
 
-window.addEventListener('mouseup',function(event){
-    // If the click was started outside of showpony, ignore it
+function pointerUp(event){
+	var pointer;
+	
+	if(event.touches) pointer=event.touches[0];
+	else pointer=event;
+	
+	// If the click was started outside of showpony, ignore it
     if (!clickStart) return;
     clickStart = false;
     
 	// Allow left-click only
-	if(event.button!==0) return;
+	if(pointer.button!==0) return;
 	
     clearTimeout(actionTimeout);
     actionTimeout=null;
@@ -1390,7 +1402,7 @@ window.addEventListener('mouseup',function(event){
 	}
     
     // Ignore scrollbar
-    if(event.offsetX>event.target.clientWidth || event.offsetY>event.target.clientHeight) return;
+    if(pointer.offsetX>pointer.target.clientWidth || pointer.offsetY>pointer.target.clientHeight) return;
     
 	if(S.window.classList.contains('s-hold')){
 		S.window.classList.remove('s-hold');
@@ -1400,29 +1412,35 @@ window.addEventListener('mouseup',function(event){
 	// Some elements have pointer-events none, but their collisions still matter. We'll see if we're within those buttons here.
 
 	// Don't read clicks if the user's clicking an input or button
-	if(event.target.tagName==='INPUT') return;
-	if(event.target.tagName==='BUTTON') return;
-	if(event.target.tagName==='A') return;
-	if(event.target.classList.contains('s-popup')) return;
+	if(pointer.target.tagName==='INPUT') return;
+	if(pointer.target.tagName==='BUTTON') return;
+	if(pointer.target.tagName==='A') return;
+	if(pointer.target.classList.contains('s-popup')) return;
 	
 	// Pause
-	if(checkCollision(event.clientX,event.clientY,pause) && buttonDown === 'pause'){
+	if(checkCollision(pointer.clientX,pointer.clientY,pause) && buttonDown === 'pause'){
 		S.toggle();
 	}
 	// Progress
-	else if(checkCollision(event.clientX,event.clientY,progress) && buttonDown === 'progress'){
+	else if(checkCollision(pointer.clientX,pointer.clientY,progress) && buttonDown === 'progress'){
 		S.progress();
 	}
 	// Regress
-	else if(checkCollision(event.clientX,event.clientY,regress) && buttonDown === 'regress'){
+	else if(checkCollision(pointer.clientX,pointer.clientY,regress) && buttonDown === 'regress'){
 		S.regress();
 	}
     
     buttonDown = '';
-});
+}
+
+S.window.addEventListener('mousedown',pointerDown);
+window.addEventListener('mouseup',pointerUp);
+
+S.window.addEventListener('touchstart',pointerDown);
+S.window.addEventListener('touchend',pointerUp);
 
 // On touch end, don't keep moving the bar to the user's touch
-overlay.addEventListener('touchend',userScrub);
+// overlay.addEventListener('touchend',userScrub);
 
 // On dragging
 window.addEventListener('mousemove',function(event){userScrub(event,true);});
