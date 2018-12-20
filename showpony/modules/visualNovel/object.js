@@ -179,9 +179,7 @@ S.modules.visualNovel=new function(){
 			var src=S.files[file].path;
 			
 			fetch(src,{credentials:'include'})
-			.then(response=>{
-				return response.text();
-			})
+			.then(response=>{if(response.ok) return response.text();})
 			.then(text=>{
 				// Remove multiline comments
 				text=text.replace(/\/\*[^]*?\*\//g,'');
@@ -670,11 +668,6 @@ S.modules.visualNovel=new function(){
 		}
 	}
 	
-	function loadingError(e){
-		loadingTracker();
-		S.notice('404: File Not Found ('+e.target.src+')');
-	}
-	
 	// Read window as "engine" object
 	M.type='engine';
 	
@@ -695,7 +688,6 @@ S.modules.visualNovel=new function(){
 		O.el.dataset.name=input;
 		O.name=input;
 		M.window.appendChild(O.el);
-		
 		
 		O.filepath='audio/';
 		
@@ -762,6 +754,10 @@ S.modules.visualNovel=new function(){
 			return true;
 		}
 		
+		// O.el.addEventListener('load',function(){});
+		
+		O.el.addEventListener('error',loadingError);
+		
 		O.el.addEventListener('ended',function(){
 			if(!O.el.loop) O.playing=false;
 		});
@@ -769,6 +765,10 @@ S.modules.visualNovel=new function(){
 		O.el.addEventListener('timeupdate',function(){
 			M.displaySubtitles();
 		});
+		
+		function loadingError(e){
+			S.notice('Error loading '+e.target.dataset.file);
+		}
 		
 		objectAddCommonFunctions(O);
 	}
@@ -856,6 +856,11 @@ S.modules.visualNovel=new function(){
 			}
 			
 			if(preloading='complete') return true;
+		}
+		
+		function loadingError(e){
+			loadingTracker();
+			S.notice('Error loading '+e.target.dataset.file);
 		}
 		
 		objectAddCommonFunctions(O);
