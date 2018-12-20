@@ -157,13 +157,13 @@ S.window.tabIndex		= 0;
 S.window.innerHTML		= `
 	<div class="s-content"></div>
 	<?php if(file_exists('cover.jpg')) echo '<img class="s-cover" src="',$stories_path,'cover.jpg">'; ?>
-	<div class="s-overlay">
+	<div class="s-menu">
 		<button class="s-progress"></button>
 		<button class="s-regress"></button>
 		<button class="s-pause"></button>
-		<div class="s-progress-bar" style="left:0%;"></div>
-		<canvas class="s-overlay-buffer" width="1000" height="1"></canvas>
-		<div class="s-overlay-text"></div>
+		<div class="s-scrubber" style="left:0%;"></div>
+		<canvas class="s-buffer" width="1000" height="1"></canvas>
+		<div class="s-info-text"></div>
 		<div class="s-upcoming-file"></div>
 		<div class="s-buttons s-hide-on-hold">
 			<button class="s-button s-button-comments" alt="Comments" title="Comments"></button>
@@ -172,11 +172,9 @@ S.window.innerHTML		= `
 			<button class="s-button s-button-bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
 			<button class="s-button s-fullscreen-button" alt="Fullscreen" title="Fullscreen Toggle"></button>
 		</div>
-		<div class="s-dropdowns s-hide-on-hold">
-			<div class="s-dropdown s-dropdown-language"></div>
-			<div class="s-dropdown s-dropdown-subtitles"></div>
-			<div class="s-dropdown s-dropdown-bookmark"></div>
-		</div>
+		<div class="s-dropdown s-dropdown-language"></div>
+		<div class="s-dropdown s-dropdown-subtitles"></div>
+		<div class="s-dropdown s-dropdown-bookmark"></div>
 	</div>
 `;
 
@@ -188,12 +186,12 @@ const captionsButton	= S.window.getElementsByClassName('s-captions-button')[0];
 const content			= S.window.getElementsByClassName('s-content')[0];
 content.classList.add('s-loading');
 const fullscreenButton	= S.window.getElementsByClassName('s-fullscreen-button')[0];
-const overlay			= S.window.getElementsByClassName('s-overlay')[0];
-const overlayBuffer		= S.window.getElementsByClassName('s-overlay-buffer')[0];
-const overlayText		= S.window.getElementsByClassName('s-overlay-text')[0];
+const overlay			= S.window.getElementsByClassName('s-menu')[0];
+const buffer			= S.window.getElementsByClassName('s-buffer')[0];
+const infoText			= S.window.getElementsByClassName('s-info-text')[0];
 const pause				= S.window.getElementsByClassName('s-pause')[0];
-const progress			= S.window.getElementsByClassName('s-progress-bar')[0];
-const progressBtn		= S.window.getElementsByClassName('s-progress')[0];
+const scrubber			= S.window.getElementsByClassName('s-scrubber')[0];
+const progress			= S.window.getElementsByClassName('s-progress')[0];
 const regress			= S.window.getElementsByClassName('s-regress')[0];
 
 var actionTimeout		= null;		// Used to start running constant mousedown functions, like fast-forward and rewind
@@ -589,28 +587,28 @@ function getTotalBuffered(){
 	
 	// Update amount buffered total
 	for(let i=0;i<S.files.length;i++){
-		var buffer=false;
+		var bufferTrack=false;
 		
 		if(S.files[i].buffered===true){
-			buffer=[time,parseFloat(time+S.files[i].duration)];
+			bufferTrack=[time,parseFloat(time+S.files[i].duration)];
 			
-			if(buffer){
+			if(bufferTrack){
 				// Combine buffered arrays, if we're moving forward
-				if(buffered.length>0 && buffer[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=buffer[1];
-				else buffered.push(buffer);
+				if(buffered.length>0 && bufferTrack[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=bufferTrack[1];
+				else buffered.push(bufferTrack);
 			}
 		}
 		else if(Array.isArray(S.files[i].buffered)){
 			// Get working for multiple contained buffers
 			for(let ii=0;ii<S.files[i].buffered.length;ii++){
-				buffer=[
+				bufferTrack=[
 					time+parseFloat(S.files[i].buffered[ii][0])
 					,time+parseFloat(S.files[i].buffered[ii][1])
 				];
 				
 				// Combine buffered arrays, if we're moving forward
-				if(buffered.length>0 && buffer[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=buffer[1];
-				else buffered.push(buffer);
+				if(buffered.length>0 && bufferTrack[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=bufferTrack[1];
+				else buffered.push(bufferTrack);
 			}
 		}
 		
@@ -624,9 +622,9 @@ function getTotalBuffered(){
 	
 	// Show buffer
 	var rectRes=1000;
-	overlayBuffer.width=rectRes;
-	overlayBuffer.height=1;
-	var ctx=overlayBuffer.getContext('2d');
+	buffer.width=rectRes;
+	buffer.height=1;
+	var ctx=buffer.getContext('2d');
 	ctx.clearRect(0,0,rectRes,1);
 	
 	// Update info on dropdown
@@ -666,7 +664,7 @@ function scrub(inputPercent=null,loadFile=false){
 	if(inputPercent>1) inputPercent=1;
 	
 	// Move the progress bar
-	progress.style.left=(inputPercent*100)+'%';
+	scrubber.style.left=(inputPercent*100)+'%';
 	
 	// If scrubbing, estimate the new time
 	if(scrubbing===true || scrubbing==='out'){
@@ -744,7 +742,7 @@ function scrub(inputPercent=null,loadFile=false){
 		S.window.querySelector('.s-upcoming-file').innerHTML='<p>'+upcoming+'</p>';
 	}
 	
-	if(info!==overlayText.innerHTML) overlayText.innerHTML=info;
+	if(info!==infoText.innerHTML) infoText.innerHTML=info;
 	
 	// We don't want to over-update the title, so we stick with when we're not scrubbing.
 	if(info!==document.title) document.title=completed+' - '+remaining;
@@ -765,7 +763,7 @@ function userScrub(event=null,start=false){
 	// Relative scrubbing
 	}else{
 		input='joystick';
-		pos=progress.getBoundingClientRect().left+progress.getBoundingClientRect().width/2+event*5;
+		pos=scrubber.getBoundingClientRect().left+scrubber.getBoundingClientRect().width/2+event*5;
 	}
 	
 	var scrubPercent=(pos-S.window.getBoundingClientRect().left)/(S.window.getBoundingClientRect().width);
@@ -1301,7 +1299,7 @@ window.addEventListener('mouseup',function(event){
 			}
 			
 			// Progress
-			if(checkCollision(event.clientX,event.clientY,progressBtn)){
+			if(checkCollision(event.clientX,event.clientY,progress)){
 				S.progress();
 				break;
 			}
@@ -1347,8 +1345,8 @@ S.window.addEventListener('mousedown',function(event){
             S.window.classList.add('s-hold');
         },500);
 	// Progress
-    } else if(checkCollision(event.clientX,event.clientY,progressBtn)){
-		progressBtn.classList.add('s-active');
+    } else if(checkCollision(event.clientX,event.clientY,progress)){
+		progress.classList.add('s-active');
         actionTimeout=setTimeout(function(){
             S.window.classList.add('s-hold');
             actionInterval=setInterval(function(){
