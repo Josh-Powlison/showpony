@@ -670,6 +670,11 @@ S.modules.visualNovel=new function(){
 		}
 	}
 	
+	function loadingError(e){
+		loadingTracker();
+		S.notice('404: File Not Found ('+e.target.src+')');
+	}
+	
 	// Read window as "engine" object
 	M.type='engine';
 	
@@ -826,7 +831,7 @@ S.modules.visualNovel=new function(){
 					
 					loadingTracker(1);
 					img.addEventListener('load',loadingTracker);
-					img.addEventListener('error',loadingTracker);
+					img.addEventListener('error',loadingError);
 					
 					// Can go to the root of the website, or from the current path
 					if(image[0]==='/') img.src='<?php echo $stories_path; ?>resources/'+image;
