@@ -1244,6 +1244,8 @@ S.window.addEventListener(
 	,function(event){
 		if(this!==event.target) return;
 		
+        // Disable keyboard when scrubbing
+		if(scrubbing) return;
 		if(event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) return;
 		
 		switch(event.key){
