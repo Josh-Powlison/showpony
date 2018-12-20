@@ -40,16 +40,30 @@ S.modules.<?php echo 'image'; ?>=new function(){
 		return new Promise(function(resolve,reject){
 			if(time==='end') time=M.currentTime=S.files[file].duration;
 			
-			if(M.currentFile!==file){
-				M.image.src=S.files[file].path;
-			}
-			else{
-				content.classList.remove('s-loading');
+			if(M.currentFile===file){
 				// Go to a scroll point dependent on time
 				M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
+				content.classList.remove('s-loading');
+				
+				resolve({file:file,time:time});
+			}else{
+				M.image.src=S.files[file].path;
+				
+				// Resolve the promise after the image loads
+				M.image.onload=function(){
+					S.files[file].buffered=true;
+					getTotalBuffered();
+					
+					if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
+					
+					M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
+					S.displaySubtitles();
+					
+					content.classList.remove('s-loading');
+					
+					resolve({file:file,time:time});
+				}
 			}
-			
-			resolve({file:file,time:time});
 		});
 	}
 	
@@ -86,19 +100,9 @@ S.modules.<?php echo 'image'; ?>=new function(){
 	
 	// Update time on scrolling
 	M.window.addEventListener('scroll',function(){
+		if(M.currentFile===null) return;
+		
 		M.currentTime=Math.round(M.window.scrollTop/M.window.scrollHeight*(S.files[M.currentFile].duration));
 		timeUpdate();
-	});
-	
-	/// BUFFERING ///
-	M.image.addEventListener('load',function(){
-		S.files[M.currentFile].buffered=true;
-		getTotalBuffered();
-		
-		if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
-		
-		M.window.scrollTop=M.window.scrollHeight*(M.currentTime/S.files[M.currentFile].duration);
-		S.displaySubtitles();
-		content.classList.remove('s-loading');
 	});
 }();
