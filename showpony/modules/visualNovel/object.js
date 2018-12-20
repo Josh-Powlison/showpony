@@ -179,9 +179,7 @@ S.modules.visualNovel=new function(){
 			var src=S.files[file].path;
 			
 			fetch(src,{credentials:'include'})
-			.then(response=>{
-				return response.text();
-			})
+			.then(response=>{if(response.ok) return response.text();})
 			.then(text=>{
 				// Remove multiline comments
 				text=text.replace(/\/\*[^]*?\*\//g,'');
