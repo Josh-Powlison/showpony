@@ -307,12 +307,21 @@ S.to = function(obj = {}){
 			if(Array.isArray(S.files[i].buffered) && S.files[i].buffered.length===0){
 				S.files[i].buffered='buffering';
 				
-				fetch(S.files[i].path).then(()=>{
-					S.files[i].buffered=true;
-					getTotalBuffered();
+				fetch(S.files[i].path)
+				.then(response=>{
+					if(response.ok){
+						S.files[i].buffered=true;
+						getTotalBuffered();
+						return true;
+					}
+					
+					S.notice('Error buffering file '+S.files[i].path);
 				});
 			}
 		}
+	})
+	.catch(response=>{
+		S.notice('Error loading File '+obj.file+' at Time '+obj.time+' for Module '+S.currentModule);
 	});
 }
 
@@ -829,7 +838,7 @@ S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 	// Otherwise, load them
 	}else{
 		fetch('showpony/get-subtitles.php?path=<?php echo $stories_path; ?>&lang='+newSubtitles+'&files='+S.files.length)
-		.then(response=>{return response.text();})
+		.then(response=>{if(response.ok) return response.text();})
 		.then(text=>{
 			var filesArray=[];
 			
@@ -888,7 +897,7 @@ S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
 		})
 		.catch(response=>{
 			S.currentSubtitles=null;
-			S.notice('Subtitles not found!');
+			S.notice('Error loading subtitles for '+newSubtitles);
 		});
 	}
 }
