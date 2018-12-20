@@ -221,6 +221,8 @@ foreach(array_keys($media) as $moduleName){
 ///////////////////////////////////////
 
 S.notice = function(message){
+	if(!S.paused) S.pause();
+	
 	// If a message is currently up, add new messages to the list rather than overwriting them
 	if(notice.classList.contains('s-visible')) notice.innerHTML += '<hr><p>'+message+'</p>';
 	else notice.innerHTML = '<p>'+message+'</p>';
