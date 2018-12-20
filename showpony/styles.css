@@ -373,9 +373,14 @@
 	background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cg fill='%23fff'%3E%3Cpath d='M17.6 19.4h-5.2v-17h5.2zM12.4 22.3h5.2v5.2h-5.2z'/%3E%3C/g%3E%3C/svg%3E");
 }
 
-.s-notice *{
+.s-notice-text *{
 	margin:0;
-	pointer-events:none;
+	pointer-events:auto;
+	
+	-ms-user-select:text;
+	-moz-user-select:text;
+	-webkit-user-select:text;
+	user-select:text;
 }
 
 .s-visible{
