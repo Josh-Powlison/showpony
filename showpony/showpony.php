@@ -170,7 +170,7 @@ S.window.innerHTML		= `
 			<button class="s-button s-button-language" alt="Language" title="Language"></button>
 			<button class="s-button s-button-subtitles" alt="Subtitles" title="Subtitles"></button>
 			<button class="s-button s-button-bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
-			<button class="s-button s-fullscreen-button" alt="Fullscreen" title="Fullscreen Toggle"></button>
+			<button class="s-button s-button-fullscreen" alt="Fullscreen" title="Fullscreen Toggle"></button>
 		</div>
 		<div class="s-dropdown s-dropdown-language"></div>
 		<div class="s-dropdown s-dropdown-subtitles"></div>
@@ -185,7 +185,6 @@ S.window.innerHTML		= `
 const captionsButton	= S.window.getElementsByClassName('s-captions-button')[0];
 const content			= S.window.getElementsByClassName('s-content')[0];
 content.classList.add('s-loading');
-const fullscreenButton	= S.window.getElementsByClassName('s-fullscreen-button')[0];
 const overlay			= S.window.getElementsByClassName('s-menu')[0];
 const buffer			= S.window.getElementsByClassName('s-buffer')[0];
 const infoText			= S.window.getElementsByClassName('s-info-text')[0];
@@ -312,12 +311,7 @@ S.play = function(){
 	if(S.paused===false) return;
 	
 	// Close dropdowns
-	var dropdowns=S.window.querySelectorAll('.s-dropdown.s-visible');
-	if(dropdowns){
-		for(var i=0;i<dropdowns.length;i++){
-			dropdowns[i].classList.remove('s-visible')
-		}
-	}
+	if(S.window.querySelector('.s-visible')) S.window.querySelector('.s-visible').classList.remove('s-visible');
 	
 	S.window.classList.remove('s-paused');
 	S.paused=false;
@@ -1259,29 +1253,23 @@ window.addEventListener('mouseup',function(event){
 	
 	// One event listener for all of the buttons
 	switch(event.target){
-		case fullscreenButton:
+		case S.window.querySelector('.s-button-fullscreen'):
 			S.fullscreenToggle();
 			break;
 		case S.window.querySelector('.s-button-bookmark'):
-			if(S.window.querySelector('.s-dropdown-bookmark').classList.toggle('s-visible')){
-				// Added
-			}else{
-				// Removed
-			}
+			if(S.window.querySelector('.s-visible:not(.s-dropdown-bookmark)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
+			
+			S.window.querySelector('.s-dropdown-bookmark').classList.toggle('s-visible');
 			break;
 		case S.window.querySelector('.s-button-language'):
-			if(S.window.querySelector('.s-dropdown-language').classList.toggle('s-visible')){
-				// Added
-			}else{
-				// Removed
-			}
+			if(S.window.querySelector('.s-visible:not(.s-dropdown-language)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
+		
+			S.window.querySelector('.s-dropdown-language').classList.toggle('s-visible');
 			break;
 		case S.window.querySelector('.s-button-subtitles'):
-			if(S.window.querySelector('.s-dropdown-subtitles').classList.toggle('s-visible')){
-				// Added
-			}else{
-				// Removed
-			}
+			if(S.window.querySelector('.s-visible:not(.s-dropdown-subtitles)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
+		
+			S.window.querySelector('.s-dropdown-subtitles').classList.toggle('s-visible');
 			break;
 		default:
 			// Some elements have pointer-events none, but their collisions still matter. We'll see if we're within those buttons here.
