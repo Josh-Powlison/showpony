@@ -316,7 +316,7 @@ S.play = function(){
 	if(S.paused===false) return;
 	
 	// Close popups
-	if(S.window.querySelector('.s-visible')) S.window.querySelector('.s-visible').classList.remove('s-visible');
+	while(S.window.querySelector('.s-visible')) S.window.querySelector('.s-visible').classList.remove('s-visible');
 	
 	S.window.classList.remove('s-paused');
 	S.paused=false;
@@ -1250,7 +1250,7 @@ window.addEventListener('mouseup',function(event){
     actionInterval=null;
 	
 	// Get rid of any active coloring
-	if(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
+	while(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
 	
     scrubbing=false;
 	
@@ -1276,17 +1276,17 @@ window.addEventListener('mouseup',function(event){
 			S.fullscreenToggle();
 			break;
 		case S.window.querySelector('.s-button-bookmark'):
-			if(S.window.querySelector('.s-visible:not(.s-popup-bookmark)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
+			while(S.window.querySelector('.s-visible:not(.s-popup-bookmark)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
 			
 			S.window.querySelector('.s-popup-bookmark').classList.toggle('s-visible');
 			break;
 		case S.window.querySelector('.s-button-language'):
-			if(S.window.querySelector('.s-visible:not(.s-popup-language)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
+			while(S.window.querySelector('.s-visible:not(.s-popup-language)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
 		
 			S.window.querySelector('.s-popup-language').classList.toggle('s-visible');
 			break;
 		case S.window.querySelector('.s-button-subtitles'):
-			if(S.window.querySelector('.s-visible:not(.s-popup-subtitles)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
+			while(S.window.querySelector('.s-visible:not(.s-popup-subtitles)')) S.window.querySelector('.s-visible').classList.remove('s-visible');
 		
 			S.window.querySelector('.s-popup-subtitles').classList.toggle('s-visible');
 			break;
