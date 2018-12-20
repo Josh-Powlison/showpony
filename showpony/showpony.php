@@ -566,7 +566,7 @@ function timeUpdate(){
 	S.currentTime=parseFloat(S.modules[S.currentModule].currentTime);
 	for(let i=0;i<S.currentFile;i++) S.currentTime+=parseFloat(S.files[i].duration);
 	
-	if(scrubbing!==true && scrubbing!=='out') scrub(null,false);
+	if(scrubbing!==true) scrub(null);
 
 	// Run custom event for checking time
 	S.window.dispatchEvent(
@@ -674,7 +674,7 @@ function infoFile(input){
 }
 
 // This updates the scrub bar's position
-function scrub(inputPercent=null,loadFile=false){
+function scrub(inputPercent=null){
 	// If no inputPercent was set, get it!
 	if(inputPercent===null) inputPercent=S.currentTime/S.duration;
 	
@@ -685,19 +685,17 @@ function scrub(inputPercent=null,loadFile=false){
 	scrubber.style.left=(inputPercent*100)+'%';
 	
 	// If scrubbing, estimate the new time
-	if(scrubbing===true || scrubbing==='out'){
+	if(scrubbing===true){
 		var time=S.duration*inputPercent;
 		
 		/// LOADING THE SELECTED FILE ///
-		if(loadFile){
-			clearTimeout(scrubLoad);
-			scrubLoad=null;
-			if(checkBuffered(time) || scrubbing==='out') S.to({time:time});
-			else{
-				// Load the file if we sit in the same spot for a moment
-				scrubLoadTime=time;
-				scrubLoad=setTimeout(S.to,400,{time:scrubLoadTime});
-			}
+		clearTimeout(scrubLoad);
+		scrubLoad=null;
+		if(checkBuffered(time)) S.to({time:time});
+		else{
+			// Load the file if we sit in the same spot for a moment
+			scrubLoadTime=time;
+			scrubLoad=setTimeout(S.to,400,{time:scrubLoadTime});
 		}
 		
 		var file=0;
@@ -767,82 +765,48 @@ function scrub(inputPercent=null,loadFile=false){
 }
 
 // When the user scrubs, this function runs
-function userScrub(event=null,start=false){
-	// Don't scrub if touching with 2 or more fingers at once
-	if(event.touches && event.touches.length>1) return;
-	
-	var input;
-	
+function userScrub(event){
 	// Only allow scrubbing when paused
 	if(!S.paused) return;
 	
-	// General events
-	if(isNaN(event)){
-		// Mouse and touch work slightly differently
-		input=event.changedTouches ? 'touch' : 'cursor';
-		pos=input==='touch' ? event.changedTouches[0].clientX : event.clientX;
-	// Relative scrubbing
-	}else{
-		input='joystick';
-		pos=scrubber.getBoundingClientRect().left+scrubber.getBoundingClientRect().width/2+event*5;
+	if(scrubbing===false) return;
+	
+	// Don't scrub if touching with 2 or more fingers at once
+	// if(event.touches && event.touches.length>1) return;
+	
+	event.preventDefault();
+	
+	var pointer;
+	if(event.changedTouches) pointer=event.changedTouches[0];
+	else pointer=event;
+	
+	var percent = (pointer.clientX-S.window.getBoundingClientRect().left)/(S.window.getBoundingClientRect().width);
+	
+	// We give ourselves a little snap near the edges
+	const scrubSnap=.0025;
+	if(percent<0+scrubSnap) percent=0;
+	if(percent>1-scrubSnap) percent=1;
+		
+	// You have to swipe farther than you move the cursor to adjust the position
+	if(scrubbing!==true){
+		// 34 is an arbitrary percentage of the screen that seems to feel good to trigger scrubbing
+		if(Math.abs(scrubbing-pointer.clientX) < screen.width/34) return;
+		
+		// Don't wait to start a series of actions
+		clearTimeout(actionTimeout);
+		actionTimeout=null;
+		clearInterval(actionInterval);
+		actionInterval=null;
+		
+		// Remove active button, if one exists
+		while(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
+		
+		// S.window.classList.add('s-hold');
+		
+		scrubbing=true;
 	}
 	
-	var scrubPercent=(pos-S.window.getBoundingClientRect().left)/(S.window.getBoundingClientRect().width);
-	const scrubSnap=.0025; // We give ourselves a little snap near the edges
-	if(scrubPercent<0+scrubSnap) scrubPercent=0;
-	if(scrubPercent>1-scrubSnap) scrubPercent=1;
-	
-	if(start){
-		if(scrubbing===false){
-			if(input==='touch') scrubbing=pos;
-			else return;
-		}
-			
-		// You have to swipe farther than you move the cursor to adjust the position
-		if(scrubbing!==true && scrubbing!=='out'){
-			if(input==='joystick'
-				|| Math.abs(scrubbing-pos)>screen.width/34 // 34 is an arbitrary percentage of the screen that seems to feel good to trigger scrubbing
-			){
-				// Don't wait to start a series of actions
-				clearTimeout(actionTimeout);
-				actionTimeout=null;
-				clearInterval(actionInterval);
-				actionInterval=null;
-				
-				if(S.window.querySelector('.s-cover') && checkCollision(event.clientX,event.clientY,S.window)){
-					S.window.querySelector('.s-cover').remove();
-				}
-				
-				scrubbing=true;
-				S.window.classList.add('s-hold');
-				
-				// Remove active button, if one exists
-				if(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
-			}
-			else return;
-		}
-		
-		// Don't want the users to accidentally swipe to another page!
-		if(input==='touch') event.preventDefault();
-		
-		scrub(scrubPercent,true);
-	}else{
-		// Drag on the menu to go to any part
-		
-		if(scrubbing===true || scrubbing==='out'){
-			if(!checkBuffered(S.duration*scrubPercent)){
-				// Load the file our pointer's on
-				scrub(scrubPercent,true);
-			}
-			
-			scrubbing=false;
-			
-			return true; // Exit the function
-		}
-		
-		// scrubbing needs to be set to false here too; either way it's false, but we need to allow the overlay to update above, so we set it to false earlier too.
-		scrubbing=false;
-	}
+	scrub(percent);
 }
 
 S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
@@ -981,12 +945,14 @@ function gamepadControls(){
 	if(S.gamepad.home==2) S.to({time:'start'});
 	if(S.gamepad.fullscreen==2) S.fullscreenToggle();
 	
+	// TODO: add joystick support back in (once it's working elsewhere)
+	/*
 	// Scrubbing with the analogue stick
 	if(S.gamepad.analogLPress===2){
 		overlay.style.opacity=1; // Show the overlay
 		pos=0;
 	}
-
+	
 	if(S.gamepad.analogL!==0){
 		
 		scrubbing=S.gamepad.analogL;
@@ -996,13 +962,13 @@ function gamepadControls(){
 	if(S.gamepad.analogLPress===-2){
 		overlay.style.opacity=''; // Hide the overlay
 		// If we're not scrubbing, set scrubbing to false and return
-		if(scrubbing!==true && scrubbing!=='out'){
+		if(scrubbing!==true){
 			scrubbing=false;
 		}else{
-			userScrub(S.gamepad.analogL);
+			// userScrub(S.gamepad.analogL);
 			pos=0;
 		}
-	}
+	}*/
 }
 
 function gamepadAxis(gamepad,number,type){
@@ -1308,17 +1274,32 @@ S.window.querySelector('.s-notice-close').addEventListener('click',function(){
 // TODO: put this somewhere sensible, or decide that here is fine
 var buttonDown = '';
 
+var touching = false;
+
 function pointerDown(event){
+	// Don't scrub if touching with 2 or more fingers at once
+	if(event.touches && event.touches.length>1) return;
+	
 	var pointer;
 	
-	if(event.touches) pointer=event.touches[0];
-	else pointer=event;
+	if(event.touches){
+		pointer=event.touches[0];
+		touching = true;
+	}
+	else{
+		if(touching) return;
+		pointer=event;
+	}
+	
+	// Allow left-click only
+	if(pointer.button && pointer.button!==0) return;
+	
+	event.preventDefault();
+	
+	if(S.name==='gamePlan') console.log("PRESSED DOWN",event);
 	
 	// Click was started inside showpony
     clickStart = true;
-    
-	// Allow left-click only
-	if(pointer.button!==0) return;
 	
     // Do nothing if the user clicked certain elements
 	if(pointer.target.classList.contains('s-popup')) return;
@@ -1372,18 +1353,32 @@ function pointerDown(event){
 }
 
 function pointerUp(event){
+	// Don't scrub if touching with 2 or more fingers at once
+	// if(event.touches && event.touches.length>1) return;
+	
 	var pointer;
 	
-	if(event.touches) pointer=event.touches[0];
-	else pointer=event;
+	if(event.changedTouches){
+		pointer=event.changedTouches[0];
+	}
+	else{
+		pointer=event;
+		
+		if(touching){
+			touching = false;
+			return;
+		}
+	}
+	
+	// Allow left-click only
+	if(pointer && pointer.button && pointer.button!==0) return;
+	
+	if(S.name==='gamePlan') console.log("PRESSED UP",event);
 	
 	// If the click was started outside of showpony, ignore it
     if (!clickStart) return;
     clickStart = false;
     
-	// Allow left-click only
-	if(pointer.button!==0) return;
-	
     clearTimeout(actionTimeout);
     actionTimeout=null;
     clearInterval(actionInterval);
@@ -1443,8 +1438,8 @@ window.addEventListener('touchend',pointerUp);
 // overlay.addEventListener('touchend',userScrub);
 
 // On dragging
-window.addEventListener('mousemove',function(event){userScrub(event,true);});
-window.addEventListener('touchmove',function(event){userScrub(event,true);});
+window.addEventListener('mousemove',userScrub);
+window.addEventListener('touchmove',userScrub);
 
 // Gamepad support
 
