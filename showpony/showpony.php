@@ -1305,63 +1305,6 @@ S.window.querySelector('.s-notice-close').addEventListener('click',function(){
 // TODO: put this somewhere sensible, or decide that here is fine
 var buttonDown = '';
 
-window.addEventListener('mouseup',function(event){
-    // If the click was started outside of showpony, ignore it
-    if (!clickStart) return;
-    clickStart = false;
-    
-	// Allow left-click only
-	if(event.button!==0) return;
-	
-    clearTimeout(actionTimeout);
-    actionTimeout=null;
-    clearInterval(actionInterval);
-    actionInterval=null;
-	
-	// Get rid of any active coloring
-	while(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
-	
-    scrubbing=false;
-	
-	// If we were waiting to load on an interval, load immediately!
-	if(scrubLoad){
-		clearTimeout(scrubLoad);
-		scrubLoad=null;
-		S.to({time:scrubLoadTime});
-	}
-    
-    // Ignore scrollbar
-    if(event.offsetX>event.target.clientWidth || event.offsetY>event.target.clientHeight) return;
-    
-	if(S.window.classList.contains('s-hold')){
-		S.window.classList.remove('s-hold');
-		return;
-	}
-	
-	// Some elements have pointer-events none, but their collisions still matter. We'll see if we're within those buttons here.
-
-	// Don't read clicks if the user's clicking an input or button
-	if(event.target.tagName==='INPUT') return;
-	if(event.target.tagName==='BUTTON') return;
-	if(event.target.tagName==='A') return;
-	if(event.target.classList.contains('s-popup')) return;
-	
-	// Pause
-	if(checkCollision(event.clientX,event.clientY,pause) && buttonDown === 'pause'){
-		S.toggle();
-	}
-	// Progress
-	else if(checkCollision(event.clientX,event.clientY,progress) && buttonDown === 'progress'){
-		S.progress();
-	}
-	// Regress
-	else if(checkCollision(event.clientX,event.clientY,regress) && buttonDown === 'regress'){
-		S.regress();
-	}
-    
-    buttonDown = '';
-});
-
 // On mousedown, we prepare to move the cursor (but not over overlay buttons)
 S.window.addEventListener('mousedown',function(event){
     // Click was started inside showpony
@@ -1419,6 +1362,63 @@ S.window.addEventListener('mousedown',function(event){
 	// Scrubbing will be considered here
 	scrubbing=event.clientX;
 	window.getSelection().removeAllRanges();
+});
+
+window.addEventListener('mouseup',function(event){
+    // If the click was started outside of showpony, ignore it
+    if (!clickStart) return;
+    clickStart = false;
+    
+	// Allow left-click only
+	if(event.button!==0) return;
+	
+    clearTimeout(actionTimeout);
+    actionTimeout=null;
+    clearInterval(actionInterval);
+    actionInterval=null;
+	
+	// Get rid of any active coloring
+	while(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
+	
+    scrubbing=false;
+	
+	// If we were waiting to load on an interval, load immediately!
+	if(scrubLoad){
+		clearTimeout(scrubLoad);
+		scrubLoad=null;
+		S.to({time:scrubLoadTime});
+	}
+    
+    // Ignore scrollbar
+    if(event.offsetX>event.target.clientWidth || event.offsetY>event.target.clientHeight) return;
+    
+	if(S.window.classList.contains('s-hold')){
+		S.window.classList.remove('s-hold');
+		return;
+	}
+	
+	// Some elements have pointer-events none, but their collisions still matter. We'll see if we're within those buttons here.
+
+	// Don't read clicks if the user's clicking an input or button
+	if(event.target.tagName==='INPUT') return;
+	if(event.target.tagName==='BUTTON') return;
+	if(event.target.tagName==='A') return;
+	if(event.target.classList.contains('s-popup')) return;
+	
+	// Pause
+	if(checkCollision(event.clientX,event.clientY,pause) && buttonDown === 'pause'){
+		S.toggle();
+	}
+	// Progress
+	else if(checkCollision(event.clientX,event.clientY,progress) && buttonDown === 'progress'){
+		S.progress();
+	}
+	// Regress
+	else if(checkCollision(event.clientX,event.clientY,regress) && buttonDown === 'regress'){
+		S.regress();
+	}
+    
+    buttonDown = '';
 });
 
 // On touch end, don't keep moving the bar to the user's touch
