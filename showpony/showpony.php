@@ -1291,6 +1291,8 @@ if (fullscreenButton){
     });
 }
 
+// TODO: put this somewhere sensible, or decide that here is fine
+var buttonDown = '';
 
 window.addEventListener('mouseup',function(event){
     // If the click was started outside of showpony, ignore it
@@ -1341,19 +1343,19 @@ window.addEventListener('mouseup',function(event){
 			if(event.target.classList.contains('s-popup')) return;
 			
 			// Pause
-			if(checkCollision(event.clientX,event.clientY,pause)){
+			if(checkCollision(event.clientX,event.clientY,pause) && buttonDown === 'pause'){
 				S.toggle();
 				break;
 			}
 			
 			// Progress
-			if(checkCollision(event.clientX,event.clientY,progress)){
+			if(checkCollision(event.clientX,event.clientY,progress) && buttonDown === 'progress'){
 				S.progress();
 				break;
 			}
 			
 			// Regress
-			if(checkCollision(event.clientX,event.clientY,regress)){
+			if(checkCollision(event.clientX,event.clientY,regress) && buttonDown === 'regress'){
 				S.regress();
 				break;
 			}
@@ -1361,6 +1363,7 @@ window.addEventListener('mouseup',function(event){
 			break;
 	}
     
+    buttonDown = '';
 });
 
 // On mousedown, we prepare to move the cursor (but not over overlay buttons)
@@ -1389,12 +1392,14 @@ S.window.addEventListener('mousedown',function(event){
 	// One event listener for all of the buttons
     // Pause
     if(checkCollision(event.clientX,event.clientY,pause)){
+        buttonDown = 'pause';
 		pause.classList.add('s-active');
         actionTimeout=setTimeout(function(){
             S.window.classList.add('s-hold');
         },500);
 	// Progress
     } else if(checkCollision(event.clientX,event.clientY,progress)){
+        buttonDown = 'progress';
 		progress.classList.add('s-active');
         actionTimeout=setTimeout(function(){
             S.window.classList.add('s-hold');
@@ -1404,6 +1409,7 @@ S.window.addEventListener('mousedown',function(event){
         },500);
 	// Regress
     } else if(checkCollision(event.clientX,event.clientY,regress)){
+        buttonDown = 'regress';
 		regress.classList.add('s-active');
         actionTimeout=setTimeout(function(){
             S.window.classList.add('s-hold');
