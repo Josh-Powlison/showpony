@@ -1391,6 +1391,7 @@ function pointerUp(event){
 	// Get rid of any active coloring
 	while(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
 	
+	var prevScrubState = scrubbing;
     scrubbing=false;
 	
 	// If we were waiting to load on an interval, load immediately!
@@ -1403,10 +1404,16 @@ function pointerUp(event){
     // Ignore scrollbar
     if(pointer.offsetX>pointer.target.clientWidth || pointer.offsetY>pointer.target.clientHeight) return;
     
+	// If we were holding the button, remove the class
 	if(S.window.classList.contains('s-hold')){
 		S.window.classList.remove('s-hold');
-		return;
+		
+		// Next and previous buttons shouldn't be activated again on release if they were held down
+		if(buttonDown !== 'pause' || S.paused === false) return;
 	}
+	
+	// If we were previously scrubbing, don't press buttons
+	if(prevScrubState === true) return;
 	
 	// Some elements have pointer-events none, but their collisions still matter. We'll see if we're within those buttons here.
 
