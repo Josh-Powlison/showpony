@@ -78,7 +78,7 @@ if(!document.getElementById('s-styles')){
 
 <?php
 
-// Load modules
+// Load modules CSS
 foreach(array_keys($media) as $moduleName){
 	
 ?>
@@ -91,6 +91,20 @@ if(!document.getElementById('s-<?php echo $moduleName; ?>-styles')){
 	?>`;
 	document.head.appendChild(styles);
 }
+
+<?php } ?>
+
+<?php
+// If the story has its own css file, add it in here
+if(file_exists('styles.css')){
+	
+?>
+// Load story-specific css
+var styles=document.createElement('style');
+styles.innerHTML=`<?php
+	addslashes(readfile('styles.css'));
+?>`;
+document.head.appendChild(styles);
 
 <?php } ?>
 
@@ -826,8 +840,6 @@ S.displaySubtitles = function(newSubtitles = S.currentSubtitles){
 			var files = text.split('|SPLIT|');
 			for(var i = 0; i < files.length; i++){
 				var grouping = {};
-				
-				console.log('CHECK',files);
 				
 				// Loop through sections
 				
