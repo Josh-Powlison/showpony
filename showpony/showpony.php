@@ -299,6 +299,7 @@ S.to = function(obj = {}){
 	S.modules[S.currentModule].src(obj.file,obj.time).then((obj)=>{
 		S.currentFile=S.modules[S.currentModule].currentFile=obj.file;
 		S.modules[S.currentModule].currentTime=obj.time;
+		S.displaySubtitles();
 		timeUpdate();
 		
 		/// PRELOAD ///
@@ -809,23 +810,24 @@ function userScrub(event){
 	scrub(percent);
 }
 
-S.displaySubtitles=function(newSubtitles=S.currentSubtitles){
+S.displaySubtitles = function(newSubtitles = S.currentSubtitles){
 	// Display the subtitles if they're loaded in
 	if(S.subtitles[newSubtitles] || newSubtitles===null){
-		S.currentSubtitles=newSubtitles;
+		S.currentSubtitles = newSubtitles;
 		S.modules[S.currentModule].displaySubtitles();
 	// Otherwise, load them
 	}else{
-		fetch('showpony/get-subtitles.php?path=<?php echo $stories_path; ?>&lang='+newSubtitles+'&files='+S.files.length)
+		fetch('showpony/get-subtitles.php?path=<?php echo $stories_path; ?>&lang=' + newSubtitles + '&files=' + S.files.length)
 		.then(response=>{if(response.ok) return response.text();})
 		.then(text=>{
-			var filesArray=[];
+			var filesArray = [];
 			
 			// Loop through files
-			var files=text.split('|SPLIT|');
-			files.pop(); // Last item is blank, remove it
-			for(var i=0;i<files.length;i++){
-				var grouping={};
+			var files = text.split('|SPLIT|');
+			for(var i = 0; i < files.length; i++){
+				var grouping = {};
+				
+				console.log('CHECK',files);
 				
 				// Loop through sections
 				

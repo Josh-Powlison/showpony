@@ -57,7 +57,6 @@ S.modules.<?php echo 'image'; ?>=new function(){
 					if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
 					
 					M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
-					S.displaySubtitles();
 					
 					content.classList.remove('s-loading');
 					
