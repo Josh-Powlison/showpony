@@ -147,11 +147,7 @@ S.readingDirection		= <?php echo json_encode(READING_DIRECTION); ?>;
 S.subtitles				= {<?php
 
 	//Immediately load subtitles if called for
-	if($subtitles !== 'null'){
-		echo json_encode($subtitles.'-RAW'),':`';
-		require ROOT.'/get-subtitles.php';
-		echo '`';
-	}
+	if($subtitles !== 'null' && !empty($subtitles)) require ROOT.'/get-subtitles.php';
 	
 ?>};
 S.supportedSubtitles	= <?php
