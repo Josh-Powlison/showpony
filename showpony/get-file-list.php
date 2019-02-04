@@ -80,7 +80,7 @@ function readFolder($folder){
 		*/
 		
 		// The base quality is always 0- so if we've found higher than that, just increase the value of the previously added file in the array
-		if(intval($match[1]) !== 0){
+		if(!empty($match[1])){
 			$files[count($files)-1]['quality'] = intval($match[1]);
 			
 			// Update max quality
