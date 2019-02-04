@@ -44,6 +44,7 @@ forest.style	bottom:100%;
 
 engine.textbox	name
 name.class		name
+name.style		background-color:#fff;border:solid #000 .125em;padding:.4em;width:5em;position:absolute;z-index:11;left:17.5%;margin-left:1em;bottom:6.75em;font-size:2em;font-family:Arial;font-weight:bold;
 
 
 //foresttw			forest.jpg
@@ -67,22 +68,15 @@ forest.style	time:1s;bottom:0%;
 ben.style		time:1s;bottom:0%;
 engine.wait		3
 
-
 //theme.play
 
 [BEN]
 		Aren't the woods beautiful, [playerName]?~ And the way the light comes through the leaves and rests gently upon your face...
 
-engine.textbox		thoughts
-thoughts.class		thoughts
-thoughts			Hey, wait a minute...
-
 ben		shock
 
 [NONE]
 		Ben talks like this when he's avoiding something.
-
-thoughts.empty
 
 [BEN]
 ben		frown
@@ -130,16 +124,6 @@ susan.remove
 		...to be honest, I wasn't expecting that answer.
 
 		(Wait, did she actually buy that?)
-		
-engine.go	//CONTINUE
-
-//NO
-
-		<shake>...</shake>
-
-		(Here comes the thunder...)
-
-engine.go	//CONTINUE
 
 //CONTINUE
 

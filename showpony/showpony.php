@@ -727,7 +727,15 @@ function scrub(inputPercent=null){
 	
 	// If scrubbing, estimate the new time
 	if(scrubbing===true){
-		var time=S.duration * (1 - inputPercent);
+		var time;
+		
+		// Left-to-right reading
+		if(S.readingDirection === 'left-to-right'){
+			time = S.duration * inputPercent;
+		// Right-to-left reading
+		}else{
+			time = S.duration * (1 - inputPercent);
+		}
 		
 		/// LOADING THE SELECTED FILE ///
 		clearTimeout(scrubLoad);

@@ -1,0 +1,4 @@
+susan=	<span style="color:magenta">Susan</span>::
+ben=	<span style="color:aqua">Ben</span>::
+player=	<span style="color:green">[playerName]</span>::
+playerAndBen=	<span style="color:aqua">Ben</span> & <span style="color:green">[playerName]</span>::
