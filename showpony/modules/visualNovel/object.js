@@ -7,7 +7,7 @@ S.modules.visualNovel=new function(){
 	M.lines=null;
 	M.loading=0; // Tracks how many items are currently loading
 	M.variables = {};
-	M.src = null;
+	M.filesrc = null;
 	
 	M.window=document.createElement('div');
 	M.window.className='m-vn';
@@ -156,7 +156,7 @@ S.modules.visualNovel=new function(){
 			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, S.currentQuality) + '$');
 			
 			// If this is the current file
-			if(M.src === filename){
+			if(M.filesrc === filename){
 				
 				// Get the keyframe
 				var keyframeSelect=Math.round(keyframes.length*(time/S.files[M.currentFile].duration));
@@ -182,7 +182,7 @@ S.modules.visualNovel=new function(){
 			fetch(filename,{credentials:'include'})
 			.then(response=>{if(response.ok) return response.text();})
 			.then(text=>{
-				M.src = filename;
+				M.filesrc = filename;
 				
 				// Remove multiline comments
 				text=text.replace(/\/\*[^]*?\*\//g,'');
