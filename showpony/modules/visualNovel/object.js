@@ -433,14 +433,19 @@ S.modules.visualNovel=new function(){
 						continue;
 					}
 					
+					// If it's a function to run
 					if(typeof(objects[compTarget][commTarget])==='function'){
 						if(typeof(target[compTarget][commTarget])==='undefined'){
 							objects[compTarget][commTarget]();
 						}else{
 							objects[compTarget][commTarget](target[compTarget][commTarget]);
 						}
-					}else{
+					// If it's a value to set
+					}else if(typeof objects[compTarget][commTarget] !== 'undefined'){
 						objects[compTarget][commTarget]=target[compTarget][commTarget];
+					// If it doesn't exist
+					} else {
+						S.notice('"' + compTarget + '" does not have a command called "' + commTarget + '"');
 					}
 				}
 			}
@@ -553,7 +558,7 @@ S.modules.visualNovel=new function(){
 			objects[component][command] = parameter;
 			return true;
 		} else {
-			S.notice('"' + component + '" does not have a command called "' + command);
+			S.notice('"' + component + '" does not have a command called "' + command + '"');
 			return false;
 		}
 	}
