@@ -139,7 +139,6 @@
 .m-vn-continue{
 	color:white;
 	position:absolute;
-	right:0;
 	bottom:0;
 	z-index:11;
 	margin:1.75em 2em;
@@ -147,20 +146,43 @@
 	height:3em;
 	pointer-events:none;
 	visibility:hidden;
-	animation:arrow-point 1s ease infinite alternate 3s;
 	background-size:contain;
 	background-repeat:no-repeat;
 	background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none' viewBox='0 0 10 10'%3E%3Cg fill='%23fff'%3E%3Cpath d='M.35 3.14h3.27v3.71H.35z'/%3E%3Cpath d='M2.23.7L9.65 5 2.23 9.3z'/%3E%3C/g%3E%3C/svg%3E");
 	filter:drop-shadow(0 0 1px #000);
 }
 
-@keyframes arrow-point{
+/* Put arrow on the right side for reading left-to-right */
+.s-left-to-right .m-vn-continue{
+	right:0;
+	animation:arrow-point-right 1s ease infinite alternate 3s;
+}
+
+@keyframes arrow-point-right{
 	0%{
 		transform:translate(0em,0);
 		visibility:visible;
 	}
 	100%{
 		transform:translate(-.5em,0);
+		visibility:visible;
+	}
+}
+
+/* Reverse arrow for reading right-to-left */
+.s-right-to-left .m-vn-continue{
+	transform:scaleX(-1);
+	left:0;
+	animation:arrow-point-left 1s ease infinite alternate 3s;
+}
+
+@keyframes arrow-point-left{
+	0%{
+		transform:translate(0em,0) scaleX(-1);
+		visibility:visible;
+	}
+	100%{
+		transform:translate(-.5em,0) scaleX(-1);
 		visibility:visible;
 	}
 }

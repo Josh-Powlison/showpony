@@ -145,6 +145,7 @@ S.saves					= {
 	system		:<?php echo json_encode($save_system); ?>,
 	timestamp	:Date.now()
 };
+S.direction				= <?php echo json_encode(DIRECTION); ?>;
 S.subtitles				= {};
 S.supportedSubtitles	= <?php
 	// Get subtitles
@@ -171,7 +172,7 @@ S.supportedSubtitles	= <?php
 S.upcomingFiles			= <?php echo json_encode($releaseDates); ?>;
 	
 S.window				= document.createElement('div');
-S.window.className		= 's';
+S.window.className		= 's s-' + S.direction;
 S.window.tabIndex		= 0;
 S.window.innerHTML		= `
 	<div class="s-content"></div>
@@ -465,6 +466,9 @@ S.changeLanguage = function(newLanguage=<?php echo json_encode($language); ?>){
 		S.modules[S.currentModule].currentFile=-1;
 		
 		S.to({time:S.currentTime});
+	})
+	.catch(error=>{
+		S.notice('Failed to load language files. '+error);
 	});
 }
 
@@ -702,8 +706,18 @@ function infoFile(input){
 
 // This updates the scrub bar's position
 function scrub(inputPercent=null){
+	// inputPercent will always be from left-to-right; remember that for display reading from right-to-left
+	
 	// If no inputPercent was set, get it!
-	if(inputPercent===null) inputPercent=S.currentTime/S.duration;
+	if(inputPercent===null){
+		// Left-to-right reading
+		if(S.direction === 'left-to-right'){
+			inputPercent = S.currentTime/S.duration;
+		// Right-to-left reading
+		}else{
+			inputPercent = 1 - (S.currentTime/S.duration);
+		}
+	}
 	
 	if(inputPercent<0) inputPercent=0;
 	if(inputPercent>1) inputPercent=1;
@@ -713,7 +727,7 @@ function scrub(inputPercent=null){
 	
 	// If scrubbing, estimate the new time
 	if(scrubbing===true){
-		var time=S.duration*inputPercent;
+		var time=S.duration * (1 - inputPercent);
 		
 		/// LOADING THE SELECTED FILE ///
 		clearTimeout(scrubLoad);
@@ -1285,8 +1299,8 @@ S.window.addEventListener(
 		switch(event.key){
 			case ' ':				S.progress();			break;
 			case 'Enter':			S.progress();			break;
-			case 'ArrowLeft':		S.regress();			break;
-			case 'ArrowRight':		S.progress();			break;
+			case 'ArrowLeft':		(S.direction === 'right-to-left' ? S.progress : S.regress)();	break;
+			case 'ArrowRight':		(S.direction === 'right-to-left' ? S.regress : S.progress)();	break;
 			// case 'Home':			S.to({time:'start'});	break;
 			// case 'End':				S.to({time:'end'});		break;
 			case 'MediaPrevious':	S.to({file:'-1'});		break;
