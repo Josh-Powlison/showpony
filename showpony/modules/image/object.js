@@ -28,12 +28,23 @@ S.modules.<?php echo 'image'; ?>=new function(){
 	}
 	
 	M.regress=function(){
-		if(S.currentFile>0) S.to({file:'-1',time:'end'});
-		else S.to({time:0});
+		// If we're not at the top of the file, scroll up
+		if(M.window.scrollTop > 0){
+			M.window.scrollTop -= S.window.clientHeight * .75;
+			// M.window.scrollTop -= 10;
+		}
+		// Go back to the previous file otherwise
+		else{
+			if(S.currentFile>0) S.to({file:'-1',time:'end'});
+			else S.to({time:0});
+		}
 	}
 	
 	M.progress=function(){
-		S.to({file:'+1'});
+		// If we're not at the bottom, scroll down
+		if(M.window.scrollTop < M.window.scrollHeight - (M.window.clientHeight * 1.07)) M.window.scrollTop += M.window.clientHeight * .75;
+		// Continue to the next file otherwise
+		else S.to({file:'+1'});
 	}
 	
 	M.src=function(file=0,time=0){

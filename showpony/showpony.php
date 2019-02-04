@@ -1356,9 +1356,7 @@ function pointerDown(event){
 		progress.classList.add('s-active');
         actionTimeout=setTimeout(function(){
             S.window.classList.add('s-hold');
-            actionInterval=setInterval(function(){
-                S.to({time:'+5'});
-            },50);
+            actionInterval=setInterval(S.progress,50);
         },500);
 	// Regress
     } else if(checkCollision(pointer.clientX,pointer.clientY,regress)){
@@ -1366,9 +1364,7 @@ function pointerDown(event){
 		regress.classList.add('s-active');
         actionTimeout=setTimeout(function(){
             S.window.classList.add('s-hold');
-            actionInterval=setInterval(function(){
-                S.to({time:'-5'});
-            },50);
+            actionInterval=setInterval(S.regress,50);
         },500);
     }
 	

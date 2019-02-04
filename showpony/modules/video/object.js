@@ -24,13 +24,13 @@ S.modules.video=new function(){
 	}
 	
 	M.regress=function(){
-		if(M.currentTime<10) S.to({file:'-1',time:'end'});
-		else S.to({time:'-10'});
+		if(M.currentTime<5) S.to({file:'-1',time:'end'});
+		else S.to({time:'-5'});
 	}
 	
 	M.progress=function(){
-		if(M.currentTime>S.files[M.currentFile].duration-10) S.to({file:'+1'});
-		else S.to({time:'+10'});
+		if(M.currentTime>S.files[M.currentFile].duration-5) S.to({file:'+1'});
+		else S.to({time:'+5'});
 	}
 	
 	M.src=function(file=0,time=0){
