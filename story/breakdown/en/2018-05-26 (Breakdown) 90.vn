@@ -1,9 +1,5 @@
-////// SPECIAL PROPERTIES //////
+////// VARIABLES //////
 
-slow=	<speed rate="2">
-/slow=	</speed>
-fast=	<speed rate=".25">
-/fast=	</speed>
 instant=	<speed rate="0">
 /instant=	</speed>
 
@@ -16,20 +12,39 @@ steph=	name	[instant]<span style="color:#799877;">Steph</span>[/instant]>
 
 shout=	<span class="shout">
 /shout=	</span>
-fade=	<span class="fade">
-/fade=	</span>
-
 sing=			<span class="sing"><animation offset="10">
 /sing=			</animation></span>
 shake=			<span class="shake"><animation offset="3">
 /shake=			</animation></span>
 
+
+
+////// SPECIAL OBJECTS //////
+
 engine.textbox	name
 name.class		name
 
-////////////////////////////////
 
-// CHARACTERS //
+
+////// BACKGROUNDS, CGs, & ICONS //////
+
+hallway.class	background
+hallway.content	/backgrounds/hallway.jpg
+
+black.class		background
+black.style		opacity:0;background-color:black;z-index:12;
+
+logo.content	/logo.svg
+logo.class		character
+logo.style		height:100%;
+
+mother			/cgs/mother.jpg
+mother.class	cg
+mother.style	opacity:0;z-index:12;filter:brightness(0.1);background-size:300%;background-position:0% 50%;
+
+
+
+////// CHARACTERS //////
 
 james.class		character
 james.filepath	characters/james/
@@ -46,29 +61,12 @@ steph.filepath	characters/steph/
 steph.style		height:100%;left:-100%;transform:scale(-1,1);z-index:4;
 steph.content	pose-1,eyes/nervous00,mouth/nervous00
 
-////////////////
-
-//Backgrounds
-
-hallway.class	background
-hallway.content	/backgrounds/hallway.jpg
 
 
-empty.class		background
-empty.style		opacity:0;background-color:black;z-index:11;
+////// MUSIC & SFX //////
 
-logo		/logo.svg
-logo.class	character
-logo.style	height:100%;
-
-// Starting position
-engine.wait
-logo.style		time:1s;opacity:0;
-
-//Prepare music
 happy		happy.mp3
 happy.loop	true
-happy.play
 
 silly		silly.mp3
 silly.loop	true
@@ -77,13 +75,17 @@ static		static.mp3
 static.loop		true
 static.volume	.1
 
-//CGS
 
-mother			/cgs/mother.jpg
-mother.class	cg
-mother.style	opacity:0;z-index:12;filter:brightness(0.1);background-size:300%;background-position:0% 50%;
+
+////// START //////
+
+engine.wait
+
+logo.style		time:1s;opacity:0;
+happy.play
 
 engine.wait		1.5s
+logo.remove
 james.style		time:.5s;opacity:1;
 engine.wait		1s
 
@@ -103,8 +105,9 @@ mother.style	filter:brightness(1);background-position:0% 100%;
 engine.wait		.1s
 mother.style	filter:brightness(0.01);
 engine.wait		.1s
-mother.style	opacity:0;
-static.pause
+// In the demo, we don't need the static or cg anymore
+static.remove
+mother.remove
 		+ and you'll be fine!
 		
 james	pose-1,eyes/smile00,mouth/grin00
@@ -112,9 +115,8 @@ james	pose-1,eyes/smile00,mouth/grin00
 [me]
 		...
 
-name.empty
+name.black
 		He thrusts out his hand.
-
 
 [?james]
 james	pose-1,eyes/grin00,mouth/smile01
@@ -127,9 +129,8 @@ james	pose-1,eyes/grin00,mouth/grin00
 
 james	pose-1,eyes/smile00,mouth/grin00
 
-name.empty
+name.black
 		I take his hand and shake.
-
 
 [james]
 james	pose-1,eyes/wow00,mouth/wow01
@@ -142,13 +143,13 @@ james	pose-1,eyes/smile00,mouth/smile01
 james	pose-1,eyes/grin00,mouth/smile01
 		Come on in and...
 
-happy.stop
+// We don't need this music any more for the demo
+happy.remove
 
 james	pose-1,eyes/annoy00,mouth/smile01
 		...
 james	pose-1,eyes/annoy00,mouth/annoy01
 		[shout]I know you're both watching, come on out already![/shout]
-
 
 silly.play
 
@@ -183,7 +184,7 @@ steph	pose-1,eyes/joy00,mouth/smile00
 
 james	pose-1,eyes/grin00,mouth/smile00
 
-name.empty
+name.black
 		I put out my hand.
 
 james	pose-1,eyes/grin00,mouth/grin00
@@ -221,7 +222,7 @@ james	pose-1,eyes/smile00,mouth/smile00
 sly		pose-1,eyes/upset00,mouth/serious00
 steph	pose-1,eyes/smile00,mouth/smile00
 
-name.empty
+name.black
 		She puts out her hand, and I take it.
 
 sly		pose-1,eyes/upset00,mouth/serious00
@@ -257,18 +258,19 @@ james	pose-1,eyes/concern00,mouth/smile01
 sly		pose-1,eyes/smile00,mouth/serious00
 steph	pose-1,eyes/upset00,mouth/upset00
 
-empty.style		time:1s;opacity:1;
+black.style		time:1s;opacity:1;
 engine.wait		1.5s
 
-// Hide characters
-james.style		visibility:hidden;
-sly.style		visibility:hidden;
-steph.style		visibility:hidden;
-name.empty
+// Remove characters and pieces
+james.remove
+sly.remove
+steph.remove
+name.remove
 
-//Credits
+// Credits
 textbox.style		border:none;top:1rem;left:1rem;right:1rem;bottom:1rem;height:auto;text-align:center;background:none;max-height:none;padding:0;font-size:1.5rem;
 		[instant]<img style="max-width:100%;width:20em;" src="story/breakdown/resources/logo.svg"><br>Thank you for reading!<br><a href="https://joshpowlison.itch.io/breakdown">Check out the full version of Breakdown here!</a><br><br><strong>Writer, Programmer:</strong> Josh Powlison<br><br><strong>Character Art, Background Art:</strong> Puppetbomb<br><br><strong>CGs: </strong> Inkhana<br><br><strong>Music: </strong> Joshua "Mussar" Nussbaum[/instant]>
 		
-empty.style		time:1s;opacity:0;
+black.style		time:1s;opacity:0;
 engine.wait
+black.remove
