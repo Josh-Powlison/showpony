@@ -20,10 +20,10 @@ const HIDDEN_FILENAME_STARTING_CHAR='~';	// Change in .htaccess too, to block di
 
 // The names of varying levels of quality, if needed. From lowest to highest.
 const QUALITY_NAMES=[
-	'480p'
-	,'720p'
-	,'1080p'
-	,'4K'
+	'480p'		// 0$
+	,'720p'		// 1$
+	,'1080p'	// 2$
+	,'4K'		// 3$
 ];
 
 const FILE_DATA_GET_MODULE=[
