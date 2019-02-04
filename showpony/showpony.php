@@ -24,8 +24,6 @@ Thanks!
 
 */
 
-session_start();
-
 require 'settings.php';
 
 // TESTING ADMIN
@@ -146,10 +144,19 @@ S.saves					= {
 	timestamp	:Date.now()
 };
 S.readingDirection		= <?php echo json_encode(READING_DIRECTION); ?>;
-S.subtitles				= {};
+S.subtitles				= {<?php
+
+	//Immediately load subtitles if called for
+	if($subtitles !== 'null'){
+		echo json_encode($subtitles.'-RAW'),':`';
+		require ROOT.'/get-subtitles.php';
+		echo '`';
+	}
+	
+?>};
 S.supportedSubtitles	= <?php
 	// Get subtitles
-	$subtitles=[];
+	$supportedSubtitles=[];
 	if(file_exists('subtitles')){
 		foreach(scandir('subtitles') as $file){
 			// Ignore hidden files
@@ -160,14 +167,14 @@ S.supportedSubtitles	= <?php
 			if(extension_loaded('intl')) $subtitleLanguage = Locale::getDisplayLanguage($subtitleLanguage);
 			if($closedCaptions) $subtitleLanguage .= ' (CC)';
 			
-			$subtitles[]=[
+			$supportedSubtitles[]=[
 				'short'	=>	$file
 				,'long'	=>	$subtitleLanguage
 			];
 		}
 	}
 	
-	echo json_encode($subtitles);
+	echo json_encode($supportedSubtitles);
 ?>;
 S.upcomingFiles			= <?php echo json_encode($releaseDates); ?>;
 	
@@ -244,7 +251,7 @@ var start				= 0;		// Where we're starting the Showpony from
 
 // Load modules
 foreach(array_keys($media) as $moduleName){
-	include ROOT.'/modules/'.$moduleName.'/object.js';
+	require ROOT.'/modules/'.$moduleName.'/object.js';
 }
 
 ?>
@@ -865,68 +872,86 @@ S.displaySubtitles = function(newSubtitles = S.currentSubtitles){
 		S.modules[S.currentModule].displaySubtitles();
 	// Otherwise, load them
 	}else{
-		fetch('showpony/get-subtitles.php?path=<?php echo $stories_path; ?>&lang=' + newSubtitles + '&files=' + S.files.length)
-		.then(response=>{if(response.ok) return response.text();})
-		.then(text=>{
-			var filesArray = [];
+		// If we have these subtitles available raw, get those
+		if(S.subtitles[newSubtitles + '-RAW']){
+			console.log('processing raw');
+			S.subtitles[newSubtitles] = processSubtitles(S.subtitles[newSubtitles + '-RAW'], false);
+			S.currentSubtitles = newSubtitles;
+			S.modules[S.currentModule].displaySubtitles();
+		// Otherwise, fetch
+		} else {
+			fetch('showpony/get-subtitles.php?path=<?php echo $stories_path; ?>&lang=' + newSubtitles + '&files=' + S.files.length)
+			.then(response=>{if(response.ok) return response.text();})
+			.then(text=>{
+				S.subtitles[newSubtitles] = processSubtitles(text);
+				S.currentSubtitles = newSubtitles;
+				S.modules[S.currentModule].displaySubtitles();
+			})
+			.catch(response=>{
+				S.currentSubtitles=null;
+				S.notice('Error loading subtitles for '+newSubtitles);
+			});
+		}
+	}
+}
+
+function processSubtitles(text,fromFetch = true){
+	// fromFetch is needed because the line breaks when the text is loaded into JS is different from when it's called with fetch.
+	// There's gotta be a better way to do this, this is ridiculous...
+	
+	var filesArray = [];
 			
-			// Loop through files
-			var files = text.split('|SPLIT|');
-			for(var i = 0; i < files.length; i++){
-				var grouping = {};
-				
-				// Loop through sections
-				
-				// (get rid of surrounding blanks)
-				var sections=files[i].replace(/^\s+|\s+$/g,'');
-				// Split between lines
-				// sections=sections.split(/(?:\n\s*){2,}/g);
-				sections=sections.split(/[\r\n]{4,}/g);
-				for(var j=0;j<sections.length;j++){
-					var name=j;
-					var phrase={
-						start:null
-						,end:null
-						,content:''
-					};
+	// Loop through files
+	var files = text.split('|SPLIT|');
+	for(var i = 0; i < files.length; i++){
+		var grouping = {};
+		
+		// Loop through sections
+		
+		// (get rid of surrounding blanks)
+		var sections=files[i].replace(/^\s+|\s+$/g,'');
+		// Split between lines
+		if(fromFetch) sections=sections.split(/[\r\n]{4,}/g);
+		else sections=sections.split(/[\r\n]{2,}/g);
+		
+		for(var j=0;j<sections.length;j++){
+			var name=j;
+			var phrase={
+				start:null
+				,end:null
+				,content:''
+			};
+			
+			// Loop through chunk
+			if(fromFetch) var chunk=sections[j].split(/[\r\n]{2,}/g);
+			else var chunk=sections[j].split(/[\r\n]+/g);
+			for(var k=0;k<chunk.length;k++){
+				// Get time
+				if(/-->/.test(chunk[k])){
+					var times=chunk[k].split(/\s*-->\s*/);
+					phrase.start=times[0];
+					phrase.end=times[1];
 					
-					// Loop through chunk
-					var chunk=sections[j].split(/[\r\n]{2,}/g);
-					for(var k=0;k<chunk.length;k++){
-						// Get time
-						if(/-->/.test(chunk[k])){
-							var times=chunk[k].split(/\s*-->\s*/);
-							phrase.start=times[0];
-							phrase.end=times[1];
-							
-							continue;
-						}
-						
-						// The first line is a name; otherwise, it's content
-						if(k===0){
-							name=chunk[k].replace(/\s+/,'');
-						}else{
-							// Add a <br> tag if this is an additional line
-							if(phrase.content.length) phrase.content+='<br>';
-							phrase.content+=chunk[k];
-						}
-					}
-					
-					grouping[name]=phrase;
+					continue;
 				}
 				
-				filesArray.push(grouping);
+				// The first line is a name; otherwise, it's content
+				if(k===0){
+					name=chunk[k].replace(/\s+/,'');
+				}else{
+					// Add a <br> tag if this is an additional line
+					if(phrase.content.length) phrase.content+='<br>';
+					phrase.content+=chunk[k];
+				}
 			}
 			
-			S.subtitles[newSubtitles]=filesArray;
-			S.currentSubtitles=newSubtitles;
-			S.modules[S.currentModule].displaySubtitles();
-		})
-		.catch(response=>{
-			S.currentSubtitles=null;
-			S.notice('Error loading subtitles for '+newSubtitles);
-		});
+			grouping[name]=phrase;
+		}
+		
+		filesArray.push(grouping);
 	}
+	
+	return filesArray;
 }
 
 // Convert a time to seconds. Useful for to() function, and subtitles
@@ -1134,6 +1159,8 @@ if(S.supportedSubtitles.length>0){
 }else{
 	S.window.querySelector('.s-button-subtitles').remove();
 }
+
+// delete S.supportedSubtitles;
 
 // Add quality dropdown
 if(S.maxQuality > 0){
