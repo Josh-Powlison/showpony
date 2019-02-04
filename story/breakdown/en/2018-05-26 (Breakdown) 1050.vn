@@ -1,0 +1,275 @@
+////// SPECIAL PROPERTIES //////
+
+slow=	<speed rate="2">
+/slow=	</speed>
+fast=	<speed rate=".25">
+/fast=	</speed>
+instant=	<speed rate="0">
+/instant=	</speed>
+
+me=		name	[instant]<span style="color:#000000;">Me</span>[/instant]>
+?james=	name	[instant]<span style="color:#48737a;">???</span>[/instant]>
+james=	name	[instant]<span style="color:#48737a;">James</span>[/instant]>
+?sly=	name	[instant]<span style="color:#624a46;">???</span>[/instant]>
+sly=	name	[instant]<span style="color:#624a46;">Sly</span>[/instant]>
+steph=	name	[instant]<span style="color:#799877;">Steph</span>[/instant]>
+
+shout=	<span class="shout">
+/shout=	</span>
+fade=	<span class="fade">
+/fade=	</span>
+
+sing=			<span class="sing"><animation offset="10">
+/sing=			</animation></span>
+shake=			<span class="shake"><animation offset="3">
+/shake=			</animation></span>
+
+engine.textbox	name
+name.class		name
+
+////////////////////////////////
+
+// CHARACTERS //
+
+james.class		character
+james.filepath	characters/james/
+james.style		height:100%;opacity:0;
+james.content	pose-1,eyes/smile00,mouth/smile00
+
+sly.class		character
+sly.filepath	characters/sly/
+sly.style		height:100%;left:-100%;z-index:6;
+sly.content		pose-1,eyes/wow00,mouth/soft01
+
+steph.class		character
+steph.filepath	characters/steph/
+steph.style		height:100%;left:-100%;transform:scale(-1,1);z-index:4;
+steph.content	pose-1,eyes/nervous00,mouth/nervous00
+
+////////////////
+
+//Backgrounds
+
+hallway.class	background
+hallway.content	/backgrounds/hallway.jpg
+
+empty.class		background
+empty.style		opacity:1;background-color:black;z-index:11;
+
+logo		/logo.svg
+logo.class	character
+logo.style	height:100%;max-width:50rem;
+
+// Starting position
+engine.wait		.5s
+empty.style		time:1s;opacity:0;
+engine.wait
+logo.style		time:1s;opacity:0;
+
+//Prepare music
+happy		happy.mp3
+happy.loop	true
+happy.play
+
+silly		silly.mp3
+silly.loop	true
+
+static		static.mp3
+static.loop		true
+static.volume	.1
+
+//CGS
+
+mother			/cgs/mother.jpg
+mother.class	cg
+mother.style	opacity:0;z-index:12;filter:brightness(0.1);background-size:300%;background-position:0% 50%;
+
+engine.wait		1.5s
+james.style		time:.5s;opacity:1;
+engine.wait		1s
+
+[?james]
+james	pose-1,eyes/smile00,mouth/neutral01
+		You're my roommate's replacement, huh?
+
+[?james]
+james	pose-1,eyes/grin00,mouth/smile01
+		Don't worry, you don't have much to live up to. Just don't use heroin like the last guy,>
+
+//Trigger
+static.play
+mother.style	opacity:.01;filter:brightness(0.01);
+engine.wait		.1s
+mother.style	filter:brightness(1);background-position:0% 100%;
+engine.wait		.1s
+mother.style	filter:brightness(0.01);
+engine.wait		.1s
+mother.style	opacity:0;
+static.pause
+		+ and you'll be fine!
+		
+james	pose-1,eyes/smile00,mouth/grin00
+
+[me]
+		...
+
+name.empty
+		He thrusts out his hand.
+
+
+[?james]
+james	pose-1,eyes/grin00,mouth/smile01
+		James!
+
+james	pose-1,eyes/grin00,mouth/grin00
+
+[me]
+		...Peter.
+
+james	pose-1,eyes/smile00,mouth/grin00
+
+name.empty
+		I take his hand and shake.
+
+
+[james]
+james	pose-1,eyes/wow00,mouth/wow01
+		Ooh, Peter! Nice, firm handshake! >
+james	pose-1,eyes/annoy00,mouth/annoy01
+		+The last guy always gave me the dead fish. >
+james	pose-1,eyes/smile00,mouth/smile01
+		+I already think we're gonna get along fine.
+
+james	pose-1,eyes/grin00,mouth/smile01
+		Come on in and...
+
+happy.stop
+
+james	pose-1,eyes/annoy00,mouth/smile01
+		...
+james	pose-1,eyes/annoy00,mouth/annoy01
+		[shout]I know you're both watching, come on out already![/shout]
+
+
+silly.play
+
+james		pose-1,eyes/annoy00,mouth/annoy00
+sly.style	time:1s;left:-25%;
+steph.style	time:1.4s;left:25%;
+
+[?sly]
+		I just wanted to see what the new guy was >
+steph.style	transform:scale(1,1);z-index:6;
+		+like. >
+sly		pose-1,eyes/upset00,mouth/smile01
+		+Hey, you, Peter- be nice to our little brother, >
+sly		pose-1,eyes/smile00,mouth/grin00
+		+or you'll have to deal with <em>us</em>.
+
+james	pose-1,eyes/smile00,mouth/neutral00
+sly		pose-1,eyes/grin00,mouth/grin00
+steph	pose-1,eyes/nervous00,mouth/smile00
+
+[me]
+		...
+
+james	pose-1,eyes/smile00,mouth/smile01
+sly		pose-1,eyes/smile00,mouth/smile00
+
+[james]
+		Peter, this is Sly. >
+sly		pose-1,eyes/upset00,mouth/smile00
+steph	pose-1,eyes/joy00,mouth/smile00
+		+Yes, that is her real name.
+
+james	pose-1,eyes/grin00,mouth/smile00
+
+name.empty
+		I put out my hand.
+
+james	pose-1,eyes/grin00,mouth/grin00
+sly		pose-1,eyes/upset00,mouth/upset01
+steph	pose-1,eyes/wow00,mouth/nervous00
+
+[sly]
+		I'm not shakin' your hand until I decide you're an all-right dude. >
+
+sly		pose-1,eyes/grin00,mouth/serious01
+steph	pose-1,eyes/nervous00,mouth/nervous00
+		+Sorry, policy.
+
+james	pose-1,eyes/grin00,mouth/grin00
+sly		pose-1,eyes/upset00,mouth/smile00
+
+[me]
+		Fair enough, I'm a pretty scary guy, or so I've been told.
+
+james	pose-1,eyes/smile00,mouth/smile01
+sly		pose-1,eyes/smile00,mouth/serious01
+steph	pose-1,eyes/nervous00,mouth/smile00
+
+[james]
+		The redhead behind her is Stephanie.
+
+james	pose-1,eyes/grin00,mouth/grin00
+sly		pose-1,eyes/smile00,mouth/serious00
+steph	pose-1,eyes/joy00,mouth/smile01
+
+[steph]
+		[sing]Hey![/sing] Everyone calls me Steph. I'll shake your hand.
+
+james	pose-1,eyes/smile00,mouth/smile00
+sly		pose-1,eyes/upset00,mouth/serious00
+steph	pose-1,eyes/smile00,mouth/smile00
+
+name.empty
+		She puts out her hand, and I take it.
+
+sly		pose-1,eyes/upset00,mouth/serious00
+steph	pose-1,eyes/wow00,mouth/nervous00
+
+[me]
+		Thanks, good to meet you, Stephanie.
+
+james	pose-1,eyes/wow00,mouth/smile00
+sly		pose-1,eyes/wow00,mouth/serious00
+steph	pose-1,eyes/wow00,mouth/wow01
+[steph]
+		[shout]WOW[/shout], that is, like, the most [shout]perfect[/shout] handshake I've ever had! Firm, but also gentle. >
+
+sly		pose-1,eyes/upset00,mouth/upset00
+		+Sly, you <em>gotta</em> shake his hand!
+
+james	pose-1,eyes/grin00,mouth/grin00
+sly		pose-1,eyes/upset00,mouth/serious01
+steph	pose-1,eyes/wow00,mouth/nervous00
+
+[sly]
+		<span style="font-size:.5em;">It's just a handshake...</span>
+
+james	pose-1,eyes/smile00,mouth/grin00
+sly		pose-1,eyes/upset00,mouth/serious00
+steph	pose-1,eyes/upset00,mouth/upset01
+
+[steph]
+		[sing]Then just give it to him![/sing]
+
+james	pose-1,eyes/concern00,mouth/smile01
+sly		pose-1,eyes/smile00,mouth/serious00
+steph	pose-1,eyes/upset00,mouth/upset00
+
+empty.style		time:1s;opacity:1;
+engine.wait		1.5s
+
+// Hide characters
+james.style		visibility:hidden;
+sly.style		visibility:hidden;
+steph.style		visibility:hidden;
+name.empty
+
+//Credits
+textbox.style		border:none;top:0;left:0;right:0;bottom:0;height:auto;text-align:center;background:none;max-height:none;padding:0;
+		[instant]<img style="max-width:100%;width:20em;" src="story/breakdown/resources/logo.svg"><br>Thank you for reading the demo! <a href="https://joshpowlison.itch.io/breakdown">Check out the full version here!</a><br><br><strong>Writer, Programmer:</strong> Josh Powlison<br><br><strong>Character Art, Background Art:</strong> Puppetbomb<br><br><strong>CGs: </strong> Inkhana<br><br><strong>Music: </strong> Joshua "Mussar" Nussbaum[/instant]>
+		
+empty.style		time:1s;opacity:0;
+engine.wait
