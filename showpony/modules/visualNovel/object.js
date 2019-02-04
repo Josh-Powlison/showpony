@@ -6,6 +6,7 @@ S.modules.visualNovel=new function(){
 	M.currentLine=null;
 	M.lines=null;
 	M.loading=0; // Tracks how many items are currently loading
+	M.variables = {};
 	
 	M.window=document.createElement('div');
 	M.window.className='m-vn';
@@ -322,7 +323,7 @@ S.modules.visualNovel=new function(){
 		
 		// Replace all variables (including variables inside variables) with the right component
 		var match;
-		while(match=/[^\[]+(?=\])/g.exec(vals)) vals=vals.replace('['+match[0]+']',S.data[match[0]]);
+		while(match=/[^\[]+(?=\])/g.exec(vals)) vals=vals.replace('['+match[0]+']',M.variables[match[0]]);
 		
 		vals=/(^[^\t\.\+\-=<>!]+)?(?:\.([^\t]+)|([+\-=<>!]+))?\t*(.+$)?/.exec(vals);
 		
@@ -336,8 +337,8 @@ S.modules.visualNovel=new function(){
 			case '=':
 			case '+':
 			case '-':
-				S.data[component]=operations[operation](
-					ifParse(S.data[component])
+				M.variables[component]=operations[operation](
+					ifParse(M.variables[component])
 					,ifParse(parameter)
 				);
 				
@@ -351,7 +352,7 @@ S.modules.visualNovel=new function(){
 			case '!':
 				// If returns true, read the next line
 				if(operations[operation](
-					ifParse(S.data[component])
+					ifParse(M.variables[component])
 					,ifParse(parameter)
 				)) return true;
 				// Otherwise, skip it
@@ -1088,7 +1089,7 @@ S.modules.visualNovel=new function(){
 											O.el.dataset.state='inactive';
 											
 											// This might just be a continue button, so we need to check
-											if(this.dataset.var) S.data[this.dataset.var]=this.dataset.val;
+											if(this.dataset.var) M.variables[this.dataset.var]=this.dataset.val;
 											
 											if(this.dataset.go){
 												M.currentLine=M.lines.indexOf(this.dataset.go);
@@ -1104,10 +1105,10 @@ S.modules.visualNovel=new function(){
 										});
 									}else{
 										// Set data to the defaults of these, in case the user just clicks through
-										if(newElement.dataset.var) S.data[newElement.dataset.var]=newElement.value;
+										if(newElement.dataset.var) M.variables[newElement.dataset.var]=newElement.value;
 										
 										newElement.addEventListener('change',function(){
-											S.data[this.dataset.var]=this.value;
+											M.variables[this.dataset.var]=this.value;
 										});
 									}
 								}
