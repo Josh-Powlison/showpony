@@ -1288,11 +1288,13 @@ S.window.querySelector('.s-notice-close').addEventListener('click',function(){
 });
 
 // TODO: put this somewhere sensible, or decide that here is fine
-var buttonDown = '';
+var buttonDown = null;
 
 var touching = false;
 
 function pointerDown(event){
+	buttonDown = null; // We don't want to carry any previous states from buttonDown
+	
 	// Don't scrub if touching with 2 or more fingers at once
 	if(event.touches && event.touches.length>1) return;
 	
@@ -1462,7 +1464,7 @@ function pointerUp(event){
 		S.regress();
 	}
     
-    buttonDown = '';
+    buttonDown = null;
 }
 
 S.window.addEventListener('mousedown',pointerDown);
