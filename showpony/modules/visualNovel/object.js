@@ -250,7 +250,9 @@ S.modules.visualNovel=new function(){
 	
 	M.displaySubtitles=function(){
 		// When an audio file updates its time, display subtitles for it
-		if(S.currentSubtitles===null || !S.subtitles[S.currentSubtitles][M.currentFile]){
+		if(S.currentSubtitles === null
+			|| !S.subtitles[S.currentSubtitles][M.currentFile]
+		){
 			M.subtitles.style.display='none';
 			return;
 		}
@@ -723,6 +725,7 @@ S.modules.visualNovel=new function(){
 		
 		O.play=function(){
 			O.playing=true;
+			S.displaySubtitles();
 			if(!S.paused) O.el.play();
 			
 			return true;
@@ -776,7 +779,7 @@ S.modules.visualNovel=new function(){
 		});
 		
 		O.el.addEventListener('timeupdate',function(){
-			M.displaySubtitles();
+			S.displaySubtitles();
 		});
 		
 		function loadingError(e){
