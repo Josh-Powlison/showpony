@@ -1132,21 +1132,15 @@ if(S.maxQuality > 0){
 	}
 
 	// The terms for different levels of quality
-	var qualityTerms=[
-		'Very Low'
-		,'Low'
-		,'Medium'
-		,'High'
-		,'Very High'
-	];
+	var qualityTerms = <?php echo json_encode(QUALITY_NAMES); ?>;
 	
 	var qualityButtons=document.createDocumentFragment();
 	for(var i=0; i <= S.maxQuality; i++){
 		var buttonEl = document.createElement('button');
 		
 		// Get a quality term and use it here
-		console.log('BUTTON!',Math.ceil(i / S.maxQuality * qualityTerms.length));
-		buttonEl.innerText = qualityTerms[Math.ceil(i / S.maxQuality * (qualityTerms.length-1))];
+		if(i >= qualityTerms.length) buttonEl.innerText = '[UNNAMED]';
+		else buttonEl.innerText = qualityTerms[i];
 		
 		buttonEl.dataset.value = i;
 		buttonEl.addEventListener('click',changeQuality);
