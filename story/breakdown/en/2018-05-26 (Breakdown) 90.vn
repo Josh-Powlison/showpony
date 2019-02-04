@@ -53,16 +53,15 @@ steph.content	pose-1,eyes/nervous00,mouth/nervous00
 hallway.class	background
 hallway.content	/backgrounds/hallway.jpg
 
+
 empty.class		background
-empty.style		opacity:1;background-color:black;z-index:11;
+empty.style		opacity:0;background-color:black;z-index:11;
 
 logo		/logo.svg
 logo.class	character
-logo.style	height:100%;max-width:50rem;
+logo.style	height:100%;
 
 // Starting position
-engine.wait		.5s
-empty.style		time:1s;opacity:0;
 engine.wait
 logo.style		time:1s;opacity:0;
 
@@ -268,8 +267,8 @@ steph.style		visibility:hidden;
 name.empty
 
 //Credits
-textbox.style		border:none;top:0;left:0;right:0;bottom:0;height:auto;text-align:center;background:none;max-height:none;padding:0;
-		[instant]<img style="max-width:100%;width:20em;" src="story/breakdown/resources/logo.svg"><br>Thank you for reading the demo! <a href="https://joshpowlison.itch.io/breakdown">Check out the full version here!</a><br><br><strong>Writer, Programmer:</strong> Josh Powlison<br><br><strong>Character Art, Background Art:</strong> Puppetbomb<br><br><strong>CGs: </strong> Inkhana<br><br><strong>Music: </strong> Joshua "Mussar" Nussbaum[/instant]>
+textbox.style		border:none;top:1rem;left:1rem;right:1rem;bottom:1rem;height:auto;text-align:center;background:none;max-height:none;padding:0;font-size:1.5rem;
+		[instant]<img style="max-width:100%;width:20em;" src="story/breakdown/resources/logo.svg"><br>Thank you for reading!<br><a href="https://joshpowlison.itch.io/breakdown">Check out the full version of Breakdown here!</a><br><br><strong>Writer, Programmer:</strong> Josh Powlison<br><br><strong>Character Art, Background Art:</strong> Puppetbomb<br><br><strong>CGs: </strong> Inkhana<br><br><strong>Music: </strong> Joshua "Mussar" Nussbaum[/instant]>
 		
 empty.style		time:1s;opacity:0;
 engine.wait
