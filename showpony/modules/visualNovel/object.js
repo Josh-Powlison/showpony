@@ -89,7 +89,7 @@ S.modules.visualNovel=new function(){
 			if(keyframes.indexOf(i)!==-1){
 				// Skip over comments
 				if(/^\s*\/\//.test(keyframes[keyframes.indexOf(i)])) continue;
-
+				
 				runTo=keyframes[keyframes.indexOf(i)];
 				M.run(0);
 				return;
@@ -117,7 +117,6 @@ S.modules.visualNovel=new function(){
 		
 		// Continue if the timer was going
 		if(timer.remaining>0){
-			timer.stop();
 			M.run();
 			return;
 		}
@@ -148,9 +147,6 @@ S.modules.visualNovel=new function(){
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
 			if(time==='end') time=S.files[file].duration;
-			
-			// Visual Novel engine resets
-			timer.stop();
 			
 			// If this is the current file
 			if(M.currentFile===file){
@@ -307,6 +303,7 @@ S.modules.visualNovel=new function(){
 	M.run=function(line=M.currentLine+1){
 		M.currentLine=line;
 		continueNotice.remove();
+		timer.stop();
 
 		while(M.currentLine<M.lines.length && M.readLine(M.currentLine)) M.currentLine++;
 
