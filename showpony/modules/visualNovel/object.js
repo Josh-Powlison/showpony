@@ -546,7 +546,17 @@ S.modules.visualNovel=new function(){
 		if(command===null) return true;
 		
 		// Run the object command and go to the next line if it returns true
-		return objects[component][command](parameter);
+		if(typeof objects[component][command] === 'function'){
+			return objects[component][command](parameter);
+		}
+		// If a variable is passed, set to that instead
+		else if (typeof objects[component][command] !== 'undefined'){
+			objects[component][command] = parameter;
+			return true;
+		} else {
+			S.notice('"' + component + '" does not have a command called "' + command);
+			return false;
+		}
 	}
 	
 	// If a value's a number, return it as one
@@ -570,24 +580,26 @@ S.modules.visualNovel=new function(){
 	}
 
 	M.wait=function(input){
-		// Skip waiting if we're running through, or we're paused
-		if(runTo!==false || S.paused){
-			return true;
-		}
-		
-		if(input){
+		// Timed wait
+		if(input !== null){
+			// If we're skipping through, go to the next VN line
+			if(runTo !== false || S.paused) return true;
+			
 			timer.start(parseFloat(input)*1000);
 		}
-		// Otherwise, let the user know to continue it
+		// Wait until input
 		else{
+			// If we're skipping through- and this isn't where we're skipping to- skip this line.
+			if(runTo !== false && M.currentLine !== runTo) return true;
+			
+			wait = true;
 			junction();
 		}
 		
 		// If we're paused, pause the timer
-		if(S.paused) timer.pause();
+		// if(S.paused) timer.pause(); // this should never be able to run; timers aren't made right now if we're paused. We either start before timers are made or skip ahead of them completely.
 		
 		// Don't automatically go to the next line
-		
 		return false;
 	}
 
