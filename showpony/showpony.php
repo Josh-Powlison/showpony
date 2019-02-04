@@ -145,7 +145,7 @@ S.saves					= {
 	system		:<?php echo json_encode($save_system); ?>,
 	timestamp	:Date.now()
 };
-S.direction				= <?php echo json_encode(DIRECTION); ?>;
+S.readingDirection		= <?php echo json_encode(READING_DIRECTION); ?>;
 S.subtitles				= {};
 S.supportedSubtitles	= <?php
 	// Get subtitles
@@ -172,7 +172,7 @@ S.supportedSubtitles	= <?php
 S.upcomingFiles			= <?php echo json_encode($releaseDates); ?>;
 	
 S.window				= document.createElement('div');
-S.window.className		= 's s-' + S.direction;
+S.window.className		= 's s-' + S.readingDirection;
 S.window.tabIndex		= 0;
 S.window.innerHTML		= `
 	<div class="s-content"></div>
@@ -711,7 +711,7 @@ function scrub(inputPercent=null){
 	// If no inputPercent was set, get it!
 	if(inputPercent===null){
 		// Left-to-right reading
-		if(S.direction === 'left-to-right'){
+		if(S.readingDirection === 'left-to-right'){
 			inputPercent = S.currentTime/S.duration;
 		// Right-to-left reading
 		}else{
@@ -1299,8 +1299,8 @@ S.window.addEventListener(
 		switch(event.key){
 			case ' ':				S.progress();			break;
 			case 'Enter':			S.progress();			break;
-			case 'ArrowLeft':		(S.direction === 'right-to-left' ? S.progress : S.regress)();	break;
-			case 'ArrowRight':		(S.direction === 'right-to-left' ? S.regress : S.progress)();	break;
+			case 'ArrowLeft':		(S.readingDirection === 'right-to-left' ? S.progress : S.regress)();	break;
+			case 'ArrowRight':		(S.readingDirection === 'right-to-left' ? S.regress : S.progress)();	break;
 			// case 'Home':			S.to({time:'start'});	break;
 			// case 'End':				S.to({time:'end'});		break;
 			case 'MediaPrevious':	S.to({file:'-1'});		break;

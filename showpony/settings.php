@@ -17,8 +17,7 @@ const DEFAULT_START=0;						// Where we'll start in the Showpony by default
 const PRELOAD_BYTES=.5*1048576;				// How many file bytes to preload
 const RELEASE_DATES=1;						// How many upcoming files to show release dates for
 const HIDDEN_FILENAME_STARTING_CHAR='~';	// Change in .htaccess too, to block direct URL access
-const DIRECTION='left-to-right';			// left-to-right, right-to-left, or (to add) top-to-bottom for infinite scroll
-// const DIRECTION='right-to-left';			// left-to-right, right-to-left, or (to add) top-to-bottom for infinite scroll
+const READING_DIRECTION='left-to-right';	// left-to-right, right-to-left, or (to add) top-to-bottom for infinite scroll
 
 // The names of varying levels of quality, if needed. From lowest to highest.
 const QUALITY_NAMES=[
