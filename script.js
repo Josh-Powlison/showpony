@@ -139,3 +139,15 @@ window:document.getElementById("properties")
 
 // Start
 chooseStory(currentShowpony);
+
+/*
+
+	CODE TO CUSTOMIZE THE SHOWPONIES
+
+*/
+
+// Make Game Plan! read from right-to-left
+showponies.comic.window.classList.remove('s-left-to-right');
+showponies.comic.window.classList.add('s-right-to-left');
+showponies.comic.readingDirection = 'right-to-left';
+showponies.comic.to();
