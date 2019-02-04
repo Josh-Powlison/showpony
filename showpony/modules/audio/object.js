@@ -37,8 +37,13 @@ S.modules.audio=new function(){
 		return new Promise(function(resolve,reject){
 			if(time==='end') time=S.files[file].duration-5;
 			
+			var filename =  S.files[file].path;
+			
+			// Consider file quality
+			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, S.currentQuality) + '$');
+			
 			// Change the file if it'd be a new one
-			if(M.currentFile!==file) M.audio.src=S.files[file].path;
+			if(M.audio.src !== filename) M.audio.src = filename;
 			
 			M.audio.currentTime=time;
 			

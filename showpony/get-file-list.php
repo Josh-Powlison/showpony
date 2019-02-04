@@ -13,6 +13,7 @@ $releaseDates=[];
 $success=true;
 $unhideSubtitles=[];
 $unhideSubfiles=[];
+$maxQuality=0;
 
 if(!file_exists('../'.$stories_path)){
 	http_response_code(500);
@@ -45,6 +46,7 @@ function readFolder($folder){
 	global $releaseDates;
 	global $unhideSubtitles;
 	global $unhideSubfiles;
+	global $maxQuality;
 	global $success;
 	
 	// Get the section's title
@@ -68,12 +70,28 @@ function readFolder($folder){
 		$hidden=false;
 		
 		// Get file info
-		preg_match('/(\d{4}-\d\d-\d\d(?:\s\d\d(?::|;)\d\d(?::|;)\d\d)?)?\s?(?:\((.+)\))\s?([^\.]+)?/',$file,$match);
+		preg_match('/(?:(\d+)\$)?(\d{4}-\d\d-\d\d(?:\s\d\d(?::|;)\d\d(?::|;)\d\d)?)?\s?(?:\((.+)\))\s?([^\.]+)?/',$file,$match);
+		/*
+			$match[0] = Whole Match
+			$match[1] = Quality
+			$match[2] = Date
+			$match[3] = Title
+			$match[4] = Length
+		*/
+		
+		// The base quality is always 0- so if we've found higher than that, just increase the value of the previously added file in the array
+		if(intval($match[1]) !== 0){
+			$files[count($files)-1]['quality'] = intval($match[1]);
+			
+			// Update max quality
+			if($maxQuality < intval($match[1])) $maxQuality = intval($match[1]);
+			continue;
+		}
 		
 		// Ignore files that have dates in their filenames set to later
-		if(!empty($match[1])){ // Get the posting date from the file's name; if there is one:
+		if(!empty($match[2])){ // Get the posting date from the file's name; if there is one:
 			// If the time is previous to now (replacing ; with : for Windows filename compatibility)
-			$date=str_replace(';',':',$match[1]).' UTC';
+			$date=str_replace(';',':',$match[2]).' UTC';
 			
 			// Check if the file should be live based on the date passed
 			if(strtotime($date)<=time()){
@@ -121,20 +139,21 @@ function readFolder($folder){
 		$title='';
 		if($sectionTitle){
 			$title.=$sectionTitle;
-			if(!empty($match[2])) $title.=': '.$match[2];
+			if(!empty($match[3])) $title.=': '.$match[3];
 		}else{
-			if(!empty($match[2])) $title=$match[2];
+			if(!empty($match[3])) $title=$match[3];
 		}
 		
 		// There must be a better way to get some of this info...
 		$fileInfo=[
 			'buffered'		=>	[]
 			,'date'			=>	$date
-			,'duration'		=>	$match[3] ?? DEFAULT_FILE_DURATION
+			,'duration'		=>	$match[4] ?? DEFAULT_FILE_DURATION
 			,'extension'	=>	pathinfo($folder.'/'.$file,PATHINFO_EXTENSION)
 			,'mimeType'		=>	mime_content_type($folder.'/'.$file)
 			,'name'			=>	$file
 			,'path'			=>	$hidden ? 'showpony/get-hidden-file.php?file='.$stories_path.$folder.'/'.$file  : $stories_path.$folder.'/'.$file
+			,'quality'		=>	0 // Defaults to 0; if higher quality files are found, we consider those
 			,'size'			=>	filesize($folder.'/'.$file)
 			,'subtitles'	=>	false
 			,'title'		=>	str_replace(

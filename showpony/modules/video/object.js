@@ -35,12 +35,17 @@ S.modules.video=new function(){
 	
 	M.src=function(file=0,time=0){
 		return new Promise(function(resolve,reject){
-			if(time==='end') time=S.files[file].duration-5;
+			if(time === 'end') time = S.files[file].duration - 5;
+			
+			var filename =  S.files[file].path;
+			
+			// Consider file quality
+			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, S.currentQuality) + '$');
 			
 			// Change the file if it'd be a new one
-			if(M.currentFile!==file) M.video.src=S.files[file].path;
+			if(M.video.src !== filename) M.video.src = filename;
 			
-			M.video.currentTime=time;
+			M.video.currentTime = time;
 			
 			// If we're not paused, play
 			if(!S.paused) M.play();

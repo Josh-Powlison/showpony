@@ -10,6 +10,8 @@ date_default_timezone_set('UTC');			// The timezone we're reading times in
 const ROOT=__DIR__;							// The directory Showpony is in
 const DEFAULT_PATH='story/';				// The path to the files we'll play
 const DEFAULT_LANGUAGE='en';				// If a language isn't set by the user, assume this one
+const DEFAULT_SUBTITLES=null;				// If subtitles aren't set by the user, assume this one
+const DEFAULT_QUALITY=1;					// If quality level isn't set by the user, assume this one
 const DEFAULT_FILE_DURATION=10;				// How long files without a duration in their filename will be assumed to be
 const DEFAULT_START=0;						// Where we'll start in the Showpony by default
 const PRELOAD_BYTES=.5*1048576;				// How many file bytes to preload

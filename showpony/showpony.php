@@ -40,12 +40,13 @@ $saveName = toCamelCase($name).'Data';
 
 // 0 is save system; 1 is save name; 2 is language
 if(!empty($_COOKIE[$saveName])) $data = explode('&',$_COOKIE[$saveName]);
-else $data = [null,null,null,null];
+else $data = [null,null,null,null,null];
 
 $save_system	= $data[0]		??	null;
 $current_save	= $data[1]		??	'Autosave';
-$language		= $_GET['lang']	??	$data[2]	?? DEFAULT_LANGUAGE;
-$subtitles		= $_GET['subs']	??	$data[3]	??	null;
+$language		= $_GET['lang']	??	$data[2]	??	DEFAULT_LANGUAGE;
+$subtitles		= $_GET['subs']	??	$data[3]	??	DEFAULT_SUBTITLES;
+$quality		= $data[4]		??	DEFAULT_QUALITY;
 
 function toCamelCase($input){
 	return lcfirst(
@@ -135,6 +136,8 @@ S.path					= <?php echo json_encode($stories_path); ?>;
 S.paused				= false;
 S.queryBookmark			= <?php echo json_encode($name); ?>+'-bookmark';
 S.saveName				= <?php echo json_encode($saveName); ?>;
+S.currentQuality		= <?php echo $quality; ?>;
+S.maxQuality			= <?php echo $maxQuality; ?>;
 S.saves					= {
 	currentSave	:<?php echo json_encode($current_save); ?>,
 	language	:<?php echo json_encode($language); ?>,
@@ -185,11 +188,13 @@ S.window.innerHTML		= `
 			<button class="s-button s-button-comments" alt="Comments" title="Comments"></button>
 			<button class="s-button s-button-language" alt="Language" title="Language"></button>
 			<button class="s-button s-button-subtitles" alt="Subtitles" title="Subtitles"></button>
+			<button class="s-button s-button-quality" alt="Quality" title="Quality Toggle"></button>
 			<button class="s-button s-button-bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
 			<button class="s-button s-button-fullscreen" alt="Fullscreen" title="Fullscreen Toggle"></button>
 		</div>
 		<div class="s-popup s-popup-language"></div>
 		<div class="s-popup s-popup-subtitles"></div>
+		<div class="s-popup s-popup-quality"></div>
 		<div class="s-popup s-popup-bookmark"></div>
 		<div class="s-popup s-notice">
 			<div class="s-notice-text s-block-scrubbing"></div>
@@ -203,10 +208,11 @@ S.window.innerHTML		= `
 ///////////////////////////////////////
 
 // const commentsButton = S.window.getElementsByClassName('s-button-comments')[0];
-const languageButton = S.window.getElementsByClassName('s-button-language')[0];
-const subtitlesButton = S.window.getElementsByClassName('s-button-subtitles')[0];
-const bookmarkButton = S.window.getElementsByClassName('s-button-bookmark')[0];
-const fullscreenButton = S.window.getElementsByClassName('s-button-fullscreen')[0];
+const languageButton	= S.window.getElementsByClassName('s-button-language')[0];
+const subtitlesButton	= S.window.getElementsByClassName('s-button-subtitles')[0];
+const bookmarkButton	= S.window.getElementsByClassName('s-button-bookmark')[0];
+const qualityButton		= S.window.getElementsByClassName('s-button-quality')[0];
+const fullscreenButton	= S.window.getElementsByClassName('s-button-fullscreen')[0];
 
 const captionsButton	= S.window.getElementsByClassName('s-captions-button')[0];
 const content			= S.window.getElementsByClassName('s-content')[0];
@@ -259,7 +265,7 @@ S.notice = function(message){
 }
 
 // Go to another file
-S.to = function(obj = {}){
+S.to = function(obj = {file:S.currentFile, time:S.currentTime}){
 	content.classList.add('s-loading');
 	
 	/// GET TIME AND FILE ///
@@ -395,6 +401,7 @@ S.load = function(){
 			S.data=loadFile.data;
 			S.currentLanguage=loadFile.language;
 			S.currentSubtitles=loadFile.subtitles;
+			S.currentQuality=loadFile.quality;
 			
 			return loadFile.bookmark;
 			break;
@@ -421,6 +428,7 @@ S.save = function(){
 				,data:S.data
 				,language:S.currentLanguage
 				,subtitles:S.currentSubtitles
+				,quality:S.currentQuality
 				,timestamp:Date.now()
 			};
 			break;
@@ -439,6 +447,7 @@ S.save = function(){
 			+'&'+S.saves.currentSave
 			+'&'+S.currentLanguage
 			+'&'+S.currentSubtitles
+			+'&'+S.currentQuality
 		)
 	;
 }
@@ -1065,7 +1074,7 @@ if(supportedLanguages.length>1){
 		
 		languageButtons.appendChild(buttonEl);
 	}
-	S.window.querySelector(".s-popup-language").appendChild(languageButtons);
+	S.window.querySelector('.s-popup-language').appendChild(languageButtons);
 }else{
 	S.window.querySelector('.s-button-language').remove();
 }
@@ -1102,6 +1111,54 @@ if(S.supportedSubtitles.length>0){
 	S.window.querySelector(".s-popup-subtitles").appendChild(subtitleButtons);
 }else{
 	S.window.querySelector('.s-button-subtitles').remove();
+}
+
+// Add quality dropdown
+if(S.maxQuality > 0){
+	function changeQuality(){
+		// Ignore if re-selecting an old item
+		if(S.currentQuality === this.dataset.value) return;
+		
+		// Remove selected class from previous selected item
+		var previous=S.window.querySelector('.s-popup-quality .s-selected');
+		if(previous){
+			previous.classList.remove('s-selected');
+		}
+		
+		this.classList.add('s-selected');
+		
+		S.currentQuality = this.dataset.value;
+		S.to();
+	}
+
+	// The terms for different levels of quality
+	var qualityTerms=[
+		'Very Low'
+		,'Low'
+		,'Medium'
+		,'High'
+		,'Very High'
+	];
+	
+	var qualityButtons=document.createDocumentFragment();
+	for(var i=0; i <= S.maxQuality; i++){
+		var buttonEl = document.createElement('button');
+		
+		// Get a quality term and use it here
+		console.log('BUTTON!',Math.ceil(i / S.maxQuality * qualityTerms.length));
+		buttonEl.innerText = qualityTerms[Math.ceil(i / S.maxQuality * (qualityTerms.length-1))];
+		
+		buttonEl.dataset.value = i;
+		buttonEl.addEventListener('click',changeQuality);
+		
+		if(S.currentQuality === i) buttonEl.className='s-selected';
+		
+		qualityButtons.appendChild(buttonEl);
+	}
+	S.window.querySelector(".s-popup-quality").appendChild(qualityButtons);
+// Remove the quality button if we have no options
+} else {
+	qualityButton.remove();
 }
 
 // Bookmarks
@@ -1264,6 +1321,7 @@ if (languageButton){
         S.window.querySelector('.s-popup-language').classList.toggle('s-visible');
     });    
 }
+
 if (subtitlesButton){
     subtitlesButton.addEventListener('click', function(){
         while(S.window.querySelector('.s-visible:not(.s-popup-subtitles)')) 
@@ -1272,6 +1330,7 @@ if (subtitlesButton){
         S.window.querySelector('.s-popup-subtitles').classList.toggle('s-visible');
     });    
 }
+
 if (bookmarkButton){
     bookmarkButton.addEventListener('click', function(){
         while(S.window.querySelector('.s-visible:not(.s-popup-bookmark)')) 
@@ -1280,6 +1339,15 @@ if (bookmarkButton){
         S.window.querySelector('.s-popup-bookmark').classList.toggle('s-visible');
     });    
 }
+
+if (qualityButton){
+	qualityButton.addEventListener('click',function(){
+        while(S.window.querySelector('.s-visible:not(.s-popup-quality)')) 
+            S.window.querySelector('.s-visible').classList.remove('s-visible');
+        S.window.querySelector('.s-popup-quality').classList.toggle('s-visible');
+    });
+}
+
 if (fullscreenButton){
     fullscreenButton.addEventListener('click', function(){
         S.fullscreenToggle();

@@ -337,7 +337,11 @@
 
 .s-button-fullscreen{
 	background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath d='M7.52 8.9v12.42l-6.21-6.2zM22.26 21.32V8.9l6.2 6.21zM8.68 22.48H21.1l-6.21 6.21zM21.1 7.74H8.68l6.2-6.2z'/%3E%3C/svg%3E");
+}
 
+.s-popup-quality
+,.s-button-quality{
+	background-image:url("design-files/icons/quality.svg");
 }
 
 /*/////////////////////////////////////

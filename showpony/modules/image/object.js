@@ -51,18 +51,23 @@ S.modules.<?php echo 'image'; ?>=new function(){
 		return new Promise(function(resolve,reject){
 			if(time==='end') time=M.currentTime=S.files[file].duration;
 			
-			if(M.currentFile===file){
+			var filename =  S.files[file].path;
+			
+			// Consider file quality
+			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, S.currentQuality) + '$');
+			
+			if(M.image.src === filename){
 				// Go to a scroll point dependent on time
-				M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
+				M.window.scrollTop = M.window.scrollHeight * (time/S.files[file].duration);
 				content.classList.remove('s-loading');
 				
 				resolve({file:file,time:time});
 			}else{
-				M.image.src=S.files[file].path;
+				M.image.src = filename;
 				
 				// Resolve the promise after the image loads
-				M.image.onload=function(){
-					S.files[file].buffered=true;
+				M.image.onload = function(){
+					S.files[file].buffered = true;
 					getTotalBuffered();
 					
 					if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();

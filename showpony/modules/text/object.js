@@ -3,6 +3,7 @@ S.modules.text=new function(){
 	
 	M.currentTime=null;
 	M.currentFile=null;
+	M.src = null;
 	
 	M.window=document.createElement('div');
 	M.window.className='showpony-text';
@@ -35,16 +36,22 @@ S.modules.text=new function(){
 		return new Promise(function(resolve,reject){
 			if(time==='end') time=S.files[file].duration;
 			
-			var src=S.files[file].path;
+			var filename =  S.files[file].path;
+			
+			// Consider file quality
+			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, S.currentQuality) + '$');
 			
 			// If this is the current file
-			if(M.currentFile===file){
+			if(M.src === filename){
 				M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
 				content.classList.remove('s-loading');
 				resolve({time:time,file:file});
+				return;
 			}
 			
-			fetch(src,{credentials:'include'})
+			M.src = filename;
+			
+			fetch(filename,{credentials:'include'})
 			.then(response=>{
 				return response.text();
 			})
