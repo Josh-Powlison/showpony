@@ -114,8 +114,8 @@ james	pose-1,eyes/smile00,mouth/grin00
 
 [me]
 		...
-
-name.black
+		
+name.empty
 		He thrusts out his hand.
 
 [?james]
@@ -129,7 +129,7 @@ james	pose-1,eyes/grin00,mouth/grin00
 
 james	pose-1,eyes/smile00,mouth/grin00
 
-name.black
+name.empty
 		I take his hand and shake.
 
 [james]
@@ -184,7 +184,7 @@ steph	pose-1,eyes/joy00,mouth/smile00
 
 james	pose-1,eyes/grin00,mouth/smile00
 
-name.black
+name.empty
 		I put out my hand.
 
 james	pose-1,eyes/grin00,mouth/grin00
@@ -222,7 +222,7 @@ james	pose-1,eyes/smile00,mouth/smile00
 sly		pose-1,eyes/upset00,mouth/serious00
 steph	pose-1,eyes/smile00,mouth/smile00
 
-name.black
+name.empty
 		She puts out her hand, and I take it.
 
 sly		pose-1,eyes/upset00,mouth/serious00
@@ -245,7 +245,7 @@ sly		pose-1,eyes/upset00,mouth/serious01
 steph	pose-1,eyes/wow00,mouth/nervous00
 
 [sly]
-		<span style="font-size:.5em;">It's just a handshake...</span>
+		<div style="font-size:.5em;">It's just a handshake...</div>
 
 james	pose-1,eyes/smile00,mouth/grin00
 sly		pose-1,eyes/upset00,mouth/serious00
