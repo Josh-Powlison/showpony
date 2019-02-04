@@ -369,8 +369,7 @@ S.modules.visualNovel=new function(){
 		if(objects[component]) var type=objects[component].type;
 		else{
 			var type='character';
-			if(/^(?:go|end|event|wait)$/.test(command)) type='engine';
-			else if(/\.mp3/.test(parameter)) type='audio';
+			if(/\.mp3/.test(parameter)) type='audio';
 			
 			if(component==='textbox') type='textbox';
 			else if(component==='engine') type='engine';
