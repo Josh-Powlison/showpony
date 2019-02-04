@@ -9,6 +9,7 @@ S.modules.video=new function(){
 	
 	M.video=document.createElement('video');
 	M.video.className='m-video';
+	M.video.dataset.filename = null;
 	M.window.appendChild(M.video);
 	
 	M.subtitles=document.createElement('p');
@@ -42,8 +43,8 @@ S.modules.video=new function(){
 			// Consider file quality
 			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, S.currentQuality) + '$');
 			
-			// Change the file if it'd be a new one
-			if(M.video.src !== filename) M.video.src = filename;
+			// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
+			if(M.video.dataset.filename !== filename) M.video.dataset.filename = M.video.src = filename;
 			
 			M.video.currentTime = time;
 			

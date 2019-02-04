@@ -13,6 +13,7 @@ S.modules.<?php echo 'image'; ?>=new function(){
 
 	M.image=document.createElement('img');
 	M.image.className='m-img';
+	M.image.dataset.filename = null;
 	M.container.appendChild(M.image);
 
 	M.subtitles=document.createElement('div');
@@ -56,14 +57,15 @@ S.modules.<?php echo 'image'; ?>=new function(){
 			// Consider file quality
 			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, S.currentQuality) + '$');
 			
-			if(M.image.src === filename){
+			// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
+			if(M.image.dataset.filename === filename){
 				// Go to a scroll point dependent on time
 				M.window.scrollTop = M.window.scrollHeight * (time/S.files[file].duration);
 				content.classList.remove('s-loading');
 				
 				resolve({file:file,time:time});
 			}else{
-				M.image.src = filename;
+				M.image.dataset.filename = M.image.src = filename;
 				
 				// Resolve the promise after the image loads
 				M.image.onload = function(){

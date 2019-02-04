@@ -9,6 +9,7 @@ S.modules.audio=new function(){
 	
 	M.audio=document.createElement('audio');
 	M.audio.className='m-audio';
+	M.audio.dataset.filename = null;
 	M.window.appendChild(M.audio);
 	
 	M.subtitles=document.createElement('p');
@@ -43,7 +44,8 @@ S.modules.audio=new function(){
 			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, S.currentQuality) + '$');
 			
 			// Change the file if it'd be a new one
-			if(M.audio.src !== filename) M.audio.src = filename;
+			// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
+			if(M.audio.dataset.filename !== filename) M.audio.dataset.filename = M.audio.src = filename;
 			
 			M.audio.currentTime=time;
 			
