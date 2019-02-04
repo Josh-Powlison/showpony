@@ -151,11 +151,14 @@ S.supportedSubtitles	= <?php
 			// Ignore hidden files
 			if(!is_dir('subtitles/'.$file) || $file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
 
-			// TODO: add support for differentiating Closed Captions (maybe append with "cc", like "en-cc" "es-cc"
+			// Get the subtitles (if ends with -cc, then it's closed captions)
+			$subtitleLanguage = str_replace('-cc','',$file,$closedCaptions);
+			if(extension_loaded('intl')) $subtitleLanguage = Locale::getDisplayLanguage($subtitleLanguage);
+			if($closedCaptions) $subtitleLanguage .= ' (CC)';
 			
 			$subtitles[]=[
 				'short'	=>	$file
-				,'long'	=>	extension_loaded('intl') ? (Locale::getDisplayLanguage($file)) : $file
+				,'long'	=>	$subtitleLanguage
 			];
 		}
 	}
