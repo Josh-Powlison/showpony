@@ -1321,9 +1321,16 @@ function pointerDown(event){
 	if(pointer.target.classList.contains('s-popup')) return;
 	if(pointer.target.classList.contains('s-notice')) return;
 	if(pointer.target.classList.contains('s-block-scrubbing')) return;
-	if(pointer.target.tagName==='INPUT') return;
-	if(pointer.target.tagName==='BUTTON') return;
-	if(pointer.target.tagName==='A') return;
+	
+	// Look through the target and its parents; don't run anything further if we are or are inside a button, input, or anchor
+	var node = pointer.target;
+	while(node !== null){
+		if(node.tagName==='INPUT') return;
+		if(node.tagName==='BUTTON') return;
+		if(node.tagName==='A') return;
+		
+		node = node.parentNode;
+	}
     
     // Ignore if grabbing a scrollbar
     if(pointer.offsetX>pointer.target.clientWidth || pointer.offsetY>pointer.target.clientHeight) return;
@@ -1430,10 +1437,17 @@ function pointerUp(event){
 	// Some elements have pointer-events none, but their collisions still matter. We'll see if we're within those buttons here.
 
 	// Don't read clicks if the user's clicking an input or button
-	if(pointer.target.tagName==='INPUT') return;
-	if(pointer.target.tagName==='BUTTON') return;
-	if(pointer.target.tagName==='A') return;
 	if(pointer.target.classList.contains('s-popup')) return;
+	
+	// Look through the target and its parents; don't run anything further if we are or are inside a button, input, or anchor
+	var node = pointer.target;
+	while(node !== null){
+		if(node.tagName==='INPUT') return;
+		if(node.tagName==='BUTTON') return;
+		if(node.tagName==='A') return;
+		
+		node = node.parentNode;
+	}
 	
 	// Pause
 	if(checkCollision(pointer.clientX,pointer.clientY,pause) && buttonDown === 'pause'){
