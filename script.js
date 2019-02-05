@@ -1,4 +1,4 @@
-const DEFAULT_SHOWPONY='comic';
+const DEFAULT_SHOWPONY='manga';
 
 var currentShowpony=/#([^\?]+)/.exec(location.href);
 if(currentShowpony) currentShowpony=currentShowpony[1];
@@ -147,7 +147,7 @@ chooseStory(currentShowpony);
 */
 
 // Make Game Plan! read from right-to-left
-showponies.comic.window.classList.remove('s-left-to-right');
-showponies.comic.window.classList.add('s-right-to-left');
-showponies.comic.readingDirection = 'right-to-left';
-showponies.comic.to();
+showponies.manga.window.classList.remove('s-left-to-right');
+showponies.manga.window.classList.add('s-right-to-left');
+showponies.manga.readingDirection = 'right-to-left';
+showponies.manga.to();

@@ -33,15 +33,25 @@
 
 <h1><img class="svg-inline" src="logo.svg"> Showpony</h1>
 
+<p>I don't want you to be afraid of putting your story on your own website.</p>
+
+<p>But I also want you to get the features you should be able to expect with modern web technologies: fullscreen, automatic bookmarking, multilingual support, preloading...</p>
+
+<p>Introducing Showpony!</p>
+
 <p id="intro">The easiest way to share your <select id="example-list">
-	<option value="comic">comics</option>
+	<option value="manga">manga</option>
+	<option value="comic">comic</option>
 	<option value="video">video series</option>
 	<option value="audio">audiobook</option>
 	<option value="text">serial novel</option>
 	<option value="vn">kinetic novel</option>
 </select>!</p>
 
-<div id="comic" class="story"><script src="showpony/showpony.php?path=game-plan/"></script></div>
+<p><em>Manga reads right-to-left.</em></p>
+
+<div id="manga" class="story"><script src="showpony/showpony.php?path=game-plan/"></script></div>
+<div id="comic" class="story"><script src="showpony/showpony.php?path=orbit/"></script></div>
 <div id="video" class="story"><script src="showpony/showpony.php?path=sintel/"></script></div>
 <div id="audio" class="story"><script src="showpony/showpony.php?path=bob-and-susie/"></script></div>
 <div id="text" class="story"><script src="showpony/showpony.php?path=ecocrystals/"></script></div>
@@ -49,7 +59,8 @@
 
 <script defer>
 	var showponies={
-		comic:gamePlan
+		manga:gamePlan
+		,comic:orbit
 		,video:sintel
 		,text:ecocrystals
 		,vn:breakdown
