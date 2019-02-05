@@ -50,22 +50,15 @@
 
 <p><em>Manga reads right-to-left.</em></p>
 
-<div id="manga" class="story"><script src="showpony/showpony.php?path=game-plan/"></script></div>
-<div id="comic" class="story"><script src="showpony/showpony.php?path=orbit/"></script></div>
-<div id="video" class="story"><script src="showpony/showpony.php?path=sintel/"></script></div>
-<div id="audio" class="story"><script src="showpony/showpony.php?path=bob-and-susie/"></script></div>
-<div id="text" class="story"><script src="showpony/showpony.php?path=ecocrystals/"></script></div>
-<div id="vn" class="story"><script src="showpony/showpony.php?path=breakdown/"></script></div>
+<div id="manga" class="story hidden" data-path="showpony/showpony.php?path=game-plan/"></div>
+<div id="comic" class="story hidden" data-path="showpony/showpony.php?path=orbit/"></div>
+<div id="video" class="story hidden" data-path="showpony/showpony.php?path=sintel/"></div>
+<div id="audio" class="story hidden" data-path="showpony/showpony.php?path=bob-and-susie/"></div>
+<div id="text" class="story hidden" data-path="showpony/showpony.php?path=ecocrystals/"></div>
+<div id="vn" class="story hidden" data-path="showpony/showpony.php?path=breakdown/"></div>
 
 <script defer>
-	var showponies={
-		manga:gamePlan
-		,comic:orbit
-		,video:sintel
-		,text:ecocrystals
-		,vn:breakdown
-		,audio:bobAndSusie
-	};
+	var showponies=[];
 </script>
 
 <h2>Install in 5 minutes!</h2>

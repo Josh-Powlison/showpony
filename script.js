@@ -22,11 +22,46 @@ for(var i=0;i<keys.length;i++){
 function chooseStory(id){
 	console.log('RUN chooseStory');
 	
-	//Set the dropdown's value
+	// Set the dropdown's value
 	if(document.getElementById("example-list").value!==id){ 
 		document.getElementById("example-list").value=id;
 	}
 	
+	// Load Showponies dynamically
+	if(typeof showponies[id] === 'undefined'){
+		var script = document.createElement('script');
+		
+		var showponyWindow = document.getElementById(id);
+		
+		script.src = showponyWindow.dataset.path;
+		
+		// showponies.push = ();
+		showponyWindow.addEventListener('built',function(event){
+			console.log('BUILT');
+			showponies[id]=event.detail.object;
+			
+			/*
+				CODE TO CUSTOMIZE THE SHOWPONIES
+			*/
+
+			if(id === 'manga'){
+				// Make Game Plan! read from right-to-left
+				showponies[id].window.classList.remove('s-left-to-right');
+				showponies[id].window.classList.add('s-right-to-left');
+				showponies[id].readingDirection = 'right-to-left';
+				// showponies[id].to();
+			}
+			
+			displayStory(id);
+		});
+		
+		showponyWindow.appendChild(script);
+	}else{
+		displayStory(id);
+	}
+}
+
+function displayStory(id){
 	var keys=Object.keys(showponies);
 	for(var i=0;i<keys.length;i++){
 		
@@ -54,9 +89,9 @@ function chooseStory(id){
 		}
 	}
 	
-	currentShowpony=id;
-	
 	printer.print(showponies[currentShowpony]);
+	
+	currentShowpony=id;
 }
 
 var printer=new ObjPrint({
@@ -139,15 +174,3 @@ window:document.getElementById("properties")
 
 // Start
 chooseStory(currentShowpony);
-
-/*
-
-	CODE TO CUSTOMIZE THE SHOWPONIES
-
-*/
-
-// Make Game Plan! read from right-to-left
-showponies.manga.window.classList.remove('s-left-to-right');
-showponies.manga.window.classList.add('s-right-to-left');
-showponies.manga.readingDirection = 'right-to-left';
-showponies.manga.to();
