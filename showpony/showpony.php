@@ -123,21 +123,18 @@ S.buffered				= [];
 S.currentFile			= null;
 S.currentLanguage		= <?php echo json_encode($language); ?>;
 S.currentModule			= null;
+S.currentQuality		= <?php echo $quality; ?>;
 S.currentSubtitles		= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
 S.currentTime			= null;
 S.data					= {};
 S.duration				= S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 S.fullscreen			= false;
 S.gamepad				= null;
-S.message				= <?php echo json_encode($message); ?>;
+S.maxQuality			= <?php echo $maxQuality; ?>;
 S.modules				= {};
-S.name					= <?php echo json_encode(toCamelCase($name)); ?>;
-S.path					= <?php echo json_encode($stories_path); ?>;
 S.paused				= false;
 S.queryBookmark			= <?php echo json_encode($name); ?>+'-bookmark';
 S.saveName				= <?php echo json_encode($saveName); ?>;
-S.currentQuality		= <?php echo $quality; ?>;
-S.maxQuality			= <?php echo $maxQuality; ?>;
 S.saves					= {
 	currentSave	:<?php echo json_encode($current_save); ?>,
 	language	:<?php echo json_encode($language); ?>,
@@ -1426,7 +1423,7 @@ function pointerDown(event){
 	
 	// event.preventDefault();
 	
-	if(S.name==='gamePlan') console.log("PRESSED DOWN",event);
+	// if(S.name==='gamePlan') console.log("PRESSED DOWN",event);
 	
 	// Click was started inside showpony
     clickStart = true;
@@ -1506,7 +1503,7 @@ function pointerUp(event){
 	// Allow left-click only
 	if(pointer && pointer.button && pointer.button!==0) return;
 	
-	if(S.name==='gamePlan') console.log("PRESSED UP",event);
+	// if(S.name==='gamePlan') console.log("PRESSED UP",event);
 	
 	// If the click was started outside of showpony, ignore it
     if (!clickStart) return;
@@ -1670,6 +1667,7 @@ S.window.parentNode.dispatchEvent(
 		,{
 			detail:{
 				object:this
+				,messages:<?php echo json_encode($message); ?>
 			}
 		}
 	)
