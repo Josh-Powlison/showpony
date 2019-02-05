@@ -107,7 +107,7 @@ document.head.appendChild(styles);
 
 <?php } ?>
 
-var <?php echo toCamelCase($name); ?>= new function(){
+new function(){
 
 const S = this;
 
@@ -1660,6 +1660,18 @@ S.to({time:start});
 
 // Add the Showpony window to the document
 document.currentScript.insertAdjacentElement('afterend',S.window);
+
+// Put this on the containing element
+S.window.parentNode.dispatchEvent(
+	new CustomEvent(
+		'built'
+		,{
+			detail:{
+				object:this
+			}
+		}
+	)
+);
 
 ///////////////////////////////////////
 /////////////////ADMIN/////////////////
