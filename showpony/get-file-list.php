@@ -56,7 +56,7 @@ function readFolder($folder){
 	// Run through the files
 	foreach(scandir($folder) as &$file){
 		// Ignore hidden files and folders
-		if($file[0]==='.') continue;
+		if($file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
 		
 		// Read subdirectories
 		if(is_dir($folder.'/'.$file) && $file!=='..'  && $file!=='.'){
