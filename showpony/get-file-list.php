@@ -1,27 +1,28 @@
 <?php
 
-if(!empty($_GET['return'])){
+// if(!empty($_GET['return'])){
+if(!defined('STORIES_PATH')){
 	require 'settings.php';
 
-	$stories_path=DEFAULT_PATH.($_GET['path'] ?? '');
+	define('STORIES_PATH', DEFAULT_PATH.($_GET['path'] ?? ''));
 	$language=$_GET['lang'] ?? DEFAULT_LANGUAGE;
 }
 
 $media=[];
 $files=[];
 $releaseDates=[];
-$success=true;
 $unhideSubtitles=[];
 $unhideSubfiles=[];
 $maxQuality=0;
+$success=true;
 
-if(!file_exists('../'.$stories_path)){
+if(!file_exists('../'.STORIES_PATH)){
 	http_response_code(500);
 	die('500: Story folder doesn\'t exist!');
 }
 
 // Go to the story's file directory
-chdir('../'.$stories_path);
+chdir('../'.STORIES_PATH);
 
 // Unhide a file, including any hidden parent folders
 function unhideFile($name){
@@ -40,7 +41,6 @@ function unhideFile($name){
 }
 
 function readFolder($folder){
-	global $stories_path;
 	global $media;
 	global $files;
 	global $releaseDates;
@@ -152,7 +152,7 @@ function readFolder($folder){
 			,'extension'	=>	pathinfo($folder.'/'.$file,PATHINFO_EXTENSION)
 			,'mimeType'		=>	mime_content_type($folder.'/'.$file)
 			,'name'			=>	$file
-			,'path'			=>	$hidden ? 'showpony/get-hidden-file.php?file='.$stories_path.$folder.'/'.$file  : $stories_path.$folder.'/'.$file
+			,'path'			=>	$hidden ? 'showpony/get-hidden-file.php?file='.STORIES_PATH.$folder.'/'.$file  : STORIES_PATH.$folder.'/'.$file
 			,'quality'		=>	0 // Defaults to 0; if higher quality files are found, we consider those
 			,'size'			=>	filesize($folder.'/'.$file)
 			,'subtitles'	=>	false
@@ -196,8 +196,10 @@ if(!file_exists($language)){
 		http_response_code(500);
 		die('500: A story folder doesn\'t exist in that language!');
 	}else{
-		$language=DEFAULT_LANGUAGE;
+		$language = DEFAULT_LANGUAGE;
 	}
+}else{
+	
 }
 
 readFolder($language);
@@ -210,7 +212,7 @@ foreach(array_keys($media) as $moduleName){
 // Unhide subtitles
 if(file_exists('subtitles')){
 	foreach(scandir('subtitles') as $subtitleFolder){
-		if($subtitleFolder[0]=='.') continue;
+		if($subtitleFolder[0] == '.' || $subtitleFolder[0] === HIDDEN_FILENAME_STARTING_CHAR) continue;
 		
 		foreach($unhideSubtitles as $fileNumber){
 			unhideFile('subtitles/'.$subtitleFolder.'/'.str_pad($fileNumber,4,'0',STR_PAD_LEFT).'.vtt');

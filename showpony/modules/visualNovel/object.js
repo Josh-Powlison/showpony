@@ -725,7 +725,7 @@ S.modules.visualNovel=new function(){
 			O.el.dataset.file=name;
 			
 			// loadingTracker(1);
-			O.el.src='<?php echo $stories_path; ?>resources/'+O.filepath+input;
+			O.el.src='<?php echo STORIES_PATH; ?>resources/'+O.filepath+input;
 			
 			return true;
 		}
@@ -857,8 +857,8 @@ S.modules.visualNovel=new function(){
 					img.addEventListener('error',loadingError);
 					
 					// Can go to the root of the website, or from the current path
-					if(image[0]==='/') img.src='<?php echo $stories_path; ?>resources/'+image;
-					else img.src='<?php echo $stories_path; ?>resources/'+O.filepath+image;
+					if(image[0]==='/') img.src='<?php echo STORIES_PATH; ?>resources/'+image;
+					else img.src='<?php echo STORIES_PATH; ?>resources/'+O.filepath+image;
 					
 					O.el.children[layer].appendChild(img);
 					

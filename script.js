@@ -39,6 +39,7 @@ function chooseStory(id){
 		showponyWindow.addEventListener('built',function(event){
 			console.log('BUILT');
 			showponies[id]=event.detail.object;
+			console.log(event.detail.message);
 			
 			/*
 				CODE TO CUSTOMIZE THE SHOWPONIES

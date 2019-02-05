@@ -31,22 +31,24 @@ require 'settings.php';
 // TESTING ADMIN
 // $_SESSION['showpony_admin']=false;
 
-$stories_path = DEFAULT_PATH.($_GET['path'] ?? '');
+define('STORIES_PATH',DEFAULT_PATH.($_GET['path'] ?? ''));
 
 // Get the query from the paths
-$name = preg_match('/[^\/]+(?=\/?$)/',$stories_path,$match) ? $match[0] : 'story';
+define('NAME', preg_match('/[^\/]+(?=\/?$)/',STORIES_PATH,$match) ? $match[0] : 'story');
 
-$saveName = toCamelCase($name).'Data';
+$saveName = toCamelCase(NAME).'Data';
 
 // 0 is save system; 1 is save name; 2 is language
 if(!empty($_COOKIE[$saveName])) $data = explode('&',$_COOKIE[$saveName]);
 else $data = [null,null,null,null,null];
 
-$save_system	= $data[0]		??	null;
-$current_save	= $data[1]		??	'Autosave';
-$language		= $_GET['lang']	??	$data[2]	??	DEFAULT_LANGUAGE;
-$subtitles		= $_GET['subs']	??	$data[3]	??	DEFAULT_SUBTITLES;
-$quality		= $data[4]		??	DEFAULT_QUALITY;
+define('SAVE_SYSTEM'	, $data[0] ?? null);
+define('CURRENT_SAVE'	, $data[1] ?? 'Autosave');
+define('QUALITY'		, $data[4] ?? DEFAULT_QUALITY);
+
+// These will change if the requested options aren't available
+$subtitles = $_GET['subs'] ?? $data[3] ?? DEFAULT_SUBTITLES;
+$language = $_GET['lang'] ?? $data[2] ?? DEFAULT_LANGUAGE;
 
 function toCamelCase($input){
 	return lcfirst(
@@ -123,7 +125,7 @@ S.buffered				= [];
 S.currentFile			= null;
 S.currentLanguage		= <?php echo json_encode($language); ?>;
 S.currentModule			= null;
-S.currentQuality		= <?php echo $quality; ?>;
+S.currentQuality		= <?php echo QUALITY; ?>;
 S.currentSubtitles		= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
 S.currentTime			= null;
 S.data					= {};
@@ -133,13 +135,13 @@ S.gamepad				= null;
 S.maxQuality			= <?php echo $maxQuality; ?>;
 S.modules				= {};
 S.paused				= false;
-S.queryBookmark			= <?php echo json_encode($name); ?>+'-bookmark';
+S.queryBookmark			= <?php echo json_encode(NAME); ?>+'-bookmark';
 S.saveName				= <?php echo json_encode($saveName); ?>;
 S.saves					= {
-	currentSave	:<?php echo json_encode($current_save); ?>,
+	currentSave	:<?php echo json_encode(CURRENT_SAVE); ?>,
 	language	:<?php echo json_encode($language); ?>,
 	local		:{},
-	system		:<?php echo json_encode($save_system); ?>,
+	system		:<?php echo json_encode(SAVE_SYSTEM); ?>,
 	timestamp	:Date.now()
 };
 S.readingDirection		= <?php echo json_encode(READING_DIRECTION); ?>;
@@ -178,7 +180,7 @@ S.window.className		= 's s-' + S.readingDirection;
 S.window.tabIndex		= 0;
 S.window.innerHTML		= `
 	<div class="s-content"></div>
-	<?php if(file_exists('cover.jpg')) echo '<img class="s-cover" src="',$stories_path,'cover.jpg">'; ?>
+	<?php if(file_exists('cover.jpg')) echo '<img class="s-cover" src="',STORIES_PATH,'cover.jpg">'; ?>
 	<div class="s-menu">
 		<button class="s-progress"></button>
 		<button class="s-regress"></button>
@@ -875,7 +877,7 @@ S.displaySubtitles = function(newSubtitles = S.currentSubtitles){
 			S.modules[S.currentModule].displaySubtitles();
 		// Otherwise, fetch
 		} else {
-			fetch('showpony/get-subtitles.php?path=<?php echo $stories_path; ?>&lang=' + newSubtitles + '&files=' + S.files.length)
+			fetch('showpony/get-subtitles.php?path=<?php echo STORIES_PATH; ?>&lang=' + newSubtitles + '&files=' + S.files.length)
 			.then(response=>{if(response.ok) return response.text();})
 			.then(text=>{
 				S.subtitles[newSubtitles] = processSubtitles(text);
