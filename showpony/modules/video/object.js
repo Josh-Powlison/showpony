@@ -9,6 +9,7 @@ S.modules.video=new function(){
 	
 	M.video=document.createElement('video');
 	M.video.className='m-video';
+	M.video.disableRemotePlayback = true;
 	M.video.dataset.filename = null;
 	M.window.appendChild(M.video);
 	

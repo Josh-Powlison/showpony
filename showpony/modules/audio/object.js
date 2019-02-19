@@ -9,6 +9,7 @@ S.modules.audio=new function(){
 	
 	M.audio=document.createElement('audio');
 	M.audio.className='m-audio';
+	M.audio.disableRemotePlayback = true;
 	M.audio.dataset.filename = null;
 	M.window.appendChild(M.audio);
 	
