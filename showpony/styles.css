@@ -62,13 +62,6 @@
 /////////////////MENU//////////////////
 /////////////////////////////////////*/
 
-@font-face{
-	font-family:'ShowponyUI';
-	src:url('showpony/font.woff2');
-	font-weight:medium;
-	font-style:normal;
-}
-
 .s-menu{
 	position:absolute;
 	top:0;
@@ -87,7 +80,7 @@
 	
 	pointer-events:none;
 	
-	font-family: 'ShowponyUI';
+	font-family: Arial, sans-serif;
 	font-size: 1rem;
 }
 
@@ -301,7 +294,7 @@
 	
 	text-align:left;
 	cursor:pointer;
-	font-family:'ShowponyUI';
+	font-family:Arial, sans-serif;
 	
 	background:none;
 	background-color:#fff;
