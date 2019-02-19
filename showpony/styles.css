@@ -254,6 +254,8 @@
 	box-sizing:border-box;
 	
 	background-size:contain;
+	background-position:50% 0%;
+	background-repeat:no-repeat;
 }
 
 .s-buttons button:active{
