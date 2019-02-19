@@ -32,6 +32,7 @@ const FILE_DATA_GET_MODULE=[
 	'default'			=>	null
 	,'mime:text'		=>	'text'
 	,'mime:image'		=>	'image'
+	,'ext:svg'			=>	'image' // Not all servers recognize SVGs as images
 	,'mime:audio'		=>	'audio'
 	,'mime:video'		=>	'video'
 	,'ext:vn'			=>	'visualNovel'
