@@ -817,21 +817,20 @@ function scrub(inputPercent=null){
 	if(info!==document.title) document.title=completed+' - '+remaining;
 }
 
+var pointerXStart = null;
+var pointerYStart = null;
+var pointerMoved = false;
+
 // When the user scrubs, this function runs
 function userScrub(event){
-	// Only allow scrubbing when paused
-	if(!S.paused) return;
-	
-	if(scrubbing===false) return;
+	var pointer;
+	if(event.changedTouches) pointer=event.changedTouches[0];
+	else pointer=event;
 	
 	// Don't scrub if touching with 2 or more fingers at once
 	// if(event.touches && event.touches.length>1) return;
 	
 	event.preventDefault();
-	
-	var pointer;
-	if(event.changedTouches) pointer=event.changedTouches[0];
-	else pointer=event;
 	
 	var percent = (pointer.clientX-S.window.getBoundingClientRect().left)/(S.window.getBoundingClientRect().width);
 	
@@ -839,27 +838,65 @@ function userScrub(event){
 	const scrubSnap=.0025;
 	if(percent<0+scrubSnap) percent=0;
 	if(percent>1-scrubSnap) percent=1;
-		
+	
 	// You have to swipe farther than you move the cursor to adjust the position
-	if(scrubbing!==true){
-		// 34 is an arbitrary percentage of the screen that seems to feel good to trigger scrubbing
-		if(Math.abs(scrubbing-pointer.clientX) < screen.width/34) return;
+	if(scrubbing!==true && scrubbing!==false && S.paused){
+		// 34 creates an arbitrary percentage of the screen that seems to feel good to trigger scrubbing
+		if(Math.abs(scrubbing-pointer.clientX) >= screen.width/34){
 		
-		// Don't wait to start a series of actions
-		clearTimeout(actionTimeout);
-		actionTimeout=null;
-		clearInterval(actionInterval);
-		actionInterval=null;
+			// Don't wait to start a series of actions
+			clearTimeout(actionTimeout);
+			actionTimeout=null;
+			clearInterval(actionInterval);
+			actionInterval=null;
+			
+			// Remove active button, if one exists
+			while(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
+			
+			// S.window.classList.add('s-hold');
+			
+			scrubbing=true;
+			
+			// Don't let cursor position throw this off
+			pointerXStart = null;
+			pointerYStart = null;
+		}
+	}
+	
+	// Consider if we've moved too far for clicking functions to run
+	if(
+		scrubbing !== true
+		&&
+		!pointerMoved
+		&&
+		pointerXStart !== null
+		&&
+		// Distance
+		Math.abs(
+			Math.sqrt(
+				Math.pow(pointerXStart - pointer.clientX,2)
+				+ Math.pow(pointerYStart - pointer.clientY,2)
+			)
+		)
+		> screen.width/20 // 25 is made to not interrupt scrubbing, while still meaning that if we move far enough, we'll ignore scrubbing (like if we're vertically scrolling
+	){
+		pointerMoved = true;
+		scrubbing = false;
+		
+		console.log("Moved too far");
 		
 		// Remove active button, if one exists
 		while(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
 		
-		// S.window.classList.add('s-hold');
-		
-		scrubbing=true;
-	}
+		// Don't let actions happen
+		clearTimeout(actionTimeout);
+		actionTimeout = null;
+		clearInterval(actionInterval);
+		actionInterval = null;
+		return;
+	};
 	
-	scrub(percent);
+	if(scrubbing == true) scrub(percent);
 }
 
 S.displaySubtitles = function(newSubtitles = S.currentSubtitles){
@@ -1405,6 +1442,7 @@ var touching = false;
 
 function pointerDown(event){
 	buttonDown = null; // We don't want to carry any previous states from buttonDown
+	pointerMoved = false;
 	
 	// Don't scrub if touching with 2 or more fingers at once
 	if(event.touches && event.touches.length>1) return;
@@ -1419,6 +1457,10 @@ function pointerDown(event){
 		if(touching) return;
 		pointer=event;
 	}
+	
+	// Track movement
+	pointerXStart = pointer.clientX;
+	pointerYStart = pointer.clientY;
 	
 	// Allow left-click only
 	if(pointer.button && pointer.button!==0) return;
@@ -1459,6 +1501,11 @@ function pointerDown(event){
         buttonDown = 'pause';
 		pause.classList.add('s-active');
         actionTimeout=setTimeout(function(){
+			// Don't let moving the cursor stop this function
+			pointerXStart = null;
+			pointerYStart = null;
+			
+			// Add the display class
             S.window.classList.add('s-hold');
         },500);
 	// Progress
@@ -1466,6 +1513,11 @@ function pointerDown(event){
         buttonDown = 'progress';
 		progress.classList.add('s-active');
         actionTimeout=setTimeout(function(){
+			// Don't let moving the cursor stop this function
+			pointerXStart = null;
+			pointerYStart = null;
+			
+			// Add the display class
             S.window.classList.add('s-hold');
             actionInterval=setInterval(S.progress,50);
         },500);
@@ -1474,6 +1526,11 @@ function pointerDown(event){
         buttonDown = 'regress';
 		regress.classList.add('s-active');
         actionTimeout=setTimeout(function(){
+			// Don't let moving the cursor stop this function
+			pointerXStart = null;
+			pointerYStart = null;
+			
+			// Add the display class
             S.window.classList.add('s-hold');
             actionInterval=setInterval(S.regress,50);
         },500);
@@ -1489,6 +1546,10 @@ function pointerUp(event){
 	// if(event.touches && event.touches.length>1) return;
 	
 	var pointer;
+	
+	// Remove these values
+	pointerXStart = null;
+	pointerYStart = null;
 	
 	if(event.changedTouches){
 		pointer=event.changedTouches[0];
@@ -1540,6 +1601,12 @@ function pointerUp(event){
 		if(buttonDown !== 'pause' || S.paused === false) return;
 	}
 	
+	// If we were moving the pointer, ignore presses
+	if(pointerMoved){
+		pointerMoved = false;
+		return;
+	}
+	
 	// If we were previously scrubbing, don't press buttons
 	if(prevScrubState === true) return;
 	
@@ -1573,6 +1640,9 @@ function pointerUp(event){
     
     buttonDown = null;
 }
+
+// Resets to 0 on touch/start click; tracks how much we've moved the pointer since putting it down
+var pointerMovement = 0;
 
 S.window.addEventListener('mousedown',pointerDown);
 window.addEventListener('mouseup',pointerUp);
