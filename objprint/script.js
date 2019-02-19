@@ -133,7 +133,7 @@ function ObjPrint(obj={}){
 						for(var ii=0;ii<parameters.length;ii++){
 							var parameterEl=document.createElement('span');
 							
-							var parameterSplit=/([^=]+)(=.+)?/.exec(parameters[ii]);
+							var parameterSplit=/([^=\s]+)(\s*=.+)?/.exec(parameters[ii]);
 							
 							parameterEl.dataset.call=nameEl.dataset.call+'('+parameterSplit[1]+')';
 							parameterEl.className='objprint-parameter';
