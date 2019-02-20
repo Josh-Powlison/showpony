@@ -55,14 +55,19 @@ function readFolder($folder){
 	preg_match('/\(([^\/]+)\)$/',$folder,$sectionTitle);
 	$sectionTitle=$sectionTitle[1] ?? null;
 	
+	
 	// Run through the files
 	foreach(scandir($folder) as &$file){
 		// Ignore hidden files and folders
-		if($file[0]==='.' || $file[0]===HIDING_CHAR) continue;
+		if($file[0] === '.') continue;
 		
 		// Read subdirectories
 		if(is_dir($folder.'/'.$file) && $file!=='..'  && $file!=='.'){
-			// die('folder found! '.$file);
+			// If it's a hidden folder or hidden subfolder and we're not an admin skip over it pass that info
+			if($file[0] === HIDING_CHAR && empty($_SESSION['showpony_admin'])){
+				continue;
+			}
+			
 			readFolder($folder.'/'.$file);
 			continue;
 		}
@@ -157,7 +162,6 @@ function readFolder($folder){
 			,'path'			=>	$hidden ? 'showpony/get-hidden-file.php?file='.STORIES_PATH.$folder.'/'.$file  : STORIES_PATH.$folder.'/'.$file
 			,'quality'		=>	0 // Defaults to 0; if higher quality files are found, we consider those
 			,'size'			=>	filesize($folder.'/'.$file)
-			,'subtitles'	=>	false
 			,'title'		=>	str_replace(
 				// Dissallowed in Windows files: \ / : * ? " < > |
 				['[bs]','[fs]','[c]','[a]','[q]','[dq]','[lt]','[gt]','[b]']
@@ -182,10 +186,14 @@ function readFolder($folder){
 		// If the module isn't supported, skip over it
 		if($fileInfo['module']===null) continue;
 		
-		// If this file has been unhid, unhide related files
+		// If this file has been unhid
 		if($unhid){
+			// Unhide related files
 			$unhideSubtitles[]=count($files)+1;
 			$unhideSubfiles[]=[$fileInfo['module'],$folder.'/'.$file];
+			
+			// Run new release function and any sub-functions
+			NEW_RELEASE(count($files)+1, $fileInfo);
 		}
 		
 		// Add to the items in the module, or set to 1 if it doesn't exist yet
@@ -209,7 +217,8 @@ if(!file_exists($language)){
 	
 }
 
-readFolder($language);
+// Read the folder if it doesn't start with the hiding char or if we're an admin (this could be used for a sneaky way to access files otherwise)
+if($language[0] !== HIDING_CHAR || !empty($_SESSION['showpony_admin'])) readFolder($language);
 
 // Load modules
 foreach(array_keys($media) as $moduleName){
