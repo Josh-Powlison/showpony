@@ -47,8 +47,8 @@ define('CURRENT_SAVE'	, $data[1] ?? 'Autosave');
 define('QUALITY'		, $data[4] ?? DEFAULT_QUALITY);
 
 // These will change if the requested options aren't available
-$subtitles = $_GET['subs'] ?? $data[3] ?? DEFAULT_SUBTITLES;
-$language = $_GET['lang'] ?? $data[2] ?? DEFAULT_LANGUAGE;
+$subtitles	= $_GET['subs'] ?? $data[3] ?? DEFAULT_SUBTITLES;
+$language	= $_GET['lang'] ?? $data[2] ?? DEFAULT_LANGUAGE;
 
 function toCamelCase($input){
 	return lcfirst(
@@ -61,10 +61,12 @@ function toCamelCase($input){
 // We'll store all errors and code that's echoed, so we can send that info to the user (in a way that won't break the JSON object).
 ob_start();
 
+if(DEBUG) echo 'Set DEBUG = false in settings.php if you want to hide PHP messages.\n';
+
 require 'get-file-list.php';
 
 // Pass any echoed statements or errors to the response object
-$message = ob_get_clean();
+$debugMessages = ob_get_clean();
 
 header('Content-type: application/javascript');
 ?>'use strict';
@@ -157,7 +159,7 @@ S.supportedSubtitles	= <?php
 	if(file_exists('subtitles')){
 		foreach(scandir('subtitles') as $file){
 			// Ignore hidden files
-			if(!is_dir('subtitles/'.$file) || $file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
+			if(!is_dir('subtitles/'.$file) || $file[0]==='.' || $file[0]===HIDING_CHAR) continue;
 
 			// Get the subtitles (if ends with -cc, then it's closed captions)
 			$subtitleLanguage = str_replace('-cc','',$file,$closedCaptions);
@@ -1118,7 +1120,7 @@ const supportedLanguages=<?php
 	$languages=[];
 	foreach(scandir('.') as $file){
 		// Ignore hidden folders and subtitles folder
-		if($file==='subtitles' || $file==='resources' || !is_dir($file) || $file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
+		if($file==='subtitles' || $file==='resources' || !is_dir($file) || $file[0]==='.' || $file[0]===HIDING_CHAR) continue;
 
 		$languages[]=[
 			'short'	=>	$file
@@ -1739,7 +1741,7 @@ S.window.parentNode.dispatchEvent(
 		,{
 			detail:{
 				object:this
-				,messages:<?php echo json_encode($message); ?>
+				,debug:<?php echo json_encode($debugMessages); ?>
 			}
 		}
 	)

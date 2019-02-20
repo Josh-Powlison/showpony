@@ -26,14 +26,14 @@ chdir('../'.STORIES_PATH);
 
 // Unhide a file, including any hidden parent folders
 function unhideFile($name){
-	// Split the file into its path segments, so we can check all folders for HIDDEN_FILENAME_STARTING_CHAR
+	// Split the file into its path segments, so we can check all folders for HIDING_CHAR
 	$segments=explode('/',$name);
 	$path='';
 	
 	foreach($segments as $check){
-		if(file_exists($path.HIDDEN_FILENAME_STARTING_CHAR.$check)){
-			// Remove HIDDEN_FILENAME_STARTING_CHAR
-			rename($path.HIDDEN_FILENAME_STARTING_CHAR.$check,$path.$check);
+		if(file_exists($path.HIDING_CHAR.$check)){
+			// Remove HIDING_CHAR
+			rename($path.HIDING_CHAR.$check,$path.$check);
 		}
 		
 		$path.=$check.'/';
@@ -56,7 +56,7 @@ function readFolder($folder){
 	// Run through the files
 	foreach(scandir($folder) as &$file){
 		// Ignore hidden files and folders
-		if($file[0]==='.' || $file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
+		if($file[0]==='.' || $file[0]===HIDING_CHAR) continue;
 		
 		// Read subdirectories
 		if(is_dir($folder.'/'.$file) && $file!=='..'  && $file!=='.'){
@@ -98,11 +98,11 @@ function readFolder($folder){
 				// $hidden is already false
 				
 				// If the file is hidden but shouldn't be
-				if($file[0]===HIDDEN_FILENAME_STARTING_CHAR){
-					// Remove HIDDEN_FILENAME_STARTING_CHAR at the beginning of the filename
+				if($file[0]===HIDING_CHAR){
+					// Remove HIDING_CHAR at the beginning of the filename
 					if(rename($folder.'/'.$file,$folder.'/'.($file=substr($file,1)))){
 						$unhid=true;
-					// If removing HIDDEN_FILENAME_STARTING_CHAR fails
+					// If removing HIDING_CHAR fails
 					}else{
 						$success=false;
 					}
@@ -111,11 +111,11 @@ function readFolder($folder){
 				$hidden=true;
 				
 				// If the file isn't hidden but should be
-				if($file[0]!==HIDDEN_FILENAME_STARTING_CHAR){
-					// Add HIDDEN_FILENAME_STARTING_CHAR at the beginning of the filename
-					if(rename($folder.'/'.$file,$folder.'/'.($file=HIDDEN_FILENAME_STARTING_CHAR.$file))){
+				if($file[0]!==HIDING_CHAR){
+					// Add HIDING_CHAR at the beginning of the filename
+					if(rename($folder.'/'.$file,$folder.'/'.($file=HIDING_CHAR.$file))){
 						
-					// If adding HIDDEN_FILENAME_STARTING_CHAR fails
+					// If adding HIDING_CHAR fails
 					}else{
 						$success=false;
 					}
@@ -131,7 +131,7 @@ function readFolder($folder){
 			}
 		}else{
 			// Still skip hidden files
-			if($file[0]===HIDDEN_FILENAME_STARTING_CHAR) continue;
+			if($file[0]===HIDING_CHAR) continue;
 			
 			$date=null;
 		}
@@ -212,7 +212,7 @@ foreach(array_keys($media) as $moduleName){
 // Unhide subtitles
 if(file_exists('subtitles')){
 	foreach(scandir('subtitles') as $subtitleFolder){
-		if($subtitleFolder[0] == '.' || $subtitleFolder[0] === HIDDEN_FILENAME_STARTING_CHAR) continue;
+		if($subtitleFolder[0] == '.' || $subtitleFolder[0] === HIDING_CHAR) continue;
 		
 		foreach($unhideSubtitles as $fileNumber){
 			unhideFile('subtitles/'.$subtitleFolder.'/'.str_pad($fileNumber,4,'0',STR_PAD_LEFT).'.vtt');
