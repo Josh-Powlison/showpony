@@ -50,4 +50,29 @@ const MODULE_SET_DISPLAY = [
 	,'visualNovel'		=> 'time'
 ];
 
+// This function is run on a new file's release. THIS WILL ONLY WORK IF THE FILE IS UNHIDDEN BY ITS DATE, not if a file's just manually added.
+function NEW_RELEASE($number, $info){
+	/* Put any functionality you want to in here:
+		- Message a mailing list
+		- Send tweets
+		- Email yourself as a reminder
+		
+		Over time, we'll add some of this functionality. If you're interested in anything specific being included as part of Showpony, be sure to ask for it!
+		
+		$number: the file's number
+		$info: an associative array with the following file info (using "2018-05-26 (Breakdown) 90.vn" for example)
+			buffered		// Will always be an empty array
+			date			// Release date for the file		"2018-05-26 UTC"
+			duration		// The file's duration in seconds	90
+			extension		// The file's extension				"vn"
+			mimeType		// The file's mime type				"text/plain"
+			name			// The file's name					"2018-05-26 (Breakdown) 90.vn"
+			path			// The path to the file				"story/en/2018-05-26 (Breakdown) 90.vn"
+			quality			// Quality available for the file	0
+			size			// Filesize in bytes				7217
+			title			// The file's title					"Breakdown"
+			hidden			// Since it's gone live, will always be "true"
+	*/
+}
+
 ?>
