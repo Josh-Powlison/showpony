@@ -769,20 +769,30 @@ function scrub(inputPercent=null){
 	}
 	
 	<?php
-	if($displayType==='file'){
+	switch($displayType){
+		case 'file':
+			?>
+	var completed = infoFile(file+1);
+    var remaining = infoFile(S.files.length-(file+1));
+			<?php
+			break;
+		case 'time':
+			?>
+	var completed = infoTime(time);
+	var remaining = infoTime(S.duration-time);
+			<?php
+			break;
+		case 'percent':
+			?>
+	var completed = Math.round(inputPercent * 100);
+	var remaining = 100 - completed;
+	
+	completed += '%';
+	remaining += '%';
+			<?php
+			break;
+	}
 	?>
-		
-    var completed=infoFile(file+1);
-    var remaining=infoFile(S.files.length-(file+1));
-	
-	<?php
-	}else{
-	?>
-	
-	var completed=infoTime(time);
-	var remaining=infoTime(S.duration-time);
-	
-	<?php } ?>
     
     var info = '<p>'+completed+'</p><p>';
 	if((S.files[file].title)) info+=S.files[file].title;
