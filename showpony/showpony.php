@@ -61,7 +61,7 @@ function toCamelCase($input){
 // We'll store all errors and code that's echoed, so we can send that info to the user (in a way that won't break the JSON object).
 ob_start();
 
-if(DEBUG) echo 'Set DEBUG = false in settings.php if you want to hide PHP messages.\n';
+if(DEBUG) echo 'DEBUG = true. PHP debug info will be passed.\n';
 
 require 'get-file-list.php';
 
@@ -1751,7 +1751,10 @@ S.window.parentNode.dispatchEvent(
 		,{
 			detail:{
 				object:this
-				,debug:<?php echo json_encode($debugMessages); ?>
+				,debug:<?php
+					if(DEBUG) echo json_encode($debugMessages);
+					else echo json_encode('DEBUG = false. No PHP debug info will be passed.');
+				?>
 			}
 		}
 	)
