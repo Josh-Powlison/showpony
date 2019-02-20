@@ -8,13 +8,14 @@ if(!defined('STORIES_PATH')){
 	$language=$_GET['lang'] ?? DEFAULT_LANGUAGE;
 }
 
-$media=[];
-$files=[];
-$releaseDates=[];
-$unhideSubtitles=[];
-$unhideSubfiles=[];
-$maxQuality=0;
-$success=true;
+$displayType		= MODULE_SET_DISPLAY['default'];
+$files				= [];
+$maxQuality			= 0;
+$media				= [];
+$releaseDates		= [];
+$success			= true;
+$unhideSubtitles	= [];
+$unhideSubfiles		= [];
 
 if(!file_exists('../'.STORIES_PATH)){
 	http_response_code(500);
@@ -41,13 +42,14 @@ function unhideFile($name){
 }
 
 function readFolder($folder){
-	global $media;
+	global $displayType;
 	global $files;
+	global $maxQuality;
+	global $media;
 	global $releaseDates;
+	global $success;
 	global $unhideSubtitles;
 	global $unhideSubfiles;
-	global $maxQuality;
-	global $success;
 	
 	// Get the section's title
 	preg_match('/\(([^\/]+)\)$/',$folder,$sectionTitle);
@@ -171,6 +173,11 @@ function readFolder($folder){
 			?? FILE_DATA_GET_MODULE['mime:'.explode('/',$fileInfo['mimeType'])[0]]
 			?? FILE_DATA_GET_MODULE['default']
 		;
+		
+		// Get the progress display based on MODULE_SET_DISPLAY
+		if(isset(MODULE_SET_DISPLAY[$fileInfo['module']])){
+			$displayType = MODULE_SET_DISPLAY[$fileInfo['module']];
+		}
 		
 		// If the module isn't supported, skip over it
 		if($fileInfo['module']===null) continue;

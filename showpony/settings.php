@@ -42,7 +42,12 @@ const FILE_DATA_GET_MODULE = [
 	,'mime:application'	=>	null
 ];
 
-// Will be impacted by modules if they want another display type. Set the default here.
-$displayType='file';
+// If run into one of these modules, will change the display type to this
+const MODULE_SET_DISPLAY = [
+	'default'			=> 'file'
+	,'audio'			=> 'time'
+	,'video'			=> 'time'
+	,'visualNovel'		=> 'time'
+];
 
 ?>

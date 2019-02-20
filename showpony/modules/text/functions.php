@@ -1,8 +1,5 @@
 <?php
 
-// Comment out the below line for other media to take priority. Defaults to 'file'.
-// $displayType='file';
-
 function textUnhideChildren($input){
 	// text includes files as paths
 	$handle=fopen($input,'r');
