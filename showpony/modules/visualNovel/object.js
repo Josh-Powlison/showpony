@@ -824,14 +824,14 @@ S.modules.visualNovel=new function(){
 		
 		O.filepath='images/'+O.name+'/';
 		
-		var preloading=false;
+		var preloading = false;
 		
 		M.window.appendChild(O.el);
 
-		O.content=function(input,preloading=false){
+		O.content = function(input){
 			// Preload the files when we first display one
-			if(preloading===false){
-				var preloading='ongoing';
+			if(preloading === false){
+				preloading='ongoing';
 				
 				// Preload images
 				for(let i=0;i<M.lines.length;i++){
