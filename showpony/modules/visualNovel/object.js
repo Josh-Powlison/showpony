@@ -314,7 +314,23 @@ S.modules.visualNovel=new function(){
 		continueNotice.remove();
 		timer.stop();
 
-		while(M.currentLine<M.lines.length && M.readLine(M.currentLine)) M.currentLine++;
+		while(M.currentLine<M.lines.length){
+			<?php if(DEBUG) {
+				echo "console.log(M.lines[M.currentLine]);
+				console.time('Line Time');";
+			}
+			?>
+			
+			var next = M.readLine(M.currentLine);
+			
+			<?php if(DEBUG) {
+				echo "console.timeEnd('Line Time');";
+			}
+			?>
+			
+			if(next) M.currentLine++;
+			else break;
+		}
 
 		if(M.currentLine>=M.lines.length) S.to({file:'+1'});
 	}
