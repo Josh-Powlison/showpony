@@ -72,7 +72,7 @@ S.modules.visualNovel=new function(){
 		timer.start();
 	}
 	
-	M.pause=function(){
+	M.pause = function(){
 		// Go through objects that can be played- pause them, and track that
 		for(var name in objects){
 			// If it can play, and it is playing
@@ -85,14 +85,18 @@ S.modules.visualNovel=new function(){
 		timer.pause();
 	}
 	
-	M.regress=function(){
+	M.regress = function(){
 		// Get the correct keyframe
-		for(var i=M.currentLine-1;i>0;i--){
-			if(keyframes.indexOf(i)!==-1){
-				// Skip over comments
-				if(/^\s*\/\//.test(keyframes[keyframes.indexOf(i)])) continue;
+		for(var i = M.currentLine - 1; i > 0; i--){
+			var goTo = keyframes.indexOf(i);
+			if(goTo !== -1){
+				var lineText = M.lines[keyframes[goTo]];
+				console.log("MOVE OVER",lineText);
 				
-				runTo=keyframes[keyframes.indexOf(i)];
+				// Skip over comments
+				if(/^\s*\/\//.test(lineText)) continue;
+				
+				runTo = keyframes[goTo];
 				M.run(0);
 				return;
 			}
@@ -102,7 +106,7 @@ S.modules.visualNovel=new function(){
 		else S.to({time:0});
 	}
 	
-	M.progress=function(){
+	M.progress = function(){
 		// Finish all animations
 		for(var name in objects){
 			objects[name].el.dispatchEvent(new Event('animationend'));
@@ -185,18 +189,45 @@ S.modules.visualNovel=new function(){
 				M.filesrc = filename;
 				
 				// Remove multiline comments
-				text=text.replace(/\/\*[^]*?\*\//g,'');
+				text = text.replace(/\/\*[^]*?\*\//g,'');
 				
 				// Get all non-blank lines
-				M.lines=text.match(/.+(?=\S).+/g);
+				M.lines = text.match(/.+(?=\S).+/g);
 				
 				// Get keyframes from the waiting points in the text
-				keyframes=[];
+				keyframes = [];
 				
 				// Go through each line
-				for(let i=0;i<M.lines.length;i++){
+				for(let i = 0; i < M.lines.length; i++){
+					// Throw an error if too many keyframes crop up; we're likely creating an accidental infinite loop
+					if(keyframes.length > 1000){
+						S.notice("Error: likely recursion. Over 1000 keyframes read.");
+						throw "ERROR: too many keyframes";
+					}
+					
+					// Prevent recursion
+					if(keyframes.length > 0 && keyframes.indexOf(i) !== -1){
+						S.notice("Error: recursion detected. Revisited keyframe on line "+i+ " reading: "+M.lines[i]);
+						return;
+					}
+					
 					// Look for keyframes
 					if(/^engine\.wait$/.test(M.lines[i])){
+						keyframes.push(i);
+						continue;
+					}
+					
+					// Get "engine.go" keyframes, where possible (where not based on a variable)
+					if(/^engine\.go/.test(M.lines[i])){
+						var goTo = /\t+(.+)$/.exec(M.lines[i]);
+						console.log(goTo[1],M.lines.indexOf(goTo[1]));
+						
+						if(M.lines.indexOf(goTo[1]) !== -1) i = M.lines.indexOf(goTo[1]);
+						continue;
+					}
+					
+					// Add comments
+					if(/^\/\//.test(M.lines[i])){
 						keyframes.push(i);
 						continue;
 					}
@@ -216,7 +247,6 @@ S.modules.visualNovel=new function(){
 							test.innerHTML=M.lines[i];
 							var text=test.innerText;
 							
-							
 							//If it's not an ending tag
 							if(text[text.length-1]==='>'){
 								var skip=1;
@@ -229,9 +259,12 @@ S.modules.visualNovel=new function(){
 							}
 						}
 						
+						// console.log(M.lines[i]);
 						keyframes.push(i);
 					}
 				}
+				
+				// console.log(keyframes);
 				
 				// Get the keyframe
 				var keyframeSelect=Math.round(keyframes.length*(time/S.files[file].duration));
@@ -404,7 +437,10 @@ S.modules.visualNovel=new function(){
 			}
 		}
 		
-		if(command === 'go') M.go(parameter);
+		if(command === 'go'){
+			M.go(parameter);
+			return true;
+		}
 		
 		// Run through if we're running to a point; if we're there or beyond though, stop running through
 		if(runTo!==false && line>=runTo){
@@ -522,7 +558,8 @@ S.modules.visualNovel=new function(){
 					
 				case 'go':
 					// Go to the right line
-					return true;
+					S.notice('Error: command ' + command + ' made it to an unexpected point in the code.');
+					return false;
 					break;
 					
 				case 'end':
@@ -588,8 +625,15 @@ S.modules.visualNovel=new function(){
 	}
 	
 	M.go = function(input){
-		M.currentLine = M.lines.indexOf(input);
-		return true;
+		var goTo = M.lines.indexOf(input);
+		
+		if(goTo === -1){
+			S.notice('Error: tried to go to a nonexistent line labeled '+input);
+			return false;
+		} else {
+			M.currentLine = M.lines.indexOf(input);
+			return true;
+		}
 	}
 	
 	M.end = function(){
