@@ -833,7 +833,7 @@ S.modules.visualNovel=new function(){
 		O.el.addEventListener('error',loadingError);
 		
 		O.el.addEventListener('ended',function(){
-			if(!O.el.loop) O.playing=false;
+			if(!O.el.loop) O.playing = false;
 		});
 		
 		O.el.addEventListener('timeupdate',function(){
@@ -871,7 +871,7 @@ S.modules.visualNovel=new function(){
 			// Go through each passed image and see if it exists
 			for(var i = 0; i < imageNames.length; i++){
 				// Layer is i+1 because 0 is the style tag
-				var layer = i+1;
+				var layer = i + 1;
 				
 				var image = imageNames[i];
 				// If no extension, assume png
@@ -915,7 +915,7 @@ S.modules.visualNovel=new function(){
 		
 		function loadingError(e){
 			loadingTracker();
-			S.notice('Error loading '+e.target.dataset.file);
+			S.notice('Error loading ' + e.target.dataset.file);
 		}
 		
 		objectAddCommonFunctions(O);
@@ -938,9 +938,11 @@ S.modules.visualNovel=new function(){
 		O.el.dataset.name=input;
 		O.el.dataset.state='hidden';
 		O.el.dataset.done='true';
+		
 		O.el.addEventListener('submit',function(event){
 			event.preventDefault();
 		});
+		
 		M.window.appendChild(O.el);
 		
 		O.empty=function(){
@@ -1257,16 +1259,9 @@ S.modules.visualNovel=new function(){
 		// If we aren't waiting to continue, continue
 		if(!wait){
 			M.run();
-		}else{
-			if(!M.window.querySelector('input')){
-				// Don't add a continue notice if we ran through a textbox
-				if(!M.window.querySelector('.m-vn-textbox[data-done="false"]')){
-					// console.log("ADD CONTINUE NOTICE");
-					M.window.appendChild(continueNotice);
-				}
-			}
+		// Don't add a continue notice if we ran through a textbox
+		}else if(!M.window.querySelector('input') && !M.window.querySelector('.m-vn-textbox[data-done="false"]')){
+			M.window.appendChild(continueNotice);
 		}
-		
-		
 	}
 }();
