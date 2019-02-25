@@ -47,15 +47,15 @@ mother.style	opacity:0;z-index:12;filter:brightness(0.1);background-size:300%;ba
 ////// CHARACTERS //////
 
 james.class		character
-james.style		height:100%;opacity:0;
+james.style		opacity:0;z-index:5;
 james.content	pose-1,eyes/smile00,mouth/smile00
 
 sly.class		character
-sly.style		height:100%;left:-100%;z-index:6;
+sly.style		transform:translateX(-100%);z-index:6;
 sly.content		pose-1,eyes/wow00,mouth/soft01
 
 steph.class		character
-steph.style		height:100%;left:-100%;transform:scale(-1,1);z-index:4;
+steph.style		transform:translateX(-100%) scale(-1,1);z-index:4;
 steph.content	pose-1,eyes/nervous00,mouth/nervous00
 
 
@@ -151,12 +151,12 @@ james	pose-1,eyes/annoy00,mouth/annoy01
 silly.play
 
 james		pose-1,eyes/annoy00,mouth/annoy00
-sly.style	time:1s;left:-25%;
-steph.style	time:1.4s;left:25%;
+sly.style	time:1s;transform:translateX(-25%);
+steph.style	time:1.4s;transform:translateX(25%) scale(-1,1);
 
 [?sly]
 		I just wanted to see what the new guy was >
-steph.style	transform:scale(1,1);z-index:6;
+steph.style	transform:translateX(25%) scale(1,1);z-index:6;
 		+like. >
 sly		pose-1,eyes/upset00,mouth/smile01
 		+Hey, you, Peter- be nice to our little brother, >
