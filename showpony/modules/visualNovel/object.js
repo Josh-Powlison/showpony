@@ -813,49 +813,35 @@ S.modules.visualNovel=new function(){
 		objectAddCommonFunctions(O);
 	}
 	
-	M.character=function(input){
-		objects[input]=this;
-		const O=this;
-		O.type='character';
+	M.character = function(input){
+		objects[input] = this;
+		const O = this;
+		O.type = 'character';
 		
-		O.el=document.createElement('div');
-		O.el.className='m-vn-character';
-		O.el.dataset.name=input;
-		O.name=input;
+		O.el = document.createElement('div');
+		O.el.className = 'm-vn-character';
+		O.el.dataset.name = input;
+		O.name = input;
 		
-		O.filepath='images/'+O.name+'/';
-		
-		var preloading = false;
+		O.filepath = 'characters/'+O.name+'/';
+		O.defaultExtension = '.png';
 		
 		M.window.appendChild(O.el);
 
-		O.content = function(input){
-			// Preload the files when we first display one
-			if(preloading === false){
-				preloading='ongoing';
-				
-				// Preload images
-				for(let i=0;i<M.lines.length;i++){
-					var value=new RegExp(O.name+'(\s{3,}|\t+)(.+$)').exec(M.lines[i]);
-					if(value) O.content(value[2],true);
-				}
-				
-				preloading='complete';
-			}
-			
+		O.content = function(input, preload = false){
 			// Character level
 			// Get the image names passed (commas separate layers)
-			var imageNames=input.split(',');
+			var imageNames = input.split(',');
 		
 			// Layer level
 			// Go through each passed image and see if it exists
-			for(var i=0;i<imageNames.length;i++){
+			for(var i = 0; i < imageNames.length; i++){
 				// Layer is i+1 because 0 is the style tag
-				var layer=i+1;
+				var layer = i+1;
 				
-				var image=imageNames[i];
+				var image = imageNames[i];
 				// If no extension, assume png
-				if(!/\./.test(image)) image+='.png';
+				if(!/\./.test(image)) image += O.defaultExtension;
 				
 				// If the layer doesn't exist, add it!
 				if(!O.el.children[layer]){
@@ -865,37 +851,32 @@ S.modules.visualNovel=new function(){
 				// If the image doesn't exist, add it!
 				if(!O.el.children[layer].querySelector('img[data-file="'+image+'"]')){
 					// Add a layer image
-					var img=document.createElement('img');
-					img.className='m-vn-character-image';
-					img.dataset.file=image;
+					var img = document.createElement('img');
+					img.className = 'm-vn-character-image';
+					img.dataset.file = image;
+					img.dataset.state = 'hidden';
 					
 					loadingTracker(1);
 					img.addEventListener('load',loadingTracker);
 					img.addEventListener('error',loadingError);
 					
 					// Can go to the root of the website, or from the current path
-					if(image[0]==='/') img.src='<?php echo STORIES_PATH; ?>resources/'+image;
-					else img.src='<?php echo STORIES_PATH; ?>resources/'+O.filepath+image;
+					if(image[0] === '/') img.src = '<?php echo STORIES_PATH; ?>resources' + image;
+					else img.src = '<?php echo STORIES_PATH; ?>resources/' + O.filepath + image;
 					
 					O.el.children[layer].appendChild(img);
-					
-					if(preloading==='complete') img.dataset.state = 'hidden';
 				}
 				
-				if(preloading!=='complete') continue;
-				
-				// Set the matching images' opacity to 1, and all the others to 0 (visibility:hidden, display:none would result in flashing images on some browsers)
-				var images=O.el.children[layer].children;
-				for(var ii=0; ii<images.length; ii++){
-					if(images[ii].dataset.file===image){
-						 images[ii].dataset.state = 'visible';
-					}else{
-						images[ii].dataset.state = 'hidden';
+				// Show and hide the correct images if we're done preloading
+				if(!preload){
+					var images = O.el.children[layer].children;
+					for(var ii = 0; ii < images.length; ii++){
+						images[ii].dataset.state = (images[ii].dataset.file === image) ? 'visible' : 'hidden';
 					}
 				}
 			}
 			
-			if(preloading == 'complete') return true;
+			return true;
 		}
 		
 		function loadingError(e){
@@ -904,6 +885,12 @@ S.modules.visualNovel=new function(){
 		}
 		
 		objectAddCommonFunctions(O);
+		
+		// Preload images
+		for(let i = 0; i < M.lines.length; i++){
+			var value = new RegExp(O.name + '(\s{3,}|\t+)(.+$)').exec(M.lines[i]);
+			if(value) O.content(value[2],true);
+		}
 	}
 	
 	M.textbox=function(input){
