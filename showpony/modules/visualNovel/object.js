@@ -226,11 +226,11 @@ S.modules.visualNovel=new function(){
 						continue;
 					}
 					
-					// Add comments
-					if(/^\/\//.test(M.lines[i])){
+					// Add comments (messes with time display, disabled for now)
+					/*if(/^\/\//.test(M.lines[i])){
 						keyframes.push(i);
 						continue;
-					}
+					}*/
 					
 					// Text lines
 					if(/^\t+/.test(M.lines[i])){
