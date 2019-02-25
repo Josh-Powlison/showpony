@@ -647,24 +647,18 @@ S.modules.visualNovel=new function(){
 	}
 
 	M.wait = function(input){
-		// Timed wait
-		if(input !== null){
-			// If we're skipping through, go to the next VN line
-			if(runTo !== false || S.paused) return true;
-			
-			timer.start(parseFloat(input)*1000);
-		}
 		// Wait until input
-		else{
-			// If we're skipping through- and this isn't where we're skipping to- skip this line.
-			if(runTo !== false && M.currentLine !== runTo) return true;
-			
+		if(input === null){
 			wait = true;
 			junction();
 		}
-		
-		// If we're paused, pause the timer
-		// if(S.paused) timer.pause(); // this should never be able to run; timers aren't made right now if we're paused. We either start before timers are made or skip ahead of them completely.
+		// Wait until time's up
+		else {
+			// If we're paused, continue instead of waiting for the timer
+			if(S.paused) return true;
+			
+			timer.start(parseFloat(input) * 1000);
+		}
 		
 		// Don't automatically go to the next line
 		return false;
