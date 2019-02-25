@@ -825,7 +825,7 @@ S.modules.visualNovel=new function(){
 		O.el.dataset.name = input;
 		O.name = input;
 		
-		O.filepath = 'characters/'+O.name+'/';
+		O.filepath = 'images/'+O.name+'/';
 		O.defaultExtension = '.png';
 		
 		M.window.appendChild(O.el);
