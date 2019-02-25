@@ -666,6 +666,8 @@ S.modules.visualNovel=new function(){
 			
 			// If running to or not requesting animation, add styles without implementing animation
 			if(animationSpeed===null || runTo!==false || S.paused){
+				localStyle.innerHTML='';
+				
 				O.el.style.cssText+=style;
 			}else{
 				localStyle.innerHTML='@keyframes '+cssName+'{100%{'+style+'}}';
