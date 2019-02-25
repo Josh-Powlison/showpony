@@ -484,53 +484,43 @@ S.modules.visualNovel=new function(){
 		}
 		
 		// If we're running through to a point, add the info to the target
-		if(runTo!==false && !/^(?:go|end|event|wait)$/.test(command)){
-			
-			// Remove the element if requested
-			if(command==='remove'){
-				delete target[component];
-				return true;
-			}
-			
+		if(runTo!==false)
+		{
 			// Creating elements with the engine
-			if(type==='engine'){
-			}else{
+			if(type !== 'engine'){
 				if(!target[component]){
-					target[component]={
+					target[component] = {
 						'type':type
 					};
 					
 					// Add necessary starting values based on what's passed
-					if(type==='audio') target[component].stop=null;
-					else if(type==='textbox') target[component].empty=null;
+					if(type === 'audio') target[component].stop = null;
+					else if(type === 'textbox') target[component].empty = null;
 				}
 			}
 			
-			// Ignore adding a command if there is none to return
-			if(command===null) return true;
-			
-			// Add styles; everything else is replaced
-			if(command==='style'){
-				if(!target[component].style) target[component].style='';
-				
-				// Styles are appended; later ones will override earlier ones. Time is removed here; we don't want to affect that here.
-				target[component].style+=parameter.replace(/time:[^;]+;?/i,'');
-				
-				return true;
-			}
-			
-			// Append textbox content if it starts with a "+" this time
-			if(target[component].type==='textbox'
-				&& command==='content'
-				&& parameter[0]==='+'
-			){
-				target[component][command]+=parameter.replace(/^\+/,'');
-				
-				return true;
-			}
-			
-			// When it comes to conflicting commands, choose only the latest
 			switch(command){
+				case 'content':
+					// Append textbox content if it starts with a "+" this time
+					if(target[component].type==='textbox'
+						&& parameter[0]==='+'
+					){
+						target[component][command]+=parameter.replace(/^\+/,'');
+						
+						return true;
+					}
+					
+					// Get rid of any empty commands
+					delete target[component].empty;
+					
+					break;
+				case 'remove':
+					delete target[component];
+					return true;
+					break;
+				case 'empty':
+					delete target[component].content;
+					break;
 				case 'play':
 					delete target[component].pause;
 					delete target[component].stop;
@@ -543,17 +533,32 @@ S.modules.visualNovel=new function(){
 					delete target[component].play;
 					delete target[component].pause;
 					break;
-				case 'empty':
-					delete target[component].content;
+				case 'go':
+					// Go to the right line
+					return true;
 					break;
-				case 'content':
-					delete target[component].empty;
+				case 'end':
+				case 'event':
+				case 'wait':
+					// Don't do anything
+					return true;
+					break;
+				case 'style':
+					if(!target[component].style) target[component].style='';
+				
+					// Styles are appended; later ones will override earlier ones. Time is removed here; we don't want to affect that here.
+					target[component].style+=parameter.replace(/time:[^;]+;?/i,'');
+					
+					return true;
+					break;
+				case null:
+					return true;
 					break;
 				default:
 					break;
 			}
 			
-			target[component][command]=parameter;
+			target[component][command] = parameter;
 			
 			// Continue without creating objects- we'll look at THAT once we've run through and added all the info to the target
 			return true;
@@ -572,7 +577,7 @@ S.modules.visualNovel=new function(){
 		if(!objects[component]) new M[type](component);
 		
 		// If no command was passed, continue
-		if(command===null) return true;
+		if(command === null) return true;
 		
 		// Run the object command and go to the next line if it returns true
 		if(typeof objects[component][command] === 'function'){
