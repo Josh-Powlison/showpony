@@ -316,15 +316,15 @@ S.modules.visualNovel=new function(){
 
 		while(M.currentLine<M.lines.length){
 			<?php if(DEBUG) {
-				echo "console.log(M.lines[M.currentLine]);
-				console.time('Line Time');";
+				// echo "console.log(M.lines[M.currentLine]);
+				// console.time('Line Time');";
 			}
 			?>
 			
 			var next = M.readLine(M.currentLine);
 			
 			<?php if(DEBUG) {
-				echo "console.timeEnd('Line Time');";
+				// echo "console.timeEnd('Line Time');";
 			}
 			?>
 			
@@ -911,6 +911,10 @@ S.modules.visualNovel=new function(){
 		O.type='textbox';
 		O.name=input;
 		
+		// Design defaults
+		const defaultBaseWaitTime=.03;
+		const defaultConstant=false;
+		
 		O.el=document.createElement('form');
 		O.el.className='m-vn-textbox';
 		O.el.dataset.name=input;
@@ -926,55 +930,50 @@ S.modules.visualNovel=new function(){
 			return true;
 		}
 		
-		O.content=function(input='NULL: No text was passed.'){
-			O.el.dataset.state='normal';
-			O.el.dataset.done='false';
+		O.content=function(input = 'NULL: No text was passed.'){
+			O.el.dataset.state = 'normal';
+			O.el.dataset.done = 'false';
 			
-			wait=true; // Assume we're waiting at the end time //XXX
+			wait = true; // Assume we're waiting at the end time //XXX
+			var additive; // Whether we're replacing or adding on to the text
 			
-			// If the line doesn't start with +, replace the text
-			if(input[0]!=='+'){
-				O.el.innerHTML='';
-				O.el.scrollTop=0;
+			// If the line starts with +, note we're adding and not replacing text
+			if(input[0] === '+'){
+				additive = true;
+				input = input.substr(1);
 			}
-			else input=input.substr(1);
 			
 			// STEP 2: Design the text//
 			
-			// Design defaults
-			const defaultBaseWaitTime=.03;
-			const defaultConstant=false;
-			
-			var charElementDefault=document.createElement('span');
-			
-			var charElement=document.createElement('span');
-			charElement.className='m-vn-letter-container';
-			var baseWaitTime=defaultBaseWaitTime;
-			var constant=defaultConstant;
+			var charElement = document.createElement('span');
+			charElement.className = 'm-vn-letter-container';
+			var baseWaitTime = defaultBaseWaitTime;
+			var constant = defaultConstant;
 			
 			// Tracks nested attributes
-			var nestedAttributes={
+			var nestedAttributes = {
 				speed:[]
 				,animation:[]
 			};
-
+			
 			// The total time we're waiting until x happens
-			var totalWait=0;
-			var fragment=document.createDocumentFragment();
-			var currentParent=fragment;
+			var totalWait = 0;
+			var fragment = document.createDocumentFragment();
+			var currentParent = fragment;
 			
-			var letters=''; // Have to save actual letters separately; special tags and such can mess with our calculations
+			var letters = ''; // Have to save actual letters separately; special tags and such can mess with our calculations
 			
-			var lastLetter=null;
+			var lastLetter = null;
 			
-			var l=input.length;
+			var l = input.length;
+			
 			// We check beyond the length of the text because that lets us place characters that allow text wrapping in Firefox
 			for(let i=0;i<=l;i++){
 				// If a > is at the end of a text line, continue automatically.
 				// Won't interfere with tags, no worries!
-				if(i==l-1 && input[i]==='>'){
-					wait=false; //XXX
-					continue;
+				if(i == l-1 && input[i]==='>'){
+					wait = false; //XXX
+					break;
 				}
 				
 				// If HTML
@@ -1152,11 +1151,8 @@ S.modules.visualNovel=new function(){
 					if(input[i]===' ' && !constant && i!==input.length){
 						var testLetter=letters.length-2;
 						
-						/*
-							Go back before the following:
-								" ' ~
-							That way sentences can end with those and still have a beat for the punctuation.
-						*/
+						// Go back before the following: " ' ~
+						// That way sentences can end with those and still have a beat for the punctuation.
 						while(/["'~]/.test(letters[testLetter])){
 							testLetter--;
 						}
@@ -1177,57 +1173,61 @@ S.modules.visualNovel=new function(){
 								// No punctuation found
 								break;
 						}
+						
+						/*letterLoop:
+						for(var testLetter = letters.length - 2; testLetter > 0; testLetter--){
+							switch(letters[testLetter]){
+								// Check the previous character; these ones don't count
+								case '"':
+								case "'":
+								case '~':
+									continue;
+									break;
+								case '.':
+								case '!':
+								case '?':
+								case ':':
+								case ';':
+								case '-':
+									waitTime *= 20;
+									break letterLoop;
+								case ',':
+									waitTime *= 10;
+									break letterLoop;
+								default:
+									// No punctuation found
+									break letterLoop;
+							}
+						}*/
 					}
 
 					// Make the char based on charElement
-					var thisChar=charElement.cloneNode(false);
+					var thisChar = charElement.cloneNode(false);
 					
-					let showChar=document.createElement('span')			// Display animation character (appear, shout, etc), parent to animChar
-					showChar.className='m-vn-letter';
-					let animChar=document.createElement('span')			// Perpetual animation character (singing, shaking...)
-					animChar.className='m-vn-letter-animation';
-					let hideChar=document.createElement('span');		// Hidden char for positioning
+					let showChar = document.createElement('span')			// Display animation character (appear, shout, etc), parent to animChar
+					showChar.className = 'm-vn-letter';
+					let animChar = document.createElement('span')			// Perpetual animation character (singing, shaking...)
+					animChar.className = 'm-vn-letter-animation';
+					let hideChar = document.createElement('span');		// Hidden char for positioning
 					hideChar.className='m-vn-letter-placeholder';
 					
 					// Spaces
 					// and Ending! (needs this to wrap lines correctly on Firefox)
-					if(input[i]===' ' || i===l){
-						thisChar.style.whiteSpace='pre-line';
-						hideChar.innerHTML=animChar.innerHTML=' <wbr>';
+					if(input[i] === ' ' || i === l){
+						thisChar.style.whiteSpace = 'pre-line';
+						hideChar.innerHTML=animChar.innerHTML = ' <wbr>';
 						
-						showChar.addEventListener('animationstart',function(event){
-							// If the animation ended on a child, don't continue! (animations are applied to children for text effects)
-							if(this!=event.target) return;
-							
-							// If the element's currently hidden (the animation that ended is for unhiding)
-							if(this.style.visibility!=='visible'){
-								this.style.visibility='visible';
-								
-								// If running to a spot, ignore all of this
-								if(runTo!==false || S.paused) return;
-								
-								// If the letter's below the textbox
-								if(this.parentNode.getBoundingClientRect().bottom>O.el.getBoundingClientRect().bottom){
-									O.el.scrollTop=this.parentNode.offsetTop+this.parentNode.offsetHeight-O.el.offsetHeight;
-								}
-								
-								// If the letter's above the textbox
-								if(this.parentNode.getBoundingClientRect().top<O.el.getBoundingClientRect().top){
-									O.el.scrollTop=this.parentNode.offsetTop;
-								}
-								
-							}
-						});
+						showChar.addEventListener('animationstart',letterAppear);
 					}else{
-						hideChar.innerText=animChar.innerText=input[i];
+						hideChar.innerText = animChar.innerText = input[i];
 					}
 					
 					// Set the display time here- but if we're paused, or running through the text with runTo, no delay!
-					if(!S.paused && runTo===false) showChar.style.animationDelay=totalWait+'s';
+					if(!S.paused && runTo === false) showChar.style.animationDelay=totalWait+'s';
 					
 					// Set animation timing for animChar, based on the type of animation
-					var animation=nestedAttributes.animation;
-					animation=animation[animation.length-1];
+					var animation = nestedAttributes.animation;
+					animation = animation[animation.length-1];
 					
 					if(!isNaN(animation)){
 						animChar.style.animationDelay=-(letters.length/parseFloat(animation))+'s';
@@ -1239,20 +1239,19 @@ S.modules.visualNovel=new function(){
 					thisChar.appendChild(hideChar);
 					currentParent.appendChild(thisChar);
 					
-					totalWait+=waitTime;
+					totalWait += waitTime;
 					
-					lastLetter=showChar;
+					lastLetter = showChar;
 				}
 			}
 			
-			lastLetter.addEventListener('animationstart',function(event){
-				if(this!==event.target) return;
-				
-				// console.log("RUN ANIMATION START");
-				O.el.dataset.done='true';
-				
-				junction();
-			});
+			lastLetter.addEventListener('animationstart',lastLetterAppear);
+			
+			// Replace the text if we're not additive
+			if(!additive){
+				O.el.innerHTML = '';
+				O.el.scrollTop = 0;
+			}
 			
 			// Add the chars to the textbox
 			O.el.appendChild(fragment);
@@ -1260,24 +1259,35 @@ S.modules.visualNovel=new function(){
 			return false;
 		}
 		
-		objectAddCommonFunctions(O);
-	}
-	/*
-	function lastLetterAppear(target){
-		if(this!==target) return;
+		function letterAppear(event){
+			// If the animation ended on a child, don't continue! (animations are applied to children for text effects)
+			if(this!=event.target) return;
+			
+			// If the element's currently hidden (the animation that ended is for unhiding)
+			if(this.style.visibility!=='visible'){
+				this.style.visibility='visible';
 				
-		console.log("RUN ANIMATION START");
-		this.dataset.done='true';
-		
-		// If we aren't waiting to continue, continue
-		if(!wait){ //XXX
-			M.run();
-		}else{
-			if(!O.el.querySelector('input')){
-				junction();
+				// If running to a spot, ignore all of this
+				if(runTo!==false || S.paused) return;
+				
+				// If the letter's below the textbox
+				if(this.parentNode.getBoundingClientRect().bottom>O.el.getBoundingClientRect().bottom){
+					O.el.scrollTop = this.parentNode.offsetTop + (this.parentNode.offsetHeight * 1.5) - O.el.offsetHeight;
+				}
 			}
 		}
-	}*/
+		
+		function lastLetterAppear(event){
+			if(this!==event.target) return;
+			
+			// console.log("RUN ANIMATION START");
+			O.el.dataset.done='true';
+			
+			junction();
+		}
+		
+		objectAddCommonFunctions(O);
+	}
 	
 	// What to do when we aren't sure whether to proceed automatically or wait for input
 	function junction(){
