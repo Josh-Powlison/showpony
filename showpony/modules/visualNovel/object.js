@@ -241,14 +241,14 @@ S.modules.visualNovel=new function(){
 						// Anything with a space we'll ignore; you should only have self-closing tags or closing tags at the end of the line
 						
 						// See if the line ends with an unescaped >; if so, don't add the line
-						if(M.lines[i][M.lines[i].length-1]==='>'){
+						if(M.lines[i][M.lines[i].length-1] === '>'){
 							//See if it's an ending tag
 							var test=document.createElement('div');
 							test.innerHTML=M.lines[i];
 							var text=test.innerText;
 							
 							//If it's not an ending tag
-							if(text[text.length-1]==='>'){
+							if(text[text.length-1] === '>'){
 								var skip=1;
 								var j=M.lines[i].length-2;
 								while(M.lines[i][j]==='\\'){
@@ -933,10 +933,6 @@ S.modules.visualNovel=new function(){
 		O.type='textbox';
 		O.name=input;
 		
-		// Design defaults
-		const defaultBaseWaitTime=.03;
-		const defaultConstant=false;
-		
 		O.el=document.createElement('form');
 		O.el.className='m-vn-textbox';
 		O.el.dataset.name=input;
@@ -952,46 +948,32 @@ S.modules.visualNovel=new function(){
 			return true;
 		}
 		
+		var charElement = document.createElement('span');
+		charElement.className = 'm-vn-letter-container';
+		
 		O.content=function(input = 'NULL: No text was passed.'){
 			O.el.dataset.state = 'normal';
 			O.el.dataset.done = 'false';
 			
 			wait = true; // Assume we're waiting at the end time //XXX
-			var additive; // Whether we're replacing or adding on to the text
 			
-			// If the line starts with +, note we're adding and not replacing text
-			if(input[0] === '+'){
-				additive = true;
-				input = input.substr(1);
-			}
-			
-			// STEP 2: Design the text//
-			
-			var charElement = document.createElement('span');
-			charElement.className = 'm-vn-letter-container';
-			var baseWaitTime = defaultBaseWaitTime;
-			var constant = defaultConstant;
-			
-			// Tracks nested attributes
-			var nestedAttributes = {
-				speed:[]
-				,animation:[]
-			};
-			
-			// The total time we're waiting until x happens
-			var totalWait = 0;
 			var fragment = document.createDocumentFragment();
 			var currentParent = fragment;
-			
+			var totalWait = 0;
 			var letters = ''; // Have to save actual letters separately; special tags and such can mess with our calculations
+			
+			// Values for change; the first value is the default
+			var baseWaitTime	= [.03];
+			var constant		= [false];
+			var animation		= [0];
 			
 			var l = input.length;
 			
-			// We check beyond the length of the text because that lets us place characters that allow text wrapping in Firefox
-			for(let i=0;i<=l;i++){
+			// We check beyond the length of the text because that lets us place characters that allow text wrapping in Firefox; if it starts with '+' we skip that character though
+			for(let i = ((input[0] === '+') ? 1 : 0); i <= l; i++){
 				// If a > is at the end of a text line, continue automatically.
 				// Won't interfere with tags, no worries!
-				if(i == l-1 && input[i]==='>'){
+				if(i == l-1 && input[i] === '>'){
 					wait = false; //XXX
 					continue;
 				}
@@ -1015,22 +997,21 @@ S.modules.visualNovel=new function(){
 						switch(values.substr(1)){
 							case 'animation':
 								// Revert the attributes to their previous values
-								var attributes=nestedAttributes.animation.pop();
+								animation.pop();
 								break;
 							case 'speed':
 								// Revert the attributes to their previous values
-								var attributes=nestedAttributes.speed.pop();
-								baseWaitTime=attributes.waitTime;
-								constant=attributes.constant;
+								baseWaitTime.pop();
+								constant.pop();
 								break;
 							default:
 								// If the parent doesn't have a parent (it's top-level)
-								if(currentParent.parentElement==null){
+								if(currentParent.parentElement == null){
 									fragment.appendChild(currentParent);
-									currentParent=fragment;
+									currentParent = fragment;
 								// If a parent element exists, it's the new parent
-								}else{
-									currentParent=currentParent.parentElement;
+								} else {
+									currentParent = currentParent.parentElement;
 								}
 								break;
 						}
@@ -1053,50 +1034,46 @@ S.modules.visualNovel=new function(){
 						switch(tag){
 							case 'animation':
 								if(attributes[0][1]==='offset'){
-									nestedAttributes.animation.push(parseFloat(attributes[0][3]));
+									animation.push(parseFloat(attributes[0][3]));
 								}
 								break;
 							case 'speed':
-								// Save the previous speed values
-								nestedAttributes.speed.push({
-									constant:constant
-									,waitTime:baseWaitTime
-								});
-							
-								var setConstant=false;
-								var setRate=null;
-								var setBaseTime=null;
+								var setConstant = false;
+								var setRate = null;
+								var setBaseTime = null;
 								for(let ii=0;ii<attributes.length;ii++){
-									if(attributes[ii][4]) setConstant=true;
+									if(attributes[ii][4]) setConstant = true;
 									else{
 										switch(attributes[ii][1]){
 											case 'constant':
-												setConstant=(attributes[ii][3]==='false' ? false : true);
+												setConstant = (attributes[ii][3]==='false' ? false : true);
 												break;
 											case 'rate':
-												setRate=attributes[ii][3];
+												setRate = attributes[ii][3];
 												break;
 											case 'basetime':
-												setBaseTime=attributes[ii][3];
+												setBaseTime = attributes[ii][3];
 												break;
 										}
 									}
 								}
 								
-								constant=setConstant;
+								var setWaitTime = baseWaitTime[baseWaitTime.length-1];
 								
 								if(setBaseTime!==null){
-									if(setBaseTime==='default') baseWaitTime=defaultBaseWaitTime;
-									else baseWaitTime=parseFloat(setBaseTime);
+									if(setBaseTime==='default') setWaitTime = defaultBaseWaitTime;
+									else setWaitTime=parseFloat(setBaseTime);
 								}
 								
 								if(setRate!==null){
-									baseWaitTime*=setRate;
+									setWaitTime*=setRate;
 								}
 								
+								constant.push(setConstant);
+								baseWaitTime.push(setWaitTime);
 								break;
 							case 'br':
-								var lineBreak=document.createElement('span');
+								var lineBreak = document.createElement('span');
 								lineBreak.style.whiteSpace='pre-line';
 								lineBreak.innerHTML=' <wbr>';
 								currentParent.appendChild(lineBreak);
@@ -1160,13 +1137,13 @@ S.modules.visualNovel=new function(){
 				// If letters
 				}else{
 					// Escape character
-					if(input[i] === '\\' && i+1<input.length) i++;
+					if(input[i] === '\\' && i + 1 < input.length) i++;
 					
-					var waitTime = baseWaitTime;
+					var waitTime = baseWaitTime[baseWaitTime.length-1];
 					letters += input[i];
 				
 					// Handle punctuation- at spaces we check, if constant isn't true
-					if(input[i]===' ' && !constant && i!==input.length){
+					if(input[i]===' ' && !constant[constant.length-1] && i!==input.length){
 						letterLoop:
 						for(var testLetter = letters.length - 2; testLetter > 0; testLetter--){
 							switch(letters[testLetter]){
@@ -1196,11 +1173,11 @@ S.modules.visualNovel=new function(){
 
 					// Make the char based on charElement
 					var charContainer = charElement.cloneNode(false);
-					let charAppearAnimation = document.createElement('span')		// Display animation character (appear, shout, etc), parent to charPerpetualAnimation
+					var charAppearAnimation = document.createElement('span')		// Display animation character (appear, shout, etc), parent to charPerpetualAnimation
 					charAppearAnimation.className = 'm-vn-letter';
-					let charPositioning = document.createElement('span');		// Hidden char for positioning
+					var charPositioning = document.createElement('span');		// Hidden char for positioning
 					charPositioning.className='m-vn-letter-placeholder';
-					let charPerpetualAnimation = document.createElement('span') // Perpetual animation character (singing, shaking...)
+					var charPerpetualAnimation = document.createElement('span') // Perpetual animation character (singing, shaking...)
 					charPerpetualAnimation.className = 'm-vn-letter-animation';
 					
 					// Set the display time here- but if we're paused, or running through the text with runTo, no delay!
@@ -1213,11 +1190,10 @@ S.modules.visualNovel=new function(){
 					currentParent.appendChild(charContainer);
 					
 					// Set animation timing for charPerpetualAnimation, based on the type of animation
-					var animation = nestedAttributes.animation;
-					animation = animation[animation.length-1];
+					var thisAnimation = animation[animation.length-1];
 					
-					if(!isNaN(animation)){
-						charPerpetualAnimation.style.animationDelay=-(letters.length/parseFloat(animation))+'s';
+					if(!isNaN(thisAnimation)){
+						charPerpetualAnimation.style.animationDelay=-(letters.length/parseFloat(thisAnimation))+'s';
 					}
 					
 					totalWait += waitTime;
@@ -1243,10 +1219,9 @@ S.modules.visualNovel=new function(){
 				}
 			}
 			
-			// Replace the text if we're not additive
-			if(!additive){
-				O.el.innerHTML = '';
-				O.el.scrollTop = 0;
+			// Remove old text if we aren't appending
+			if(input[0] !== '+'){
+				while(O.el.firstChild) O.el.removeChild(O.el.firstChild);
 			}
 			
 			// Add the chars to the textbox
