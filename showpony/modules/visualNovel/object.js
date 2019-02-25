@@ -698,7 +698,7 @@ S.modules.visualNovel=new function(){
 	function loadingTracker(increase=-1){
 		if(increase.target) increase=-1;
 		M.loading+=increase;
-
+		
 		if(M.loading>0){
 			content.classList.add('s-loading');
 		}else{
@@ -740,8 +740,9 @@ S.modules.visualNovel=new function(){
 			
 			O.el.dataset.file=name;
 			
-			// loadingTracker(1);
-			O.el.src='<?php echo STORIES_PATH; ?>resources/'+O.filepath+input;
+			// Can go to the root of the website, or from the current path
+			if(name[0]==='/') O.el.src='<?php echo STORIES_PATH; ?>resources'+input;
+			else O.el.src='<?php echo STORIES_PATH; ?>resources/'+O.filepath+input;
 			
 			return true;
 		}
