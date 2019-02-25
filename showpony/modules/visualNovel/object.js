@@ -314,19 +314,8 @@ S.modules.visualNovel=new function(){
 		continueNotice.remove();
 		timer.stop();
 
-		while(M.currentLine<M.lines.length){
-			<?php if(DEBUG) {
-				// echo "console.log(M.lines[M.currentLine]);
-				// console.time('Line Time');";
-			}
-			?>
-			
+		while(M.currentLine < M.lines.length){
 			var next = M.readLine(M.currentLine);
-			
-			<?php if(DEBUG) {
-				// echo "console.timeEnd('Line Time');";
-			}
-			?>
 			
 			if(next) M.currentLine++;
 			else break;
@@ -394,10 +383,10 @@ S.modules.visualNovel=new function(){
 		if(objects[component]) var type=objects[component].type;
 		else{
 			var type='character';
-			if(/\.mp3/.test(parameter)) type='audio';
+			if(/\.mp3/i.test(parameter)) type='audio';
 			
-			if(component==='textbox') type='textbox';
-			else if(component==='engine') type='engine';
+			if(component === 'textbox') type='textbox';
+			else if(component === 'engine') type='engine';
 		}
 		
 		// Creating a new element using the engine command
@@ -406,14 +395,16 @@ S.modules.visualNovel=new function(){
 				case 'audio':
 				case 'textbox':
 				case 'character':
-					component=parameter;
-					type=command;
-					command=null;
+					component = parameter;
+					type = command;
+					command = null;
 					break;
 				default:
 					break;
 			}
 		}
+		
+		if(command === 'go') M.go(parameter);
 		
 		// Run through if we're running to a point; if we're there or beyond though, stop running through
 		if(runTo!==false && line>=runTo){
@@ -502,47 +493,45 @@ S.modules.visualNovel=new function(){
 			switch(command){
 				case 'content':
 					// Append textbox content if it starts with a "+" this time
-					if(target[component].type==='textbox'
-						&& parameter[0]==='+'
+					if(target[component].type === 'textbox'
+						&& parameter[0] === '+'
 					){
 						target[component][command]+=parameter.replace(/^\+/,'');
 						
 						return true;
 					}
-					
-					// Get rid of any empty commands
-					delete target[component].empty;
-					
 					break;
+				
 				case 'remove':
 					delete target[component];
 					return true;
 					break;
+					
 				case 'empty':
 					delete target[component].content;
+					return true;
 					break;
+					
 				case 'play':
-					delete target[component].pause;
-					delete target[component].stop;
-					break;
 				case 'pause':
-					delete target[component].play;
-					delete target[component].stop;
-					break;
 				case 'stop':
 					delete target[component].play;
 					delete target[component].pause;
+					delete target[component].stop;
 					break;
+					
 				case 'go':
 					// Go to the right line
 					return true;
 					break;
+					
 				case 'end':
 				case 'event':
 				case 'wait':
 					// Don't do anything
 					return true;
 					break;
+					
 				case 'style':
 					if(!target[component].style) target[component].style='';
 				
@@ -598,22 +587,22 @@ S.modules.visualNovel=new function(){
 		return isNaN(input) ? input : parseFloat(input);
 	}
 	
-	M.go=function(input){
-		M.currentLine=M.lines.indexOf(input);
+	M.go = function(input){
+		M.currentLine = M.lines.indexOf(input);
 		return true;
 	}
 	
-	M.end=function(){
+	M.end = function(){
 		S.to({file:'+1'});
 		return false;
 	}
 	
-	M.event=function(input){
+	M.event = function(input){
 		S.window.dispatchEvent(new CustomEvent(input));
 		return true;
 	}
 
-	M.wait=function(input){
+	M.wait = function(input){
 		// Timed wait
 		if(input !== null){
 			// If we're skipping through, go to the next VN line

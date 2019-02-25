@@ -89,8 +89,7 @@ engine.wait		1s
 [?james]
 james	pose-1,eyes/smile00,mouth/neutral01
 		You're my roommate's replacement, huh?
-
-[?james]
+		
 james	pose-1,eyes/grin00,mouth/smile01
 		Don't worry, you don't have much to live up to. Just don't use heroin like the last guy,>
 
@@ -105,6 +104,7 @@ engine.wait		.1s
 // In the demo, we don't need the static or cg anymore
 static.remove
 mother.remove
+
 		+ and you'll be fine!
 		
 james	pose-1,eyes/smile00,mouth/grin00
