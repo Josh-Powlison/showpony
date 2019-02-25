@@ -168,13 +168,13 @@ S.modules.visualNovel=new function(){
 				else keyframeSelect=keyframes[keyframeSelect];
 				
 				// If this is the current keyframe, resolve
-				// if(keyframeSelect===M.currentLine){
-					// loadingTracker();
-					// resolve({file:file,time:time});
-					// return;
-				// }
+				if(keyframeSelect === M.currentLine){
+					content.classList.remove('s-loading');
+					resolve({file:file,time:time});
+					return;
+				}
 				
-				runTo=keyframeSelect;
+				runTo = keyframeSelect;
 				
 				content.classList.remove('s-loading');
 				M.run(0);
