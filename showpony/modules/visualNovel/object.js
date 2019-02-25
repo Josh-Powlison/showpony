@@ -973,7 +973,7 @@ S.modules.visualNovel=new function(){
 				// Won't interfere with tags, no worries!
 				if(i == l-1 && input[i]==='>'){
 					wait = false; //XXX
-					break;
+					continue;
 				}
 				
 				// If HTML
