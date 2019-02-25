@@ -963,8 +963,6 @@ S.modules.visualNovel=new function(){
 			
 			var letters = ''; // Have to save actual letters separately; special tags and such can mess with our calculations
 			
-			var lastLetter = null;
-			
 			var l = input.length;
 			
 			// We check beyond the length of the text because that lets us place characters that allow text wrapping in Firefox
@@ -1142,39 +1140,14 @@ S.modules.visualNovel=new function(){
 				// If letters
 				}else{
 					// Escape character
-					if(input[i]==='\\' && i+1<input.length) i++;
+					if(input[i] === '\\' && i+1<input.length) i++;
 					
-					var waitTime=baseWaitTime;
-					letters+=input[i];
+					var waitTime = baseWaitTime;
+					letters += input[i];
 				
 					// Handle punctuation- at spaces we check, if constant isn't true
 					if(input[i]===' ' && !constant && i!==input.length){
-						var testLetter=letters.length-2;
-						
-						// Go back before the following: " ' ~
-						// That way sentences can end with those and still have a beat for the punctuation.
-						while(/["'~]/.test(letters[testLetter])){
-							testLetter--;
-						}
-						
-						switch(letters[testLetter]){
-							case '.':
-							case '!':
-							case '?':
-							case ':':
-							case ';':
-							case '-':
-								waitTime*=20;
-								break;
-							case ',':
-								waitTime*=10;
-								break;
-							default:
-								// No punctuation found
-								break;
-						}
-						
-						/*letterLoop:
+						letterLoop:
 						for(var testLetter = letters.length - 2; testLetter > 0; testLetter--){
 							switch(letters[testLetter]){
 								// Check the previous character; these ones don't count
@@ -1198,32 +1171,26 @@ S.modules.visualNovel=new function(){
 									// No punctuation found
 									break letterLoop;
 							}
-						}*/
+						}
 					}
 
 					// Make the char based on charElement
 					var thisChar = charElement.cloneNode(false);
-					
 					let showChar = document.createElement('span')			// Display animation character (appear, shout, etc), parent to animChar
 					showChar.className = 'm-vn-letter';
-					let animChar = document.createElement('span')			// Perpetual animation character (singing, shaking...)
-					animChar.className = 'm-vn-letter-animation';
 					let hideChar = document.createElement('span');		// Hidden char for positioning
 					hideChar.className='m-vn-letter-placeholder';
-					
-					// Spaces
-					// and Ending! (needs this to wrap lines correctly on Firefox)
-					if(input[i] === ' ' || i === l){
-						thisChar.style.whiteSpace = 'pre-line';
-						hideChar.innerHTML=animChar.innerHTML = ' <wbr>';
-						
-						showChar.addEventListener('animationstart',letterAppear);
-					}else{
-						hideChar.innerText = animChar.innerText = input[i];
-					}
+					let animChar = document.createElement('span') // Perpetual animation character (singing, shaking...)
+					animChar.className = 'm-vn-letter-animation';
 					
 					// Set the display time here- but if we're paused, or running through the text with runTo, no delay!
-					if(!S.paused && runTo === false) showChar.style.animationDelay=totalWait+'s';
+					if(!S.paused && runTo === false) showChar.style.animationDelay = totalWait+'s';
+					
+					// Build the char and add it to the parent (which may be a document fragment)
+					showChar.appendChild(animChar);
+					thisChar.appendChild(showChar);
+					thisChar.appendChild(hideChar);
+					currentParent.appendChild(thisChar);
 					
 					// Set animation timing for animChar, based on the type of animation
 					var animation = nestedAttributes.animation;
@@ -1233,19 +1200,28 @@ S.modules.visualNovel=new function(){
 						animChar.style.animationDelay=-(letters.length/parseFloat(animation))+'s';
 					}
 					
-					// Build the char and add it to the parent (which may be a document fragment)
-					showChar.appendChild(animChar);
-					thisChar.appendChild(showChar);
-					thisChar.appendChild(hideChar);
-					currentParent.appendChild(thisChar);
-					
 					totalWait += waitTime;
 					
-					lastLetter = showChar;
+					// Spaces
+					// and Ending! (needs this to wrap lines correctly on Firefox)
+					if(input[i] === ' ' || i === l){
+						thisChar.style.whiteSpace = 'pre-line';
+						hideChar.innerHTML= ' <wbr>';
+						
+						if(runTo === false) showChar.addEventListener('animationstart', spaceAppear);
+						else showChar.style.visibility = 'visible';
+					
+						// Last character
+						if(i === l){
+							showChar.addEventListener('animationstart',lastLetterAppear);
+						}
+					
+					// Regular characters
+					}else{
+						hideChar.innerText = animChar.innerText = input[i];
+					}
 				}
 			}
-			
-			lastLetter.addEventListener('animationstart',lastLetterAppear);
 			
 			// Replace the text if we're not additive
 			if(!additive){
@@ -1259,21 +1235,12 @@ S.modules.visualNovel=new function(){
 			return false;
 		}
 		
-		function letterAppear(event){
-			// If the animation ended on a child, don't continue! (animations are applied to children for text effects)
-			if(this!=event.target) return;
+		function spaceAppear(event){
+			if(this != event.target) return;
 			
-			// If the element's currently hidden (the animation that ended is for unhiding)
-			if(this.style.visibility!=='visible'){
-				this.style.visibility='visible';
-				
-				// If running to a spot, ignore all of this
-				if(runTo!==false || S.paused) return;
-				
-				// If the letter's below the textbox
-				if(this.parentNode.getBoundingClientRect().bottom>O.el.getBoundingClientRect().bottom){
-					O.el.scrollTop = this.parentNode.offsetTop + (this.parentNode.offsetHeight * 1.5) - O.el.offsetHeight;
-				}
+			// If the letter's below the textbox
+			if(runTo === false && !S.paused && this.parentNode.getBoundingClientRect().bottom > O.el.getBoundingClientRect().bottom){
+				O.el.scrollTop = this.parentNode.offsetTop + (this.parentNode.offsetHeight * 1.5) - O.el.offsetHeight;
 			}
 		}
 		
