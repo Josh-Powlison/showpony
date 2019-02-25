@@ -130,7 +130,7 @@
 	position:absolute;
 	
 	/* You can add a transition here to have images fade in and out */
-	/* transition: opacity .1s; */
+	/* transition: opacity .2s; */
 	
 	object-fit:contain;
 }
