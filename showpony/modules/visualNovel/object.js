@@ -878,23 +878,23 @@ S.modules.visualNovel=new function(){
 					
 					O.el.children[layer].appendChild(img);
 					
-					if(preloading==='complete') img.style.opacity=0;
+					if(preloading==='complete') img.dataset.state = 'hidden';
 				}
 				
 				if(preloading!=='complete') continue;
 				
 				// Set the matching images' opacity to 1, and all the others to 0 (visibility:hidden, display:none would result in flashing images on some browsers)
 				var images=O.el.children[layer].children;
-				for(let ii=0;ii<images.length;ii++){
+				for(var ii=0; ii<images.length; ii++){
 					if(images[ii].dataset.file===image){
-						 images[ii].style.opacity=1;
+						 images[ii].dataset.state = 'visible';
 					}else{
-						images[ii].style.opacity=0;
+						images[ii].dataset.state = 'hidden';
 					}
 				}
 			}
 			
-			if(preloading='complete') return true;
+			if(preloading == 'complete') return true;
 		}
 		
 		function loadingError(e){
@@ -990,9 +990,7 @@ S.modules.visualNovel=new function(){
 					
 					// We're closing the element
 					if(values[0]==='/'){
-						var tag=values.substr(1);
-						
-						switch(tag){
+						switch(values.substr(1)){
 							case 'animation':
 								// Revert the attributes to their previous values
 								var attributes=nestedAttributes.animation.pop();
@@ -1175,29 +1173,29 @@ S.modules.visualNovel=new function(){
 					}
 
 					// Make the char based on charElement
-					var thisChar = charElement.cloneNode(false);
-					let showChar = document.createElement('span')			// Display animation character (appear, shout, etc), parent to animChar
-					showChar.className = 'm-vn-letter';
-					let hideChar = document.createElement('span');		// Hidden char for positioning
-					hideChar.className='m-vn-letter-placeholder';
-					let animChar = document.createElement('span') // Perpetual animation character (singing, shaking...)
-					animChar.className = 'm-vn-letter-animation';
+					var charContainer = charElement.cloneNode(false);
+					let charAppearAnimation = document.createElement('span')		// Display animation character (appear, shout, etc), parent to charPerpetualAnimation
+					charAppearAnimation.className = 'm-vn-letter';
+					let charPositioning = document.createElement('span');		// Hidden char for positioning
+					charPositioning.className='m-vn-letter-placeholder';
+					let charPerpetualAnimation = document.createElement('span') // Perpetual animation character (singing, shaking...)
+					charPerpetualAnimation.className = 'm-vn-letter-animation';
 					
 					// Set the display time here- but if we're paused, or running through the text with runTo, no delay!
-					if(!S.paused && runTo === false) showChar.style.animationDelay = totalWait+'s';
+					if(!S.paused && runTo === false) charAppearAnimation.style.animationDelay = totalWait+'s';
 					
 					// Build the char and add it to the parent (which may be a document fragment)
-					showChar.appendChild(animChar);
-					thisChar.appendChild(showChar);
-					thisChar.appendChild(hideChar);
-					currentParent.appendChild(thisChar);
+					charAppearAnimation.appendChild(charPerpetualAnimation);
+					charContainer.appendChild(charAppearAnimation);
+					charContainer.appendChild(charPositioning);
+					currentParent.appendChild(charContainer);
 					
-					// Set animation timing for animChar, based on the type of animation
+					// Set animation timing for charPerpetualAnimation, based on the type of animation
 					var animation = nestedAttributes.animation;
 					animation = animation[animation.length-1];
 					
 					if(!isNaN(animation)){
-						animChar.style.animationDelay=-(letters.length/parseFloat(animation))+'s';
+						charPerpetualAnimation.style.animationDelay=-(letters.length/parseFloat(animation))+'s';
 					}
 					
 					totalWait += waitTime;
@@ -1205,20 +1203,20 @@ S.modules.visualNovel=new function(){
 					// Spaces
 					// and Ending! (needs this to wrap lines correctly on Firefox)
 					if(input[i] === ' ' || i === l){
-						thisChar.style.whiteSpace = 'pre-line';
-						hideChar.innerHTML= ' <wbr>';
+						charContainer.style.whiteSpace = 'pre-line';
+						charPositioning.innerHTML= ' <wbr>';
 						
-						if(runTo === false) showChar.addEventListener('animationstart', spaceAppear);
-						else showChar.style.visibility = 'visible';
+						if(runTo === false) charAppearAnimation.addEventListener('animationstart', spaceAppear);
+						else charAppearAnimation.style.visibility = 'visible';
 					
 						// Last character
 						if(i === l){
-							showChar.addEventListener('animationstart',lastLetterAppear);
+							charAppearAnimation.addEventListener('animationstart',lastLetterAppear);
 						}
 					
 					// Regular characters
 					}else{
-						hideChar.innerText = animChar.innerText = input[i];
+						charPositioning.innerText = charPerpetualAnimation.innerText = input[i];
 					}
 				}
 			}
@@ -1247,7 +1245,6 @@ S.modules.visualNovel=new function(){
 		function lastLetterAppear(event){
 			if(this!==event.target) return;
 			
-			// console.log("RUN ANIMATION START");
 			O.el.dataset.done='true';
 			
 			junction();

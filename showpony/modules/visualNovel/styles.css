@@ -129,9 +129,18 @@
 	height:100%;
 	position:absolute;
 	
-	opacity:1;
+	/* You can add a transition here to have images fade in and out */
+	/* transition: opacity .1s; */
 	
 	object-fit:contain;
+}
+
+.m-vn-character-image[data-state="visible"]{
+	opacity:1;
+}
+
+.m-vn-character-image[data-state="hidden"]{
+	opacity:0;
 }
 
 /* Other */
