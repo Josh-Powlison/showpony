@@ -312,17 +312,15 @@ S.modules.visualNovel=new function(){
 		}
 	}
 	
-	var operations={
-		'='		:(a,b)=>	b
-		,'+'	:(a,b)=>	a+b
-		,'-'	:(a,b)=>	a-b
-		,'=='	:(a,b)=>	a==b
-		,'<'	:(a,b)=>	a<b
-		,'>'	:(a,b)=>	a>b
-		,'<='	:(a,b)=>	a<=b
-		,'>='	:(a,b)=>	a>=b
-		,'!'	:(a,b)=>	a!=b
-	};
+	M['=']	= function(a,b){return b;}
+	M['+']	= function(a,b){return a + b;}
+	M['-']	= function(a,b){return a - b;}
+	M['==']	= function(a,b){return a == b;}
+	M['<']	= function(a,b){return a < b;}
+	M['>']	= function(a,b){return a > b;}
+	M['<=']	= function(a,b){return a <= b;}
+	M['>=']	= function(a,b){return a >= b;}
+	M['!=']	= function(a,b){return a != b;}
 	
 	/// TO DO: stop filling up the stack so high; instead, keep running readLine() while it returns true. This way we aren't increasing the stack so heavily
 	M.run = function(line = M.currentLine + 1){
@@ -330,41 +328,33 @@ S.modules.visualNovel=new function(){
 		continueNotice.remove();
 		M.currentLine = line;
 
-		while(M.currentLine < M.lines.length){
-			var next = M.readLine(M.currentLine);
-			
-			if(next) M.currentLine++;
-			else break;
+		for(M.currentLine; M.currentLine < M.lines.length; M.currentLine++){
+			if(!M.readLine(M.currentLine, M.lines[M.currentLine])) break;
 		}
 
-		if(M.currentLine>=M.lines.length) S.to({file:'+1'});
+		if(M.currentLine >= M.lines.length) S.to({file:'+1'});
 	}
 	
-	M.readLine=function(line){
-		// Skip comments
-		if(/^\/\//.test(M.lines[line])){
-			return true;
-		}
-		
-		var vals=M.lines[line];
-		
+	M.readLine = function(lineNumber, text){
 		// Replace all variables (including variables inside variables) with the right component
 		var match;
-		while(match=/[^\[]+(?=\])/g.exec(vals)) vals=vals.replace('['+match[0]+']',M.variables[match[0]]);
+		while(match = /[^\[]+(?=\])/g.exec(text)) text = text.replace('[' + match[0] + ']', M.variables[match[0]]);
 		
-		vals=/(^[^\t\.\+\-=<>!]+)?(?:\.([^\t]+)|([+\-=<>!]+))?\t*(.+$)?/.exec(vals);
+		text = /(^[^\t\.\+\-=<>!]+)?\.?([^\t]+|[+\-=<>!]+)?\t*(.+$)?/.exec(text);
 		
-		var component	=typeof(vals[1])!=='undefined' ? vals[1] : 'textbox';
-		var command		=typeof(vals[2])!=='undefined' ? vals[2] : 'content';
-		var operation	=typeof(vals[3])!=='undefined' ? vals[3] : null;
-		var parameter	=typeof(vals[4])!=='undefined' ? vals[4] : null;
+		// Skip comments
+		if(/^\t*\/\//.test(text)) return true;
+		
+		var component	= typeof(text[1]) !== 'undefined' ? text[1] : 'textbox';
+		var command		= typeof(text[2]) !== 'undefined' ? text[2] : 'content';
+		var parameter	= typeof(text[3]) !== 'undefined' ? text[3] : null;
 		
 		// Operations
-		switch(operation){
+		switch(command){
 			case '=':
 			case '+':
 			case '-':
-				M.variables[component]=operations[operation](
+				M.variables[component] = M[command](
 					ifParse(M.variables[component])
 					,ifParse(parameter)
 				);
@@ -377,36 +367,28 @@ S.modules.visualNovel=new function(){
 			case '<=':
 			case '>=':
 			case '!':
-				// If returns true, read the next line
-				if(operations[operation](
-					ifParse(M.variables[component])
-					,ifParse(parameter)
-				)) return true;
-				// Otherwise, skip it
-				else{
-					line+=1;
-					return true;
-				}
+				// If returns false, skip the next line
+				if(!M[command](M.variables[component],parameter)) M.currentLine++;
 				
-				return;
+				return true;
 				break;
 			default:
-				// Continue; no operation found
+				// Continue; no operation command found
 				break;
 		}
 		
 		// Determine type
-		if(objects[component]) var type=objects[component].type;
+		if(objects[component]) var type = objects[component].type;
 		else{
-			var type='character';
-			if(/\.mp3/i.test(parameter)) type='audio';
+			var type = 'character';
+			if(/\.mp3/i.test(parameter)) type = 'audio';
 			
-			if(component === 'textbox') type='textbox';
-			else if(component === 'engine') type='engine';
+			if(component === 'textbox') type = 'textbox';
+			else if(component === 'engine') type = 'engine';
 		}
 		
 		// Creating a new element using the engine command
-		if(type==='engine'){
+		if(type === 'engine'){
 			switch(command){
 				case 'audio':
 				case 'textbox':
@@ -426,7 +408,7 @@ S.modules.visualNovel=new function(){
 		}
 		
 		// Run through if we're running to a point; if we're there or beyond though, stop running through
-		if(runTo!==false && line>=runTo){
+		if(runTo !== false && lineNumber >= runTo){
 			
 			loadingTracker(1);
 			
@@ -574,8 +556,8 @@ S.modules.visualNovel=new function(){
 		}
 		
 		// Update the scrubbar if the frame we're on is a keyframe
-		if(runTo===false && keyframes.includes(line)){
-			M.currentTime=(keyframes.indexOf(line)/keyframes.length)*S.files[M.currentFile].duration;
+		if(runTo===false && keyframes.includes(lineNumber)){
+			M.currentTime=(keyframes.indexOf(lineNumber)/keyframes.length)*S.files[M.currentFile].duration;
 			timeUpdate();
 		}
 		
