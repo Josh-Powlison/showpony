@@ -68,6 +68,26 @@ require 'get-file-list.php';
 // Pass any echoed statements or errors to the response object
 $debugMessages = ob_get_clean();
 
+// Can pass 'export' to get to create a loadable file instead of running PHP every time
+if(!empty($_GET['export'])){
+	ob_start();
+	echo '/*
+	
+	Showpony Export on ',date('D, d M Y H:i:s'),'
+	
+	This export does not have the following features:
+		- Automatically releasing files based on date
+		- Connecting to databases for server-based save files or data
+		- Multilingual or subtitle support
+	
+	This export is intended for a static presentation of this story.
+	
+	THIS FEATURE IS NOT RECOMMENDED. It is provided for desktop applications or situations where you do not have consistent access to PHP.
+	
+*/
+';
+}
+
 header('Content-type: application/javascript');
 ?>'use strict';
 
@@ -1141,7 +1161,7 @@ const supportedLanguages=<?php
 	echo json_encode($languages);
 ?>;
 
-if(supportedLanguages.length>1){
+if(<?php if(!empty($_GET['export'])) echo 'false || '; ?>supportedLanguages.length>1){
 	function toggleLanguage(){
 		// Ignore clicking on same button again
 		if(S.currentLanguage===this.dataset.value) return;
@@ -1172,7 +1192,7 @@ if(supportedLanguages.length>1){
 	S.window.querySelector('.s-button-language').remove();
 }
 
-if(S.supportedSubtitles.length>0){
+if(<?php if(!empty($_GET['export'])) echo 'false || '; ?>S.supportedSubtitles.length>0){
 	function toggleSubtitle(){
 		// Remove selected class from previous selected item
 		var previous=S.window.querySelector('.s-popup-subtitles .s-selected');
@@ -1767,3 +1787,9 @@ S.window.parentNode.dispatchEvent(
 ///// With new admin panel, we just reload the entire Showpony- this avoids risk of any bugs with AJAX vs reality and the like
 
 }();
+
+<?php
+
+if(!empty($_GET['export'])) file_put_contents('showpony-export.js',ob_get_clean());
+
+?>
