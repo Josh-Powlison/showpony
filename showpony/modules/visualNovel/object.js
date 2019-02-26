@@ -377,6 +377,11 @@ S.modules.visualNovel=new function(){
 				break;
 		}
 		
+		if(command === 'go'){
+			M.go(parameter);
+			return true;
+		}
+		
 		// Determine type
 		if(objects[component]) var type = objects[component].type;
 		else{
@@ -402,15 +407,10 @@ S.modules.visualNovel=new function(){
 			}
 		}
 		
-		if(command === 'go'){
-			M.go(parameter);
-			return true;
-		}
-		
 		// Run through if we're running to a point; if we're there or beyond though, stop running through
 		if(runTo !== false && lineNumber >= runTo){
 			
-			loadingTracker(1);
+			M.loading++;
 			
 			// Reset the engine and delete unnecessary engine target info
 			M.style(target.engine ? target.engine.style : null);
@@ -472,7 +472,7 @@ S.modules.visualNovel=new function(){
 			runTo=false;
 			
 			M.window.offsetHeight; // Trigger reflow to flush CSS changes
-			loadingTracker();
+			M.loading--;
 		}
 		
 		// If we're running through to a point, add the info to the target
@@ -694,23 +694,12 @@ S.modules.visualNovel=new function(){
 		});
 	}
 	
-	function loadingTracker(increase=-1){
-		if(increase.target) increase=-1;
-		M.loading+=increase;
-		
-		if(M.loading>0){
-			content.classList.add('s-loading');
-		}else{
-			content.classList.remove('s-loading');
-		}
-	}
-	
 	// Read window as "engine" object
-	M.type='engine';
+	M.type = 'engine';
 	
-	M.el=M.window;
-	M.window.dataset.name='engine';
-	M.name='engine';
+	M.el = M.window;
+	M.window.dataset.name = 'engine';
+	M.name = 'engine';
 	
 	objectAddCommonFunctions(M);
 	
@@ -855,8 +844,8 @@ S.modules.visualNovel=new function(){
 					img.dataset.file = image;
 					img.dataset.state = 'hidden';
 					
-					loadingTracker(1);
-					img.addEventListener('load',loadingTracker);
+					M.loading++;
+					img.addEventListener('load',loadingSuccess);
 					img.addEventListener('error',loadingError);
 					
 					// Can go to the root of the website, or from the current path
@@ -878,8 +867,12 @@ S.modules.visualNovel=new function(){
 			return true;
 		}
 		
+		function loadingSuccess(e){
+			M.loading--;
+		}
+		
 		function loadingError(e){
-			loadingTracker();
+			M.loading--;
 			S.notice('Error loading ' + e.target.dataset.file);
 		}
 		
