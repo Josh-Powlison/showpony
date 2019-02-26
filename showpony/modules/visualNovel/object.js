@@ -106,47 +106,30 @@ S.modules.visualNovel=new function(){
 		else S.to({time:0});
 	}
 	
+	var skipping = false;
+	
 	M.progress = function(){
 		// Finish all animations
-		for(var name in objects){
-			objects[name].el.dispatchEvent(new Event('animationend'));
-		}
-		loadingTracker(1);
-		M.window.offsetHeight; // Trigger reflow to flush CSS changes
-		loadingTracker();
+		for(var name in objects) objects[name].el.dispatchEvent(new Event('animationend'));
 		
-		// If a continue notice exists, continue!
-		if(M.window.querySelector('.m-vn-continue')){
-			M.run();
-			return;
+		// If a continue notice exists, or if a timer was going, continue
+		if(M.window.querySelector('.m-vn-continue') || timer.remaining > 0){
+			return M.run();
 		}
 		
-		// Continue if the timer was going
-		if(timer.remaining>0){
-			M.run();
-			return;
-		}
-		
-		// Display all letters
+		// Display all letters immediately
 		M.window.querySelectorAll('.m-vn-letter').forEach(function(letter){
-			// Skip creating animation, and display the letter
-			letter.style.animationDelay=null;
-			var classes=letter.className;
-			letter.className=classes;
-			letter.style.animation='initial';
-			// letter.firstChild.dispatchEvent(new CustomEvent('animationstart'));
-			letter.style.visibility='visible';
+			letter.style.animationDelay = null;
+			letter.style.animation = 'initial';
+			letter.style.visibility = 'visible';
 		});
 		
 		// Set all textboxes to state they're done
-		M.window.querySelectorAll('.m-vn-textbox').forEach(function(textbox){
+		M.window.querySelectorAll('.m-vn-textbox[data-done="false"]').forEach(function(textbox){
 			textbox.dataset.done='true';
 		});
 		
-		// If we're inputting, exit
-		/// TODO: Add this in for multiple textboxes
-		// if(objects.textbox.el.querySelector('input')) return;
-		
+		skipping = true;
 		junction();
 	}
 
@@ -342,10 +325,10 @@ S.modules.visualNovel=new function(){
 	};
 	
 	/// TO DO: stop filling up the stack so high; instead, keep running readLine() while it returns true. This way we aren't increasing the stack so heavily
-	M.run=function(line=M.currentLine+1){
-		M.currentLine=line;
-		continueNotice.remove();
+	M.run = function(line = M.currentLine + 1){
 		timer.stop();
+		continueNotice.remove();
+		M.currentLine = line;
 
 		while(M.currentLine < M.lines.length){
 			var next = M.readLine(M.currentLine);
@@ -1141,7 +1124,10 @@ S.modules.visualNovel=new function(){
 					// Escape character
 					if(input[i] === '\\' && i + 1 < input.length) i++;
 					
-					var waitTime = baseWaitTime[baseWaitTime.length-1];
+					// If skipping multiple lines of text, display immediately
+					if(skipping) waitTime = 0;
+					else var waitTime = baseWaitTime[baseWaitTime.length-1];
+					
 					letters += input[i];
 				
 					// Handle punctuation- at spaces we check, if constant isn't true
@@ -1262,6 +1248,7 @@ S.modules.visualNovel=new function(){
 		// Don't add a continue notice if we ran through a textbox
 		}else if(!M.window.querySelector('input') && !M.window.querySelector('.m-vn-textbox[data-done="false"]')){
 			M.window.appendChild(continueNotice);
+			skipping = false;
 		}
 	}
 }();
