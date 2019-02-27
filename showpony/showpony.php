@@ -100,12 +100,34 @@ const S = this;
 S.files					= <?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
 
 S.buffered				= [];
-S.currentFile			= null;
-S.currentLanguage		= <?php echo json_encode($language); ?>;
 S.currentModule			= null;
-S.currentQuality		= <?php echo QUALITY; ?>;
 S.currentSubtitles		= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
-S.currentTime			= null;
+
+var language			= <?php echo json_encode($language); ?>;
+var file				= null;
+var time				= null;
+var quality				= <?php echo json_encode(QUALITY,JSON_NUMERIC_CHECK); ?>;
+
+// Make language change on changing value
+Object.defineProperty(S, "time", {
+	get: function() {
+		return time;
+	},
+	set: function(input){
+		S.to({time:input});
+	}
+});
+
+// Make language change on changing value
+Object.defineProperty(S, "file", {
+	get: function() {
+		return file;
+	},
+	set: function(input){
+		S.to({file:input});
+	}
+});
+
 S.data					= {};
 S.duration				= S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 S.fullscreen			= false;
@@ -241,7 +263,7 @@ S.notice = function(message){
 }
 
 // Go to another file
-S.to = function(obj = {file:S.currentFile, time:S.currentTime}){
+S.to = function(obj = {file:file, time:time}){
 	content.classList.add('s-loading');
 	
 	/// GET TIME AND FILE ///
@@ -249,18 +271,14 @@ S.to = function(obj = {file:S.currentFile, time:S.currentTime}){
 	// Special values
 	if(obj.file==='last') obj.file=S.files.length-1;
 	
-	// Relative adjustment
-	if(/-|\+/.test(obj.file)) obj.file=S.currentFile+parseInt(obj.file);
-	obj.file=Math.max(0,obj.file || 0);
+	obj.file = Math.max(0,obj.file || 0);
 	
 	// If we're not going to the end, adjust time values; 'end' gets passed to the modules
 	if(obj.time!=='end'){
-		// Relative adjustment
-		if(/-|\+/.test(obj.time)) obj.time=S.currentTime+timeToSeconds(obj.time);
-		obj.time=timeToSeconds(obj.time);
+		obj.time = timeToSeconds(obj.time);
 		
 		// Minimal time and file values are 0
-		obj.time=Math.max(0,parseFloat(obj.time) || 0);
+		obj.time = Math.max(0,parseFloat(obj.time) || 0);
 		
 		// Based on time, get the right file
 		for(obj.file;obj.file<S.files.length;obj.file++){
@@ -296,7 +314,7 @@ S.to = function(obj = {file:S.currentFile, time:S.currentTime}){
 	if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
 	
 	S.modules[S.currentModule].src(obj.file,obj.time).then((obj)=>{
-		S.currentFile=S.modules[S.currentModule].currentFile=obj.file;
+		file=S.modules[S.currentModule].currentFile=obj.file;
 		S.modules[S.currentModule].currentTime=obj.time;
 		S.displaySubtitles();
 		timeUpdate();
@@ -373,9 +391,9 @@ S.load = function(){
 			if(!loadFile) break;
 			
 			S.data=loadFile.data;
-			S.currentLanguage=loadFile.language;
+			language=loadFile.language;
 			S.currentSubtitles=loadFile.subtitles;
-			S.currentQuality=loadFile.quality;
+			quality=loadFile.quality;
 			
 			return loadFile.bookmark;
 			break;
@@ -398,11 +416,11 @@ S.save = function(){
 		case 'local':
 			// Update the save file before setting it
 			S.saves.local[S.saves.currentSave]={
-				bookmark:S.currentTime
+				bookmark:time
 				,data:S.data
-				,language:S.currentLanguage
+				,language:language
 				,subtitles:S.currentSubtitles
-				,quality:S.currentQuality
+				,quality:quality
 				,timestamp:Date.now()
 			};
 			break;
@@ -419,31 +437,39 @@ S.save = function(){
 		+encodeURIComponent(
 			S.saves.system
 			+'&'+S.saves.currentSave
-			+'&'+S.currentLanguage
+			+'&'+language
 			+'&'+S.currentSubtitles
-			+'&'+S.currentQuality
+			+'&'+quality
 		)
 	;
 }
 
 S.changeLanguage = function(newLanguage=<?php echo json_encode($language); ?>){
-	if(S.currentLanguage===newLanguage) return;
+	if(language === newLanguage) return;
 	
 	fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
 	.then(response=>{return response.json();})
 	.then(json=>{
 		S.files=json;
-		S.currentLanguage=newLanguage;
+		language = newLanguage;
 		
 		// Need to set this to -1 to reload the current file
 		S.modules[S.currentModule].currentFile=-1;
 		
-		S.to({time:S.currentTime});
+		S.to({time:time});
 	})
 	.catch(error=>{
 		S.notice('Failed to load language files. '+error);
 	});
 }
+
+// Make language change on changing value
+Object.defineProperty(S, "language", {
+	get: function() {
+		return language;
+	},
+	set: S.changeLanguage
+});
 
 // Toggle fullscreen, basing the functions on the browser's abilities
 // Standards fullscreen
@@ -566,8 +592,8 @@ function checkCollision(x=0,y=0,element){
 
 function timeUpdate(){
 	// Get the current time in the midst of the entire Showpony
-	S.currentTime=parseFloat(S.modules[S.currentModule].currentTime);
-	for(let i=0;i<S.currentFile;i++) S.currentTime+=parseFloat(S.files[i].duration);
+	time = parseFloat(S.modules[S.currentModule].currentTime);
+	for(let i=0;i<file;i++) time += parseFloat(S.files[i].duration);
 	
 	if(scrubbing!==true) scrub(null);
 
@@ -577,8 +603,8 @@ function timeUpdate(){
 			'timeupdate'
 			,{
 				detail:{
-					file:S.currentFile
-					,time:S.currentTime
+					file:file
+					,time:time
 				}
 			}
 		)
@@ -679,10 +705,10 @@ function scrub(inputPercent=null){
 	if(inputPercent === null){
 		// Left-to-right reading
 		if(S.readingDirection === 'left-to-right'){
-			inputPercent = S.currentTime/S.duration;
+			inputPercent = time/S.duration;
 		// Right-to-left reading
 		}else{
-			inputPercent = 1 - (S.currentTime/S.duration);
+			inputPercent = 1 - (time/S.duration);
 		}
 	}
 	
@@ -694,53 +720,53 @@ function scrub(inputPercent=null){
 	
 	// If scrubbing, estimate the new time
 	if(scrubbing===true){
-		var time;
+		var displayTime;
 		
 		// Left-to-right reading
 		if(S.readingDirection === 'left-to-right'){
-			time = S.duration * inputPercent;
+			displayTime = S.duration * inputPercent;
 		// Right-to-left reading
 		}else{
-			time = S.duration * (1 - inputPercent);
+			displayTime = S.duration * (1 - inputPercent);
 		}
 		
 		/// LOADING THE SELECTED FILE ///
 		clearTimeout(scrubLoad);
 		scrubLoad=null;
-		if(checkBuffered(time)) S.to({time:time});
+		if(checkBuffered(displayTime)) S.to({time:displayTime});
 		else{
 			// Load the file if we sit in the same spot for a moment
-			scrubLoadTime=time;
+			scrubLoadTime=displayTime;
 			scrubLoad=setTimeout(S.to,400,{time:scrubLoadTime});
 		}
 		
-		var file = 0;
-		var timeCheck = time;
+		var displayFile = 0;
+		var timeCheck = displayTime;
 		// Based on time, get the right file
-		for(file; file < S.files.length - 1; file++){
-			if(timeCheck < S.files[file].duration) break; // We've reached the file
+		for(displayFile; displayFile < S.files.length - 1; displayFile++){
+			if(timeCheck < S.files[displayFile].duration) break; // We've reached the file
 			
-			timeCheck -= S.files[file].duration;
+			timeCheck -= S.files[displayFile].duration;
 		}
 	}
 	// Otherwise, get it based off current values
 	else{
-		var time = S.currentTime;
-		var file = S.currentFile;
+		var displayTime = time;
+		var displayFile = file;
 	}
 	
 	<?php
 	switch($_GET['progress'] ?? DEFAULT_PROGRESS){
 		case 'file':
 			?>
-	var completed = infoFile(file + 1);
-    var remaining = infoFile(S.files.length - (file + 1));
+	var completed = infoFile(displayFile + 1);
+    var remaining = infoFile(S.files.length - (displayFile + 1));
 			<?php
 			break;
 		case 'time':
 			?>
-	var completed = infoTime(time);
-	var remaining = infoTime(S.duration - time);
+	var completed = infoTime(displayTime);
+	var remaining = infoTime(S.duration - displayTime);
 			<?php
 			break;
 		case 'percent':
@@ -753,11 +779,11 @@ function scrub(inputPercent=null){
 	?>
     
     var info = '<p>'+completed+'</p><p>';
-	if((S.files[file].title)) info+=S.files[file].title;
+	if((S.files[displayFile].title)) info+=S.files[displayFile].title;
 	info+='</p><p>'+remaining+'</p>';
 	
 	// Add info about upcoming parts if not added already
-	if(file===S.files.length-1 && S.upcomingFiles.length
+	if(displayFile===S.files.length-1 && S.upcomingFiles.length
 		&& !S.window.querySelector('.s-upcoming-file').innerHTML){
 		var upcoming='';
 		for(var i=0;i<S.upcomingFiles.length;i++){
@@ -1113,7 +1139,7 @@ const supportedLanguages=<?php
 if(<?php if(!empty($_GET['export'])) echo 'false || '; ?>supportedLanguages.length>1){
 	function toggleLanguage(){
 		// Ignore clicking on same button again
-		if(S.currentLanguage===this.dataset.value) return;
+		if(language === this.dataset.value) return;
 		
 		// Remove selected class from previous selected item
 		var previous=S.window.querySelector('.s-popup-language .s-selected');
@@ -1132,7 +1158,7 @@ if(<?php if(!empty($_GET['export'])) echo 'false || '; ?>supportedLanguages.leng
 		buttonEl.dataset.value=supportedLanguages[i]['short'];
 		buttonEl.addEventListener('click',toggleLanguage);
 		
-		if(S.currentLanguage===supportedLanguages[i]['short']) buttonEl.className='s-selected';
+		if(language === supportedLanguages[i]['short']) buttonEl.className='s-selected';
 		
 		languageButtons.appendChild(buttonEl);
 	}
@@ -1179,9 +1205,9 @@ if(<?php if(!empty($_GET['export'])) echo 'false || '; ?>S.supportedSubtitles.le
 
 // Add quality dropdown
 if(S.maxQuality > 0){
-	function changeQuality(){
+	S.changeQuality = function(newQuality){
 		// Ignore if re-selecting an old item
-		if(S.currentQuality === this.dataset.value) return;
+		if(quality === newQuality) return;
 		
 		// Remove selected class from previous selected item
 		var previous=S.window.querySelector('.s-popup-quality .s-selected');
@@ -1189,9 +1215,9 @@ if(S.maxQuality > 0){
 			previous.classList.remove('s-selected');
 		}
 		
-		this.classList.add('s-selected');
+		// if(this.dataset) this.classList.add('s-selected');
 		
-		S.currentQuality = this.dataset.value;
+		quality = newQuality;
 		S.to();
 	}
 
@@ -1207,9 +1233,11 @@ if(S.maxQuality > 0){
 		else buttonEl.innerText = qualityTerms[i];
 		
 		buttonEl.dataset.value = i;
-		buttonEl.addEventListener('click',changeQuality);
+		buttonEl.addEventListener('click',function(){
+			S.changeQuality(this.dataset.value);
+		});
 		
-		if(S.currentQuality === i) buttonEl.className='s-selected';
+		if(quality === i) buttonEl.className='s-selected';
 		
 		qualityButtons.appendChild(buttonEl);
 	}
@@ -1218,6 +1246,16 @@ if(S.maxQuality > 0){
 } else {
 	S.window.querySelector('.s-button-quality').remove();
 }
+
+// Make language change on changing value
+Object.defineProperty(S, "quality", {
+	get: function() {
+		return quality;
+	},
+	set: function(input){
+		S.changeQuality(input);
+	}
+});
 
 // Bookmarks
 function toggleBookmark(){
@@ -1272,7 +1310,7 @@ function addBookmark(obj){
 		// Saving the page name in the URL/querystring
 		case 'url':
 			nameEl.addEventListener('click',function(){
-				searchParams.set(S.queryBookmark,S.currentTime|0);
+				searchParams.set(S.queryBookmark,time|0);
 				
 				var url = location.host + location.pathname + '?' + searchParams.toString() + location.hash;
 				var temporaryInput = document.createElement('textarea');
@@ -1630,7 +1668,7 @@ if(start === null || isNaN(start)) start = <?php echo $_GET['start'] ?? DEFAULT_
 
 // Pause the Showpony
 S.pause();
-S.to({time:start});
+S.time = start;
 
 // We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
 

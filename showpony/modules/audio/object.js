@@ -42,7 +42,7 @@ S.modules.audio=new function(){
 			var filename =  S.files[file].path;
 			
 			// Consider file quality
-			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, S.currentQuality) + '$');
+			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, quality) + '$');
 			
 			// Change the file if it'd be a new one
 			// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)

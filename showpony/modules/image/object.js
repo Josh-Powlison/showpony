@@ -55,7 +55,7 @@ S.modules.<?php echo 'image'; ?>=new function(){
 			var filename =  S.files[file].path;
 			
 			// Consider file quality
-			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, S.currentQuality) + '$');
+			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, quality) + '$');
 			
 			// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
 			if(M.image.dataset.filename === filename){

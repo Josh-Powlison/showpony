@@ -42,7 +42,7 @@ S.modules.video=new function(){
 			var filename =  S.files[file].path;
 			
 			// Consider file quality
-			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, S.currentQuality) + '$');
+			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, quality) + '$');
 			
 			// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
 			if(M.video.dataset.filename !== filename) M.video.dataset.filename = M.video.src = filename;

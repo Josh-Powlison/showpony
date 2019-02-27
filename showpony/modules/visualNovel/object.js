@@ -140,7 +140,7 @@ S.modules.visualNovel=new function(){
 			var filename =  S.files[file].path;
 			
 			// Consider file quality
-			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, S.currentQuality) + '$');
+			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, quality) + '$');
 			
 			// If this is the current file
 			if(M.filesrc === filename){
@@ -558,7 +558,7 @@ S.modules.visualNovel=new function(){
 		// Update the scrubbar if the frame we're on is a keyframe
 		if(runTo===false && keyframes.includes(lineNumber)){
 			M.currentTime=(keyframes.indexOf(lineNumber)/keyframes.length)*S.files[M.currentFile].duration;
-			timeUpdate();
+			if(S.currentFile) timeUpdate();
 		}
 		
 		// Engine command

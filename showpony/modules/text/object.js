@@ -39,7 +39,7 @@ S.modules.text=new function(){
 			var filename =  S.files[file].path;
 			
 			// Consider file quality
-			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, S.currentQuality) + '$');
+			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, quality) + '$');
 			
 			// If this is the current file
 			if(M.filesrc === filename){
