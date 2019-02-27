@@ -2,24 +2,21 @@
 
 require 'settings.php';
 
-define('STORIES_PATH',DEFAULT_PATH.($_GET['path'] ?? ''));
+define('STORIES_PATH'	, DEFAULT_PATH.($_GET['path'] ?? ''));
 
 // Get the query from the paths
-define('NAME', preg_match('/[^\/]+(?=\/?$)/',STORIES_PATH,$match) ? $match[0] : 'story');
-
-$saveName = urlencode(NAME).'Data';
+define('NAME'			, preg_match('/[^\/]+(?=\/?$)/',STORIES_PATH,$match) ? $match[0] : 'story');
+define('SAVE_NAME'		, urlencode(NAME).'Data');
 
 // 0 is save system; 1 is save name; 2 is language
-if(!empty($_COOKIE[$saveName])) $data = explode('&',$_COOKIE[$saveName]);
+if(!empty($_COOKIE[SAVE_NAME])) $data = explode('&',$_COOKIE[SAVE_NAME]);
 else $data = [null,null,null,null,null];
 
 define('SAVE_SYSTEM'	, $data[0] ?? null);
 define('CURRENT_SAVE'	, $data[1] ?? 'Autosave');
-define('QUALITY'		, $data[4] ?? DEFAULT_QUALITY);
-
-// These will change if the requested options aren't available
-$subtitles	= $_GET['subs'] ?? $data[3] ?? DEFAULT_SUBTITLES;
-$language	= $_GET['lang'] ?? $data[2] ?? DEFAULT_LANGUAGE;
+$language				= $data[2] ?? $_GET['language'] ?? DEFAULT_LANGUAGE;
+$subtitles				= $data[3] ?? $_GET['subtitles'] ?? DEFAULT_SUBTITLES;
+define('QUALITY'		, $data[4] ?? $_GET['quality'] ?? DEFAULT_QUALITY);
 
 // We'll store all errors and code that's echoed, so we can send that info to the user (in a way that won't break the JSON object).
 ob_start();
@@ -117,7 +114,7 @@ S.maxQuality			= <?php echo $maxQuality; ?>;
 S.modules				= {};
 S.paused				= false;
 S.queryBookmark			= <?php echo json_encode(NAME); ?>+'-bookmark';
-S.saveName				= <?php echo json_encode($saveName); ?>;
+S.saveName				= <?php echo json_encode(SAVE_NAME); ?>;
 S.saves					= {
 	currentSave	:<?php echo json_encode(CURRENT_SAVE); ?>,
 	language	:<?php echo json_encode($language); ?>,
@@ -125,7 +122,7 @@ S.saves					= {
 	system		:<?php echo json_encode(SAVE_SYSTEM); ?>,
 	timestamp	:Date.now()
 };
-S.readingDirection		= <?php echo json_encode(READING_DIRECTION); ?>;
+S.readingDirection		= <?php echo json_encode($_GET['direction'] ?? DEFAULT_DIRECTION); ?>;
 S.subtitles				= {<?php
 
 	//Immediately load subtitles if called for
@@ -222,7 +219,7 @@ var searchParams		= new URLSearchParams(window.location.search);
 
 // Load modules
 foreach(array_keys($media) as $moduleName){
-	require ROOT.'/modules/'.$moduleName.'/object.js';
+	require __DIR__.'/modules/'.$moduleName.'/object.js';
 }
 
 ?>
@@ -733,7 +730,7 @@ function scrub(inputPercent=null){
 	}
 	
 	<?php
-	switch($displayType){
+	switch($_GET['progress'] ?? DEFAULT_PROGRESS){
 		case 'file':
 			?>
 	var completed = infoFile(file + 1);
@@ -1629,7 +1626,7 @@ history.replaceState(null,'',window.location.pathname + '?' + searchParams.toStr
 if(start === null || isNaN(start)) start = S.load();
 
 // Use the Default Bookmark if the Save Bookmark has nothing
-if(start === null || isNaN(start)) start = <?php echo DEFAULT_START; ?>;
+if(start === null || isNaN(start)) start = <?php echo $_GET['start'] ?? DEFAULT_START; ?>;
 
 // Pause the Showpony
 S.pause();

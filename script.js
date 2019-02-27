@@ -44,14 +44,6 @@ function chooseStory(id){
 			/*
 				CODE TO CUSTOMIZE THE SHOWPONIES
 			*/
-
-			if(id === 'manga'){
-				// Make Game Plan! read from right-to-left
-				showponies[id].window.classList.remove('s-left-to-right');
-				showponies[id].window.classList.add('s-right-to-left');
-				showponies[id].readingDirection = 'right-to-left';
-				// showponies[id].to();
-			}
 			
 			displayStory(id);
 		});

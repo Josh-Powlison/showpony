@@ -33,7 +33,6 @@ function unhideFile($name){
 }
 
 function readFolder($folder){
-	global $displayType;
 	global $files;
 	global $maxQuality;
 	global $media;
@@ -162,17 +161,12 @@ function readFolder($folder){
 			,'hidden'		=>	$hidden ?? false
 		];
 		
-		// Get the module based on FILE_DATA_GET_MODULE- first ext, then full mime, then partial mime, then default
-		$fileInfo['module']=FILE_DATA_GET_MODULE['ext:'.$fileInfo['extension']]
-			?? FILE_DATA_GET_MODULE['mime:'.$fileInfo['mimeType']]
-			?? FILE_DATA_GET_MODULE['mime:'.explode('/',$fileInfo['mimeType'])[0]]
-			?? FILE_DATA_GET_MODULE['default']
+		// Get the module based on FILE_GET_MODULE- first ext, then full mime, then partial mime, then ignore (it could be a dangerous file)
+		$fileInfo['module']=FILE_GET_MODULE['ext:'.$fileInfo['extension']]
+			?? FILE_GET_MODULE['mime:'.$fileInfo['mimeType']]
+			?? FILE_GET_MODULE['mime:'.explode('/',$fileInfo['mimeType'])[0]]
+			?? null
 		;
-		
-		// Get the progress display based on MODULE_SET_DISPLAY
-		if(isset(MODULE_SET_DISPLAY[$fileInfo['module']])){
-			$displayType = MODULE_SET_DISPLAY[$fileInfo['module']];
-		}
 		
 		// If the module isn't supported, skip over it
 		if($fileInfo['module']===null) continue;
@@ -213,7 +207,7 @@ if($language[0] !== HIDING_CHAR || !empty($_SESSION['showpony_admin'])) readFold
 
 // Load modules
 foreach(array_keys($media) as $moduleName){
-	require ROOT.'/modules/'.$moduleName.'/functions.php';
+	require __DIR__.'/modules/'.$moduleName.'/functions.php';
 }
 
 // Unhide subtitles
