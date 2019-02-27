@@ -107,6 +107,8 @@ var time				= null;
 var language			= <?php echo json_encode($language); ?>;
 var subtitles			= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
 var quality				= <?php echo json_encode(QUALITY,JSON_NUMERIC_CHECK); ?>;
+var fullscreen			= false;
+var paused				= false;
 
 // Make language change on changing value
 Object.defineProperty(S, 'time', {
@@ -129,12 +131,6 @@ Object.defineProperty(S, 'file', {
 		S.to({file:input});
 	}
 });
-
-// Make direct affect
-S.paused				= false;
-var fullscreen			= false;
-
-
 
 S.data					= {};
 S.duration				= S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
@@ -257,7 +253,7 @@ foreach(array_keys($media) as $moduleName){
 ///////////////////////////////////////
 
 S.notice = function(message){
-	if(!S.paused) S.pause();
+	if(!paused) S.paused = true;
 	
 	var noticeText=notice.querySelector('.s-notice-text');
 	
@@ -301,7 +297,7 @@ S.to = function(obj = {file:file, time:time}){
 		S.window.dispatchEvent(new CustomEvent('end'));
 		
 		// Pause
-		S.pause();
+		S.paused = true;
 	}
 	
 	/// LOAD RIGHT MODULE AND SOURCE ///
@@ -359,30 +355,38 @@ S.to = function(obj = {file:file, time:time}){
 	});
 }
 
-S.play = function(){
-	if(S.paused===false) return;
-	
-	// Close popups
-	while(S.window.querySelector('.s-visible')) S.window.querySelector('.s-visible').classList.remove('s-visible');
-	
-	S.window.classList.remove('s-paused');
-	S.paused=false;
-	S.modules[S.currentModule].play();
-	S.window.dispatchEvent(new CustomEvent('play'));
-}
-
-S.pause = function(){
-	if(S.paused===true) return;
-	
-	S.window.classList.add('s-paused');
-	S.paused=true;
-	if(S.currentModule) S.modules[S.currentModule].pause();
-	S.window.dispatchEvent(new CustomEvent('pause'));
-}
-
-S.toggle = function(){
-	S[S.paused ? 'play' : 'pause']();
-}
+// Make language change on changing value
+Object.defineProperty(S, 'paused', {
+	get: function() {
+		return paused;
+	},
+	set: function(input){
+		if(input === 'toggle') input = !paused;
+		
+		// Play
+		if(!input){
+			if(paused===false) return;
+			
+			// Close popups
+			while(S.window.querySelector('.s-visible')) S.window.querySelector('.s-visible').classList.remove('s-visible');
+			
+			S.window.classList.remove('s-paused');
+			paused=false;
+			S.modules[S.currentModule].play();
+			S.window.dispatchEvent(new CustomEvent('play'));
+		}
+		// Pause
+		else{
+			if(paused===true) return;
+			
+			S.window.classList.add('s-paused');
+			paused=true;
+			
+			if(S.currentModule) S.modules[S.currentModule].pause();
+			S.window.dispatchEvent(new CustomEvent('pause'));
+		}
+	}
+});
 
 S.load = function(){
 	S.saves=JSON.parse(localStorage.getItem(S.saveName));
@@ -465,7 +469,7 @@ Object.defineProperty(S, 'language', {
 			// Need to set this to -1 to reload the current file
 			S.modules[S.currentModule].currentFile=-1;
 			
-			S.to({time:time});
+			S.time = time;
 		})
 		.catch(error=>{
 			S.notice('Failed to load language files. '+error);
@@ -742,7 +746,7 @@ function scrub(inputPercent=null){
 		/// LOADING THE SELECTED FILE ///
 		clearTimeout(scrubLoad);
 		scrubLoad=null;
-		if(checkBuffered(displayTime)) S.to({time:displayTime});
+		if(checkBuffered(displayTime)) S.time = displayTime;
 		else{
 			// Load the file if we sit in the same spot for a moment
 			scrubLoadTime=displayTime;
@@ -788,7 +792,8 @@ function scrub(inputPercent=null){
 	?>
     
     var info = '<p>'+completed+'</p><p>';
-	if((S.files[displayFile].title)) info+=S.files[displayFile].title;
+	
+	if(S.files[displayFile].title) info+=S.files[displayFile].title;
 	info+='</p><p>'+remaining+'</p>';
 	
 	// Add info about upcoming parts if not added already
@@ -845,7 +850,7 @@ function userScrub(event){
 	if(percent>1-scrubSnap) percent=1;
 	
 	// You have to swipe farther than you move the cursor to adjust the position
-	if(scrubbing!==true && scrubbing!==false && S.paused){
+	if(scrubbing!==true && scrubbing!==false && paused){
 		// 34 creates an arbitrary percentage of the screen that seems to feel good to trigger scrubbing
 		if(Math.abs(scrubbing-pointer.clientX) >= screen.width/34){
 		
@@ -884,8 +889,6 @@ function userScrub(event){
 	){
 		pointerMoved = true;
 		scrubbing = false;
-		
-		console.log("Moved too far");
 		
 		// Remove active button, if one exists
 		while(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
@@ -1046,10 +1049,10 @@ function gamepadControls(){
 	}
 	
 	// Register inputs
-	if(S.gamepad.menu==2) S.toggle();
+	if(S.gamepad.menu==2) S.paused = 'toggle';
 	if(S.gamepad.input==2) S.progress();
-	if(S.gamepad.dpadL==2) S.to({time:'-10'});
-	if(S.gamepad.dpadR==2) S.to({time:'+10'});
+	if(S.gamepad.dpadL==2) S.regress();
+	if(S.gamepad.dpadR==2) S.progress();
 	if(S.gamepad.end==2) S.to({time:'end'});
 	if(S.gamepad.home==2) S.to({time:'start'});
 	if(S.gamepad.fullscreen==2) S.fullscreen = 'toggle';
@@ -1386,11 +1389,11 @@ S.window.addEventListener(
 			case 'ArrowRight':		(S.readingDirection === 'right-to-left' ? S.regress : S.progress)();	break;
 			// case 'Home':			S.to({time:'start'});	break;
 			// case 'End':				S.to({time:'end'});		break;
-			case 'MediaPrevious':	S.to({file:'-1'});		break;
-			case 'MediaNext':		S.to({file:'+1'});		break;
-			case 'MediaPlayPause':	S.toggle();				break;
+			case 'MediaPrevious':	S.file--;		break;
+			case 'MediaNext':		S.file++;		break;
+			case 'MediaPlayPause':	S.paused = 'toggle';				break;
 			case 'f':				S.fullscreen = 'toggle';	break;
-			case 'm':				S.toggle();				break;
+			case 'm':				S.paused = 'toggle';				break;
 			default:				return;					break;
 		}
 		
@@ -1546,7 +1549,7 @@ function pointerUp(event){
 	if(scrubLoad){
 		clearTimeout(scrubLoad);
 		scrubLoad=null;
-		S.to({time:scrubLoadTime});
+		S.time = scrubLoadTime;
 	}
     
     // Ignore scrollbar
@@ -1557,7 +1560,7 @@ function pointerUp(event){
 		S.window.classList.remove('s-hold');
 		
 		// Next and previous buttons shouldn't be activated again on release if they were held down
-		if(buttonDown !== 'pause' || S.paused === false) return;
+		if(buttonDown !== 'pause' || paused === false) return;
 	}
 	
 	// If we were moving the pointer, ignore presses
@@ -1586,7 +1589,7 @@ function pointerUp(event){
 	
 	// Pause
 	if(checkCollision(pointer.clientX,pointer.clientY,pause) && buttonDown === 'pause'){
-		S.toggle();
+		S.paused = 'toggle';
 	}
 	// Progress
 	else if(checkCollision(pointer.clientX,pointer.clientY,progress) && buttonDown === 'progress'){
@@ -1683,7 +1686,7 @@ if(start === null || isNaN(start)) start = S.load();
 if(start === null || isNaN(start)) start = <?php echo $_GET['start'] ?? DEFAULT_START; ?>;
 
 // Pause the Showpony
-S.pause();
+S.paused = true;
 S.time = start;
 
 // We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading

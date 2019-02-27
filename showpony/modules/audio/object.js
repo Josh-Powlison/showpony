@@ -26,13 +26,13 @@ S.modules.audio=new function(){
 	}
 	
 	M.regress=function(){
-		if(M.currentTime<5) S.to({file:'-1',time:'end'});
-		else S.to({time:'-5'});
+		if(M.currentTime<5) S.to({file:file - 1,time:'end'});
+		else S.time -= 5;
 	}
 	
 	M.progress=function(){
-		if(M.currentTime>S.files[M.currentFile].duration-5) S.to({file:'+1'});
-		else S.to({time:'+5'});
+		if(M.currentTime>S.files[M.currentFile].duration-5) S.file++;
+		else S.time += 5;
 	}
 	
 	M.src=function(file=0,time=0){
@@ -51,7 +51,7 @@ S.modules.audio=new function(){
 			M.audio.currentTime=time;
 			
 			// If we're not paused, play
-			if(!S.paused) M.play();
+			if(!paused) M.play();
 			
 			resolve({file:file,time:time});
 		});
@@ -123,7 +123,7 @@ S.modules.audio=new function(){
 	// When we finish playing an audio file
 	M.audio.addEventListener('ended',function(){
 		// Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
-		if(!S.paused) S.to({file:'+1'});
+		if(!paused) S.file++;
 	});
 
 	// On moving through time, update info and title

@@ -91,7 +91,6 @@ S.modules.visualNovel=new function(){
 			var goTo = keyframes.indexOf(i);
 			if(goTo !== -1){
 				var lineText = M.lines[keyframes[goTo]];
-				console.log("MOVE OVER",lineText);
 				
 				// Skip over comments
 				if(/^\s*\/\//.test(lineText)) continue;
@@ -102,8 +101,8 @@ S.modules.visualNovel=new function(){
 			}
 		}
 		
-		if(M.currentFile>0) S.to({file:'-1',time:'end'});
-		else S.to({time:0});
+		if(M.currentFile>0) S.to({file:file - 1,time:'end'});
+		else S.time = 0;
 	}
 	
 	var skipping = false;
@@ -203,7 +202,6 @@ S.modules.visualNovel=new function(){
 					// Get "engine.go" keyframes, where possible (where not based on a variable)
 					if(/^engine\.go/.test(M.lines[i])){
 						var goTo = /\t+(.+)$/.exec(M.lines[i]);
-						console.log(goTo[1],M.lines.indexOf(goTo[1]));
 						
 						if(M.lines.indexOf(goTo[1]) !== -1) i = M.lines.indexOf(goTo[1]);
 						continue;
@@ -242,12 +240,9 @@ S.modules.visualNovel=new function(){
 							}
 						}
 						
-						// console.log(M.lines[i]);
 						keyframes.push(i);
 					}
 				}
-				
-				// console.log(keyframes);
 				
 				// Get the keyframe
 				var keyframeSelect=Math.round(keyframes.length*(time/S.files[file].duration));
@@ -256,9 +251,9 @@ S.modules.visualNovel=new function(){
 				
 				runTo=keyframeSelect;
 				
-				M.currentFile=S.currentFile=file;
 				content.classList.remove('s-loading');
 				M.run(0);
+				
 				
 				if(S.files[file].buffered!==true){
 					S.files[file].buffered=true;
@@ -266,6 +261,9 @@ S.modules.visualNovel=new function(){
 				}
 				
 				S.displaySubtitles();
+				
+				// Set file at end? Or maybe even pass an object of the file's data rather than reading from Showpony?
+				M.currentFile=file;
 				resolve({file:file,time:time});
 			});
 		});
@@ -332,7 +330,7 @@ S.modules.visualNovel=new function(){
 			if(!M.readLine(M.currentLine, M.lines[M.currentLine])) break;
 		}
 
-		if(M.currentLine >= M.lines.length) S.to({file:'+1'});
+		if(M.currentLine >= M.lines.length) S.file++;
 	}
 	
 	M.readLine = function(lineNumber, text){
@@ -556,9 +554,9 @@ S.modules.visualNovel=new function(){
 		}
 		
 		// Update the scrubbar if the frame we're on is a keyframe
-		if(runTo===false && keyframes.includes(lineNumber)){
-			M.currentTime=(keyframes.indexOf(lineNumber)/keyframes.length)*S.files[M.currentFile].duration;
-			if(S.currentFile) timeUpdate();
+		if(runTo===false && keyframes.includes(lineNumber) && M.currentFile !== null){
+			M.currentTime = (keyframes.indexOf(lineNumber)/keyframes.length)*S.files[M.currentFile].duration;
+			timeUpdate();
 		}
 		
 		// Engine command
@@ -602,7 +600,7 @@ S.modules.visualNovel=new function(){
 	}
 	
 	M.end = function(){
-		S.to({file:'+1'});
+		S.file++;
 		return false;
 	}
 	
@@ -620,7 +618,7 @@ S.modules.visualNovel=new function(){
 		// Wait until time's up
 		else {
 			// If we're paused, continue instead of waiting for the timer
-			if(S.paused) return true;
+			if(paused) return true;
 			
 			timer.start(parseFloat(input) * 1000);
 		}
@@ -662,7 +660,7 @@ S.modules.visualNovel=new function(){
 			// Add back in to support multiple objects sharing the same file set
 			
 			// If running to or not requesting animation, add styles without implementing animation
-			if(animationSpeed===null || runTo!==false || S.paused){
+			if(animationSpeed===null || runTo!==false || paused){
 				localStyle.innerHTML='';
 				
 				O.el.style.cssText+=style;
@@ -738,7 +736,7 @@ S.modules.visualNovel=new function(){
 		O.play=function(){
 			O.playing=true;
 			S.displaySubtitles();
-			if(!S.paused) O.el.play();
+			if(!paused) O.el.play();
 			
 			return true;
 		}
@@ -1144,7 +1142,7 @@ S.modules.visualNovel=new function(){
 					charPerpetualAnimation.className = 'm-vn-letter-animation';
 					
 					// Set the display time here- but if we're paused, or running through the text with runTo, no delay!
-					if(!S.paused && runTo === false) charAppearAnimation.style.animationDelay = totalWait+'s';
+					if(!paused && runTo === false) charAppearAnimation.style.animationDelay = totalWait+'s';
 					
 					// Build the char and add it to the parent (which may be a document fragment)
 					charAppearAnimation.appendChild(charPerpetualAnimation);
@@ -1197,7 +1195,7 @@ S.modules.visualNovel=new function(){
 			if(this != event.target) return;
 			
 			// If the letter's below the textbox
-			if(runTo === false && !S.paused && this.parentNode.getBoundingClientRect().bottom > O.el.getBoundingClientRect().bottom){
+			if(runTo === false && !paused && this.parentNode.getBoundingClientRect().bottom > O.el.getBoundingClientRect().bottom){
 				O.el.scrollTop = this.parentNode.offsetTop + (this.parentNode.offsetHeight * 1.5) - O.el.offsetHeight;
 			}
 		}

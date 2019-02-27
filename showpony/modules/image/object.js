@@ -36,8 +36,8 @@ S.modules.<?php echo 'image'; ?>=new function(){
 		}
 		// Go back to the previous file otherwise
 		else{
-			if(S.currentFile>0) S.to({file:'-1',time:'end'});
-			else S.to({time:0});
+			if(file > 0) S.to({file:file - 1,time:'end'});
+			else S.time = 0;
 		}
 	}
 	
@@ -45,7 +45,7 @@ S.modules.<?php echo 'image'; ?>=new function(){
 		// If we're not at the bottom, scroll down
 		if(M.window.scrollTop < M.window.scrollHeight - (M.window.clientHeight * 1.07)) M.window.scrollTop += M.window.clientHeight * .75;
 		// Continue to the next file otherwise
-		else S.to({file:'+1'});
+		else S.file++;
 	}
 	
 	M.src=function(file=0,time=0){

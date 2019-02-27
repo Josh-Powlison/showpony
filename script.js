@@ -63,9 +63,9 @@ function displayStory(id){
 				document.getElementById(keys[i]).classList.remove("hidden");
 				
 				if(document.getElementById(keys[i]).dataset.waspaused=='false'){
-					showponies[keys[i]].play();
+					showponies[keys[i]].paused = false;
 				}else{
-					showponies[keys[i]].pause();
+					showponies[keys[i]].paused = true;
 				}
 			}
 			
@@ -77,7 +77,7 @@ function displayStory(id){
 				
 				document.getElementById(keys[i]).dataset.waspaused=showponies[keys[i]].paused ? 'true' : 'false';
 				
-				showponies[keys[i]].pause();
+				showponies[keys[i]].paused = true;
 			}
 		}
 	}
