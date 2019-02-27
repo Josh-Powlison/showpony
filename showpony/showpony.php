@@ -132,7 +132,7 @@ Object.defineProperty(S, 'file', {
 
 // Make direct affect
 S.paused				= false;
-S.fullscreen			= false;
+var fullscreen			= false;
 
 
 
@@ -476,96 +476,103 @@ Object.defineProperty(S, 'language', {
 // Toggle fullscreen, basing the functions on the browser's abilities
 // Standards fullscreen
 if(S.window.requestFullscreen){
-	S.fullscreenEnter=function(){
-		if(document.fullscreenElement) return;
-		
-		S.fullscreen=true;
-		S.window.requestFullscreen();
-		S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
-	}
-	
-	S.fullscreenExit=function(){
-		if(!document.fullscreenElement) return;
-		
-		document.exitFullscreen();
-		S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
-	}
-	
-	S.fullscreenToggle=function(){
-		if(document.fullscreenElement) S.fullscreenExit();
-		else S.fullscreenEnter();
-	}
+	Object.defineProperty(S, 'fullscreen', {
+		get: function() {
+			return fullscreen;
+		},
+		set: function(input){
+			if(input === 'toggle') input = !fullscreen;
+			
+			if(input){
+				if(document.fullscreenElement) return;
+				
+				fullscreen=true;
+				S.window.requestFullscreen();
+				S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
+			}
+			else{
+				if(!document.fullscreenElement) return;
+				
+				document.exitFullscreen();
+				S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
+			}
+		}
+	});
 	
 	document.addEventListener('fullscreenchange',function(){
-		if(document.fullscreenElement===S.window) S.fullscreen=true;
-		else S.fullscreen=false;
+		fullscreen = (document.fullscreenElement === S.window);
 	});
 }
 // Webkit fullscreen
 else if(S.window.webkitRequestFullscreen){
-	S.fullscreenEnter=function(){
-		if(document.webkitFullscreenElement) return;
-		
-		S.window.webkitRequestFullscreen();
-		S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
-	}
-	
-	S.fullscreenExit=function(){
-		if(!document.webkitFullscreenElement) return;
-		
-		document.webkitExitFullscreen();
-		S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
-	}
-	
-	S.fullscreenToggle=function(){
-		if(document.webkitFullscreenElement) S.fullscreenExit();
-		else S.fullscreenEnter();
-	}
+	Object.defineProperty(S, 'fullscreen', {
+		get: function() {
+			return fullscreen;
+		},
+		set: function(input){
+			if(input === 'toggle') input = !fullscreen;
+			
+			if(input){
+				if(document.webkitFullscreenElement) return;
+				
+				S.window.webkitRequestFullscreen();
+				S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
+			}
+			else{
+				if(!document.webkitFullscreenElement) return;
+				
+				document.webkitExitFullscreen();
+				S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
+			}
+		}
+	});
 	
 	document.addEventListener('webkitfullscreenchange',function(){
-		if(document.webkitFullscreenElement===S.window) S.fullscreen=true;
-		else S.fullscreen=false;
+		fullscreen = (document.webkitFullscreenElement === S.window);
 	});
 }
 // No fullscreen support fullscreen (like for iOS Safari)
 else{
-	S.fullscreenEnter=function(){
-		if(S.window.classList.contains('s-fullscreen-alt')) return;
-		
-		S.window.classList.add('s-fullscreen-alt');
-		document.getElementsByTagName('html')[0].classList.add('s-fullscreen-control');
-		
-		S.window.dataset.prevz=S.window.style.zIndex || 'initial';
-		
-		// From: https://stackoverflow.com/questions/1118198/how-can-you-figure-out-the-highest-z-index-in-your-document
-		S.window.style.zIndex=Array.from(document.querySelectorAll('body *'))
-		   .map(a => parseFloat(window.getComputedStyle(a).zIndex))
-		   .filter(a => !isNaN(a))
-		   .sort((a,b)=>a-b)
-		   .pop()+1;
-		   
-		S.fullscreen=true;
-		S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
-	}
-	
-	S.fullscreenExit=function(){
-		if(!S.window.classList.contains('s-fullscreen-alt')) return;
-		
-		S.window.classList.remove('s-fullscreen-alt');
-		document.getElementsByTagName('html')[0].classList.remove('s-fullscreen-control');
-		
-		// Get the original z-index value
-		S.window.style.zIndex=S.window.dataset.prevz;
-		S.window.removeAttribute('data-prevz');
-		
-		S.fullscreen=false;
-		S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
-	}
-	
-	S.fullscreenToggle=function(){
-		if(S.window.classList.contains('s-fullscreen-alt')) S.fullscreenExit();
-		else S.fullscreenEnter();
-	}
+	Object.defineProperty(S, 'fullscreen', {
+		get: function() {
+			return fullscreen;
+		},
+		set: function(input){
+			if(input === 'toggle') input = !fullscreen;
+			
+			if(input){
+				if(S.window.classList.contains('s-fullscreen-alt')) return;
+				
+				S.window.classList.add('s-fullscreen-alt');
+				document.getElementsByTagName('html')[0].classList.add('s-fullscreen-control');
+				
+				S.window.dataset.prevz=S.window.style.zIndex || 'initial';
+				
+				// From: https://stackoverflow.com/questions/1118198/how-can-you-figure-out-the-highest-z-index-in-your-document
+				S.window.style.zIndex=Array.from(document.querySelectorAll('body *'))
+				   .map(a => parseFloat(window.getComputedStyle(a).zIndex))
+				   .filter(a => !isNaN(a))
+				   .sort((a,b)=>a-b)
+				   .pop()+1;
+				   
+				fullscreen = true;
+				S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
+			}
+			else{
+				if(!S.window.classList.contains('s-fullscreen-alt')) return;
+				
+				S.window.classList.remove('s-fullscreen-alt');
+				document.getElementsByTagName('html')[0].classList.remove('s-fullscreen-control');
+				
+				// Get the original z-index value
+				S.window.style.zIndex=S.window.dataset.prevz;
+				S.window.removeAttribute('data-prevz');
+				
+				fullscreen = false;
+				S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
+			}
+		}
+	});
 }
 
 S.regress = function(){
@@ -1014,7 +1021,7 @@ function gamepadControls(){
 	if(document.hidden) return;
 	
 	// If we're not focused or fullscreen
-	if(document.activeElement!==S.window && !S.fullscreen) return;
+	if(document.activeElement!==S.window && !fullscreen) return;
 	
 	var gamepad=navigator.getGamepads()[S.gamepad.id];
 	
@@ -1045,7 +1052,7 @@ function gamepadControls(){
 	if(S.gamepad.dpadR==2) S.to({time:'+10'});
 	if(S.gamepad.end==2) S.to({time:'end'});
 	if(S.gamepad.home==2) S.to({time:'start'});
-	if(S.gamepad.fullscreen==2) S.fullscreenToggle();
+	if(S.gamepad.fullscreen==2) S.fullscreen = 'toggle';
 	
 	// TODO: add joystick support back in (once it's working elsewhere)
 	/*
@@ -1109,7 +1116,9 @@ S.window.getElementsByClassName('s-button-language')[0].addEventListener('click'
 S.window.getElementsByClassName('s-button-subtitles')[0].addEventListener('click',popupToggle);
 S.window.getElementsByClassName('s-button-bookmark')[0].addEventListener('click',popupToggle);
 S.window.getElementsByClassName('s-button-quality')[0].addEventListener('click',popupToggle);
-S.window.getElementsByClassName('s-button-fullscreen')[0].addEventListener('click',S.fullscreenToggle);
+S.window.getElementsByClassName('s-button-fullscreen')[0].addEventListener('click',function(){
+	S.fullscreen = 'toggle';
+});
 
 function popupToggle(){
 	var closePopups = S.window.querySelectorAll('.s-visible:not(.s-popup-'+this.dataset.type+')');
@@ -1380,7 +1389,7 @@ S.window.addEventListener(
 			case 'MediaPrevious':	S.to({file:'-1'});		break;
 			case 'MediaNext':		S.to({file:'+1'});		break;
 			case 'MediaPlayPause':	S.toggle();				break;
-			case 'f':				S.fullscreenToggle();	break;
+			case 'f':				S.fullscreen = 'toggle';	break;
 			case 'm':				S.toggle();				break;
 			default:				return;					break;
 		}
