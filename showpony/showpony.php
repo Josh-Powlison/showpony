@@ -58,9 +58,7 @@ header('Content-type: application/javascript');
 if(!document.getElementById('s-styles')){
 	var styles=document.createElement('style');
 	styles.id='s-styles';
-	styles.innerHTML=`<?php
-		addslashes(readfile(ROOT.'/styles.css'));
-	?>`;
+	styles.innerHTML=`<?php addslashes(readfile(__DIR__.'/styles.css')); ?>`;
 	document.head.appendChild(styles);
 }
 
@@ -74,9 +72,7 @@ foreach(array_keys($media) as $moduleName){
 if(!document.getElementById('s-<?php echo $moduleName; ?>-styles')){
 	var styles=document.createElement('style');
 	styles.id='s-<?php echo $moduleName; ?>-styles';
-	styles.innerHTML=`<?php
-		addslashes(readfile(ROOT.'/modules/'.$moduleName.'/styles.css'));
-	?>`;
+	styles.innerHTML=`<?php addslashes(readfile(__DIR__.'/modules/'.$moduleName.'/styles.css')); ?>`;
 	document.head.appendChild(styles);
 }
 
@@ -216,10 +212,8 @@ var actionInterval		= null;		// Used to run constant mousedown functions, like f
 var clickStart			= false;	// Whether a click was started inside Showpony
 var checkGamepad		= null;
 var framerate			= 60;		// Connected to gamepad use and games
-var pos					= 0;		// The current scrub position
 var scrubbing			= false;	// Our state of scrubbing
 var searchParams		= new URLSearchParams(window.location.search);
-var start				= 0;		// Where we're starting the Showpony from
 
 ///////////////////////////////////////
 ////////////////MODULES////////////////
@@ -280,9 +274,9 @@ S.to = function(obj = {file:S.currentFile, time:S.currentTime}){
 	}
 		
 	// If we're past the end, go to the very end
-	if(obj.file>=S.files.length){
-		obj.file=S.files.length-1;
-		obj.time=S.files[obj.file].duration;
+	if(obj.file >= S.files.length){
+		obj.file = S.files.length-1;
+		obj.time = S.files[obj.file].duration;
 		
 		// Run the event that users can read
 		S.window.dispatchEvent(new CustomEvent('end'));
@@ -295,7 +289,7 @@ S.to = function(obj = {file:S.currentFile, time:S.currentTime}){
 	
 	// If switching types, do some cleanup
 	if(S.currentModule!==S.files[obj.file].module){
-		content.innerHTML='';
+		while(content.firstChild) content.removeChild(content.firstChild);
 		content.appendChild(S.modules[S.files[obj.file].module].window);
 	}
 	
@@ -373,8 +367,6 @@ S.toggle = function(){
 
 S.load = function(){
 	S.saves=JSON.parse(localStorage.getItem(S.saveName));
-	
-	/// TODO: add remote bookmark support
 	
 	switch(S.saves.system){
 		case 'local':
@@ -725,42 +717,39 @@ function scrub(inputPercent=null){
 			scrubLoad=setTimeout(S.to,400,{time:scrubLoadTime});
 		}
 		
-		var file=0;
-		var timeCheck=time;
+		var file = 0;
+		var timeCheck = time;
 		// Based on time, get the right file
-		for(file;file<S.files.length-1;file++){
-			if(timeCheck<S.files[file].duration) break; // We've reached the file
+		for(file; file < S.files.length - 1; file++){
+			if(timeCheck < S.files[file].duration) break; // We've reached the file
 			
-			timeCheck-=S.files[file].duration;
+			timeCheck -= S.files[file].duration;
 		}
 	}
 	// Otherwise, get it based off current values
 	else{
-		var time=S.currentTime;
-		var file=S.currentFile;
+		var time = S.currentTime;
+		var file = S.currentFile;
 	}
 	
 	<?php
 	switch($displayType){
 		case 'file':
 			?>
-	var completed = infoFile(file+1);
-    var remaining = infoFile(S.files.length-(file+1));
+	var completed = infoFile(file + 1);
+    var remaining = infoFile(S.files.length - (file + 1));
 			<?php
 			break;
 		case 'time':
 			?>
 	var completed = infoTime(time);
-	var remaining = infoTime(S.duration-time);
+	var remaining = infoTime(S.duration - time);
 			<?php
 			break;
 		case 'percent':
 			?>
-	var completed = Math.round(inputPercent * 100);
-	var remaining = 100 - completed;
-	
-	completed += '%';
-	remaining += '%';
+	var completed = (Math.round(inputPercent * 100)) + '%';
+	var remaining = (Math.round((1 - inputPercent) * 100)) + '%';
 			<?php
 			break;
 	}
@@ -1316,20 +1305,6 @@ function addBookmark(obj){
 ////////////EVENT LISTENERS////////////
 ///////////////////////////////////////
 
-// Allow using querystrings for navigation
-window.addEventListener(
-	'popstate'
-	,function(){
-		var time=searchParams.get(S.queryBookmark);
-		
-		if(time){
-			if(time===S.currentTime) return;
-		
-			S.to({time:time});
-		}
-	}
-);
-
 // Save user bookmarks when leaving the page
 window.addEventListener('blur',S.save);
 window.addEventListener('beforeunload',S.save);
@@ -1671,7 +1646,7 @@ S.window.parentNode.dispatchEvent(
 		'built'
 		,{
 			detail:{
-				object:this
+				object:S
 				,debug:<?php
 					if(DEBUG) echo json_encode($debugMessages);
 					else echo json_encode('DEBUG = false. No PHP debug info will be passed.');
