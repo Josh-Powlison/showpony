@@ -273,8 +273,8 @@ S.modules.visualNovel=new function(){
 	
 	M.displaySubtitles=function(){
 		// When an audio file updates its time, display subtitles for it
-		if(S.currentSubtitles === null
-			|| !S.subtitles[S.currentSubtitles][M.currentFile]
+		if(subtitles === null
+			|| !S.subtitlesAvailable[subtitles][M.currentFile]
 		){
 			M.subtitles.style.display='none';
 			return;
@@ -282,7 +282,7 @@ S.modules.visualNovel=new function(){
 		
 		var text='';
 		
-		var phrases=S.subtitles[S.currentSubtitles][M.currentFile];
+		var phrases=S.subtitlesAvailable[subtitles][M.currentFile];
 		var keys=Object.keys(phrases);
 		for(var i=0;i<keys.length;i++){
 			

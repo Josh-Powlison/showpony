@@ -101,25 +101,27 @@ S.files					= <?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
 
 S.buffered				= [];
 S.currentModule			= null;
-S.currentSubtitles		= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
 
-var language			= <?php echo json_encode($language); ?>;
 var file				= null;
 var time				= null;
+var language			= <?php echo json_encode($language); ?>;
+var subtitles			= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
 var quality				= <?php echo json_encode(QUALITY,JSON_NUMERIC_CHECK); ?>;
 
 // Make language change on changing value
-Object.defineProperty(S, "time", {
+Object.defineProperty(S, 'time', {
 	get: function() {
 		return time;
 	},
 	set: function(input){
+		if(isNaN(input) && input!=='end') input = timeToSeconds(input);
+		
 		S.to({time:input});
 	}
 });
 
 // Make language change on changing value
-Object.defineProperty(S, "file", {
+Object.defineProperty(S, 'file', {
 	get: function() {
 		return file;
 	},
@@ -128,13 +130,17 @@ Object.defineProperty(S, "file", {
 	}
 });
 
+// Make direct affect
+S.paused				= false;
+S.fullscreen			= false;
+
+
+
 S.data					= {};
 S.duration				= S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
-S.fullscreen			= false;
 S.gamepad				= null;
 S.maxQuality			= <?php echo $maxQuality; ?>;
 S.modules				= {};
-S.paused				= false;
 S.queryBookmark			= <?php echo json_encode(NAME); ?>+'-bookmark';
 S.saveName				= <?php echo json_encode(SAVE_NAME); ?>;
 S.saves					= {
@@ -145,7 +151,7 @@ S.saves					= {
 	timestamp	:Date.now()
 };
 S.readingDirection		= <?php echo json_encode($_GET['direction'] ?? DEFAULT_DIRECTION); ?>;
-S.subtitles				= {<?php
+S.subtitlesAvailable				= {<?php
 
 	//Immediately load subtitles if called for
 	define('FILES_COUNT'		, count($files));
@@ -275,8 +281,6 @@ S.to = function(obj = {file:file, time:time}){
 	
 	// If we're not going to the end, adjust time values; 'end' gets passed to the modules
 	if(obj.time!=='end'){
-		obj.time = timeToSeconds(obj.time);
-		
 		// Minimal time and file values are 0
 		obj.time = Math.max(0,parseFloat(obj.time) || 0);
 		
@@ -392,7 +396,7 @@ S.load = function(){
 			
 			S.data=loadFile.data;
 			language=loadFile.language;
-			S.currentSubtitles=loadFile.subtitles;
+			subtitles=loadFile.subtitles;
 			quality=loadFile.quality;
 			
 			return loadFile.bookmark;
@@ -419,7 +423,7 @@ S.save = function(){
 				bookmark:time
 				,data:S.data
 				,language:language
-				,subtitles:S.currentSubtitles
+				,subtitles:subtitles
 				,quality:quality
 				,timestamp:Date.now()
 			};
@@ -438,37 +442,35 @@ S.save = function(){
 			S.saves.system
 			+'&'+S.saves.currentSave
 			+'&'+language
-			+'&'+S.currentSubtitles
+			+'&'+subtitles
 			+'&'+quality
 		)
 	;
-}
-
-S.changeLanguage = function(newLanguage=<?php echo json_encode($language); ?>){
-	if(language === newLanguage) return;
-	
-	fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
-	.then(response=>{return response.json();})
-	.then(json=>{
-		S.files=json;
-		language = newLanguage;
-		
-		// Need to set this to -1 to reload the current file
-		S.modules[S.currentModule].currentFile=-1;
-		
-		S.to({time:time});
-	})
-	.catch(error=>{
-		S.notice('Failed to load language files. '+error);
-	});
-}
+} 
 
 // Make language change on changing value
-Object.defineProperty(S, "language", {
-	get: function() {
+Object.defineProperty(S, 'language', {
+	get: function(){
 		return language;
 	},
-	set: S.changeLanguage
+	set: function(newLanguage=<?php echo json_encode($language); ?>){
+		if(language === newLanguage) return;
+		
+		fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
+		.then(response=>{return response.json();})
+		.then(json=>{
+			S.files=json;
+			language = newLanguage;
+			
+			// Need to set this to -1 to reload the current file
+			S.modules[S.currentModule].currentFile=-1;
+			
+			S.to({time:time});
+		})
+		.catch(error=>{
+			S.notice('Failed to load language files. '+error);
+		});
+	}
 });
 
 // Toggle fullscreen, basing the functions on the browser's abilities
@@ -892,30 +894,30 @@ function userScrub(event){
 	if(scrubbing == true) scrub(percent);
 }
 
-S.displaySubtitles = function(newSubtitles = S.currentSubtitles){
+S.displaySubtitles = function(newSubtitles = subtitles){
 	// Display the subtitles if they're loaded in
-	if(S.subtitles[newSubtitles] || newSubtitles===null){
-		S.currentSubtitles = newSubtitles;
+	if(S.subtitlesAvailable[newSubtitles] || newSubtitles===null){
+		subtitles = newSubtitles;
 		S.modules[S.currentModule].displaySubtitles();
 	// Otherwise, load them
 	}else{
 		// If we have these subtitles available raw, get those
-		if(S.subtitles[newSubtitles + '-RAW']){
+		if(S.subtitlesAvailable[newSubtitles + '-RAW']){
 			console.log('processing raw');
-			S.subtitles[newSubtitles] = processSubtitles(S.subtitles[newSubtitles + '-RAW'], false);
-			S.currentSubtitles = newSubtitles;
+			S.subtitlesAvailable[newSubtitles] = processSubtitles(S.subtitlesAvailable[newSubtitles + '-RAW'], false);
+			subtitles = newSubtitles;
 			S.modules[S.currentModule].displaySubtitles();
 		// Otherwise, fetch
 		} else {
 			fetch('showpony/fetch-subtitles.php?path=<?php echo STORIES_PATH; ?>&lang=' + newSubtitles + '&files=' + S.files.length)
 			.then(response=>{if(response.ok) return response.text();})
 			.then(text=>{
-				S.subtitles[newSubtitles] = processSubtitles(text);
-				S.currentSubtitles = newSubtitles;
+				S.subtitlesAvailable[newSubtitles] = processSubtitles(text);
+				subtitles = newSubtitles;
 				S.modules[S.currentModule].displaySubtitles();
 			})
 			.catch(response=>{
-				S.currentSubtitles=null;
+				subtitles=null;
 				S.notice('Error loading subtitles for '+newSubtitles);
 			});
 		}
@@ -1148,7 +1150,7 @@ if(<?php if(!empty($_GET['export'])) echo 'false || '; ?>supportedLanguages.leng
 		}
 		
 		this.classList.add('s-selected');
-		S.changeLanguage(this.dataset.value);
+		S.language = this.dataset.value;
 	}
 
 	var languageButtons=document.createDocumentFragment();
@@ -1168,31 +1170,16 @@ if(<?php if(!empty($_GET['export'])) echo 'false || '; ?>supportedLanguages.leng
 }
 
 if(<?php if(!empty($_GET['export'])) echo 'false || '; ?>S.supportedSubtitles.length>0){
-	function toggleSubtitle(){
-		// Remove selected class from previous selected item
-		var previous=S.window.querySelector('.s-popup-subtitles .s-selected');
-		if(previous){
-			previous.classList.remove('s-selected');
-		}
-		
-		// Set subtitles to null if clicking on the same item
-		if(S.currentSubtitles===this.dataset.value){
-			S.displaySubtitles(null);
-			return;
-		}
-		
-		this.classList.add('s-selected');
-		S.displaySubtitles(this.dataset.value);
-	}
-
 	var subtitleButtons=document.createDocumentFragment();
 	for(var i=0;i<S.supportedSubtitles.length;i++){
 		var buttonEl=document.createElement('button');
 		buttonEl.innerText=S.supportedSubtitles[i]['long'];
 		buttonEl.dataset.value=S.supportedSubtitles[i]['short'];
-		buttonEl.addEventListener('click',toggleSubtitle);
+		buttonEl.addEventListener('click',function(){
+			S.subtitles = this.dataset.value;
+		});
 		
-		if(S.currentSubtitles===S.supportedSubtitles[i]['short']) buttonEl.className='s-selected';
+		if(subtitles===S.supportedSubtitles[i]['short']) buttonEl.className='s-selected';
 		
 		subtitleButtons.appendChild(buttonEl);
 	}
@@ -1201,25 +1188,33 @@ if(<?php if(!empty($_GET['export'])) echo 'false || '; ?>S.supportedSubtitles.le
 	S.window.querySelector('.s-button-subtitles').remove();
 }
 
-// delete S.supportedSubtitles;
-
-// Add quality dropdown
-if(S.maxQuality > 0){
-	S.changeQuality = function(newQuality){
-		// Ignore if re-selecting an old item
-		if(quality === newQuality) return;
-		
+// Make language change on changing value
+Object.defineProperty(S, 'subtitles', {
+	get: function() {
+		return subtitles;
+	},
+	set: function(newSubtitles){
 		// Remove selected class from previous selected item
-		var previous=S.window.querySelector('.s-popup-quality .s-selected');
+		var previous=S.window.querySelector('.s-popup-subtitles .s-selected');
 		if(previous){
 			previous.classList.remove('s-selected');
 		}
 		
-		// if(this.dataset) this.classList.add('s-selected');
+		// Set subtitles to null if clicking on the same item
+		if(subtitles===newSubtitles){
+			S.displaySubtitles(null);
+			return;
+		}
 		
-		quality = newQuality;
-		S.to();
+		// this.classList.add('s-selected');
+		S.displaySubtitles(newSubtitles);
 	}
+});
+
+// delete S.supportedSubtitles;
+
+// Add quality dropdown
+if(S.maxQuality > 0){
 
 	// The terms for different levels of quality
 	var qualityTerms = <?php echo json_encode(QUALITY_NAMES); ?>;
@@ -1234,7 +1229,7 @@ if(S.maxQuality > 0){
 		
 		buttonEl.dataset.value = i;
 		buttonEl.addEventListener('click',function(){
-			S.changeQuality(this.dataset.value);
+			S.quality = this.dataset.value;
 		});
 		
 		if(quality === i) buttonEl.className='s-selected';
@@ -1248,12 +1243,24 @@ if(S.maxQuality > 0){
 }
 
 // Make language change on changing value
-Object.defineProperty(S, "quality", {
+Object.defineProperty(S, 'quality', {
 	get: function() {
 		return quality;
 	},
-	set: function(input){
-		S.changeQuality(input);
+	set: function(newQuality){
+		// Ignore if re-selecting an old item
+		if(quality === newQuality) return;
+		
+		// Remove selected class from previous selected item
+		var previous=S.window.querySelector('.s-popup-quality .s-selected');
+		if(previous){
+			previous.classList.remove('s-selected');
+		}
+		
+		// if(this.dataset) this.classList.add('s-selected');
+		
+		quality = newQuality;
+		S.to();
 	}
 });
 

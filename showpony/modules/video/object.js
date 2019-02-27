@@ -57,12 +57,12 @@ S.modules.video=new function(){
 	}
 	
 	M.displaySubtitles=function(){
-		if(S.currentSubtitles===null || !S.subtitles[S.currentSubtitles][M.currentFile]){
+		if(subtitles===null || !S.subtitlesAvailable[subtitles][M.currentFile]){
 			M.subtitles.style.display='none';
 			return;
 		}
 		
-		var phrases=S.subtitles[S.currentSubtitles][M.currentFile];
+		var phrases=S.subtitlesAvailable[subtitles][M.currentFile];
 		var keys=Object.keys(phrases);
 		for(var i=0;i<keys.length;i++){
 			
