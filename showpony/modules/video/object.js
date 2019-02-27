@@ -1,4 +1,4 @@
-S.modules.video=new function(){
+new function(){
 	const M=this;
 	
 	M.currentTime=null;
@@ -134,4 +134,4 @@ S.modules.video=new function(){
 		// Consider how much has already been loaded; this isn't run on first chunk loaded
 		this.dispatchEvent(new CustomEvent('progress'));
 	});
-}();
+}()

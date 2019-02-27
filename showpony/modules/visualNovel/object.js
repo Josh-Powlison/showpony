@@ -1,4 +1,4 @@
-S.modules.visualNovel=new function(){
+new function(){
 	const M=this;
 	
 	M.currentTime=null;
@@ -1224,4 +1224,4 @@ S.modules.visualNovel=new function(){
 			skipping = false;
 		}
 	}
-}();
+}()

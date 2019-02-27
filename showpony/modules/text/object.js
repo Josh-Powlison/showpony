@@ -1,4 +1,4 @@
-S.modules.text=new function(){
+new function(){
 	const M=this;
 	
 	M.currentTime=null;
@@ -87,4 +87,4 @@ S.modules.text=new function(){
 		M.currentTime=Math.round(M.window.scrollTop/M.window.scrollHeight*(S.files[M.currentFile].duration));
 		timeUpdate();
 	});
-}();
+}()

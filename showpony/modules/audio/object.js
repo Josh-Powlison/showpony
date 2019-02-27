@@ -1,4 +1,4 @@
-S.modules.audio=new function(){
+new function(){
 	const M=this;
 	
 	M.currentTime=null;
@@ -135,4 +135,4 @@ S.modules.audio=new function(){
 		timeUpdate();
 		S.displaySubtitles();
 	});
-}();
+}()

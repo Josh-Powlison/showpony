@@ -1,4 +1,4 @@
-S.modules.<?php echo 'image'; ?>=new function(){
+new function(){
 	const M=this;
 	
 	M.currentTime=null;
@@ -122,4 +122,4 @@ S.modules.<?php echo 'image'; ?>=new function(){
 		M.currentTime=Math.round(M.window.scrollTop/M.window.scrollHeight*(S.files[M.currentFile].duration));
 		timeUpdate();
 	});
-}();
+}()

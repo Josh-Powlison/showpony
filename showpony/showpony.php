@@ -89,9 +89,11 @@ document.head.appendChild(styles);
 
 <?php } ?>
 
+
 new function(){
 
 const S = this;
+const DEBUG = <?php echo DEBUG ? 'true' : 'false'; ?>;
 
 ///////////////////////////////////////
 ///////////PUBLIC VARIABLES////////////
@@ -136,7 +138,24 @@ S.data					= {};
 S.duration				= S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 S.gamepad				= null;
 S.maxQuality			= <?php echo $maxQuality; ?>;
-S.modules				= {};
+S.modules				= {
+
+<?php
+
+// Load modules
+$e = array_keys($media);
+$l = count($e);
+for($i = 0; $i < $l; $i++){
+	echo $e[$i],':';
+	require __DIR__.'/modules/'.$e[$i].'/object.js';
+	if($i < $l - 1) echo '
+
+,';
+}
+
+?>
+
+};
 S.queryBookmark			= <?php echo json_encode(NAME); ?>+'-bookmark';
 S.saveName				= <?php echo json_encode(SAVE_NAME); ?>;
 S.saves					= {
@@ -180,7 +199,7 @@ S.supportedSubtitles	= <?php
 	echo json_encode($supportedSubtitles);
 ?>;
 S.upcomingFiles			= <?php echo json_encode($releaseDates); ?>;
-	
+
 S.window				= document.createElement('div');
 S.window.className		= 's s-' + S.readingDirection;
 S.window.tabIndex		= 0;
@@ -235,18 +254,6 @@ var checkGamepad		= null;
 var framerate			= 60;		// Connected to gamepad use and games
 var scrubbing			= false;	// Our state of scrubbing
 var searchParams		= new URLSearchParams(window.location.search);
-
-///////////////////////////////////////
-////////////////MODULES////////////////
-///////////////////////////////////////
-<?php
-
-// Load modules
-foreach(array_keys($media) as $moduleName){
-	require __DIR__.'/modules/'.$moduleName.'/object.js';
-}
-
-?>
 
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
@@ -327,6 +334,7 @@ S.to = function(obj = {file:file, time:time}){
 		file=S.modules[S.currentModule].currentFile=obj.file;
 		S.modules[S.currentModule].currentTime=obj.time;
 		S.displaySubtitles();
+		S.subtitles = subtitles;
 		timeUpdate();
 		
 		/// PRELOAD ///
@@ -1223,10 +1231,7 @@ Object.defineProperty(S, 'subtitles', {
 		}
 		
 		// Set subtitles to null if clicking on the same item
-		if(subtitles===newSubtitles){
-			S.displaySubtitles(null);
-			return;
-		}
+		if(subtitles === newSubtitles) newSubtitles = null;
 		
 		// this.classList.add('s-selected');
 		S.displaySubtitles(newSubtitles);
