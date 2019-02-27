@@ -1,0 +1,31 @@
+SHOWPONY.PHP
+
+Showpony is set up to only make 1 file call on initial load. So you'll see CSS, JS, etc, all compiled into showpony.php.
+
+For just one medium, here are all the files that would be called from the client side if it was all split up in a more typical way:
+1. Showpony JS
+2. Showpony PHP (called by Showpony JS)
+3. Showpony CSS
+4. Loading files (in initially requested language)
+5. Subtitles call (if subtitles initially requested)
+6. Module JS (* number of modules)
+7. Module CSS (* number of modules)
+
+This setup has a few benefits:
+1. PHP can be run in JS and CSS files: this lets us customize display and functionality based on server data directly.
+2. 1 server call instead of 5 + (Modules * 2): server calls are generally more expensive than bandwidth. This is meant to speed up the process.
+3. Allows us to require just 1 line of code to run: we can pass $_GET info to PHP to retrieve all of the info immediately.
+
+If you'd like to contest this setup, feel free to start up a discussion and let us know why you think an alternative setup would be more resource-efficient.
+
+Thanks!
+
+
+MODULES
+
+Modules are packages used for reading specific media.
+
+
+ETC
+
+This could use some more info...

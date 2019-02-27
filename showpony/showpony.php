@@ -1,42 +1,13 @@
 <?php
 
-/*
-
-ABOUT SHOWPONY'S CODE
-
-Showpony is set up to only make 1 file call on initial load. So you'll see CSS, JS, etc, all compiled into this one file.
-
-For just one medium, here are all the files that would be called from the client side if it was all split up in a more typical way:
-1. Showpony JS
-2. Showpony PHP (called by Showpony JS)
-3. Showpony CSS
-4. Loading files (in initially requested language)
-5. Subtitles call (if subtitles initially requested)
-6. Module JS (* number of modules)
-7. Module CSS (* number of modules)
-
-This setup has a few benefits:
-1. PHP can be run in JS and CSS files: this lets us customize display and functionality based on server data directly.
-2. 1 server call instead of 5 + (Modules * 2): server calls are generally more expensive than bandwidth. This is meant to speed up the process.
-3. Allows us to require just 1 line of code to run: we can pass $_GET info to PHP to retrieve all of the info immediately.
-
-If you'd like to contest this setup, feel free to start up a discussion and let us know why you think an alternative setup would be more resource-efficient.
-
-Thanks!
-
-*/
-
 require 'settings.php';
-
-// TESTING ADMIN
-// $_SESSION['showpony_admin']=false;
 
 define('STORIES_PATH',DEFAULT_PATH.($_GET['path'] ?? ''));
 
 // Get the query from the paths
 define('NAME', preg_match('/[^\/]+(?=\/?$)/',STORIES_PATH,$match) ? $match[0] : 'story');
 
-$saveName = toCamelCase(NAME).'Data';
+$saveName = urlencode(NAME).'Data';
 
 // 0 is save system; 1 is save name; 2 is language
 if(!empty($_COOKIE[$saveName])) $data = explode('&',$_COOKIE[$saveName]);
@@ -49,14 +20,6 @@ define('QUALITY'		, $data[4] ?? DEFAULT_QUALITY);
 // These will change if the requested options aren't available
 $subtitles	= $_GET['subs'] ?? $data[3] ?? DEFAULT_SUBTITLES;
 $language	= $_GET['lang'] ?? $data[2] ?? DEFAULT_LANGUAGE;
-
-function toCamelCase($input){
-	return lcfirst(
-		str_replace('-','',
-			ucwords($input,'-')
-		)
-	);
-}
 
 // We'll store all errors and code that's echoed, so we can send that info to the user (in a way that won't break the JSON object).
 ob_start();
@@ -212,7 +175,6 @@ S.window.innerHTML		= `
 		<div class="s-info-text"></div>
 		<div class="s-upcoming-file"></div>
 		<div class="s-buttons s-hide-on-hold">
-			<button class="s-button s-button-comments" data-type="comments" alt="Comments" title="Comments"></button>
 			<button class="s-button s-button-language" data-type="language" alt="Language" title="Language"></button>
 			<button class="s-button s-button-subtitles" data-type="subtitles" alt="Subtitles" title="Subtitles"></button>
 			<button class="s-button s-button-quality" data-type="quality" alt="Quality" title="Quality Toggle"></button>
@@ -234,14 +196,6 @@ S.window.innerHTML		= `
 ///////////PRIVATE VARIABLES///////////
 ///////////////////////////////////////
 
-// const commentsButton = S.window.getElementsByClassName('s-button-comments')[0];
-const languageButton	= S.window.getElementsByClassName('s-button-language')[0];
-const subtitlesButton	= S.window.getElementsByClassName('s-button-subtitles')[0];
-const bookmarkButton	= S.window.getElementsByClassName('s-button-bookmark')[0];
-const qualityButton		= S.window.getElementsByClassName('s-button-quality')[0];
-const fullscreenButton	= S.window.getElementsByClassName('s-button-fullscreen')[0];
-
-const captionsButton	= S.window.getElementsByClassName('s-captions-button')[0];
 const content			= S.window.getElementsByClassName('s-content')[0];
 content.classList.add('s-loading');
 const overlay			= S.window.getElementsByClassName('s-menu')[0];
@@ -609,11 +563,10 @@ function checkCollision(x=0,y=0,element){
 	var bounds=element.getBoundingClientRect();
 	
 	// If element is collapsed or outside of x and y, return
-	if(bounds.width===0 || bounds.height===0) return false;
-	if(y<bounds.top)	return false;
-	if(y>bounds.bottom)	return false;
-	if(x<bounds.left)	return false;
-	if(x>bounds.right)	return false;
+	if(bounds.width===0 || bounds.height===0
+		|| y<bounds.top || y>bounds.bottom
+		|| x<bounds.left || x>bounds.right
+	) return false;
 	
 	return true;
 }
@@ -658,7 +611,7 @@ function checkBuffered(time=0){
 
 function getTotalBuffered(){
 	var time=0;
-	var buffered=[];
+	S.buffered=[];
 	
 	// Update amount buffered total
 	for(let i=0;i<S.files.length;i++){
@@ -669,8 +622,8 @@ function getTotalBuffered(){
 			
 			if(bufferTrack){
 				// Combine buffered arrays, if we're moving forward
-				if(buffered.length>0 && bufferTrack[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=bufferTrack[1];
-				else buffered.push(bufferTrack);
+				if(S.buffered.length>0 && bufferTrack[0]<=S.buffered[S.buffered.length-1][1]) S.buffered[S.buffered.length-1][1]=bufferTrack[1];
+				else S.buffered.push(bufferTrack);
 			}
 		}
 		else if(Array.isArray(S.files[i].buffered)){
@@ -682,35 +635,30 @@ function getTotalBuffered(){
 				];
 				
 				// Combine buffered arrays, if we're moving forward
-				if(buffered.length>0 && bufferTrack[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=bufferTrack[1];
-				else buffered.push(bufferTrack);
+				if(S.buffered.length>0 && bufferTrack[0]<=S.buffered[S.buffered.length-1][1]) S.buffered[S.buffered.length-1][1]=bufferTrack[1];
+				else S.buffered.push(bufferTrack);
 			}
 		}
 		
 		time+=parseFloat(S.files[i].duration);
 	}
 	
-	if(buffered.length===1 && buffered[0][0]===0 && buffered[0][1]>=S.duration) buffered=true;
-	if(buffered.length===0) buffered=[];
-	
-	S.buffered=buffered;
+	if(S.buffered.length===1 && S.buffered[0][0]===0 && S.buffered[0][1]>=S.duration) S.buffered=true;
+	if(S.buffered.length===0) S.buffered=[];
 	
 	// Show buffer
-	var rectRes=1000;
-	buffer.width=rectRes;
-	buffer.height=1;
-	var ctx=buffer.getContext('2d');
-	ctx.clearRect(0,0,rectRes,1);
+	var ctx = buffer.getContext('2d');
 	
 	// Update info on popup
 	if(S.buffered===true){
-		ctx.fillRect(0,0,rectRes,1);
+		ctx.fillRect(0,0,buffer.width,1);
 	}else if(Array.isArray(S.buffered)){
+		ctx.clearRect(0,0,buffer.width,1);
 		for(let i=0;i<S.buffered.length;i++){
 			ctx.fillRect(
-				Math.floor(S.buffered[i][0]/S.duration*rectRes)
+				Math.floor(S.buffered[i][0]/S.duration*buffer.width)
 				,0
-				,Math.floor((S.buffered[i][1]-S.buffered[i][0])/S.duration*rectRes)
+				,Math.floor((S.buffered[i][1]-S.buffered[i][0])/S.duration*buffer.width)
 				,1
 			);
 		}
@@ -819,8 +767,8 @@ function scrub(inputPercent=null){
 	info+='</p><p>'+remaining+'</p>';
 	
 	// Add info about upcoming parts if not added already
-	if(!S.window.querySelector('.s-upcoming-file').innerHTML
-		&& file===S.files.length-1 && S.upcomingFiles.length){
+	if(file===S.files.length-1 && S.upcomingFiles.length
+		&& !S.window.querySelector('.s-upcoming-file').innerHTML){
 		var upcoming='';
 		for(var i=0;i<S.upcomingFiles.length;i++){
 			upcoming+='Next Update: '+new Intl.DateTimeFormat(
@@ -898,13 +846,10 @@ function userScrub(event){
 	// Consider if we've moved too far for clicking functions to run
 	if(
 		scrubbing !== true
-		&&
-		!pointerMoved
-		&&
-		pointerXStart !== null
-		&&
+		&& !pointerMoved
+		&& pointerXStart !== null
 		// Distance
-		Math.abs(
+		&& Math.abs(
 			Math.sqrt(
 				Math.pow(pointerXStart - pointer.clientX,2)
 				+ Math.pow(pointerYStart - pointer.clientY,2)
@@ -1111,14 +1056,10 @@ function gamepadControls(){
 }
 
 function gamepadAxis(gamepad,number,type){
-	// Active space
-	var min=S.gamepad.axisMin;
-	var max=S.gamepad.axisMax;
-	
 	// Get amount between -1 and 1 based on distance between values
-	if(Math.abs(gamepad.axes[number])>=min){
-		if(gamepad.axes[number]>0) S.gamepad[type]=(gamepad.axes[number]-min)/(max-min);
-		else S.gamepad[type]=((gamepad.axes[number]-(-max))/(-min-(-max)))-1;
+	if(Math.abs(gamepad.axes[number])>=S.gamepad.axisMin){
+		if(gamepad.axes[number]>0) S.gamepad[type]=(gamepad.axes[number]-S.gamepad.axisMin)/(S.gamepad.axisMax-S.gamepad.axisMin);
+		else S.gamepad[type]=((gamepad.axes[number]-(-S.gamepad.axisMax))/(-S.gamepad.axisMin-(-S.gamepad.axisMax)))-1;
 		
 		// Set pressing values right
 		if(S.gamepad[type+'Press']<0) S.gamepad[type+'Press']=2;
@@ -1144,6 +1085,24 @@ function gamepadButton(gamepad,number,type){
 }
 
 ////////////
+
+// Toggle popups on clicking buttons
+S.window.getElementsByClassName('s-button-language')[0].addEventListener('click',popupToggle);
+S.window.getElementsByClassName('s-button-subtitles')[0].addEventListener('click',popupToggle);
+S.window.getElementsByClassName('s-button-bookmark')[0].addEventListener('click',popupToggle);
+S.window.getElementsByClassName('s-button-quality')[0].addEventListener('click',popupToggle);
+S.window.getElementsByClassName('s-button-fullscreen')[0].addEventListener('click',S.fullscreenToggle);
+
+function popupToggle(){
+	var closePopups = S.window.querySelectorAll('.s-visible:not(.s-popup-'+this.dataset.type+')');
+	for(var i = 0; i < closePopups.length; i++) closePopups[i].classList.remove('s-visible');
+	
+	S.window.querySelector('.s-popup-'+this.dataset.type).classList.toggle('s-visible');
+}
+
+S.window.querySelector('.s-notice-close').addEventListener('click',function(){
+	S.window.querySelector('.s-notice').classList.remove('s-visible');
+});
 
 const supportedLanguages=<?php
 	// Get subtitles
@@ -1267,7 +1226,7 @@ if(S.maxQuality > 0){
 	S.window.querySelector(".s-popup-quality").appendChild(qualityButtons);
 // Remove the quality button if we have no options
 } else {
-	qualityButton.remove();
+	S.window.querySelector('.s-button-quality').remove();
 }
 
 // Bookmarks
@@ -1346,13 +1305,6 @@ function addBookmark(obj){
 	
 	bookmarkEl.appendChild(nameEl);
 	
-	// if(obj.type!=='new'){
-		// var deleteEl=document.createElement('button');
-		// deleteEl.className='s-bookmark-delete';
-		// deleteEl.innerHTML='X';
-		// bookmarkEl.appendChild(deleteEl);
-	// }
-	
 	S.window.querySelector(".s-popup-bookmark").appendChild(bookmarkEl);
 }
 
@@ -1416,22 +1368,6 @@ S.window.addEventListener(
 	}
 );
 
-// Toggle popups on clicking buttons
-if(languageButton)	languageButton.addEventListener('click',popupToggle);
-if(subtitlesButton)	subtitlesButton.addEventListener('click',popupToggle);
-					bookmarkButton.addEventListener('click',popupToggle);
-if(qualityButton)	qualityButton.addEventListener('click',popupToggle);
-					fullscreenButton.addEventListener('click',S.fullscreenToggle);
-
-function popupToggle(){
-	while(S.window.querySelector('.s-visible:not(.s-popup-'+this.dataset.type+')')) S.window.querySelector('.s-visible').classList.remove('s-visible');
-	S.window.querySelector('.s-popup-'+this.dataset.type).classList.toggle('s-visible');
-}
-
-S.window.querySelector('.s-notice-close').addEventListener('click',function(){
-	S.window.querySelector('.s-notice').classList.remove('s-visible');
-});
-
 // TODO: put this somewhere sensible, or decide that here is fine
 var buttonDown = null;
 
@@ -1463,8 +1399,6 @@ function pointerDown(event){
 	if(pointer.button && pointer.button!==0) return;
 	
 	// event.preventDefault();
-	
-	// if(S.name==='gamePlan') console.log("PRESSED DOWN",event);
 	
 	// Click was started inside showpony
     clickStart = true;
@@ -1562,8 +1496,6 @@ function pointerUp(event){
 	
 	// Allow left-click only
 	if(pointer && pointer.button && pointer.button!==0) return;
-	
-	// if(S.name==='gamePlan') console.log("PRESSED UP",event);
 	
 	// If the click was started outside of showpony, ignore it
     if (!clickStart) return;
@@ -1745,15 +1677,7 @@ S.window.parentNode.dispatchEvent(
 	)
 );
 
-///////////////////////////////////////
-/////////////////ADMIN/////////////////
-///////////////////////////////////////
-
-///// With new admin panel, we just reload the entire Showpony- this avoids risk of any bugs with AJAX vs reality and the like
-
-}();
-
-<?php
+}();<?php
 
 if(!empty($_GET['export'])) file_put_contents('showpony-export.js',ob_get_clean());
 
