@@ -226,7 +226,7 @@ const pause				= S.window.getElementsByClassName('s-pause')[0];
 const scrubber			= S.window.getElementsByClassName('s-scrubber')[0];
 const progress			= S.window.getElementsByClassName('s-progress')[0];
 const regress			= S.window.getElementsByClassName('s-regress')[0];
-const notice			= S.window.getElementsByClassName('s-notice')[0];
+const noticeEl			= S.window.getElementsByClassName('s-notice')[0];
 
 var actionTimeout		= null;		// Used to start running constant mousedown functions, like fast-forward and rewind
 var actionInterval		= null;		// Used to run constant mousedown functions, like fast-forward and rewind
@@ -251,18 +251,28 @@ foreach(array_keys($media) as $moduleName){
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
 ///////////////////////////////////////
+var notice = null;
 
-S.notice = function(message){
-	if(!paused) S.paused = true;
+// Make language change on changing value
+Object.defineProperty(S, 'notice', {
+	get: function() {
+		return notice;
+	},
+	set: function(input){
+		if(!paused) S.paused = true;
 	
-	var noticeText=notice.querySelector('.s-notice-text');
-	
-	// If a message is currently up, add new messages to the list rather than overwriting them
-	if(notice.classList.contains('s-visible')) noticeText.innerHTML += '<hr class="s-block-scrubbing"><p class="s-block-scrubbing">'+message+'</p>';
-	else noticeText.innerHTML = '<p class="s-block-scrubbing">'+message+'</p>';
-	
-	notice.classList.add('s-visible');
-}
+		var noticeText=noticeEl.querySelector('.s-notice-text');
+		
+		// If a message is currently up, add new messages to the list rather than overwriting them
+		if(noticeEl.classList.contains('s-visible')) noticeText.innerHTML += '<hr class="s-block-scrubbing"><p class="s-block-scrubbing">'+input+'</p>';
+		else noticeText.innerHTML = '<p class="s-block-scrubbing">'+input+'</p>';
+		
+		noticeEl.classList.add('s-visible');
+		
+		notice = input;
+		noticeEl.focus();
+	}
+});
 
 // Go to another file
 S.to = function(obj = {file:file, time:time}){
@@ -345,13 +355,13 @@ S.to = function(obj = {file:file, time:time}){
 						return true;
 					}
 					
-					S.notice('Error buffering file '+S.files[i].path);
+					S.notice = ('Error buffering file '+S.files[i].path);
 				});
 			}
 		}
 	})
 	.catch(response=>{
-		S.notice('Error loading File '+obj.file+' at Time '+obj.time+' for Module '+S.currentModule);
+		S.notice = ('Error loading File '+obj.file+' at Time '+obj.time+' for Module '+S.currentModule);
 	});
 }
 
@@ -472,7 +482,7 @@ Object.defineProperty(S, 'language', {
 			S.time = time;
 		})
 		.catch(error=>{
-			S.notice('Failed to load language files. '+error);
+			S.notice = ('Failed to load language files. '+error);
 		});
 	}
 });
@@ -928,7 +938,7 @@ S.displaySubtitles = function(newSubtitles = subtitles){
 			})
 			.catch(response=>{
 				subtitles=null;
-				S.notice('Error loading subtitles for '+newSubtitles);
+				S.notice = ('Error loading subtitles for '+newSubtitles);
 			});
 		}
 	}
@@ -1341,12 +1351,11 @@ function addBookmark(obj){
 				document.execCommand('copy');
 				temporaryInput.remove();
 				
-				S.notice("Copied the link to your clipboard!");
-				notice.focus();
+				S.notice = 'Copied the link to your clipboard!';
 			});
 			break;
 		default:
-			S.notice('Save system not recognized!');
+			S.notice = 'Save system not recognized!';
 			break;
 	}
 	

@@ -183,13 +183,13 @@ S.modules.visualNovel=new function(){
 				for(let i = 0; i < M.lines.length; i++){
 					// Throw an error if too many keyframes crop up; we're likely creating an accidental infinite loop
 					if(keyframes.length > 1000){
-						S.notice("Error: likely recursion. Over 1000 keyframes read.");
+						S.notice = "Error: likely recursion. Over 1000 keyframes read.";
 						throw "ERROR: too many keyframes";
 					}
 					
 					// Prevent recursion
 					if(keyframes.length > 0 && keyframes.indexOf(i) !== -1){
-						S.notice("Error: recursion detected. Revisited keyframe on line "+i+ " reading: "+M.lines[i]);
+						S.notice = "Error: recursion detected. Revisited keyframe on line "+i+ " reading: "+M.lines[i];
 						return;
 					}
 					
@@ -460,7 +460,7 @@ S.modules.visualNovel=new function(){
 						objects[compTarget][commTarget]=target[compTarget][commTarget];
 					// If it doesn't exist
 					} else {
-						S.notice('"' + compTarget + '" does not have a command called "' + commTarget + '"');
+						S.notice = '"' + compTarget + '" does not have a command called "' + commTarget + '"';
 					}
 				}
 			}
@@ -521,7 +521,7 @@ S.modules.visualNovel=new function(){
 					
 				case 'go':
 					// Go to the right line
-					S.notice('Error: command ' + command + ' made it to an unexpected point in the code.');
+					S.notice = 'Error: command ' + command + ' made it to an unexpected point in the code.';
 					return false;
 					break;
 					
@@ -577,7 +577,7 @@ S.modules.visualNovel=new function(){
 			objects[component][command] = parameter;
 			return true;
 		} else {
-			S.notice('"' + component + '" does not have a command called "' + command + '"');
+			S.notice = '"' + component + '" does not have a command called "' + command + '"';
 			return false;
 		}
 	}
@@ -591,7 +591,7 @@ S.modules.visualNovel=new function(){
 		var goTo = M.lines.indexOf(input);
 		
 		if(goTo === -1){
-			S.notice('Error: tried to go to a nonexistent line labeled '+input);
+			S.notice = 'Error: tried to go to a nonexistent line labeled '+input;
 			return false;
 		} else {
 			M.currentLine = M.lines.indexOf(input);
@@ -793,7 +793,7 @@ S.modules.visualNovel=new function(){
 		});
 		
 		function loadingError(e){
-			S.notice('Error loading '+e.target.dataset.file);
+			S.notice = 'Error loading '+e.target.dataset.file;
 		}
 		
 		objectAddCommonFunctions(O);
@@ -871,7 +871,7 @@ S.modules.visualNovel=new function(){
 		
 		function loadingError(e){
 			M.loading--;
-			S.notice('Error loading ' + e.target.dataset.file);
+			S.notice = 'Error loading ' + e.target.dataset.file;
 		}
 		
 		objectAddCommonFunctions(O);
