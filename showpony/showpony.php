@@ -133,7 +133,11 @@ S.readingDirection		= <?php echo json_encode(READING_DIRECTION); ?>;
 S.subtitles				= {<?php
 
 	//Immediately load subtitles if called for
-	if($subtitles !== 'null' && !empty($subtitles)) require ROOT.'/get-subtitles.php';
+	define('FILES_COUNT'		, count($files));
+	define('SUBTITLES_FETCHED'	, false);
+	define('SUBTITLES_PATH'		, 'subtitles/'.$subtitles);
+	
+	if($subtitles !== 'null' && !empty($subtitles)) require __DIR__.'/get-subtitles.php';
 	
 ?>};
 S.supportedSubtitles	= <?php
@@ -436,7 +440,7 @@ S.save = function(){
 S.changeLanguage = function(newLanguage=<?php echo json_encode($language); ?>){
 	if(S.currentLanguage===newLanguage) return;
 	
-	fetch('showpony/get-file-list.php?return=true&path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
+	fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
 	.then(response=>{return response.json();})
 	.then(json=>{
 		S.files=json;
@@ -650,7 +654,7 @@ function getTotalBuffered(){
 	var ctx = buffer.getContext('2d');
 	
 	// Update info on popup
-	if(S.buffered===true){
+	if(S.buffered === true){
 		ctx.fillRect(0,0,buffer.width,1);
 	}else if(Array.isArray(S.buffered)){
 		ctx.clearRect(0,0,buffer.width,1);
@@ -683,7 +687,7 @@ function scrub(inputPercent=null){
 	// inputPercent will always be from left-to-right; remember that for display reading from right-to-left
 	
 	// If no inputPercent was set, get it!
-	if(inputPercent===null){
+	if(inputPercent === null){
 		// Left-to-right reading
 		if(S.readingDirection === 'left-to-right'){
 			inputPercent = S.currentTime/S.duration;
@@ -891,7 +895,7 @@ S.displaySubtitles = function(newSubtitles = S.currentSubtitles){
 			S.modules[S.currentModule].displaySubtitles();
 		// Otherwise, fetch
 		} else {
-			fetch('showpony/get-subtitles.php?path=<?php echo STORIES_PATH; ?>&lang=' + newSubtitles + '&files=' + S.files.length)
+			fetch('showpony/fetch-subtitles.php?path=<?php echo STORIES_PATH; ?>&lang=' + newSubtitles + '&files=' + S.files.length)
 			.then(response=>{if(response.ok) return response.text();})
 			.then(text=>{
 				S.subtitles[newSubtitles] = processSubtitles(text);

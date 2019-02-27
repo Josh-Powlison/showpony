@@ -1,14 +1,5 @@
 <?php
 
-// if(!empty($_GET['return'])){
-if(!defined('STORIES_PATH')){
-	require 'settings.php';
-
-	define('STORIES_PATH', DEFAULT_PATH.($_GET['path'] ?? ''));
-	$language=$_GET['lang'] ?? DEFAULT_LANGUAGE;
-}
-
-$displayType		= MODULE_SET_DISPLAY['default'];
 $files				= [];
 $maxQuality			= 0;
 $media				= [];
@@ -241,9 +232,3 @@ foreach($unhideSubfiles as $subfile){
 	// die('SUBFILES TO UNHIDE '.json_encode($subfile));
 	call_user_func($subfile[0].'UnhideChildren',$subfile[1]);
 }
-
-if(!empty($_GET['return'])){
-	die(json_encode($files));
-}
-
-?>

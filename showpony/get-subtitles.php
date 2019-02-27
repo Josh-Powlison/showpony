@@ -2,26 +2,6 @@
 
 // This file returns all subtitle files' text, splitting them by '|SPLIT|'. This way, for 100 small subtitles files, we just make 1 call- save calls.
 
-// Only load settings and adjust variables if they haven't already been set
-if(!isset($_SESSION)){
-	require 'settings.php';
-
-	define('FILES_COUNT',$_GET['files'] ?? 1);
-	define('SUBTITLES_FETCHED',true);
-	define('SUBTITLES_PATH',
-		'../'
-		. ($_GET['path'] ?? DEFAULT_STORIES_PATH)
-		.'subtitles/'
-		. ($_GET['lang'] ?? DEFAULT_LANGUAGE)
-	);
-}
-// If this is being called by showpony.php
-else{
-	define('FILES_COUNT',count($files));
-	define('SUBTITLES_FETCHED',false);
-	define('SUBTITLES_PATH','subtitles/'.$subtitles);
-}
-
 if(file_exists(SUBTITLES_PATH)){
 	// Add surrounding for subs if they exist
 	if(!SUBTITLES_FETCHED){
@@ -53,5 +33,3 @@ if(file_exists(SUBTITLES_PATH)){
 		$message .= '500: Subtitles don\'t exist in requested option "'.SUBTITLES_PATH.'"!';
 	}
 }
-
-?>

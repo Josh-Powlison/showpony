@@ -16,5 +16,3 @@ header('Accept-Ranges: bytes');
 header('Content-Length:'.filesize($file));
 
 readfile($file);
-	
-?>
