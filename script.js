@@ -61,6 +61,7 @@ function displayStory(id){
 		if(keys[i]==id){
 			if(document.getElementById(keys[i]).classList.contains("hidden")){
 				document.getElementById(keys[i]).classList.remove("hidden");
+				showponies[keys[i]].active = true;
 				
 				if(document.getElementById(keys[i]).dataset.waspaused=='false'){
 					showponies[keys[i]].paused = false;
@@ -74,6 +75,7 @@ function displayStory(id){
 		}else{
 			if(!document.getElementById(keys[i]).classList.contains("hidden")){
 				document.getElementById(keys[i]).classList.add("hidden");
+				showponies[keys[i]].active = false;
 				
 				document.getElementById(keys[i]).dataset.waspaused=showponies[keys[i]].paused ? 'true' : 'false';
 				

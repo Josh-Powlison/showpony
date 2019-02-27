@@ -111,6 +111,7 @@ var subtitles			= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtit
 var quality				= <?php echo json_encode(QUALITY,JSON_NUMERIC_CHECK); ?>;
 var fullscreen			= false;
 var paused				= false;
+var active				= true;
 
 // Make language change on changing value
 Object.defineProperty(S, 'time', {
@@ -121,6 +122,19 @@ Object.defineProperty(S, 'time', {
 		if(isNaN(input) && input!=='end') input = timeToSeconds(input);
 		
 		S.to({time:input});
+	}
+});
+
+// Make language change on changing value
+Object.defineProperty(S, 'active', {
+	get: function() {
+		return time;
+	},
+	set: function(input){
+		if(input) S.window.classList.remove('s-inactive');
+		else S.window.classList.add('s-inactive');
+		
+		active = input;
 	}
 });
 
@@ -331,10 +345,9 @@ S.to = function(obj = {file:file, time:time}){
 	if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
 	
 	S.modules[S.currentModule].src(obj.file,obj.time).then((obj)=>{
-		file=S.modules[S.currentModule].currentFile=obj.file;
-		S.modules[S.currentModule].currentTime=obj.time;
+		file = S.modules[S.currentModule].currentFile = obj.file;
+		time = S.modules[S.currentModule].currentTime = obj.time;
 		S.displaySubtitles();
-		S.subtitles = subtitles;
 		timeUpdate();
 		
 		/// PRELOAD ///
@@ -933,6 +946,7 @@ S.displaySubtitles = function(newSubtitles = subtitles){
 		if(S.subtitlesAvailable[newSubtitles + '-RAW']){
 			console.log('processing raw');
 			S.subtitlesAvailable[newSubtitles] = processSubtitles(S.subtitlesAvailable[newSubtitles + '-RAW'], false);
+			
 			subtitles = newSubtitles;
 			S.modules[S.currentModule].displaySubtitles();
 		// Otherwise, fetch
@@ -1039,6 +1053,7 @@ function timeToSeconds(input=0){
 
 function gamepadControls(){
 	if(S.gamepad===null) return;
+	if(!active) return;
 	if(document.hidden) return;
 	
 	// If we're not focused or fullscreen
@@ -1224,14 +1239,13 @@ Object.defineProperty(S, 'subtitles', {
 		return subtitles;
 	},
 	set: function(newSubtitles){
+		if(newSubtitles === subtitles) return;
+		
 		// Remove selected class from previous selected item
 		var previous=S.window.querySelector('.s-popup-subtitles .s-selected');
 		if(previous){
 			previous.classList.remove('s-selected');
 		}
-		
-		// Set subtitles to null if clicking on the same item
-		if(subtitles === newSubtitles) newSubtitles = null;
 		
 		// this.classList.add('s-selected');
 		S.displaySubtitles(newSubtitles);
@@ -1390,6 +1404,7 @@ S.window.addEventListener('blur',S.save);
 S.window.addEventListener(
 	'keydown'
 	,function(event){
+		if(!active) return;
 		if(this!==event.target) return;
 		
         // Disable keyboard when scrubbing
@@ -1421,6 +1436,8 @@ var buttonDown = null;
 var touching = false;
 
 function pointerDown(event){
+	if(!active) return;
+	
 	buttonDown = null; // We don't want to carry any previous states from buttonDown
 	pointerMoved = false;
 	
@@ -1520,7 +1537,9 @@ function pointerDown(event){
 }
 
 function pointerUp(event){
-	// Don't scrub if touching with 2 or more fingers at once
+	if(!active) return;
+	
+	// Don't scrub if touching with	2 or more fingers at once
 	// if(event.touches && event.touches.length>1) return;
 	
 	var pointer;

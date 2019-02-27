@@ -402,6 +402,11 @@
 	background-color:#a2a2a2;
 }
 
+.s-inactive{
+	pointer-events:none;
+	opacity:.5;
+}
+
 .s *::-webkit-scrollbar{
 	width:1em;
 	background-color:#fff;
