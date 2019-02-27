@@ -212,12 +212,12 @@ S.window.innerHTML		= `
 		<div class="s-info-text"></div>
 		<div class="s-upcoming-file"></div>
 		<div class="s-buttons s-hide-on-hold">
-			<button class="s-button s-button-comments" alt="Comments" title="Comments"></button>
-			<button class="s-button s-button-language" alt="Language" title="Language"></button>
-			<button class="s-button s-button-subtitles" alt="Subtitles" title="Subtitles"></button>
-			<button class="s-button s-button-quality" alt="Quality" title="Quality Toggle"></button>
-			<button class="s-button s-button-bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
-			<button class="s-button s-button-fullscreen" alt="Fullscreen" title="Fullscreen Toggle"></button>
+			<button class="s-button s-button-comments" data-type="comments" alt="Comments" title="Comments"></button>
+			<button class="s-button s-button-language" data-type="language" alt="Language" title="Language"></button>
+			<button class="s-button s-button-subtitles" data-type="subtitles" alt="Subtitles" title="Subtitles"></button>
+			<button class="s-button s-button-quality" data-type="quality" alt="Quality" title="Quality Toggle"></button>
+			<button class="s-button s-button-bookmark" data-type="bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
+			<button class="s-button s-button-fullscreen" data-type="fullscreen" alt="Fullscreen" title="Fullscreen Toggle"></button>
 		</div>
 		<div class="s-popup s-popup-language"></div>
 		<div class="s-popup s-popup-subtitles"></div>
@@ -1416,51 +1416,16 @@ S.window.addEventListener(
 	}
 );
 
-// if (commentsButton){
-    // document.getElementsByClassName('s-button-comments')[0].addEventListener('click', function(){
-        
-    // });    
-// }
+// Toggle popups on clicking buttons
+if(languageButton)	languageButton.addEventListener('click',popupToggle);
+if(subtitlesButton)	subtitlesButton.addEventListener('click',popupToggle);
+					bookmarkButton.addEventListener('click',popupToggle);
+if(qualityButton)	qualityButton.addEventListener('click',popupToggle);
+					fullscreenButton.addEventListener('click',S.fullscreenToggle);
 
-if (languageButton){
-    languageButton.addEventListener('click', function(){
-        while(S.window.querySelector('.s-visible:not(.s-popup-language)')) 
-            S.window.querySelector('.s-visible').classList.remove('s-visible');
-            
-        S.window.querySelector('.s-popup-language').classList.toggle('s-visible');
-    });    
-}
-
-if (subtitlesButton){
-    subtitlesButton.addEventListener('click', function(){
-        while(S.window.querySelector('.s-visible:not(.s-popup-subtitles)')) 
-            S.window.querySelector('.s-visible').classList.remove('s-visible');
-            
-        S.window.querySelector('.s-popup-subtitles').classList.toggle('s-visible');
-    });    
-}
-
-if (bookmarkButton){
-    bookmarkButton.addEventListener('click', function(){
-        while(S.window.querySelector('.s-visible:not(.s-popup-bookmark)')) 
-            S.window.querySelector('.s-visible').classList.remove('s-visible');
-                
-        S.window.querySelector('.s-popup-bookmark').classList.toggle('s-visible');
-    });    
-}
-
-if (qualityButton){
-	qualityButton.addEventListener('click',function(){
-        while(S.window.querySelector('.s-visible:not(.s-popup-quality)')) 
-            S.window.querySelector('.s-visible').classList.remove('s-visible');
-        S.window.querySelector('.s-popup-quality').classList.toggle('s-visible');
-    });
-}
-
-if (fullscreenButton){
-    fullscreenButton.addEventListener('click', function(){
-        S.fullscreenToggle();
-    });
+function popupToggle(){
+	while(S.window.querySelector('.s-visible:not(.s-popup-'+this.dataset.type+')')) S.window.querySelector('.s-visible').classList.remove('s-visible');
+	S.window.querySelector('.s-popup-'+this.dataset.type).classList.toggle('s-visible');
 }
 
 S.window.querySelector('.s-notice-close').addEventListener('click',function(){
@@ -1682,12 +1647,12 @@ window.addEventListener('mouseup',pointerUp);
 S.window.addEventListener('touchstart',pointerDown);
 window.addEventListener('touchend',pointerUp);
 
-// On touch end, don't keep moving the bar to the user's touch
-// overlay.addEventListener('touchend',userScrub);
-
 // On dragging
 window.addEventListener('mousemove',userScrub);
 window.addEventListener('touchmove',userScrub);
+
+// On touch end, don't keep moving the bar to the user's touch
+// overlay.addEventListener('touchend',userScrub);
 
 // Gamepad support
 
