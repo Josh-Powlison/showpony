@@ -266,7 +266,7 @@ name.remove
 
 // Credits
 textbox.style		border:none;top:1rem;left:1rem;right:1rem;bottom:1rem;height:auto;text-align:center;background:none;max-height:none;padding:0;font-size:1.5rem;
-		[instant]<img style="max-width:100%;width:20em;" src="story/breakdown/resources/logo.svg"><br>Thank you for reading!<br><a href="https://joshpowlison.itch.io/breakdown">Check out the full version of Breakdown here!</a><br><br><strong>Writer, Programmer:</strong> Josh Powlison<br><br><strong>Character Art, Background Art:</strong> Puppetbomb<br><br><strong>CGs: </strong> Inkhana<br><br><strong>Music: </strong> Joshua "Mussar" Nussbaum[/instant]>
+		[instant]<img style="max-width:100%;width:20em;" src="samples/breakdown/resources/logo.svg"><br>Thank you for reading!<br><a href="https://joshpowlison.itch.io/breakdown">Check out the full version of Breakdown here!</a><br><br><strong>Writer, Programmer:</strong> Josh Powlison<br><br><strong>Character Art, Background Art:</strong> Puppetbomb<br><br><strong>CGs: </strong> Inkhana<br><br><strong>Music: </strong> Joshua "Mussar" Nussbaum[/instant]>
 		
 black.style		time:1s;opacity:0;
 engine.wait

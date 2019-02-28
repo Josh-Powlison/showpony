@@ -1,0 +1,6 @@
+Options -Indexes
+
+# Claim files starting with setting.php's HIDDEN_FILENAME_STARTING_CHAR don't exist
+RewriteEngine On
+RewriteCond %{THE_REQUEST} /~
+RewriteRule ^ - [R=404,L]

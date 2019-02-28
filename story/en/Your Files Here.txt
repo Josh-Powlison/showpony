@@ -1,0 +1,3 @@
+<h1>Ready to start using Showpony?</h1>
+
+<p>Start replacing the files in the story folder.</p>
