@@ -194,28 +194,6 @@ S.subtitlesAvailable				= {<?php
 	if($subtitles !== 'null' && !empty($subtitles)) require __DIR__.'/get-subtitles.php';
 	
 ?>};
-S.supportedSubtitles	= <?php
-	// Get subtitles
-	$supportedSubtitles=[];
-	if(file_exists('subtitles')){
-		foreach(scandir('subtitles') as $file){
-			// Ignore hidden files
-			if(!is_dir('subtitles/'.$file) || $file[0]==='.' || $file[0]===HIDING_CHAR) continue;
-
-			// Get the subtitles (if ends with -cc, then it's closed captions)
-			$subtitleLanguage = str_replace('-cc','',$file,$closedCaptions);
-			if(extension_loaded('intl')) $subtitleLanguage = Locale::getDisplayLanguage($subtitleLanguage);
-			if($closedCaptions) $subtitleLanguage .= ' (CC)';
-			
-			$supportedSubtitles[]=[
-				'short'	=>	$file
-				,'long'	=>	$subtitleLanguage
-			];
-		}
-	}
-	
-	echo json_encode($supportedSubtitles);
-?>;
 S.upcomingFiles			= <?php echo json_encode($releaseDates); ?>;
 
 S.window				= document.createElement('div');
@@ -1199,60 +1177,33 @@ S.window.querySelector('.s-notice-close').addEventListener('click',function(){
 	S.window.querySelector('.s-notice').classList.remove('s-visible');
 });
 
-const supportedLanguages=<?php
-	// Get subtitles
-	$languages=[];
-	foreach(scandir('.') as $file){
-		// Ignore hidden folders and subtitles folder
-		if($file==='subtitles' || $file==='resources' || !is_dir($file) || $file[0]==='.' || $file[0]===HIDING_CHAR) continue;
-
-		$languages[]=[
-			'short'	=>	$file
-			,'long'	=>	extension_loaded('intl') ? (Locale::getDisplayLanguage($file)) : $file
-		];
+function buildButtons(array, call, optionNone){
+	var fragment = document.createDocumentFragment();
+	
+	// If the option doesn't exist or has no options
+	// if(array.count == 0) S.window.querySelector('s-button-'+call).remove();
+	
+	for(var i = 0; i < array.length; i++){
+		var buttonEl = document.createElement('button');
+		buttonEl.innerText = array[i]['long'];
+		buttonEl.dataset.value = array[i]['short'];
+		buttonEl.addEventListener('click',function(){
+			// If options can be toggled
+			if(optionNone){
+				if(S[call] === this.dataset.value) S[call] = null;
+				else S[call] = this.dataset.value;
+			// If one option must always be on
+			}else{
+				if(S[call] !== this.dataset.value) S[call] = this.dataset.value;
+			}
+		});
+		
+		if(S[call] === array[i]['short']) buttonEl.className='s-selected';
+		
+		fragment.appendChild(buttonEl);
 	}
 	
-	echo json_encode($languages);
-?>;
-
-if(<?php if(!empty($_GET['export'])) echo 'false || '; ?>supportedLanguages.length>1){
-	var languageButtons=document.createDocumentFragment();
-	for(var i = 0; i < supportedLanguages.length; i++){
-		var buttonEl=document.createElement('button');
-		buttonEl.innerText=supportedLanguages[i]['long'];
-		buttonEl.dataset.value=supportedLanguages[i]['short'];
-		buttonEl.addEventListener('click',function(){
-			S.language = this.dataset.value;
-		});
-		
-		if(language === supportedLanguages[i]['short']) buttonEl.className='s-selected';
-		
-		languageButtons.appendChild(buttonEl);
-	}
-	S.window.querySelector('.s-popup-language').appendChild(languageButtons);
-}else{
-	S.window.querySelector('.s-button-language').remove();
-}
-
-if(<?php if(!empty($_GET['export'])) echo 'false || '; ?>S.supportedSubtitles.length>0){
-	var subtitleButtons=document.createDocumentFragment();
-	for(var i=0;i<S.supportedSubtitles.length;i++){
-		var buttonEl=document.createElement('button');
-		buttonEl.innerText=S.supportedSubtitles[i]['long'];
-		buttonEl.dataset.value=S.supportedSubtitles[i]['short'];
-		buttonEl.addEventListener('click',function(){
-			if(S.subtitles === this.dataset.value) S.subtitles = null;
-			else S.subtitles = this.dataset.value;
-		});
-		
-		console.log(subtitles,S.supportedSubtitles);
-		if(subtitles === S.supportedSubtitles[i]['short']) buttonEl.className='s-selected';
-		
-		subtitleButtons.appendChild(buttonEl);
-	}
-	S.window.querySelector(".s-popup-subtitles").appendChild(subtitleButtons);
-}else{
-	S.window.querySelector('.s-button-subtitles').remove();
+	return fragment;
 }
 
 // Make language change on changing value
@@ -1281,7 +1232,42 @@ Object.defineProperty(S, 'subtitles', {
 	}
 });
 
-// delete S.supportedSubtitles;
+<?php
+	// Get languages
+	$languages=[];
+	foreach(scandir('.') as $file){
+		// Ignore hidden files and specialized folders
+		if($file==='subtitles' || $file==='resources' || !is_dir($file) || $file[0]==='.' || $file[0]===HIDING_CHAR) continue;
+
+		$languages[]=[
+			'short'	=>	$file
+			,'long'	=>	extension_loaded('intl') ? (Locale::getDisplayLanguage($file)) : $file
+		];
+	}
+	
+	if(count($languages) > 1) echo "S.window.querySelector('.s-popup-language').appendChild(buildButtons(",json_encode($languages),",'language',false));";
+
+	// Get subtitles
+	$supportedSubtitles=[];
+	if(file_exists('subtitles')){
+		foreach(scandir('subtitles') as $file){
+			// Ignore hidden files
+			if(!is_dir('subtitles/'.$file) || $file[0]==='.' || $file[0]===HIDING_CHAR) continue;
+
+			// Get the subtitles (if ends with -cc, then it's closed captions)
+			$subtitleLanguage = str_replace('-cc','',$file,$closedCaptions);
+			if(extension_loaded('intl')) $subtitleLanguage = Locale::getDisplayLanguage($subtitleLanguage);
+			if($closedCaptions) $subtitleLanguage .= ' (CC)';
+			
+			$supportedSubtitles[]=[
+				'short'	=>	$file
+				,'long'	=>	$subtitleLanguage
+			];
+		}
+	}
+?>;
+
+S.window.querySelector('.s-popup-subtitles').appendChild(buildButtons(<?php echo json_encode($supportedSubtitles); ?>,'subtitles',true));
 
 // Add quality dropdown
 if(S.maxQuality > 0){
@@ -1358,13 +1344,6 @@ function toggleBookmark(){
 }
 
 // var bookmarkList=Object.keys(S.saves.local);
-// for(var i=0;i<bookmarkList.length;i++){
-	// addBookmark({
-		// name:bookmarkList[i]
-		// ,system:'local'
-		// ,type:'default'
-	// });
-// }
 
 function addBookmark(obj){
 	var bookmarkEl=document.createElement('div');

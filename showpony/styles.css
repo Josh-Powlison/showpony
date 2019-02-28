@@ -312,18 +312,8 @@
 	display:flex;
 }
 
-.s-bookmark-delete{
-	width:1em;
-}
-
 .s-paused .s-buttons button{
 	pointer-events:auto;
-}
-
-.s-button-comments{
-	background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath d='M15.32 3.84A11.51 8.54 0 0 0 3.8 12.38a11.51 8.54 0 0 0 8.53 8.24l3.27 5.66 3.11-5.75a11.51 8.54 0 0 0 8.11-8.15 11.51 8.54 0 0 0-11.51-8.54z'/%3E%3C/svg%3E");
-
-	display:none;
 }
 
 .s-popup-language
