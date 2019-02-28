@@ -48,14 +48,9 @@ new function(){
 		else S.file++;
 	}
 	
-	M.src=function(file=0,time=0){
+	M.src=function(file=0,time=0,filename){
 		return new Promise(function(resolve,reject){
 			if(time==='end') time=M.currentTime=S.files[file].duration;
-			
-			var filename =  S.files[file].path;
-			
-			// Consider file quality
-			if(S.files[file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[file].quality, quality) + '$');
 			
 			// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
 			if(M.image.dataset.filename === filename){

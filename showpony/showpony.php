@@ -352,7 +352,11 @@ S.to = function(obj = {file:file, time:time}){
 	// Load the file
 	if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
 	
-	S.modules[S.currentModule].src(obj.file,obj.time).then((obj)=>{
+	// Consider file quality
+	var filename = S.files[obj.file].path;
+	if(S.files[obj.file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[obj.file].quality, quality) + '$');
+	
+	S.modules[S.currentModule].src(obj.file, obj.time, filename).then((obj)=>{
 		file = S.modules[S.currentModule].currentFile = obj.file;
 		time = S.modules[S.currentModule].currentTime = obj.time;
 		S.displaySubtitles();
