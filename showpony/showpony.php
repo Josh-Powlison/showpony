@@ -359,7 +359,7 @@ S.to = async function(obj = {file:file, time:time}){
 	
 	file = obj.file;
 	S.displaySubtitles();
-	timeUpdate();
+	timeUpdate(); // time is set here
 	
 	/// PRELOAD ///
 	if(scrubbing) return;
@@ -676,7 +676,7 @@ function checkCollision(x=0,y=0,element){
 	return true;
 }
 
-function timeUpdate(){
+async function timeUpdate(){
 	// Get the current time in the midst of the entire Showpony
 	time = parseFloat(S.modules[S.currentModule].currentTime);
 	for(let i=0;i<file;i++) time += parseFloat(S.files[i].duration);
@@ -714,7 +714,7 @@ function checkBuffered(time=0){
 	return false;
 }
 
-function getTotalBuffered(){
+async function getTotalBuffered(){
 	var time=0;
 	S.buffered=[];
 	
@@ -977,39 +977,25 @@ function userScrub(event){
 	if(scrubbing == true) scrub(percent);
 }
 
-S.displaySubtitles = function(newSubtitles = subtitles){
-	return new Promise(function(resolve,reject){
-		// Display the subtitles if they're already loaded in
-		if(newSubtitles===null || S.subtitlesAvailable[newSubtitles]) resolve();
-			
-		// Otherwise, load them
-		else{
-			// If we have these subtitles available raw, get those
-			if(S.subtitlesAvailable[newSubtitles + '-RAW']){
-				console.log('processing raw');
-				S.subtitlesAvailable[newSubtitles] = processSubtitles(S.subtitlesAvailable[newSubtitles + '-RAW'], false);
-				
-				resolve();
-			// Otherwise, fetch
-			}else{
-				fetch('showpony/fetch-subtitles.php?path=<?php echo STORIES_PATH; ?>&lang=' + newSubtitles + '&files=' + S.files.length)
-				.then(response=>{if(response.ok) return response.text();})
-				.then(text=>{
-					S.subtitlesAvailable[newSubtitles] = processSubtitles(text);
-					
-					resolve();
-				})
-				.catch(response=>{reject(response);});
-			}
+S.displaySubtitles = async function(newSubtitles = subtitles){
+	// If the subtitles don't exist, make them exist
+	if(newSubtitles !== null && !S.subtitlesAvailable[newSubtitles]){
+		// If we have these subtitles available raw, get those
+		if(S.subtitlesAvailable[newSubtitles + '-RAW']){
+			console.log('processing raw');
+			S.subtitlesAvailable[newSubtitles] = processSubtitles(S.subtitlesAvailable[newSubtitles + '-RAW'], false);
+		// Otherwise, fetch
+		}else{
+			await fetch('showpony/fetch-subtitles.php?path=<?php echo STORIES_PATH; ?>&lang=' + newSubtitles + '&files=' + S.files.length)
+			.then(response=>{if(response.ok) return response.text();})
+			.then(text=>{
+				S.subtitlesAvailable[newSubtitles] = processSubtitles(text);
+			});
 		}
-	}).then(function(){
-		subtitles = newSubtitles;
-		S.modules[S.currentModule].displaySubtitles();
-	}).catch(response=>{
-		subtitles = null;
-		S.notice = ('Error loading subtitles for '+newSubtitles);
-	});
-	
+	}
+
+	subtitles = newSubtitles;
+	if(S.modules[S.currentModule].displaySubtitles) S.modules[S.currentModule].displaySubtitles();
 }
 
 function processSubtitles(text,fromFetch = true){

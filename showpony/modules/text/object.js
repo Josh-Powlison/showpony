@@ -70,10 +70,6 @@ new function(){
 		});
 	}
 	
-	M.displaySubtitles=function(){
-		/// NOT YET! OR PROBABLY EVER... this is text already, after all.
-	}
-	
 	// Update time on scrolling
 	M.window.addEventListener('scroll',function(){
 		M.currentTime=Math.round(M.window.scrollTop/M.window.scrollHeight*(S.files[M.currentFile].duration));
