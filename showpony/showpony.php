@@ -113,7 +113,6 @@ var fullscreen			= false;
 var paused				= false;
 var active				= true;
 
-// Make language change on changing value
 Object.defineProperty(S, 'time', {
 	get: function() {
 		return time;
@@ -125,26 +124,36 @@ Object.defineProperty(S, 'time', {
 	}
 });
 
-// Make language change on changing value
-Object.defineProperty(S, 'active', {
-	get: function() {
-		return time;
-	},
-	set: function(input){
-		if(input) S.window.classList.remove('s-inactive');
-		else S.window.classList.add('s-inactive');
-		
-		active = input;
-	}
-});
-
-// Make language change on changing value
 Object.defineProperty(S, 'file', {
 	get: function() {
 		return file;
 	},
 	set: function(input){
+		// Error handling
+		if(isNaN(input)){
+			S.notice = 'Error: file can only be set to an integer';
+			return;
+		}
+		
 		S.to({file:input});
+	}
+});
+
+Object.defineProperty(S, 'active', {
+	get: function() {
+		return time;
+	},
+	set: function(input){
+		// Error handling
+		if(input !== true && input !== false){
+			S.notice = 'Error: active can only be set to true or false';
+			return;
+		}
+		
+		if(input) S.window.classList.remove('s-inactive');
+		else S.window.classList.add('s-inactive');
+		
+		active = input;
 	}
 });
 
@@ -393,6 +402,12 @@ Object.defineProperty(S, 'paused', {
 	set: function(input){
 		if(input === 'toggle') input = !paused;
 		
+		// Error handling
+		if(input !==true && input !== false){
+			S.notice = 'Error: paused can only be set to true, false, or "toggle"';
+			return;
+		}
+		
 		// Play
 		if(!input){
 			if(paused===false) return;
@@ -490,6 +505,12 @@ Object.defineProperty(S, 'language', {
 	set: function(newLanguage=<?php echo json_encode($language); ?>){
 		if(language === newLanguage) return;
 		
+		// Error handling
+		if(!S.window.querySelector('.s-popup-language [data-value="'+newLanguage+'"]')){
+			S.notice = 'Error: the language "'+newLanguage+'" is not supported. Did you mean to input the short name version?';
+			return;
+		}
+		
 		// Remove selected class from previous selected item
 		S.window.querySelector('.s-popup-language .s-selected').classList.remove('s-selected');
 		S.window.querySelector('.s-popup-language [data-value="'+newLanguage+'"]').classList.add('s-selected');
@@ -517,6 +538,12 @@ if(S.window.requestFullscreen){
 		},
 		set: function(input){
 			if(input === 'toggle') input = !fullscreen;
+			
+			// Error handling
+			if(input !==true && input !== false){
+				S.notice = 'Error: fullscreen can only be set to true, false, or "toggle"';
+				return;
+			}
 			
 			if(input){
 				if(document.fullscreenElement) return;
@@ -547,6 +574,12 @@ else if(S.window.webkitRequestFullscreen){
 		set: function(input){
 			if(input === 'toggle') input = !fullscreen;
 			
+			// Error handling
+			if(input !==true && input !== false){
+				S.notice = 'Error: fullscreen can only be set to true, false, or "toggle"';
+				return;
+			}
+			
 			if(input){
 				if(document.webkitFullscreenElement) return;
 				
@@ -574,6 +607,12 @@ else{
 		},
 		set: function(input){
 			if(input === 'toggle') input = !fullscreen;
+			
+			// Error handling
+			if(input !==true && input !== false){
+				S.notice = 'Error: fullscreen can only be set to true, false, or "toggle"';
+				return;
+			}
 			
 			if(input){
 				if(S.window.classList.contains('s-fullscreen-alt')) return;
@@ -1231,6 +1270,12 @@ Object.defineProperty(S, 'subtitles', {
 	set: function(newSubtitles){
 		if(newSubtitles === subtitles) return;
 		
+		// Error handling
+		if(newSubtitles !== null && !S.window.querySelector('.s-popup-subtitles [data-value="'+newSubtitles+'"]')){
+			S.notice = 'Error: subtitles for "' + newSubtitles + '" not found';
+			return;
+		}
+		
 		// Remove selected class from previous selected item (if one was selected)
 		var previous = S.window.querySelector('.s-popup-subtitles .s-selected');
 		if(previous) previous.classList.remove('s-selected');
@@ -1280,8 +1325,13 @@ Object.defineProperty(S, 'quality', {
 		return quality;
 	},
 	set: function(newQuality){
-		// Ignore if re-selecting an old item
 		if(quality === newQuality) return;
+		
+		// Error handling
+		if(isNaN(newQuality) || newQuality < 0 || newQuality > S.maxQuality){
+			S.notice = 'Error: quality must be an integer within the available range, 0 and ' + S.maxQuality;
+			return;
+		}
 		
 		// Remove selected class from previous selected item (if one was selected)
 		S.window.querySelector('.s-popup-quality .s-selected').classList.remove('s-selected');
