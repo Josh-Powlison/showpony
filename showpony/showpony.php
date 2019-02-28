@@ -8,7 +8,6 @@ define('STORIES_PATH'	, DEFAULT_PATH.($_GET['path'] ?? ''));
 define('NAME'			, preg_match('/[^\/]+(?=\/?$)/',STORIES_PATH,$match) ? $match[0] : 'story');
 define('SAVE_NAME'		, urlencode(NAME).'Data');
 
-// 0 is save system; 1 is save name; 2 is language
 if(!empty($_COOKIE[SAVE_NAME])) $data = explode('&',$_COOKIE[SAVE_NAME]);
 else $data = [null,null,null,null,null];
 
@@ -53,9 +52,9 @@ header('Content-type: application/javascript');
 
 // Add styles if not added already
 if(!document.getElementById('s-styles')){
-	var styles=document.createElement('style');
-	styles.id='s-styles';
-	styles.innerHTML=`<?php addslashes(readfile(__DIR__.'/styles.css')); ?>`;
+	var styles = document.createElement('style');
+	styles.id = 's-styles';
+	styles.innerHTML = `<?php addslashes(readfile(__DIR__.'/styles.css')); ?>`;
 	document.head.appendChild(styles);
 }
 
@@ -67,28 +66,24 @@ foreach(array_keys($media) as $moduleName){
 ?>
 // Add <?php echo $moduleName; ?> styles if not added already
 if(!document.getElementById('s-<?php echo $moduleName; ?>-styles')){
-	var styles=document.createElement('style');
-	styles.id='s-<?php echo $moduleName; ?>-styles';
-	styles.innerHTML=`<?php addslashes(readfile(__DIR__.'/modules/'.$moduleName.'/styles.css')); ?>`;
+	var styles = document.createElement('style');
+	styles.id = 's-<?php echo $moduleName; ?>-styles';
+	styles.innerHTML = `<?php addslashes(readfile(__DIR__.'/modules/'.$moduleName.'/styles.css')); ?>`;
 	document.head.appendChild(styles);
 }
 
-<?php } ?>
+<?php }
 
-<?php
 // If the story has its own css file, add it in here
 if(file_exists('styles.css')){
 	
 ?>
 // Load story-specific css
-var styles=document.createElement('style');
-styles.innerHTML=`<?php
-	addslashes(readfile('styles.css'));
-?>`;
+var styles = document.createElement('style');
+styles.innerHTML = `<?php addslashes(readfile('styles.css')); ?>`;
 document.head.appendChild(styles);
 
 <?php } ?>
-
 
 new function(){
 
