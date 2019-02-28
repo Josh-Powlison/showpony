@@ -105,7 +105,7 @@ var language			= <?php echo json_encode($language); ?>;
 var subtitles			= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
 var quality				= <?php echo json_encode(QUALITY,JSON_NUMERIC_CHECK); ?>;
 var fullscreen			= false;
-var paused				= false;
+var paused				= true;
 var active				= true;
 
 Object.defineProperty(S, 'time', {
@@ -300,7 +300,7 @@ Object.defineProperty(S, 'notice', {
 });
 
 // Go to another file
-S.to = function(obj = {file:file, time:time}){
+S.to = async function(obj = {file:file, time:time}){
 	content.classList.add('s-loading');
 	
 	/// GET TIME AND FILE ///
@@ -351,46 +351,46 @@ S.to = function(obj = {file:file, time:time}){
 	var filename = S.files[obj.file].path;
 	if(S.files[obj.file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[obj.file].quality, quality) + '$');
 	
-	S.modules[S.currentModule].src(obj.file, obj.time, filename).then((obj)=>{
-		file = obj.file;
-		time = obj.time;
-		S.displaySubtitles();
-		timeUpdate();
+	// Update the module, and post a notice on failure
+	if(!await S.modules[S.currentModule].src(obj.file, obj.time, filename)){
+		S.notice = 'Failed to load file '+obj.file;
+		return false;
+	}
+	
+	file = obj.file;
+	S.displaySubtitles();
+	timeUpdate();
+	
+	/// PRELOAD ///
+	if(scrubbing) return;
+	
+	// We can preload up to this amount
+	var preloadBytes=<?php echo PRELOAD_BYTES; ?>;
+	
+	// Preload upcoming files
+	for(let i=file;i<S.files.length;i++){
+		// Check if we can preload this
+		preloadBytes-=S.files[file].size;
 		
-		/// PRELOAD ///
-		if(scrubbing) return;
+		// If not, exit
+		if(preloadBytes<=0) break;
 		
-		// We can preload up to this amount
-		var preloadBytes=<?php echo PRELOAD_BYTES; ?>;
-		
-		// Preload upcoming files
-		for(let i=obj.file;i<S.files.length;i++){
-			// Check if we can preload this
-			preloadBytes-=S.files[obj.file].size;
+		// Otherwise, preload
+		if(Array.isArray(S.files[i].buffered) && S.files[i].buffered.length===0){
+			S.files[i].buffered='buffering';
 			
-			// If not, exit
-			if(preloadBytes<=0) break;
-			
-			// Otherwise, preload
-			if(Array.isArray(S.files[i].buffered) && S.files[i].buffered.length===0){
-				S.files[i].buffered='buffering';
+			fetch(S.files[i].path)
+			.then(response=>{
+				if(response.ok){
+					S.files[i].buffered=true;
+					getTotalBuffered();
+					return true;
+				}
 				
-				fetch(S.files[i].path)
-				.then(response=>{
-					if(response.ok){
-						S.files[i].buffered=true;
-						getTotalBuffered();
-						return true;
-					}
-					
-					S.notice = ('Error buffering file '+S.files[i].path);
-				});
-			}
+				S.notice = ('Error buffering file '+S.files[i].path);
+			});
 		}
-	})
-	.catch(response=>{
-		S.notice = ('Error loading File '+obj.file+' at Time '+obj.time+' for Module '+S.currentModule);
-	});
+	}
 }
 
 // Make language change on changing value
@@ -978,34 +978,38 @@ function userScrub(event){
 }
 
 S.displaySubtitles = function(newSubtitles = subtitles){
-	// Display the subtitles if they're loaded in
-	if(S.subtitlesAvailable[newSubtitles] || newSubtitles===null){
+	return new Promise(function(resolve,reject){
+		// Display the subtitles if they're already loaded in
+		if(newSubtitles===null || S.subtitlesAvailable[newSubtitles]) resolve();
+			
+		// Otherwise, load them
+		else{
+			// If we have these subtitles available raw, get those
+			if(S.subtitlesAvailable[newSubtitles + '-RAW']){
+				console.log('processing raw');
+				S.subtitlesAvailable[newSubtitles] = processSubtitles(S.subtitlesAvailable[newSubtitles + '-RAW'], false);
+				
+				resolve();
+			// Otherwise, fetch
+			}else{
+				fetch('showpony/fetch-subtitles.php?path=<?php echo STORIES_PATH; ?>&lang=' + newSubtitles + '&files=' + S.files.length)
+				.then(response=>{if(response.ok) return response.text();})
+				.then(text=>{
+					S.subtitlesAvailable[newSubtitles] = processSubtitles(text);
+					
+					resolve();
+				})
+				.catch(response=>{reject(response);});
+			}
+		}
+	}).then(function(){
 		subtitles = newSubtitles;
 		S.modules[S.currentModule].displaySubtitles();
-	// Otherwise, load them
-	}else{
-		// If we have these subtitles available raw, get those
-		if(S.subtitlesAvailable[newSubtitles + '-RAW']){
-			console.log('processing raw');
-			S.subtitlesAvailable[newSubtitles] = processSubtitles(S.subtitlesAvailable[newSubtitles + '-RAW'], false);
-			
-			subtitles = newSubtitles;
-			S.modules[S.currentModule].displaySubtitles();
-		// Otherwise, fetch
-		} else {
-			fetch('showpony/fetch-subtitles.php?path=<?php echo STORIES_PATH; ?>&lang=' + newSubtitles + '&files=' + S.files.length)
-			.then(response=>{if(response.ok) return response.text();})
-			.then(text=>{
-				S.subtitlesAvailable[newSubtitles] = processSubtitles(text);
-				subtitles = newSubtitles;
-				S.modules[S.currentModule].displaySubtitles();
-			})
-			.catch(response=>{
-				subtitles=null;
-				S.notice = ('Error loading subtitles for '+newSubtitles);
-			});
-		}
-	}
+	}).catch(response=>{
+		subtitles = null;
+		S.notice = ('Error loading subtitles for '+newSubtitles);
+	});
+	
 }
 
 function processSubtitles(text,fromFetch = true){
@@ -1751,6 +1755,9 @@ addBookmark({name:'Get Link',system:'url',type:'get'});
 var start = searchParams.get(S.queryBookmark);
 searchParams.delete(S.queryBookmark);
 history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
+
+// Show we're paused
+S.window.classList.add('s-paused');
 
 // Use the Save Bookmark if the URL Bookmark has nothing
 if(!S.load()){

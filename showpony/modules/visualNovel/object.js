@@ -4,6 +4,7 @@ new function(){
 	M.currentTime=null;
 	M.currentFile=null;
 	M.currentLine=null;
+	M.file = null;
 	M.lines=null;
 	M.loading=0; // Tracks how many items are currently loading
 	M.variables = {};
@@ -132,139 +133,135 @@ new function(){
 		junction();
 	}
 
-	M.src=function(file=0,time=0,filename){
-		return new Promise(function(resolve,reject){
-			if(time==='end') time=S.files[file].duration;
+	M.src = async function(file=0,time=0,filename){
+		if(time==='end') time = S.files[file].duration;
+		
+		// If this is the current file
+		if(M.window.dataset.filename === filename){
 			
-			// If this is the current file
-			if(M.window.dataset.filename === filename){
-				
-				// Get the keyframe
-				var keyframeSelect=Math.round(keyframes.length*(time/S.files[M.currentFile].duration));
-				if(keyframeSelect>=keyframes.length) keyframeSelect=keyframes[keyframes.length-1];
-				else keyframeSelect=keyframes[keyframeSelect];
-				
-				M.currentFile=file;
-				M.currentTime=time;
-				
-				// If this is the current keyframe, resolve
-				if(keyframeSelect === M.currentLine){
-					content.classList.remove('s-loading');
-					resolve({file:file,time:time});
-					return;
-				}
-				
-				runTo = keyframeSelect;
-				
+			// Get the keyframe
+			var keyframeSelect=Math.round(keyframes.length*(time/S.files[M.currentFile].duration));
+			if(keyframeSelect>=keyframes.length) keyframeSelect=keyframes[keyframes.length-1];
+			else keyframeSelect=keyframes[keyframeSelect];
+			
+			M.currentFile=file;
+			M.currentTime=time;
+			
+			// If this is the current keyframe, resolve
+			if(keyframeSelect === M.currentLine){
 				content.classList.remove('s-loading');
-				M.run(0);
-				S.displaySubtitles();
-				resolve({file:file,time:time});
-				return;
+				return true;
 			}
 			
-			fetch(filename,{credentials:'include'})
-			.then(response=>{if(response.ok) return response.text();})
-			.then(text=>{
-				M.window.dataset.filename = filename;
+			runTo = keyframeSelect;
+			
+			content.classList.remove('s-loading');
+			M.run(0);
+			S.displaySubtitles();
+			return true;
+		}
+		
+		return fetch(filename,{credentials:'include'})
+		.then(response=>{if(response.ok) return response.text();})
+		.then(text=>{
+			M.window.dataset.filename = filename;
+			
+			// Remove multiline comments
+			text = text.replace(/\/\*[^]*?\*\//g,'');
+			
+			// Get all non-blank lines
+			M.lines = text.match(/.+(?=\S).+/g);
+			
+			// Get keyframes from the waiting points in the text
+			keyframes = [];
+			
+			// Go through each line
+			for(let i = 0; i < M.lines.length; i++){
+				// Throw an error if too many keyframes crop up; we're likely creating an accidental infinite loop
+				if(keyframes.length > 1000){
+					S.notice = "Error: likely recursion. Over 1000 keyframes read.";
+					throw "ERROR: too many keyframes";
+				}
 				
-				// Remove multiline comments
-				text = text.replace(/\/\*[^]*?\*\//g,'');
+				// Prevent recursion
+				if(keyframes.length > 0 && keyframes.indexOf(i) !== -1){
+					S.notice = "Error: recursion detected. Revisited keyframe on line "+i+ " reading: "+M.lines[i];
+					return false;
+				}
 				
-				// Get all non-blank lines
-				M.lines = text.match(/.+(?=\S).+/g);
+				// Look for keyframes
+				if(/^engine\.wait$/.test(M.lines[i])){
+					keyframes.push(i);
+					continue;
+				}
 				
-				// Get keyframes from the waiting points in the text
-				keyframes = [];
-				
-				// Go through each line
-				for(let i = 0; i < M.lines.length; i++){
-					// Throw an error if too many keyframes crop up; we're likely creating an accidental infinite loop
-					if(keyframes.length > 1000){
-						S.notice = "Error: likely recursion. Over 1000 keyframes read.";
-						throw "ERROR: too many keyframes";
-					}
+				// Get "engine.go" keyframes, where possible (where not based on a variable)
+				if(/^engine\.go/.test(M.lines[i])){
+					var goTo = /\t+(.+)$/.exec(M.lines[i]);
 					
-					// Prevent recursion
-					if(keyframes.length > 0 && keyframes.indexOf(i) !== -1){
-						S.notice = "Error: recursion detected. Revisited keyframe on line "+i+ " reading: "+M.lines[i];
-						return;
-					}
+					if(M.lines.indexOf(goTo[1]) !== -1) i = M.lines.indexOf(goTo[1]);
+					continue;
+				}
+				
+				// Add comments (messes with time display, disabled for now)
+				/*if(/^\/\//.test(M.lines[i])){
+					keyframes.push(i);
+					continue;
+				}*/
+				
+				// Text lines
+				if(/^\t+/.test(M.lines[i])){
+					// Ignore text lines that are appending
+					if(/^\t+\+/.test(M.lines[i])) continue;
 					
-					// Look for keyframes
-					if(/^engine\.wait$/.test(M.lines[i])){
-						keyframes.push(i);
-						continue;
-					}
+					// See if it's part of a tag
+					// Anything with a space we'll ignore; you should only have self-closing tags or closing tags at the end of the line
 					
-					// Get "engine.go" keyframes, where possible (where not based on a variable)
-					if(/^engine\.go/.test(M.lines[i])){
-						var goTo = /\t+(.+)$/.exec(M.lines[i]);
+					// See if the line ends with an unescaped >; if so, don't add the line
+					if(M.lines[i][M.lines[i].length-1] === '>'){
+						//See if it's an ending tag
+						var test=document.createElement('div');
+						test.innerHTML=M.lines[i];
+						var text=test.innerText;
 						
-						if(M.lines.indexOf(goTo[1]) !== -1) i = M.lines.indexOf(goTo[1]);
-						continue;
-					}
-					
-					// Add comments (messes with time display, disabled for now)
-					/*if(/^\/\//.test(M.lines[i])){
-						keyframes.push(i);
-						continue;
-					}*/
-					
-					// Text lines
-					if(/^\t+/.test(M.lines[i])){
-						// Ignore text lines that are appending
-						if(/^\t+\+/.test(M.lines[i])) continue;
-						
-						// See if it's part of a tag
-						// Anything with a space we'll ignore; you should only have self-closing tags or closing tags at the end of the line
-						
-						// See if the line ends with an unescaped >; if so, don't add the line
-						if(M.lines[i][M.lines[i].length-1] === '>'){
-							//See if it's an ending tag
-							var test=document.createElement('div');
-							test.innerHTML=M.lines[i];
-							var text=test.innerText;
-							
-							//If it's not an ending tag
-							if(text[text.length-1] === '>'){
-								var skip=1;
-								var j=M.lines[i].length-2;
-								while(M.lines[i][j]==='\\'){
-									skip*=-1;
-									j--;
-								}
-								if(skip===1) continue;
+						//If it's not an ending tag
+						if(text[text.length-1] === '>'){
+							var skip=1;
+							var j=M.lines[i].length-2;
+							while(M.lines[i][j]==='\\'){
+								skip*=-1;
+								j--;
 							}
+							if(skip===1) continue;
 						}
-						
-						keyframes.push(i);
 					}
+					
+					keyframes.push(i);
 				}
-				
-				// Get the keyframe
-				var keyframeSelect=Math.round(keyframes.length*(time/S.files[file].duration));
-				if(keyframeSelect>=keyframes.length) keyframeSelect=keyframes[keyframes.length-1];
-				else keyframeSelect=keyframes[keyframeSelect];
-				
-				runTo=keyframeSelect;
-				
-				content.classList.remove('s-loading');
-				M.run(0);
-				
-				
-				if(S.files[file].buffered!==true){
-					S.files[file].buffered=true;
-					getTotalBuffered();
-				}
-				
-				S.displaySubtitles();
-				
-				// Set file at end? Or maybe even pass an object of the file's data rather than reading from Showpony?
-				M.currentFile=file;
-				M.currentTime=time;
-				resolve({file:file,time:time});
-			});
+			}
+			
+			// Get the keyframe
+			var keyframeSelect=Math.round(keyframes.length*(time/S.files[file].duration));
+			if(keyframeSelect>=keyframes.length) keyframeSelect=keyframes[keyframes.length-1];
+			else keyframeSelect=keyframes[keyframeSelect];
+			
+			runTo=keyframeSelect;
+			
+			content.classList.remove('s-loading');
+			M.run(0);
+			
+			
+			if(S.files[file].buffered!==true){
+				S.files[file].buffered=true;
+				getTotalBuffered();
+			}
+			
+			S.displaySubtitles();
+			
+			// Set file at end? Or maybe even pass an object of the file's data rather than reading from Showpony?
+			M.currentFile=file;
+			M.currentTime=time;
+			return true;
 		});
 	}
 	

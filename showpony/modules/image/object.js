@@ -3,6 +3,7 @@ new function(){
 	
 	M.currentTime=null;
 	M.currentFile=null;
+	M.file = null;
 	
 	M.window=document.createElement('div');
 	M.window.className='m-img-window';
@@ -33,29 +34,29 @@ new function(){
 		}
 	}
 	
-	M.progress=function(){
+	M.progress = function(){
 		// If we're not at the bottom, scroll down
 		if(M.window.scrollTop < M.window.scrollHeight - (M.window.clientHeight * 1.07)) M.window.scrollTop += M.window.clientHeight * .75;
 		// Continue to the next file otherwise
 		else S.file++;
 	}
 	
-	M.src=function(file=0,time=0,filename){
-		return new Promise(function(resolve,reject){
-			if(time==='end') time=M.currentTime=S.files[file].duration;
+	M.src = async function(file=0,time=0,filename){
+		if(time==='end') time = M.currentTime=S.files[file].duration;
+		
+		// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
+		if(M.window.dataset.filename === filename){
+			// Go to a scroll point dependent on time
+			M.window.scrollTop = M.window.scrollHeight * (time/S.files[file].duration);
+			content.classList.remove('s-loading');
 			
-			// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
-			if(M.window.dataset.filename === filename){
-				// Go to a scroll point dependent on time
-				M.window.scrollTop = M.window.scrollHeight * (time/S.files[file].duration);
-				content.classList.remove('s-loading');
-				
-				M.currentFile=file;
-				M.currentTime=time;
-				resolve({file:file,time:time});
-			}else{
-				M.window.dataset.filename = M.image.src = filename;
-				
+			M.currentFile=file;
+			M.currentTime=time;
+			return true;
+		}else{
+			M.window.dataset.filename = M.image.src = filename;
+			
+			return new Promise((resolve,reject)=>{
 				// Resolve the promise after the image loads
 				M.image.onload = function(){
 					S.files[file].buffered = true;
@@ -69,13 +70,13 @@ new function(){
 					
 					M.currentFile=file;
 					M.currentTime=time;
-					resolve({file:file,time:time});
+					resolve(true);
 				}
-			}
-		});
+			});
+		}
 	}
 	
-	M.displaySubtitles=function(){
+	M.displaySubtitles = function(){
 		if(subtitles===null || !S.subtitlesAvailable[subtitles][M.currentFile]){
 			M.subtitles.innerHTML='';
 			return;

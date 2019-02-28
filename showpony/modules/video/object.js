@@ -3,6 +3,7 @@ new function(){
 	
 	M.currentTime=null;
 	M.currentFile=null;
+	M.file = null;
 	
 	M.window=document.createElement('div');
 	M.window.className='m-video-window';
@@ -17,7 +18,7 @@ new function(){
 	M.subtitles.className='m-video-subtitles';
 	M.window.appendChild(M.subtitles);
 	
-	M.play=function(){
+	M.play = function(){
 		M.video.play();
 	}
 	
@@ -35,22 +36,21 @@ new function(){
 		else S.time += 5;
 	}
 	
-	M.src=function(file=0,time=0,filename){
-		return new Promise(function(resolve,reject){
-			if(time === 'end') time = S.files[file].duration - 5;
-			
-			// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
-			if(M.window.dataset.filename !== filename) M.window.dataset.filename = M.video.src = filename;
-			
-			M.video.currentTime = time;
-			
-			// If we're not paused, play
-			if(!paused) M.play();
-			
-			M.currentFile=file;
-			M.currentTime=time;
-			resolve({file:file,time:time});
-		});
+	M.src = async function(file=0,time=0,filename){
+		if(time === 'end') time = S.files[file].duration - 5;
+		
+		// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
+		if(M.window.dataset.filename !== filename) M.window.dataset.filename = M.video.src = filename;
+		
+		M.video.currentTime = time;
+		
+		console.log('PAUSED?',paused);
+		// If we're not paused, play
+		if(!paused) M.play();
+		
+		M.currentFile=file;
+		M.currentTime=time;
+		return true;
 	}
 	
 	M.displaySubtitles=function(){
