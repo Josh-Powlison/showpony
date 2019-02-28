@@ -6,7 +6,7 @@ new function(){
 	M.filesrc = null;
 	
 	M.window=document.createElement('div');
-	M.window.className='showpony-text';
+	M.window.className='m-text';
 	
 	M.play=function(){}
 	
