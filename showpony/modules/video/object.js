@@ -6,11 +6,11 @@ new function(){
 	
 	M.window=document.createElement('div');
 	M.window.className='m-video-window';
+	M.window.dataset.filename = null;
 	
 	M.video=document.createElement('video');
 	M.video.className='m-video';
 	M.video.disableRemotePlayback = true;
-	M.video.dataset.filename = null;
 	M.window.appendChild(M.video);
 	
 	M.subtitles=document.createElement('p');
@@ -40,7 +40,7 @@ new function(){
 			if(time === 'end') time = S.files[file].duration - 5;
 			
 			// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
-			if(M.video.dataset.filename !== filename) M.video.dataset.filename = M.video.src = filename;
+			if(M.window.dataset.filename !== filename) M.window.dataset.filename = M.video.src = filename;
 			
 			M.video.currentTime = time;
 			

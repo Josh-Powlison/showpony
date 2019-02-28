@@ -6,6 +6,7 @@ new function(){
 	
 	M.window=document.createElement('div');
 	M.window.className='m-img-window';
+	M.window.dataset.filename = null;
 	
 	M.container=document.createElement('div');
 	M.container.className='m-img-container';
@@ -13,20 +14,11 @@ new function(){
 
 	M.image=document.createElement('img');
 	M.image.className='m-img';
-	M.image.dataset.filename = null;
 	M.container.appendChild(M.image);
 
 	M.subtitles=document.createElement('div');
 	M.subtitles.className='m-img-subtitles';
 	M.container.appendChild(M.subtitles);
-	
-	M.play=function(){
-		
-	}
-	
-	M.pause=function(){
-		
-	}
 	
 	M.regress=function(){
 		// If we're not at the top of the file, scroll up
@@ -53,7 +45,7 @@ new function(){
 			if(time==='end') time=M.currentTime=S.files[file].duration;
 			
 			// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
-			if(M.image.dataset.filename === filename){
+			if(M.window.dataset.filename === filename){
 				// Go to a scroll point dependent on time
 				M.window.scrollTop = M.window.scrollHeight * (time/S.files[file].duration);
 				content.classList.remove('s-loading');
@@ -62,7 +54,7 @@ new function(){
 				M.currentTime=time;
 				resolve({file:file,time:time});
 			}else{
-				M.image.dataset.filename = M.image.src = filename;
+				M.window.dataset.filename = M.image.src = filename;
 				
 				// Resolve the promise after the image loads
 				M.image.onload = function(){
@@ -89,7 +81,6 @@ new function(){
 			return;
 		}
 		
-		M.subtitles.dataset.file=M.currentFile;
 		M.subtitles.innerHTML='';
 		
 		var phrases=S.subtitlesAvailable[subtitles][M.currentFile];

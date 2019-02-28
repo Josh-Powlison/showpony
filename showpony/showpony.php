@@ -345,7 +345,7 @@ S.to = function(obj = {file:file, time:time}){
 	S.currentModule=S.files[obj.file].module;
 	
 	// Load the file
-	if(S.files[obj.file].buffered===false) S.files[obj.file].buffered='buffering';
+	if(S.files[obj.file].buffered === false) S.files[obj.file].buffered = 'buffering';
 	
 	// Consider file quality
 	var filename = S.files[obj.file].path;
@@ -416,7 +416,7 @@ Object.defineProperty(S, 'paused', {
 			
 			S.window.classList.remove('s-paused');
 			paused=false;
-			S.modules[S.currentModule].play();
+			if(S.modules[S.currentModule].play) S.modules[S.currentModule].play();
 			S.window.dispatchEvent(new CustomEvent('play'));
 		}
 		// Pause
@@ -426,34 +426,38 @@ Object.defineProperty(S, 'paused', {
 			S.window.classList.add('s-paused');
 			paused=true;
 			
-			if(S.currentModule) S.modules[S.currentModule].pause();
+			if(S.currentModule && S.modules[S.currentModule].pause) S.modules[S.currentModule].pause();
 			S.window.dispatchEvent(new CustomEvent('pause'));
 		}
 	}
 });
 
+// Returns true if loaded a savedata, false if none exists by the search terms
 S.load = function(){
 	S.saves=JSON.parse(localStorage.getItem(S.saveName));
 	
 	switch(S.saves.system){
 		case 'local':
-			var loadFile=S.saves.local[S.saves.currentSave];
+			var loadFile = S.saves.local[S.saves.currentSave];
 			
 			// If the load file can't be found, break
 			if(!loadFile) break;
 			
 			S.data = loadFile.data;
-			language = loadFile.language;
-			subtitles = loadFile.subtitles;
-			quality = loadFile.quality;
+			S.language = loadFile.language;
+			S.subtitles = loadFile.subtitles;
+			S.quality = loadFile.quality;
+			S.time = loadFile.bookmark;
 			
-			return loadFile.bookmark;
+			return true;
 			break;
 		case 'remote':
 			break;
 		default:
 			break;
 	}
+	
+	return false;
 }
 
 S.save = function(){
@@ -468,12 +472,12 @@ S.save = function(){
 		case 'local':
 			// Update the save file before setting it
 			S.saves.local[S.saves.currentSave]={
-				bookmark:time
-				,data:S.data
-				,language:language
-				,subtitles:subtitles
-				,quality:quality
-				,timestamp:Date.now()
+				bookmark:	time
+				,data:		S.data
+				,language:	language
+				,subtitles:	subtitles
+				,quality:	quality
+				,timestamp:	Date.now()
 			};
 			break;
 		case 'remote':
@@ -1749,14 +1753,14 @@ searchParams.delete(S.queryBookmark);
 history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
 
 // Use the Save Bookmark if the URL Bookmark has nothing
-if(start === null || isNaN(start)) start = S.load();
+if(!S.load()){
+	// Use the Default Bookmark if the Save Bookmark has nothing
+	if(start === null || isNaN(start)) start = <?php echo $_GET['start'] ?? DEFAULT_START; ?>;
 
-// Use the Default Bookmark if the Save Bookmark has nothing
-if(start === null || isNaN(start)) start = <?php echo $_GET['start'] ?? DEFAULT_START; ?>;
-
-// Pause the Showpony
-S.paused = true;
-S.time = start;
+	// Pause the Showpony
+	S.paused = true;
+	S.time = start;
+}
 
 // We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
 

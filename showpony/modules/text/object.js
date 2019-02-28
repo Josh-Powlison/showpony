@@ -3,14 +3,10 @@ new function(){
 	
 	M.currentTime=null;
 	M.currentFile=null;
-	M.filesrc = null;
 	
 	M.window=document.createElement('div');
 	M.window.className='m-text';
-	
-	M.play=function(){}
-	
-	M.pause=function(){}
+	M.window.dataset.filename = null;
 	
 	M.regress=function(){
 		// If we're not at the top of the file, scroll up
@@ -37,7 +33,7 @@ new function(){
 			if(time==='end') time=S.files[file].duration;
 			
 			// If this is the current file
-			if(M.filesrc === filename){
+			if(M.window.dataset.filename === filename){
 				M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
 				content.classList.remove('s-loading');
 				
@@ -47,7 +43,7 @@ new function(){
 				return;
 			}
 			
-			M.filesrc = filename;
+			M.window.dataset.filename = filename;
 			
 			fetch(filename,{credentials:'include'})
 			.then(response=>{

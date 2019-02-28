@@ -6,11 +6,11 @@ new function(){
 	
 	M.window=document.createElement('div');
 	M.window.className='m-audio-window';
+	M.window.dataset.filename = null;
 	
 	M.audio=document.createElement('audio');
 	M.audio.className='m-audio';
 	M.audio.disableRemotePlayback = true;
-	M.audio.dataset.filename = null;
 	M.window.appendChild(M.audio);
 	
 	M.subtitles=document.createElement('p');
@@ -41,7 +41,7 @@ new function(){
 			
 			// Change the file if it'd be a new one
 			// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
-			if(M.audio.dataset.filename !== filename) M.audio.dataset.filename = M.audio.src = filename;
+			if(M.window.dataset.filename !== filename) M.window.dataset.filename = M.audio.src = filename;
 			
 			M.audio.currentTime=time;
 			

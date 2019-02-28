@@ -7,10 +7,10 @@ new function(){
 	M.lines=null;
 	M.loading=0; // Tracks how many items are currently loading
 	M.variables = {};
-	M.filesrc = null;
 	
 	M.window=document.createElement('div');
 	M.window.className='m-vn';
+	M.window.dataset.filename = null;
 	
 	M.subtitles=document.createElement('p');
 	M.subtitles.className='m-vn-subtitles';
@@ -137,7 +137,7 @@ new function(){
 			if(time==='end') time=S.files[file].duration;
 			
 			// If this is the current file
-			if(M.filesrc === filename){
+			if(M.window.dataset.filename === filename){
 				
 				// Get the keyframe
 				var keyframeSelect=Math.round(keyframes.length*(time/S.files[M.currentFile].duration));
@@ -166,7 +166,7 @@ new function(){
 			fetch(filename,{credentials:'include'})
 			.then(response=>{if(response.ok) return response.text();})
 			.then(text=>{
-				M.filesrc = filename;
+				M.window.dataset.filename = filename;
 				
 				// Remove multiline comments
 				text = text.replace(/\/\*[^]*?\*\//g,'');
