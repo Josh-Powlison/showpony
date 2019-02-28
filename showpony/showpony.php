@@ -352,8 +352,8 @@ S.to = function(obj = {file:file, time:time}){
 	if(S.files[obj.file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[obj.file].quality, quality) + '$');
 	
 	S.modules[S.currentModule].src(obj.file, obj.time, filename).then((obj)=>{
-		file = S.modules[S.currentModule].currentFile = obj.file;
-		time = S.modules[S.currentModule].currentTime = obj.time;
+		file = obj.file;
+		time = obj.time;
 		S.displaySubtitles();
 		timeUpdate();
 		

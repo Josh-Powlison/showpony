@@ -47,6 +47,8 @@ new function(){
 			// If we're not paused, play
 			if(!paused) M.play();
 			
+			M.currentFile=file;
+			M.currentTime=time;
 			resolve({file:file,time:time});
 		});
 	}

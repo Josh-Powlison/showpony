@@ -40,6 +40,9 @@ new function(){
 			if(M.filesrc === filename){
 				M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
 				content.classList.remove('s-loading');
+				
+				M.currentTime = time;
+				M.currentFile = file;
 				resolve({time:time,file:file});
 				return;
 			}
@@ -68,6 +71,8 @@ new function(){
 				
 				if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
 				
+				M.currentTime = time;
+				M.currentFile = file;
 				resolve({time:time,file:file});
 			});
 		});

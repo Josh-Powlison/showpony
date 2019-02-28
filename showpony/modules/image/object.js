@@ -58,6 +58,8 @@ new function(){
 				M.window.scrollTop = M.window.scrollHeight * (time/S.files[file].duration);
 				content.classList.remove('s-loading');
 				
+				M.currentFile=file;
+				M.currentTime=time;
 				resolve({file:file,time:time});
 			}else{
 				M.image.dataset.filename = M.image.src = filename;
@@ -73,6 +75,8 @@ new function(){
 					
 					content.classList.remove('s-loading');
 					
+					M.currentFile=file;
+					M.currentTime=time;
 					resolve({file:file,time:time});
 				}
 			}

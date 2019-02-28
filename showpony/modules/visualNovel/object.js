@@ -144,6 +144,9 @@ new function(){
 				if(keyframeSelect>=keyframes.length) keyframeSelect=keyframes[keyframes.length-1];
 				else keyframeSelect=keyframes[keyframeSelect];
 				
+				M.currentFile=file;
+				M.currentTime=time;
+				
 				// If this is the current keyframe, resolve
 				if(keyframeSelect === M.currentLine){
 					content.classList.remove('s-loading');
@@ -259,6 +262,7 @@ new function(){
 				
 				// Set file at end? Or maybe even pass an object of the file's data rather than reading from Showpony?
 				M.currentFile=file;
+				M.currentTime=time;
 				resolve({file:file,time:time});
 			});
 		});
