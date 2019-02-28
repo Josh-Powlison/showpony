@@ -211,16 +211,11 @@ S.window.innerHTML		= `
 		<div class="s-info-text"></div>
 		<div class="s-upcoming-file"></div>
 		<div class="s-buttons s-hide-on-hold">
-			<button class="s-button s-button-language" data-type="language" alt="Language" title="Language"></button>
-			<button class="s-button s-button-subtitles" data-type="subtitles" alt="Subtitles" title="Subtitles"></button>
-			<button class="s-button s-button-quality" data-type="quality" alt="Quality" title="Quality Toggle"></button>
 			<button class="s-button s-button-bookmark" data-type="bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
-			<button class="s-button s-button-fullscreen" data-type="fullscreen" alt="Fullscreen" title="Fullscreen Toggle"></button>
 		</div>
-		<div class="s-popup s-popup-language"></div>
-		<div class="s-popup s-popup-subtitles"></div>
-		<div class="s-popup s-popup-quality"></div>
-		<div class="s-popup s-popup-bookmark"></div>
+		<div class="s-popups">
+			<div class="s-popup s-popup-bookmark"></div>
+		</div>
 		<div class="s-popup s-notice">
 			<div class="s-notice-text s-block-scrubbing"></div>
 			<button class="s-notice-close">Close Notice</button>
@@ -1158,13 +1153,7 @@ function gamepadButton(gamepad,number,type){
 ////////////
 
 // Toggle popups on clicking buttons
-S.window.getElementsByClassName('s-button-language')[0].addEventListener('click',popupToggle);
-S.window.getElementsByClassName('s-button-subtitles')[0].addEventListener('click',popupToggle);
 S.window.getElementsByClassName('s-button-bookmark')[0].addEventListener('click',popupToggle);
-S.window.getElementsByClassName('s-button-quality')[0].addEventListener('click',popupToggle);
-S.window.getElementsByClassName('s-button-fullscreen')[0].addEventListener('click',function(){
-	S.fullscreen = 'toggle';
-});
 
 function popupToggle(){
 	var closePopups = S.window.querySelectorAll('.s-visible:not(.s-popup-'+this.dataset.type+')');
@@ -1177,33 +1166,43 @@ S.window.querySelector('.s-notice-close').addEventListener('click',function(){
 	S.window.querySelector('.s-notice').classList.remove('s-visible');
 });
 
-function buildButtons(array, call, optionNone){
-	var fragment = document.createDocumentFragment();
-	
+function buildButtons(call, array, onClick, nullPossible){
 	// If the option doesn't exist or has no options
-	// if(array.count == 0) S.window.querySelector('s-button-'+call).remove();
-	
-	for(var i = 0; i < array.length; i++){
-		var buttonEl = document.createElement('button');
-		buttonEl.innerText = array[i]['long'];
-		buttonEl.dataset.value = array[i]['short'];
-		buttonEl.addEventListener('click',function(){
-			// If options can be toggled
-			if(optionNone){
-				if(S[call] === this.dataset.value) S[call] = null;
-				else S[call] = this.dataset.value;
-			// If one option must always be on
-			}else{
-				if(S[call] !== this.dataset.value) S[call] = this.dataset.value;
-			}
-		});
+	if(array !== null){
+		if(array.length === 0) return;
+		if(!nullPossible && array.length === 1) return;
 		
-		if(S[call] === array[i]['short']) buttonEl.className='s-selected';
+		// Add dropdown
+		var dropdown = document.createElement('div');
+		dropdown.className = 's-popup s-popup-'+call;
 		
-		fragment.appendChild(buttonEl);
+		
+		for(var i = 0; i < array.length; i++){
+			var buttonEl = document.createElement('button');
+			buttonEl.innerText = array[i]['long'];
+			buttonEl.dataset.value = array[i]['short'];
+			buttonEl.addEventListener('click',onClick);
+			
+			if(S[call] == array[i]['short']) buttonEl.className='s-selected';
+			
+			dropdown.appendChild(buttonEl);
+		}
+		
+		S.window.querySelector('.s-popups').appendChild(dropdown);
 	}
 	
-	return fragment;
+	// Add button
+	var button = document.createElement('button');
+	button.className = 's-button s-button-'+call;
+	button.dataset.type = call;
+	button.dataset.alt = call;
+	button.dataset.title = call;
+	
+	// Either toggle the popup, or the function directly if there's no popup
+	if(array !== null) button.addEventListener('click',popupToggle);
+	else button.addEventListener('click',onClick);
+	
+	S.window.querySelector('.s-buttons').appendChild(button);
 }
 
 // Make language change on changing value
@@ -1232,72 +1231,6 @@ Object.defineProperty(S, 'subtitles', {
 	}
 });
 
-<?php
-	// Get languages
-	$languages=[];
-	foreach(scandir('.') as $file){
-		// Ignore hidden files and specialized folders
-		if($file==='subtitles' || $file==='resources' || !is_dir($file) || $file[0]==='.' || $file[0]===HIDING_CHAR) continue;
-
-		$languages[]=[
-			'short'	=>	$file
-			,'long'	=>	extension_loaded('intl') ? (Locale::getDisplayLanguage($file)) : $file
-		];
-	}
-	
-	if(count($languages) > 1) echo "S.window.querySelector('.s-popup-language').appendChild(buildButtons(",json_encode($languages),",'language',false));";
-
-	// Get subtitles
-	$supportedSubtitles=[];
-	if(file_exists('subtitles')){
-		foreach(scandir('subtitles') as $file){
-			// Ignore hidden files
-			if(!is_dir('subtitles/'.$file) || $file[0]==='.' || $file[0]===HIDING_CHAR) continue;
-
-			// Get the subtitles (if ends with -cc, then it's closed captions)
-			$subtitleLanguage = str_replace('-cc','',$file,$closedCaptions);
-			if(extension_loaded('intl')) $subtitleLanguage = Locale::getDisplayLanguage($subtitleLanguage);
-			if($closedCaptions) $subtitleLanguage .= ' (CC)';
-			
-			$supportedSubtitles[]=[
-				'short'	=>	$file
-				,'long'	=>	$subtitleLanguage
-			];
-		}
-	}
-?>;
-
-S.window.querySelector('.s-popup-subtitles').appendChild(buildButtons(<?php echo json_encode($supportedSubtitles); ?>,'subtitles',true));
-
-// Add quality dropdown
-if(S.maxQuality > 0){
-
-	// The terms for different levels of quality
-	var qualityTerms = <?php echo json_encode(QUALITY_NAMES); ?>;
-	
-	var qualityButtons=document.createDocumentFragment();
-	for(var i=0; i <= S.maxQuality; i++){
-		var buttonEl = document.createElement('button');
-		
-		// Get a quality term and use it here
-		if(i >= qualityTerms.length) buttonEl.innerText = '[UNNAMED]';
-		else buttonEl.innerText = qualityTerms[i];
-		
-		buttonEl.dataset.value = i;
-		buttonEl.addEventListener('click',function(){
-			S.quality = this.dataset.value;
-		});
-		
-		if(quality === i) buttonEl.className='s-selected';
-		
-		qualityButtons.appendChild(buttonEl);
-	}
-	S.window.querySelector(".s-popup-quality").appendChild(qualityButtons);
-// Remove the quality button if we have no options
-} else {
-	S.window.querySelector('.s-button-quality').remove();
-}
-
 // Make language change on changing value
 Object.defineProperty(S, 'quality', {
 	get: function() {
@@ -1320,6 +1253,84 @@ Object.defineProperty(S, 'quality', {
 		S.to();
 	}
 });
+
+<?php
+	// Get languages
+	$languages=[];
+	foreach(scandir('.') as $file){
+		// Ignore hidden files and specialized folders
+		if($file==='subtitles' || $file==='resources' || !is_dir($file) || $file[0]==='.' || $file[0]===HIDING_CHAR) continue;
+
+		$languages[]=[
+			'short'	=>	$file
+			,'long'	=>	extension_loaded('intl') ? (Locale::getDisplayLanguage($file)) : $file
+		];
+	}
+
+	// Get subtitles
+	$supportedSubtitles=[];
+	if(file_exists('subtitles')){
+		foreach(scandir('subtitles') as $file){
+			// Ignore hidden files
+			if(!is_dir('subtitles/'.$file) || $file[0]==='.' || $file[0]===HIDING_CHAR) continue;
+
+			// Get the subtitles (if ends with -cc, then it's closed captions)
+			$subtitleLanguage = str_replace('-cc','',$file,$closedCaptions);
+			if(extension_loaded('intl')) $subtitleLanguage = Locale::getDisplayLanguage($subtitleLanguage);
+			if($closedCaptions) $subtitleLanguage .= ' (CC)';
+			
+			$supportedSubtitles[]=[
+				'short'	=>	$file
+				,'long'	=>	$subtitleLanguage
+			];
+		}
+	}
+	
+	// Get quality
+	$supportedQuality=[];
+	for($i = 0; $i <= $maxQuality; $i++){
+		$supportedQuality[]=[
+			'short'	=>	$i
+			,'long'	=>	QUALITY_NAMES[$i]
+		];
+	}
+?>;
+
+// Make buttons with functions easily; and add buttons easily
+/*
+-Name
+-Icon
+-function (on click)
+
+-Dropdown? What about that?
+*/
+
+buildButtons('language'
+	,<?php echo json_encode($languages); ?>
+	,function(){S.language = this.dataset.value;}
+	,false
+);
+
+buildButtons('subtitles'
+	,<?php echo json_encode($supportedSubtitles); ?>
+	,function(){
+		if(S.subtitles === this.dataset.value) S.subtitles = null;
+		else S.subtitles = this.dataset.value;
+	}
+	,true
+);
+
+buildButtons('quality'
+	,<?php echo json_encode($supportedQuality); ?>
+	,function(){S.quality = this.dataset.value;}
+	,false
+);
+
+buildButtons('fullscreen'
+	,null
+	,function(){S.fullscreen = 'toggle';}
+	,false
+);
 
 // Bookmarks
 function toggleBookmark(){
