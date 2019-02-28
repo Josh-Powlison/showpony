@@ -18,8 +18,7 @@
 	<meta name="msapplication-config" content="favicons/browserconfig.xml">
 	<meta name="theme-color" content="#ffffff">
 	
-	<link rel="stylesheet" href="objprint/styles.css">
-	<script src="objprint/script.js"></script>
+	<script src="script.js" defer></script>
 </head>
 <body>
 <header>
@@ -48,8 +47,6 @@
 	<option value="vn">kinetic novel</option>
 </select>!</p>
 
-<p><em>Manga reads right-to-left.</em></p>
-
 <div id="manga" class="story hidden" data-path="showpony/showpony.php?path=game-plan/&progress=file&direction=right-to-left"></div>
 <div id="comic" class="story hidden" data-path="showpony/showpony.php?path=orbit/&progress=file"></div>
 <div id="video" class="story hidden" data-path="showpony/showpony.php?path=sintel/"></div>
@@ -57,36 +54,12 @@
 <div id="text" class="story hidden" data-path="showpony/showpony.php?path=ecocrystals/&progress=file"></div>
 <div id="vn" class="story hidden" data-path="showpony/showpony.php?path=breakdown/"></div>
 
-<script defer>
-	var showponies=[];
-</script>
-
-<h2>Install in 5 minutes!</h2>
-
-<p><a href="https://github.com/Josh-Powlison/showpony/releases" target="_blank">Download</a> and put the <em>showpony</em> folder and <em>files</em> folder on your website! Then use this HTML:</p>
-
-<pre>
-&lt;div class="custom-class"&gt;
-	&lt;script src="showpony/showpony.php"&gt;&lt;/script&gt;
-&lt;/div&gt;
-</pre>
-
-<p>To customize your Showpony, look at the <a href="https://github.com/Josh-Powlison/showpony/wiki">Wiki</a>!</p>
-
-<p>Below you can check out all of the properties and functions of the Showpony above.</p>
-
-<pre id="code"><div id="properties"></div></pre>
-<p id="propertyExplanation"></p>
-<button id="refreshPrint">Refresh</button>
-
 <h2>Used by:</h3>
 <div id="websites-using">
 	<a href="http://gameplanmanga.com" target="_blank"><img src="images/gameplan-banner.jpg"></a>
 	<a href="https://joshpowlison.itch.io/breakdown" target="_blank"><img src="images/breakdown-banner.jpg"></a>
 </div>
 <p><small>Email me at <a href="mailto:joshuapowlison@gmail.com" target="_blank">joshuapowlison@gmail.com</a> if you want to be included in the list! I will not include NSFW stories.</small></p>
-
-<script src="script.js"></script>
 
 </main>
 <footer><p>Showpony is Open Source under an MIT License. Version in Demo: DEV BRANCH</p></footer>
