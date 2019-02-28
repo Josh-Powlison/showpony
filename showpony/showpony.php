@@ -2,7 +2,7 @@
 
 require 'settings.php';
 
-define('STORIES_PATH'	, DEFAULT_PATH.($_GET['path'] ?? ''));
+define('STORIES_PATH'	, $_GET['path'] ?? DEFAULT_PATH);
 
 // Get the query from the paths
 define('NAME'			, preg_match('/[^\/]+(?=\/?$)/',STORIES_PATH,$match) ? $match[0] : 'story');
