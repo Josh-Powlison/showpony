@@ -40,16 +40,18 @@ new function(){
 		if(time === 'end') time = S.files[file].duration - 5;
 		
 		// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
-		if(M.window.dataset.filename !== filename) M.window.dataset.filename = M.video.src = filename;
+		if(M.window.dataset.filename !== filename){
+			loadedData = false;
+			M.window.dataset.filename = M.video.src = filename;
+		}
 		
 		M.video.currentTime = time;
+		M.currentFile=file;
+		M.currentTime=time;
 		
-		console.log('PAUSED?',paused);
 		// If we're not paused, play
 		if(!paused) M.play();
 		
-		M.currentFile=file;
-		M.currentTime=time;
 		return true;
 	}
 	
@@ -80,8 +82,10 @@ new function(){
 	// Allow playing videos using Showpony in iOS
 	M.video.setAttribute('playsinline','');
 
+	var loadedData = false;
 	// Fix for Safari not going to the right time
 	M.video.addEventListener('loadeddata',function(){
+		var loadedData = true;
 		M.video.currentTime=M.currentTime;
 	});
 
@@ -119,12 +123,12 @@ new function(){
 	// When we finish playing a video or audio file
 	M.video.addEventListener('ended',function(){
 		// Only do this if the menu isn't showing (otherwise, while we're scrubbing this can trigger)
-		if(!paused) S.time++;
+		if(!paused) S.file++;
 	});
 
 	// On moving through time, update info and title
 	M.video.addEventListener('timeupdate',function(){
-		M.currentTime=M.video.currentTime;
+		if(loadedData) M.currentTime=M.video.currentTime;
 		
 		timeUpdate();
 		S.displaySubtitles();

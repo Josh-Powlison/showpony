@@ -39,17 +39,19 @@ new function(){
 	M.src = async function(file=0,time=0,filename){
 		if(time === 'end') time = S.files[file].duration-5;
 		
-		// Change the file if it'd be a new one
 		// (we have to use dataset because the real src gets tweaked by the browser to be an absolute path)
-		if(M.window.dataset.filename !== filename) M.window.dataset.filename = M.audio.src = filename;
+		if(M.window.dataset.filename !== filename){
+			loadedData = false;
+			M.window.dataset.filename = M.audio.src = filename;
+		}
 		
 		M.audio.currentTime=time;
+		M.currentTime=time;
+		M.currentFile=file;
 		
 		// If we're not paused, play
 		if(!paused) M.play();
 		
-		M.currentFile=file;
-		M.currentTime=time;
 		return true;
 	}
 	
@@ -80,9 +82,11 @@ new function(){
 	// Allow playing videos using Showpony in iOS
 	M.audio.setAttribute('playsinline','');
 
+	var loadedData = false;
 	// Fix for Safari not going to the right time
 	M.audio.addEventListener('loadeddata',function(){
-		M.audio.currentTime=M.currentTime;
+		loadedData = true;
+		M.audio.currentTime = M.currentTime;
 	});
 
 	M.audio.addEventListener('canplay',function(){
@@ -124,11 +128,11 @@ new function(){
 
 	// On moving through time, update info and title
 	M.audio.addEventListener('timeupdate',function(){
-		M.currentTime=M.audio.currentTime;
+		if(loadedData) M.currentTime = M.audio.currentTime;
 		
-		// Consider how much has already been loaded; this isn't run on first chunk loaded
-		this.dispatchEvent(new CustomEvent('progress'));
 		timeUpdate();
 		S.displaySubtitles();
+		// Consider how much has already been loaded; this isn't run on first chunk loaded
+		this.dispatchEvent(new CustomEvent('progress'));
 	});
 }()
