@@ -277,43 +277,46 @@ _showpony/settings.php_ has some useful settings for you to set up. (wow, what a
 Below are the defaults.
 
 ```php
-// Whether or not to display errors
-error_reporting(E_ALL);
-ini_set('display_errors',1);
+const DEFAULT_PATH			= 'story/';			// The path to the files we'll play
+const DEFAULT_LANGUAGE		= 'en';				// If a language isn't set by the user, assume this one
+const DEFAULT_SUBTITLES		= null;				// If subtitles aren't set by the user, assume this one
+const DEFAULT_QUALITY		= 1;				// If quality level isn't set by the user, assume this one
+const DEFAULT_FILE_DURATION	= 10;				// How long files without a duration in their filename will be assumed to be
+const DEFAULT_START			= 0;				// Where we'll start in the Showpony by default
+const DEFAULT_PROGRESS		= 'time';			// How to display progress in the menu. 'file', 'time', or 'percent'
+const DEFAULT_DIRECTION		= 'left-to-right';	// 'left-to-right' or 'right-to-left'
+const HIDING_CHAR			= '~';				// Start a filename with this char to hide it. Change in .htaccess too, to block direct URL access
+const PRELOAD_BYTES			= .5 * 1048576;		// How many file bytes to preload
+const RELEASE_DATES			= 1;				// How many upcoming files to show release dates for
+const DEBUG					= false;			// Passes PHP notices and errors to Showpony's creation event
+date_default_timezone_set('UTC');				// The timezone we're reading times in
 
-date_default_timezone_set('UTC');                       // The timezone we're reading times in
-
-const ROOT=__DIR__;                                     // The directory Showpony is in
-const DEFAULT_PATH='story/';                            // The path to the story
-const DEFAULT_LANGUAGE='en';                            // If a language isn't set by the user, assume this one
-const DEFAULT_SUBTITLES=null;				// If subtitles aren't set by the user, assume this one
-const DEFAULT_QUALITY=1;				// If quality level isn't set by the user, assume this one
-const DEFAULT_FILE_DURATION=10;				// How long files without a duration in their filename will be assumed to be
-const PRELOAD_BYTES=.5*1048576;				// How many file bytes to preload
-const RELEASE_DATES=1;					// How many upcoming files to show release dates for
-const HIDDEN_FILENAME_STARTING_CHAR='~';	        // Change in .htaccess too, to block direct URL access
-const READING_DIRECTION='left-to-right';		// left-to-right, right-to-left, or (to add) top-to-bottom for infinite scroll
-
-// The names of varying levels of quality, if needed. From lowest to highest.
-const QUALITY_NAMES=[
+const QUALITY_NAMES = [
 	'480p'		// 0$
 	,'720p'		// 1$
 	,'1080p'	// 2$
 	,'4K'		// 3$
 ];
 
-const FILE_GET_MODULE=[
-	'default'               =>	null
-	,'mime:text'		=>	'text'
-	,'mime:image'		=>	'image'
-	,'mime:audio'		=>	'audio'
-	,'mime:video'		=>	'video'
-	,'ext:vn'               =>	'visualNovel'
-	,'mime:application'	=>	null
+// What modules to load for what file types
+const FILE_GET_MODULE = [
+	'mime:text'			=> 'text'
+	,'mime:image'		=> 'image'
+	,'ext:svg'			=> 'image' // Not all servers recognize SVGs as images by default
+	,'mime:audio'		=> 'audio'
+	,'mime:video'		=> 'video'
+	,'ext:vn'			=> 'visualNovel'
+	,'mime:application'	=> null
 ];
+
+// This function is run on a new file's release. THIS WILL ONLY WORK IF THE FILE IS UNHIDDEN BY ITS DATE, not if a file's just manually added.
+function NEW_RELEASE($number, $info){
+	// $number: the file's number
+	// $info: an array of the file's info, same layout as passed to Showpony JS
+}
 ```
 
-Most of these are pretty straightforward (let me know if they're not), but FILE_DATA_GET_MODULE deserves some special discussion:
+Most of these are pretty straightforward (let me know if they're not), but a few deserve special discussion:
 
 ## FILE_GET_MODULE
 
@@ -324,3 +327,9 @@ File types available are partial MIME types, full MIME types, or extensions. It 
 MIME types are information on the file type. You can pass a partial or complete MIME type- partial being everything before the slash in a type like "image/jpeg" and full being the whole "image/jpeg" bit.
 
 The module's name here will be the name of the module's folder. If you set a file type's module to `null` you'll prevent that file from being opened.
+
+## NEW_RELEASE
+
+This function is meant to let you send emails, push notifications, etc when a new part of your story is released.
+
+Note that this will only trigger if a file is unhidden by date, and at that time. If you have a file scheduled to go live at 1 PM, and nobody checks your website until 2 PM, `NEW_RELEASE()` won't trigger until 2 PM.
