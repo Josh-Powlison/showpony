@@ -207,7 +207,7 @@ if($language[0] !== HIDING_CHAR || !empty($_SESSION['showpony_admin'])) readFold
 
 // Load modules
 foreach(array_keys($media) as $moduleName){
-	require __DIR__.'/modules/'.$moduleName.'/functions.php';
+	if(file_exists(__DIR__.'/modules/'.$moduleName.'/functions.php')) require __DIR__.'/modules/'.$moduleName.'/functions.php';
 }
 
 // Unhide subtitles
@@ -223,6 +223,5 @@ if(file_exists('subtitles')){
 
 // Unhide children files
 foreach($unhideSubfiles as $subfile){
-	// die('SUBFILES TO UNHIDE '.json_encode($subfile));
-	call_user_func($subfile[0].'UnhideChildren',$subfile[1]);
+	if(function_exists($subfile[0].'UnhideChildren')) call_user_func($subfile[0].'UnhideChildren',$subfile[1]);
 }
