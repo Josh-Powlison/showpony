@@ -67,7 +67,8 @@ function readFolder($folder){
 		$hidden=false;
 		
 		// Get file info
-		preg_match('/(?:(\d+)\$)?(\d{4}-\d\d-\d\d(?:\s\d\d(?::|;)\d\d(?::|;)\d\d)?)?\s?(?:\((.+)\))\s?([^\.]+)?/',$file,$match);
+		// 0$2019-01-01 12;00;00 (Title) 9.txt
+		preg_match('/(?:(\d+)\$)?(\d{4}-\d\d-\d\d(?:\s\d\d(?::|;)\d\d(?::|;)\d\d)?)?\s?(?:\((.*)\))\s?([^\.]+)?/',$file,$match);
 		/*
 			$match[0] = Whole Match
 			$match[1] = Quality
@@ -128,7 +129,7 @@ function readFolder($folder){
 			}
 		}else{
 			// Still skip hidden files
-			if($file[0]===HIDING_CHAR) continue;
+			if($file[0] === HIDING_CHAR) continue;
 			
 			$date=null;
 		}
