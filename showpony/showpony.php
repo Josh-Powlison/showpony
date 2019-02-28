@@ -280,7 +280,7 @@ Object.defineProperty(S, 'notice', {
 		return notice;
 	},
 	set: function(input){
-		if(!paused) S.paused = true;
+		S.paused = true;
 	
 		var noticeText=noticeEl.querySelector('.s-notice-text');
 		
@@ -302,8 +302,7 @@ S.to = function(obj = {file:file, time:time}){
 	/// GET TIME AND FILE ///
 	
 	// Special values
-	if(obj.file==='last') obj.file=S.files.length-1;
-	
+	if(obj.file === 'last' ) obj.file = S.files.length-1;
 	obj.file = Math.max(0,obj.file || 0);
 	
 	// If we're not going to the end, adjust time values; 'end' gets passed to the modules
@@ -312,7 +311,7 @@ S.to = function(obj = {file:file, time:time}){
 		obj.time = Math.max(0,parseFloat(obj.time) || 0);
 		
 		// Based on time, get the right file
-		for(obj.file;obj.file<S.files.length;obj.file++){
+		for(obj.file; obj.file < S.files.length;obj.file++){
 			if(obj.time<S.files[obj.file].duration) break; // We've reached the file
 			
 			obj.time-=S.files[obj.file].duration;
@@ -429,10 +428,10 @@ S.load = function(){
 			// If the load file can't be found, break
 			if(!loadFile) break;
 			
-			S.data=loadFile.data;
-			language=loadFile.language;
-			subtitles=loadFile.subtitles;
-			quality=loadFile.quality;
+			S.data = loadFile.data;
+			language = loadFile.language;
+			subtitles = loadFile.subtitles;
+			quality = loadFile.quality;
 			
 			return loadFile.bookmark;
 			break;
@@ -491,14 +490,15 @@ Object.defineProperty(S, 'language', {
 	set: function(newLanguage=<?php echo json_encode($language); ?>){
 		if(language === newLanguage) return;
 		
+		// Remove selected class from previous selected item
+		S.window.querySelector('.s-popup-language .s-selected').classList.remove('s-selected');
+		S.window.querySelector('.s-popup-language [data-value="'+newLanguage+'"]').classList.add('s-selected');
+		
 		fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
 		.then(response=>{return response.json();})
 		.then(json=>{
 			S.files=json;
 			language = newLanguage;
-			
-			// Need to set this to -1 to reload the current file
-			S.modules[S.currentModule].currentFile=-1;
 			
 			S.time = time;
 		})
@@ -852,10 +852,10 @@ function scrub(inputPercent=null){
 		S.window.querySelector('.s-upcoming-file').innerHTML='<p>'+upcoming+'</p>';
 	}
 	
-	if(info!==infoText.innerHTML) infoText.innerHTML=info;
+	if(info !== infoText.innerHTML) infoText.innerHTML = info;
 	
 	// We don't want to over-update the title, so we stick with when we're not scrubbing.
-	if(info!==document.title) document.title=completed+' - '+remaining;
+	if(info !== document.title) document.title=completed+' - '+remaining;
 }
 
 var pointerXStart = null;
@@ -1184,26 +1184,14 @@ const supportedLanguages=<?php
 ?>;
 
 if(<?php if(!empty($_GET['export'])) echo 'false || '; ?>supportedLanguages.length>1){
-	function toggleLanguage(){
-		// Ignore clicking on same button again
-		if(language === this.dataset.value) return;
-		
-		// Remove selected class from previous selected item
-		var previous=S.window.querySelector('.s-popup-language .s-selected');
-		if(previous){
-			previous.classList.remove('s-selected');
-		}
-		
-		this.classList.add('s-selected');
-		S.language = this.dataset.value;
-	}
-
 	var languageButtons=document.createDocumentFragment();
-	for(var i=0;i<supportedLanguages.length;i++){
+	for(var i = 0; i < supportedLanguages.length; i++){
 		var buttonEl=document.createElement('button');
 		buttonEl.innerText=supportedLanguages[i]['long'];
 		buttonEl.dataset.value=supportedLanguages[i]['short'];
-		buttonEl.addEventListener('click',toggleLanguage);
+		buttonEl.addEventListener('click',function(){
+			S.language = this.dataset.value;
+		});
 		
 		if(language === supportedLanguages[i]['short']) buttonEl.className='s-selected';
 		
@@ -1221,10 +1209,12 @@ if(<?php if(!empty($_GET['export'])) echo 'false || '; ?>S.supportedSubtitles.le
 		buttonEl.innerText=S.supportedSubtitles[i]['long'];
 		buttonEl.dataset.value=S.supportedSubtitles[i]['short'];
 		buttonEl.addEventListener('click',function(){
-			S.subtitles = this.dataset.value;
+			if(S.subtitles === this.dataset.value) S.subtitles = null;
+			else S.subtitles = this.dataset.value;
 		});
 		
-		if(subtitles===S.supportedSubtitles[i]['short']) buttonEl.className='s-selected';
+		console.log(subtitles,S.supportedSubtitles);
+		if(subtitles === S.supportedSubtitles[i]['short']) buttonEl.className='s-selected';
 		
 		subtitleButtons.appendChild(buttonEl);
 	}
@@ -1241,14 +1231,15 @@ Object.defineProperty(S, 'subtitles', {
 	set: function(newSubtitles){
 		if(newSubtitles === subtitles) return;
 		
-		// Remove selected class from previous selected item
-		var previous=S.window.querySelector('.s-popup-subtitles .s-selected');
-		if(previous){
-			previous.classList.remove('s-selected');
-		}
+		// Remove selected class from previous selected item (if one was selected)
+		var previous = S.window.querySelector('.s-popup-subtitles .s-selected');
+		if(previous) previous.classList.remove('s-selected');
+		// console.log('hey','.s-popup-subtitles [data-value="'+newSubtitles+'"]');
+		if(newSubtitles) S.window.querySelector('.s-popup-subtitles [data-value="'+newSubtitles+'"]').classList.add('s-selected');
 		
 		// this.classList.add('s-selected');
-		S.displaySubtitles(newSubtitles);
+		subtitles = newSubtitles;
+		S.displaySubtitles(subtitles);
 	}
 });
 
@@ -1292,13 +1283,9 @@ Object.defineProperty(S, 'quality', {
 		// Ignore if re-selecting an old item
 		if(quality === newQuality) return;
 		
-		// Remove selected class from previous selected item
-		var previous=S.window.querySelector('.s-popup-quality .s-selected');
-		if(previous){
-			previous.classList.remove('s-selected');
-		}
-		
-		// if(this.dataset) this.classList.add('s-selected');
+		// Remove selected class from previous selected item (if one was selected)
+		S.window.querySelector('.s-popup-quality .s-selected').classList.remove('s-selected');
+		S.window.querySelector('.s-popup-quality [data-value="'+newQuality+'"]').classList.add('s-selected');
 		
 		quality = newQuality;
 		S.to();
