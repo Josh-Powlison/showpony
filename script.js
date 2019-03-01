@@ -1,10 +1,8 @@
-const DEFAULT_SHOWPONY='manga';
-
 var showponies=[];
 
 var currentShowpony=/#([^\?]+)/.exec(location.href);
 if(currentShowpony) currentShowpony=currentShowpony[1];
-else currentShowpony=DEFAULT_SHOWPONY;
+else currentShowpony=document.getElementById('example-list').children[0].value;
 
 document.getElementById("example-list").addEventListener("change",function(){
 	chooseStory(this.value);
@@ -28,21 +26,17 @@ function chooseStory(id){
 	// Load Showponies dynamically
 	if(typeof showponies[id] === 'undefined'){
 		var script = document.createElement('script');
+		script.defer = true;
+		script.async = true;
 		
 		var showponyWindow = document.getElementById(id);
-		
 		script.src = showponyWindow.dataset.path;
 		
-		// showponies.push = ();
+		
 		showponyWindow.addEventListener('built',function(event){
 			console.log('BUILT');
 			showponies[id]=event.detail.object;
 			console.log(event.detail.message);
-			
-			/*
-				CODE TO CUSTOMIZE THE SHOWPONIES
-			*/
-			
 			displayStory(id);
 		});
 		

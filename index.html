@@ -18,7 +18,7 @@
 	<meta name="msapplication-config" content="favicons/browserconfig.xml">
 	<meta name="theme-color" content="#ffffff">
 	
-	<script src="script.js" defer></script>
+	<script src="script.js" defer async></script>
 </head>
 <body>
 <header>
@@ -29,22 +29,28 @@
 </header>
 <main>
 
-<h1><img class="svg-inline" src="images/logo.svg"> Showpony</h1>
+<article>
+	<h1><img class="svg-inline" src="images/logo.svg"> Showpony</h1>
 
-<h2>Code shouldn't keep you from doing what you do best</h2>
+	<h2>Is <strong>programming</strong> keeping you from <strong>storytelling</strong>?</h2>
 
-<p>You want a great online experience for your story. But the engines you’ve seen so far have weird quirks, missing features, or require more programming on your part than you’re comfortable with.</p>
+	<p>Have you been able to work on your story lately? Or has your website been breaking so often you don't feel like you have any time for that?</p>
 
-<p>Showpony is the open source package I wanted back when I was in your shoes:</p>
+	<p>Maybe you've considered or tried pre-existing engines, but their quirks, appearances, missing features, or coding requirements are too much for you.</p>
 
-<p id="intro">Share your <select id="example-list">
-	<option value="manga">manga</option>
-	<option value="comic">comic</option>
-	<option value="video">video series</option>
-	<option value="audio">audiobook</option>
-	<option value="text">serial novel</option>
-	<option value="vn">kinetic novel</option>
-</select></p>
+	<p>I was in the same place, and spent so much time on my website for 2 years that I didn't feel like I had time for actual storytelling. To the point where now I'm a professional programmer (no joke). I took my knowledge and experience from those times and started working on a new engine in 2017, with the goal of making the best suite for self-hosting stories: Showpony.</p>
+</article>
+
+<article>
+	<h2 id="intro">Check out a <select id="example-list">
+		<option value="vn">kinetic novel</option>
+		<option value="manga">manga</option>
+		<option value="comic">comic</option>
+		<option value="video">video series</option>
+		<option value="audio">audiobook</option>
+		<option value="text">serial novel</option>
+	</select> demo</h2>
+</article>
 
 <div id="manga" class="story hidden" data-path="showpony/showpony.php?path=samples/game-plan/&progress=file&direction=right-to-left"></div>
 <div id="comic" class="story hidden" data-path="showpony/showpony.php?path=samples/orbit/&progress=file"></div>
@@ -53,26 +59,48 @@
 <div id="text" class="story hidden" data-path="showpony/showpony.php?path=samples/ecocrystals/&progress=file"></div>
 <div id="vn" class="story hidden" data-path="showpony/showpony.php?path=samples/breakdown/"></div>
 
-<p><strong>Friendly to Use</strong>: Cross-device support, fullscreen, automatic bookmarking, and more.</p>
-<p><strong>Friendly to Install</strong>: No dependencies or database setup. Add the files and you’re ready.</p>
-<p><strong>Friendly to Expand</strong>: Add languages, subtitles, and quality levels just by adding files for them.</p>
+<article>
+	<h2>Showpony is:</h2>
 
-<p>You don’t have to keep programming if you don’t want to. Use Showpony and get back to storytelling.</p>
+	<div class="selling-points">
+		<div class="selling-point">
+			<img src="images/logo.svg">
+			<p><strong>Friendly to Use</strong>: Mobile-friendly, fullscreen, automatic bookmarking, and more.</p>
+		</div>
 
-<h2>Getting Started</h2>
+		<div class="selling-point">
+			<img src="images/logo.svg">
+			<p><strong>Friendly to Install</strong>: Add the files and you’re ready.</p>
+		</div>
 
-<p>[video tutorial]</p>
+		<div class="selling-point">
+			<img src="images/logo.svg">
+			<p><strong>Friendly to Expand</strong>: Add languages and subtitles just by adding files for them.</p>
+		</div>
+	</div>
+	<p class="center"><strong>Stop coding and get back to storytelling.</strong></p>
+</article>
 
-<h2>Any Questions</h2>
+<article>
+<h2>Install Now</h2>
 
-<p>Feel free to tweet me on Twitter <a href="https://twitter.com/joshpowlison" target="_blank">@joshpowlison</a>. I'd be happy to help you out!</p>
+	<p>[video tutorial]</p>
+</article>
 
-<h2>Used by:</h3>
-<div id="websites-using">
-	<a href="http://gameplanmanga.com" target="_blank"><img src="images/gameplan-banner.jpg"></a>
-	<a href="https://joshpowlison.itch.io/breakdown" target="_blank"><img src="images/breakdown-banner.jpg"></a>
-</div>
-<p><small>Email me at <a href="mailto:joshuapowlison@gmail.com" target="_blank">joshuapowlison@gmail.com</a> if you want to be included in the list! I will not include NSFW stories.</small></p>
+<article>
+	<h2>Any Questions?</h2>
+
+	<p>Feel free to tweet me on Twitter <a href="https://twitter.com/joshpowlison" target="_blank">@joshpowlison</a>. I'd be happy to help you out!</p>
+</article>
+
+<article>
+	<h2>Used by:</h3>
+	<div id="websites-using">
+		<a href="http://gameplanmanga.com" target="_blank"><img src="images/gameplan-banner.jpg"></a>
+		<a href="https://joshpowlison.itch.io/breakdown" target="_blank"><img src="images/breakdown-banner.jpg"></a>
+	</div>
+	<p><small>Email me at <a href="mailto:joshuapowlison@gmail.com" target="_blank">joshuapowlison@gmail.com</a> if you want to be included in the list! I will not include NSFW stories.</small></p>
+</article>
 
 </main>
 <footer><p>Showpony is Open Source under an MIT License. Version in Demo: DEV BRANCH</p></footer>

@@ -103,12 +103,21 @@ nav *:last-child{
 
 /* MAIN */
 
+.center{
+	text-align:center;
+}
+
 main{
-	width:50rem;
 	max-width:100%;
 	margin:auto;
-	margin-top:4em;
-	padding:2rem;
+	margin-top:6em;
+}
+
+article{
+	width:40rem;
+	max-width:100%;
+	padding:0 2rem;
+	margin:auto;
 	box-sizing:border-box;
 }
 
@@ -116,6 +125,11 @@ h1{
 	text-align:center;
 	font-size:3rem;
 	margin:0;
+}
+
+h2{
+	font-weight:normal;
+	text-align:center;
 }
 
 pre{
@@ -140,8 +154,6 @@ pre h3{
 	max-width:100%;
 }
 
-/*Don't start custom classes with .showpony, because that's how all of the classes are named in showpony.css*/
-
 #intro{
 	font-size:1.5rem;
 	text-align:center;
@@ -162,10 +174,29 @@ pre h3{
 	background-color:#fff;
 }
 	
+.selling-points{
+	display:flex;
+	justify-content:center;
+}
+
+.selling-point{
+	float:left;
+	width:12em;
+	max-width:100%;
+	padding:1em;
+	box-sizing:border-box;
+}
+
+.selling-point img{
+	width:max-width;
+}
+	
 /*Set width and height to whatever you want*/
 .story{
-	width:100%;
-	height:500px;
+	width:42em;
+	height:27em;
+	max-width:100vw;
+	max-height:80vh;
 	margin:auto;
 	display:block;
 }
