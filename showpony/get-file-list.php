@@ -42,9 +42,8 @@ function readFolder($folder){
 	global $unhideSubfiles;
 	
 	// Get the section's title
-	preg_match('/\(([^\/]+)\)$/',$folder,$sectionTitle);
-	$sectionTitle=$sectionTitle[1] ?? null;
-	
+	preg_match('/(?<={).+(?=})/',$folder,$sectionTitle);
+	$sectionTitle = $sectionTitle[0] ?? null;
 	
 	// Run through the files
 	foreach(scandir($folder) as &$file){
@@ -66,33 +65,63 @@ function readFolder($folder){
 		$unhid=false;
 		$hidden=false;
 		
+		$filename = pathinfo($file)['filename'];
+		
 		// Get file info
-		// 0$2019-01-01 12;00;00 (Title) 9.txt
-		preg_match('/(?:(\d+)\$)?(\d{4}-\d\d-\d\d(?:\s\d\d(?::|;)\d\d(?::|;)\d\d)?)?\s?(?:\((.*)\))\s?([^\.]+)?/',$file,$match);
+		preg_match('/(?<={).+(?=})/',$filename,$match);
+		$title		= $match[0] ?? null;
+		
+		preg_match('/(?<=q)[\d]+/',$filename,$match);
+		$quality	= $match[0] ?? null;
+		
+		preg_match('/[\d]+-[\d-]+/',$filename,$match);
+		if($match[0]){
+			$release = '';
+			$releaseData = explode('-',$match[0]);
+			for($i = 0; $i < count($releaseData); $i++){
+				switch($i){
+					case 0: break;
+					case 1: case 2:
+						$release .= '-';
+						break;
+					case 3:
+						$release .= ' ';
+						break;
+					case 4: case 5:
+						$release .= ':';
+						break;
+				}
+				
+				$release .= $releaseData[$i];
+			}
+			
+			$release .= ' UTC';
+		}else $release = null;
+		
+		preg_match('/[\d\.]+(?=s)/',$filename,$match);
+		$duration	= $match[0] ?? null;
+		
 		/*
 			$match[0] = Whole Match
 			$match[1] = Quality
-			$match[2] = Date
+			$match[2] = Release
 			$match[3] = Title
 			$match[4] = Length
 		*/
 		
 		// The base quality is always 0- so if we've found higher than that, just increase the value of the previously added file in the array
-		if(!empty($match[1])){
-			$files[count($files)-1]['quality'] = intval($match[1]);
+		if(!empty($quality)){
+			$files[count($files)-1]['quality'] = intval($quality);
 			
 			// Update max quality
-			if($maxQuality < intval($match[1])) $maxQuality = intval($match[1]);
+			if($maxQuality < intval($quality)) $maxQuality = intval($quality);
 			continue;
 		}
 		
 		// Ignore files that have dates in their filenames set to later
-		if(!empty($match[2])){ // Get the posting date from the file's name; if there is one:
-			// If the time is previous to now (replacing ; with : for Windows filename compatibility)
-			$date=str_replace(';',':',$match[2]).' UTC';
-			
-			// Check if the file should be live based on the date passed
-			if(strtotime($date)<=time()){
+		if(!empty($release)){ // Get the release date from the file's name; if there is one:
+			// Check if the file should be live based on the release passed
+			if(strtotime($release)<=time()){
 				// $hidden is already false
 				
 				// If the file is hidden but shouldn't be
@@ -121,7 +150,7 @@ function readFolder($folder){
 				
 				// The time the next file will go live
 				if(RELEASE_DATES && count($releaseDates)<RELEASE_DATES){
-					$releaseDates[]=strtotime($date);
+					$releaseDates[]=strtotime($release);
 				}
 				
 				// Don't add hidden files if we aren't logged in
@@ -131,27 +160,22 @@ function readFolder($folder){
 			// Still skip hidden files
 			if($file[0] === HIDING_CHAR) continue;
 			
-			$date=null;
+			$release=null;
 		}
 		
-		$title='';
 		if($sectionTitle){
-			$title.=$sectionTitle;
-			if(!empty($match[3])) $title.=': '.$match[3];
-		}else{
-			if(!empty($match[3])) $title=$match[3];
+			if($title) $title = $sectionTitle.': '.$title;
+			else $title = $sectionTitle;
 		}
 		
 		// There must be a better way to get some of this info...
 		$fileInfo=[
 			'buffered'		=>	[]
-			,'date'			=>	$date
-			,'duration'		=>	$match[4] ?? DEFAULT_FILE_DURATION
-			,'extension'	=>	pathinfo($folder.'/'.$file,PATHINFO_EXTENSION)
-			,'mimeType'		=>	mime_content_type($folder.'/'.$file)
+			,'duration'		=>	$duration ?? DEFAULT_FILE_DURATION
 			,'name'			=>	$file
 			,'path'			=>	$hidden ? 'showpony/get-hidden-file.php?file='.STORIES_PATH.$folder.'/'.$file  : STORIES_PATH.$folder.'/'.$file
 			,'quality'		=>	0 // Defaults to 0; if higher quality files are found, we consider those
+			,'release'		=>	$release
 			,'size'			=>	filesize($folder.'/'.$file)
 			,'title'		=>	str_replace(
 				// Dissallowed in Windows files: \ / : * ? " < > |
@@ -162,15 +186,18 @@ function readFolder($folder){
 			,'hidden'		=>	$hidden ?? false
 		];
 		
+		$extension = pathinfo($folder.'/'.$file,PATHINFO_EXTENSION);
+		$mimeType = mime_content_type($folder.'/'.$file);
+		
 		// Get the module based on FILE_GET_MODULE- first ext, then full mime, then partial mime, then ignore (it could be a dangerous file)
-		$fileInfo['module']=FILE_GET_MODULE['ext:'.$fileInfo['extension']]
-			?? FILE_GET_MODULE['mime:'.$fileInfo['mimeType']]
-			?? FILE_GET_MODULE['mime:'.explode('/',$fileInfo['mimeType'])[0]]
+		$fileInfo['module'] = FILE_GET_MODULE['ext:'.$extension]
+			?? FILE_GET_MODULE['mime:'.$mimeType]
+			?? FILE_GET_MODULE['mime:'.explode('/',$mimeType)[0]]
 			?? null
 		;
 		
 		// If the module isn't supported, skip over it
-		if($fileInfo['module']===null) continue;
+		if($fileInfo['module'] === null) continue;
 		
 		// If this file has been unhid
 		if($unhid){
@@ -205,6 +232,9 @@ if(!file_exists($language)){
 
 // Read the folder if it doesn't start with the hiding char or if we're an admin (this could be used for a sneaky way to access files otherwise)
 if($language[0] !== HIDING_CHAR || !empty($_SESSION['showpony_admin'])) readFolder($language);
+
+// Set them back in alphabetical order (HIDDEN_CHAR being removed can mess with order)
+sort($files);
 
 // Load modules
 foreach(array_keys($media) as $moduleName){
