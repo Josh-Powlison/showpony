@@ -1296,15 +1296,6 @@ Object.defineProperty(S, 'quality', {
 	}
 ?>;
 
-// Make buttons with functions easily; and add buttons easily
-/*
--Name
--Icon
--function (on click)
-
--Dropdown? What about that?
-*/
-
 buildButtons('language'
 	,<?php echo json_encode($languages); ?>
 	,function(){S.language = this.dataset.value;}
