@@ -14,34 +14,87 @@ You should now have a functional Showpony in your webpage!
 
 # File Names
 
-At the core, your story files just need to be in order. If all that you do is make sure that's set, your Showpony will work! But you can add quite a bit of useful info into filenames.
+For Showpony to work at a basic level, your story files just need to be in order. But you can add quite a bit of useful info into filenames, and in some cases it's pretty much essential.
 
-If you name your story files correctly, you can:
+By putting data into your filenames, you can:
 
 1. Have them go live at specific dates (and be hidden until then)
-2. Display info in the menu
+2. Display a title in the menu
 3. Scrub video and audio properly in the menu
 4. Mix media (like text and video) effectively, with each taking up a reasonable amount of the scrub area in the menu
 
 ## The convention
 
-_Q$YYYY-MM-DD HH;MM;SS (Part Title) DR.ext_
+```
+001 The Adventure Begins.jpg				// This will work
+001 2019-01-01 {The Adventure Begins} 20s 0q.jpg	// But this has a lot more functionality
+```
 
-_~Q$YYYY-MM-DD HH;MM;SS (Part Title) DR.ext_
+### Release Date
 
-**Examples**
+Release dates can look like any of the following:
 
-_1$2016-02-29 (Leap Year) 20.5.mp3_
+```
+// 2019, January, 1st
+2019-01-01.jpg
+19-01-01.jpg
+19-1-1.jpg
+19-1.jpg
 
-_0$2017-03-01 (The Adventure Begins).vn_
+2019-01-01-09-30.jpg	// Still January 1st, but at 9:30 AM
+2019-01-01-09-30-01.jpg	// Still January 1st at 9:30 AM, but 1 second in
+```
 
-_2017-11-02 15;00;00.jpg_
+You can put them anywhere in your filename.
 
-_~2020-01-01 23;00;00 (Upcoming Adventure).txt_
+Note that the times you put in will be based on UTC and not on your local timezone.
 
-### Hidden Char: ~
+If the file shouldn't be live yet, it will be prepended with a "~" and be hidden from users. Once it's time for it to go live, the "~" will be removed and your audience will be able to view it.
 
-~ appears before files that aren't ready to go live and keeps users from directly accessing that file. When it's time for that file to go live, Showpony will automatically remove the ~ and everyone can access it! (so in the case above, when January 1, 2020, 11 PM UTC arrives, the ~ will be removed and the file accessible).
+### Title
+
+Titles have to be between brackets.
+
+```
+19-12-25 {Christmas Special}.vn
+```
+
+These will show up as titles for your story file, at the top of Showpony.
+
+### Duration
+
+Durations are integers and decimals denoted by an "s" at the end of them. They're the length of your file in seconds.
+
+```
+0001 30s.html		// 30 seconds long
+0002 40.25s.html	// 40.25 seconds long
+```
+
+This is essential to add for videos and audio to display their times correctly, and will make scrubbing between files of different media much smoother.
+
+### Quality
+
+If you have different levels of quality for the same file (such as 480p, 720p, 1080p...), you can denote a quality value with "q" and an integer:
+
+```
+001 q0.mp4
+001 q1.mp4
+001 q2.mp4
+```
+
+The higher the number after q, the higher the level of quality.
+
+If you have multiple levels of quality, one of them must always be 0.
+
+You can set the names for each tier of quality in _settings.php_ in `QUALITY_NAMES`. These names will show up in the menu's quality popup.
+
+You can have multiple quality levels for just a few files in your story. For example, maybe you want your video cutscenes to have multiple quality levels, but your Visual Novel portions to all be the same level of quality.
+
+Everything else in the filename must stay exactly the same if you use this method- date to go live, title, etc.
+
+### Hiding Char: ~
+
+~ appears before files that aren't ready to go live and keeps users from directly accessing that file. When it's time for that file to go live, Showpony will automatically remove the ~.
 
 Even if users try to access files that start with ~ directly, they'll be met with a 404 error (this is why the _.htaccess_ file is important!). If they try to see a list of files by going to a directory, they will be blocked.
 
@@ -53,48 +106,7 @@ You can still access ~ files from the server side, and using the admin console y
 
 The only catch: if a folder is publicly accessible (no ~ at the start), and you go to the directory, it will show as 403, not 404. This is important: you need to make sure folders are hidden if you want nobody to discover that the folder exists. Otherwise, the 403 will confirm that the folder exists.
 
-You can change this character by replacing it in _.htaccess_ and in _settings.php_ with `HIDDEN_FILENAME_STARTING_CHAR`.
-
-### Quality: Q$
-
-Showpony allows you to have multiple qualities set up for the same files. For example, you could have videos in 480p, 720p, and 1080p.
-
-_$0_: lowest quality
-_$1_: higher quality
-_$2_: still higher quality
-...
-
-...and so on.
-
-You can set the names for each tier of quality in _settings.php_ in `QUALITY_NAMES`. These names will show up in the menu's quality popup.
-
-If not all files in your story are available at the same levels of quality, no worries- just make sure that every file has at least a _0$_ quality variant (no quality variant specified will default to _0$_) and doesn't have any gaps between _0$_ and the highest level you have available for that file. Showpony will get up to the quality requested, whatever you have available.
-
-Everything else in the filename must stay exactly the same if you use this method- date to go live, title, etc.
-
-### Date: YYYY-MM-DD HH;MM;SS
-
-The date the part should be released. Semicolons are used instead of colons between HH;MM;SS to support Windows file naming (dagnabit Windows!).
-
-HH;MM;SS is optional; you can just go with YYYY-MM-DD if you don't care about hours, minutes, or seconds.
-
-This time is based around UTC, not your local time zone, so be careful! (this gets especially messy if Daylight Savings Time is involved, so be aware!)
-
-Using dates will also order your files correctly, so I recommend it!
-
-Dates also allow you to tell your audience when files will be releasing- if you have one or more files starting with the Hidden Char (~), and they have dates, your audience will be told when they will release. You can set how many upcoming files to let the audience know about by setting `RELEASE_DATES` in _settings.php_, or you can remove this feature entirely be setting `RELEASE_DATES` to `0`.
-
-### Title: ( )
-
-The file's title. Must go between parentheses. If you want to have a chapter title that is shared across files, I recommend using folders instead (scroll down for that info).
-
-### Duration: DR
-
-The duration in seconds of the file. Can be a decimal value. Is optional. Can only be present if a title (or at least empty parentheses) are present before it (to separate it from the date).
-
-It's most relevant for video and audio, but you can also use it for comics, text, etc. This is helpful if you end up mixing media, like having video mixed in among your comics or text notes with your video!
-
-If a duration isn't set for a file here, it will take from _settings.php_'s `DEFAULT_FILE_DURATION` value.
+You can change this character by replacing it in _.htaccess_ and in _settings.php_ with `HIDING_CHAR`.
 
 ## Folders
 
@@ -102,15 +114,15 @@ You can put your files into folders, but the folders must be in alphabetical ord
 
 Folders are handy for organization, but folders can also have titles:
 
-_c1 (Chapter 1)/_
+_c1 {Chapter 1}/_
 
 If you have a title on a folder, that title will be passed along to the Showpony. So let's say you have a file in a path like so:
 
-_en/c1 (Chapter 1)/001.txt_
+_en/c1 {Chapter 1}/001.txt_
 
 Your title will be "Chapter 1" for the file, and any other files in the folder will have the same title. If a folder and contained file have a title:
 
-_en/c1 (Chapter 1)/001 (The Adventure Begins).txt_
+_en/c1 {Chapter 1}/001 {The Adventure Begins}.txt_
 
 They'll be combined and separated by a colon, like so: "Chapter 1: The Adventure Begins".
 
@@ -151,17 +163,11 @@ You can add a cover by putting a file called _cover.jpg_ in the _story_ folder. 
 
 I recommend you enable PHP's ```intl``` extension. If it's not enabled, Showpony will still work, but in the settings dropdowns languages and subtitles won't be written out in their full names: they'll be "en" instead of "English", for example.
 
-# Running JavaScript on Showpony
+# Referencing the Showpony
 
-The Showpony will be created as a JS object, camel-cased with dashes removed. It's based on the last folder in the path you give it to search for the story in. If your path is just the default- _story_- your Showpony object will be called `story`. Otherwise, look below for examples in the case of subfolders:
+The Showpony will be created as a JS object and passed to the Event Listener 'built' on the parent element. The parent element is whatever element you place the Showpony script inside of.
 
-**Examples**
-
-Path: _story/comic_ -> Object: `comic`
-
-Path: _story/video-series_ -> Object: `videoSeries`
-
-## Event Listeners
+## Window Event Listeners
 
 Showpony's window lets off the following event listeners. You'll have to check them on `showponyObject.window`:
 
