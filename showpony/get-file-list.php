@@ -1,5 +1,24 @@
 <?php
 
+// Look at cached file and consider if we should update
+if(empty($_SESSION['showpony_admin']) && file_exists('public-cache.json')){
+	// if so, ignore all of the following and grab the cached file; also need to make a cached file from $files[] at the end, if requested
+	
+	/*
+	1. Know the last time an edit was made
+	2. Compare that to the caching date
+	3. Either load or update the file
+	*/
+	
+	/*
+	Methods:
+	1. Dated (dumb): just update a file every day (or other set interval)
+	2. Update-based (smart): update the listing based on
+		a: last change dates and
+		b: dates for files going live
+	*/
+}
+
 $files				= [];
 $maxQuality			= 0;
 $media				= [];
