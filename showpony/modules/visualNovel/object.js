@@ -880,7 +880,7 @@ new function(){
 						resources[ii].dataset.state = display;
 						
 						// If it's a video and we're not paused, consider whether to play or pause it
-						if(!S.paused && resources[ii].tagName === 'VIDEO') resources[ii][display === 'visible' ? 'play' : 'pause']();
+						if(!paused && resources[ii].tagName === 'VIDEO') resources[ii][display === 'visible' ? 'play' : 'pause']();
 					}
 				}
 			}
@@ -1188,8 +1188,7 @@ new function(){
 						charContainer.style.whiteSpace = 'pre-line';
 						charPositioning.innerHTML= ' <wbr>';
 						
-						if(runTo === false) charAppearAnimation.addEventListener('animationstart', spaceAppear);
-						else charAppearAnimation.style.visibility = 'visible';
+						if(runTo !== false) charAppearAnimation.style.visibility = 'visible';
 					
 						// Last character
 						if(i === l){
@@ -1199,6 +1198,8 @@ new function(){
 					// Regular characters
 					}else{
 						charPositioning.innerText = charPerpetualAnimation.innerText = input[i];
+						
+						charAppearAnimation.addEventListener('animationstart',scrollText);
 					}
 				}
 			}
@@ -1206,6 +1207,9 @@ new function(){
 			// Remove old text if we aren't appending
 			if(input[0] !== '+'){
 				while(O.el.firstChild) O.el.removeChild(O.el.firstChild);
+				
+				// Also, scroll to the top
+				O.el.scrollTop = 0;
 			}
 			
 			// Add the chars to the textbox
@@ -1214,12 +1218,16 @@ new function(){
 			return false;
 		}
 		
-		function spaceAppear(event){
+		function scrollText(event){
 			if(this != event.target) return;
+			if(runTo !== false) return;
+			if(paused) return;
 			
 			// If the letter's below the textbox
-			if(runTo === false && !paused && this.parentNode.getBoundingClientRect().bottom > O.el.getBoundingClientRect().bottom){
-				O.el.scrollTop = this.parentNode.offsetTop + (this.parentNode.offsetHeight * 1.5) - O.el.offsetHeight;
+			var minScroll = this.parentNode.offsetTop - O.el.offsetHeight + (this.parentNode.offsetHeight * 2);
+			
+			if(O.el.scrollTop < minScroll){
+				O.el.scrollTop = minScroll;
 			}
 		}
 		
