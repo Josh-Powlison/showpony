@@ -852,6 +852,7 @@ new function(){
 						el.addEventListener('canplay',loadingSuccess);
 						
 						el.loop = true;
+						el.preload = true;
 						el.disableRemotePlayback = true;
 					// Add a layer image
 					} else {
