@@ -94,7 +94,7 @@ function readFolder($folder){
 		$quality	= $match[0] ?? null;
 		
 		preg_match('/[\d]+-[\d-]+/',$filename,$match);
-		if($match[0]){
+		if($match){
 			$release = '';
 			$releaseData = explode('-',$match[0]);
 			for($i = 0; $i < count($releaseData); $i++){
