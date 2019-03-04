@@ -69,6 +69,11 @@ new function(){
 			}
 		}
 		
+		var videos = M.window.querySelectorAll('video[data-state="visible"]');
+		for(var i = 0; i < videos.length; i++){
+			videos[i].play();
+		}
+		
 		// Resume timer
 		timer.start();
 	}
@@ -80,6 +85,11 @@ new function(){
 			if(objects[name].playing){
 				objects[name].el.pause();
 			}
+		}
+		
+		var videos = M.window.querySelectorAll('video');
+		for(var i = 0; i < videos.length; i++){
+			videos[i].pause();
 		}
 		
 		// Pause timer
@@ -821,39 +831,69 @@ new function(){
 				// Layer is i+1 because 0 is the style tag
 				var layer = i + 1;
 				
-				var image = imageNames[i];
+				var resource = imageNames[i];
 				// If no extension, assume png
-				if(!/\./.test(image)) image += O.defaultExtension;
+				if(!/\./.test(resource)) resource += O.defaultExtension;
+				
+				var ext = resource.slice((resource.lastIndexOf(".") - 1 >>> 0) + 2);
+				console.log(ext);
 				
 				// If the layer doesn't exist, add it!
 				if(!O.el.children[layer]){
 					O.el.appendChild(document.createElement('div'));
 				}
 				
-				// If the image doesn't exist, add it!
-				if(!O.el.children[layer].querySelector('img[data-file="'+image+'"]')){
-					// Add a layer image
-					var img = document.createElement('img');
-					img.className = 'm-vn-character-image';
-					img.dataset.file = image;
-					img.dataset.state = 'hidden';
+				// If the resource doesn't exist, add it!
+				if(!O.el.children[layer].querySelector('[data-file="'+resource+'"]')){
+					if(ext === 'mp4'){
+						// Add a layer image
+						var vid = document.createElement('video');
+						vid.className = 'm-vn-character-image';
+						vid.dataset.file = resource;
+						vid.dataset.state = 'hidden';
+						if(!S.paused) vid.play();
+						vid.loop = true;
+						// vid.autoplay = true;
+						vid.disableRemotePlayback = true;
+						
+						// M.loading++;
+						// vid.addEventListener('load',loadingSuccess);
+						// vid.addEventListener('error',loadingError);
 					
-					M.loading++;
-					img.addEventListener('load',loadingSuccess);
-					img.addEventListener('error',loadingError);
+						// Can go to the root of the website, or from the current path
+						if(resource[0] === '/') vid.src = '<?php echo STORIES_PATH; ?>resources' + resource;
+						else vid.src = '<?php echo STORIES_PATH; ?>resources/' + O.filepath + resource;
+						
+						O.el.children[layer].appendChild(vid);
+					} else {
+						// Add a layer image
+						var img = document.createElement('img');
+						img.className = 'm-vn-character-image';
+						img.dataset.file = resource;
+						img.dataset.state = 'hidden';
+						
+						M.loading++;
+						img.addEventListener('load',loadingSuccess);
+						img.addEventListener('error',loadingError);
 					
-					// Can go to the root of the website, or from the current path
-					if(image[0] === '/') img.src = '<?php echo STORIES_PATH; ?>resources' + image;
-					else img.src = '<?php echo STORIES_PATH; ?>resources/' + O.filepath + image;
+						// Can go to the root of the website, or from the current path
+						if(resource[0] === '/') img.src = '<?php echo STORIES_PATH; ?>resources' + resource;
+						else img.src = '<?php echo STORIES_PATH; ?>resources/' + O.filepath + resource;
+						
+						O.el.children[layer].appendChild(img);
+					}
 					
-					O.el.children[layer].appendChild(img);
 				}
 				
 				// Show and hide the correct images if we're done preloading
 				if(!preload){
-					var images = O.el.children[layer].children;
-					for(var ii = 0; ii < images.length; ii++){
-						images[ii].dataset.state = (images[ii].dataset.file === image) ? 'visible' : 'hidden';
+					var resources = O.el.children[layer].children;
+					for(var ii = 0; ii < resources.length; ii++){
+						var display = (resources[ii].dataset.file === resource) ? 'visible' : 'hidden'
+						resources[ii].dataset.state = display;
+						
+						console.log('TESTING',resources[ii],resources[ii].tagName);
+						if(!S.paused && resources[ii].tagName === 'VIDEO') resources[ii][display === 'visible' ? 'play' : 'pause']();
 					}
 				}
 			}
