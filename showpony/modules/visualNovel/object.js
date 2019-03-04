@@ -845,44 +845,32 @@ new function(){
 				
 				// If the resource doesn't exist, add it!
 				if(!O.el.children[layer].querySelector('[data-file="'+resource+'"]')){
-					if(ext === 'mp4'){
-						// Add a layer image
-						var vid = document.createElement('video');
-						vid.className = 'm-vn-character-image';
-						vid.dataset.file = resource;
-						vid.dataset.state = 'hidden';
-						if(!S.paused) vid.play();
-						vid.loop = true;
-						// vid.autoplay = true;
-						vid.disableRemotePlayback = true;
-						
-						// M.loading++;
-						// vid.addEventListener('load',loadingSuccess);
-						// vid.addEventListener('error',loadingError);
+					M.loading++;
 					
-						// Can go to the root of the website, or from the current path
-						if(resource[0] === '/') vid.src = '<?php echo STORIES_PATH; ?>resources' + resource;
-						else vid.src = '<?php echo STORIES_PATH; ?>resources/' + O.filepath + resource;
+					// Add a layer video
+					if(ext === 'mp4' || ext === 'webm'){
+						var el = document.createElement('video');
+						el.addEventListener('canplay',loadingSuccess);
 						
-						O.el.children[layer].appendChild(vid);
+						el.loop = true;
+						el.disableRemotePlayback = true;
+					// Add a layer image
 					} else {
-						// Add a layer image
-						var img = document.createElement('img');
-						img.className = 'm-vn-character-image';
-						img.dataset.file = resource;
-						img.dataset.state = 'hidden';
-						
-						M.loading++;
-						img.addEventListener('load',loadingSuccess);
-						img.addEventListener('error',loadingError);
-					
-						// Can go to the root of the website, or from the current path
-						if(resource[0] === '/') img.src = '<?php echo STORIES_PATH; ?>resources' + resource;
-						else img.src = '<?php echo STORIES_PATH; ?>resources/' + O.filepath + resource;
-						
-						O.el.children[layer].appendChild(img);
+						var el = document.createElement('img');
+						el.addEventListener('load',loadingSuccess);
 					}
 					
+					el.addEventListener('error',loadingError);
+					
+					el.className = 'm-vn-character-image';
+					el.dataset.file = resource;
+					el.dataset.state = 'hidden';
+					
+					// Can go to the root of the website, or from the current path
+					if(resource[0] === '/') el.src = '<?php echo STORIES_PATH; ?>resources' + resource;
+					else el.src = '<?php echo STORIES_PATH; ?>resources/' + O.filepath + resource;
+					
+					O.el.children[layer].appendChild(el);
 				}
 				
 				// Show and hide the correct images if we're done preloading
