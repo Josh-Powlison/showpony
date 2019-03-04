@@ -836,7 +836,6 @@ new function(){
 				if(!/\./.test(resource)) resource += O.defaultExtension;
 				
 				var ext = resource.slice((resource.lastIndexOf(".") - 1 >>> 0) + 2);
-				console.log(ext);
 				
 				// If the layer doesn't exist, add it!
 				if(!O.el.children[layer]){
@@ -880,7 +879,7 @@ new function(){
 						var display = (resources[ii].dataset.file === resource) ? 'visible' : 'hidden'
 						resources[ii].dataset.state = display;
 						
-						console.log('TESTING',resources[ii],resources[ii].tagName);
+						// If it's a video and we're not paused, consider whether to play or pause it
 						if(!S.paused && resources[ii].tagName === 'VIDEO') resources[ii][display === 'visible' ? 'play' : 'pause']();
 					}
 				}
