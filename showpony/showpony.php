@@ -2,6 +2,8 @@
 
 require 'settings.php';
 
+if(DEBUG) $time = microtime(true);
+
 define('STORIES_PATH'	, $_GET['path'] ?? DEFAULT_PATH);
 
 // Get the query from the paths
@@ -1749,8 +1751,15 @@ S.window.parentNode.dispatchEvent(
 			detail:{
 				object:S
 				,debug:<?php
-					if(DEBUG) echo json_encode($debugMessages);
-					else echo json_encode('DEBUG = false. No PHP debug info will be passed.');
+					if(DEBUG){
+						echo json_encode(
+							$debugMessages
+							.'\nProcessing Time: '. (microtime(true) - $time) . ' microseconds'
+						);
+					}
+					else{
+						echo json_encode('DEBUG = false. No PHP debug info will be passed.');
+					}
 				?>
 			}
 		}
