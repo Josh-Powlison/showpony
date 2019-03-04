@@ -426,6 +426,20 @@ james.style	times:1s;transform:translate(-100%,0);
 
 If you are timing other transformation animations in a way desynced from character movement (like scale, rotation, etc), this might be impossible, but for most cases you should be good. That's one case where you might want to use `left`, `top`, and so on.
 
+## Videos
+
+You can use videos instead of images for characters. If you do, they'll be set to loop and will play at full volume (so if you want silence you'll have to remove the sound from the video).
+
+The most practical use of this is for animated backgrounds:
+
+```
+background		rolling-sky.mp4
+```
+
+If you pass a file with either an mp4 or webm format, it will be read as a video.
+
+Remember that Showpony supports playing videos outside of the visual novel module, so if you just want to play a video without any VN features, I'd recommend putting the video file in your story folder instead. That way you'll be able to scrub the video, it will progress at the end instead of looping, etc.
+
 ## Including Files
 
 1. In settings.php, under `FILE_DATA_GET_MODULE`, set `'ext:php'=>'visualNovel'`
