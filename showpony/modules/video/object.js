@@ -85,7 +85,7 @@ new function(){
 	var loadedData = false;
 	// Fix for Safari not going to the right time
 	M.video.addEventListener('loadeddata',function(){
-		var loadedData = true;
+		loadedData = true;
 		M.video.currentTime=M.currentTime;
 	});
 
