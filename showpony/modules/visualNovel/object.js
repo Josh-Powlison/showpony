@@ -493,6 +493,12 @@ new function(){
 					if(type === 'audio') target[component].stop = null;
 					else if(type === 'textbox') target[component].empty = null;
 				}
+			}else{
+				if(!target[component]){
+					target[component] = {
+						'type':type
+					};
+				}
 			}
 			
 			switch(command){
