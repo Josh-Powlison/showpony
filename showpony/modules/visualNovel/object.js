@@ -617,7 +617,7 @@ new function(){
 	}
 	
 	M.event = function(input){
-		S.window.dispatchEvent(new CustomEvent(input));
+		S.dispatchEvent(new CustomEvent(input));
 		return true;
 	}
 
