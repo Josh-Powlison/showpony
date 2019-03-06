@@ -89,7 +89,8 @@ document.head.appendChild(styles);
 
 new function(){
 
-const S = this;
+// All of these attributes get put on the parent element, so they're easy to reference and call
+const S = document.currentScript.parentNode;
 const DEBUG = <?php echo DEBUG ? 'true' : 'false'; ?>;
 
 ///////////////////////////////////////
@@ -99,16 +100,6 @@ const DEBUG = <?php echo DEBUG ? 'true' : 'false'; ?>;
 S.files					= <?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
 
 S.buffered				= [];
-S.currentModule			= null;
-
-var file				= null;
-var time				= null;
-var language			= <?php echo json_encode($language); ?>;
-var subtitles			= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
-var quality				= <?php echo json_encode(QUALITY,JSON_NUMERIC_CHECK); ?>;
-var fullscreen			= false;
-var paused				= true;
-var active				= true;
 
 Object.defineProperty(S, 'time', {
 	get: function() {
@@ -138,7 +129,7 @@ Object.defineProperty(S, 'file', {
 
 Object.defineProperty(S, 'active', {
 	get: function() {
-		return time;
+		return active;
 	},
 	set: function(input){
 		// Error handling
@@ -147,8 +138,20 @@ Object.defineProperty(S, 'active', {
 			return;
 		}
 		
-		if(input) S.window.classList.remove('s-inactive');
-		else S.window.classList.add('s-inactive');
+		if(input){
+			if(!paused && module && S.modules[module].pause) S.modules[module].play();
+			S.window.classList.remove('s-inactive');
+			
+			S.dispatchEvent(new CustomEvent('active'));
+		}
+		else{
+			if(module && S.modules[module].pause) S.modules[module].pause();
+			S.window.classList.add('s-inactive');
+			
+			S.dispatchEvent(new CustomEvent('inactive'));
+		}
+		
+		
 		
 		active = input;
 	}
@@ -229,6 +232,16 @@ S.window.innerHTML		= `
 ///////////PRIVATE VARIABLES///////////
 ///////////////////////////////////////
 
+var file				= null;
+var time				= null;
+var module				= null;
+var language			= <?php echo json_encode($language); ?>;
+var subtitles			= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
+var quality				= <?php echo json_encode(QUALITY,JSON_NUMERIC_CHECK); ?>;
+var fullscreen			= false;
+var paused				= true;
+var active				= true;
+
 const content			= S.window.getElementsByClassName('s-content')[0];
 content.classList.add('s-loading');
 const overlay			= S.window.getElementsByClassName('s-menu')[0];
@@ -303,7 +316,7 @@ S.to = async function(obj = {file:file, time:time}){
 		obj.time = S.files[obj.file].duration;
 		
 		// Run the event that users can read
-		S.window.dispatchEvent(new CustomEvent('end'));
+		S.dispatchEvent(new CustomEvent('end'));
 		
 		// Pause
 		S.paused = true;
@@ -312,12 +325,12 @@ S.to = async function(obj = {file:file, time:time}){
 	/// LOAD RIGHT MODULE AND SOURCE ///
 	
 	// If switching types, do some cleanup
-	if(S.currentModule!==S.files[obj.file].module){
+	if(module!==S.files[obj.file].module){
 		while(content.firstChild) content.removeChild(content.firstChild);
 		content.appendChild(S.modules[S.files[obj.file].module].window);
 	}
 	
-	S.currentModule=S.files[obj.file].module;
+	module=S.files[obj.file].module;
 	
 	// Load the file
 	if(S.files[obj.file].buffered === false) S.files[obj.file].buffered = 'buffering';
@@ -327,7 +340,7 @@ S.to = async function(obj = {file:file, time:time}){
 	if(S.files[obj.file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[obj.file].quality, quality) + '$');
 	
 	// Update the module, and post a notice on failure
-	if(!await S.modules[S.currentModule].src(obj.file, obj.time, filename)){
+	if(!await S.modules[module].src(obj.file, obj.time, filename)){
 		S.notice = 'Failed to load file '+obj.file;
 		return false;
 	}
@@ -391,8 +404,8 @@ Object.defineProperty(S, 'paused', {
 			
 			S.window.classList.remove('s-paused');
 			paused=false;
-			if(S.modules[S.currentModule].play) S.modules[S.currentModule].play();
-			S.window.dispatchEvent(new CustomEvent('play'));
+			if(S.modules[module].play) S.modules[module].play();
+			S.dispatchEvent(new CustomEvent('play'));
 		}
 		// Pause
 		else{
@@ -401,8 +414,8 @@ Object.defineProperty(S, 'paused', {
 			S.window.classList.add('s-paused');
 			paused=true;
 			
-			if(S.currentModule && S.modules[S.currentModule].pause) S.modules[S.currentModule].pause();
-			S.window.dispatchEvent(new CustomEvent('pause'));
+			if(module && S.modules[module].pause) S.modules[module].pause();
+			S.dispatchEvent(new CustomEvent('pause'));
 		}
 	}
 });
@@ -528,13 +541,13 @@ if(S.window.requestFullscreen){
 				
 				fullscreen=true;
 				S.window.requestFullscreen();
-				S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
+				S.dispatchEvent(new CustomEvent('fullscreenEnter'));
 			}
 			else{
 				if(!document.fullscreenElement) return;
 				
 				document.exitFullscreen();
-				S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
+				S.dispatchEvent(new CustomEvent('fullscreenExit'));
 			}
 		}
 	});
@@ -562,13 +575,13 @@ else if(S.window.webkitRequestFullscreen){
 				if(document.webkitFullscreenElement) return;
 				
 				S.window.webkitRequestFullscreen();
-				S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
+				S.dispatchEvent(new CustomEvent('fullscreenEnter'));
 			}
 			else{
 				if(!document.webkitFullscreenElement) return;
 				
 				document.webkitExitFullscreen();
-				S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
+				S.dispatchEvent(new CustomEvent('fullscreenExit'));
 			}
 		}
 	});
@@ -608,7 +621,7 @@ else{
 				   .pop()+1;
 				   
 				fullscreen = true;
-				S.window.dispatchEvent(new CustomEvent('fullscreenEnter'));
+				S.dispatchEvent(new CustomEvent('fullscreenEnter'));
 			}
 			else{
 				if(!S.window.classList.contains('s-fullscreen-alt')) return;
@@ -621,18 +634,18 @@ else{
 				S.window.removeAttribute('data-prevz');
 				
 				fullscreen = false;
-				S.window.dispatchEvent(new CustomEvent('fullscreenExit'));
+				S.dispatchEvent(new CustomEvent('fullscreenExit'));
 			}
 		}
 	});
 }
 
 S.regress = function(){
-	S.modules[S.currentModule].regress();
+	S.modules[module].regress();
 }
 
 S.progress = function(){
-	S.modules[S.currentModule].progress();
+	S.modules[module].progress();
 }
 
 ///////////////////////////////////////
@@ -653,13 +666,13 @@ function checkCollision(x=0,y=0,element){
 
 async function timeUpdate(){
 	// Get the current time in the midst of the entire Showpony
-	time = parseFloat(S.modules[S.currentModule].currentTime);
+	time = parseFloat(S.modules[module].currentTime);
 	for(let i=0;i<file;i++) time += parseFloat(S.files[i].duration);
 	
 	if(scrubbing!==true) scrub(null);
 
 	// Run custom event for checking time
-	S.window.dispatchEvent(
+	S.dispatchEvent(
 		new CustomEvent(
 			'timeupdate'
 			,{
@@ -970,7 +983,7 @@ S.displaySubtitles = async function(newSubtitles = subtitles){
 	}
 
 	subtitles = newSubtitles;
-	if(S.modules[S.currentModule].displaySubtitles) S.modules[S.currentModule].displaySubtitles();
+	if(S.modules[module].displaySubtitles) S.modules[module].displaySubtitles();
 }
 
 function processSubtitles(text,fromFetch = true){
@@ -1728,6 +1741,15 @@ history.replaceState(null,'',window.location.pathname + '?' + searchParams.toStr
 // Show we're paused
 S.window.classList.add('s-paused');
 
+S.debug = <?php
+	if(DEBUG){
+		echo json_encode($debugMessages);
+	}
+	else{
+		echo json_encode('DEBUG = false. No PHP debug info will be passed.');
+	}
+?>;
+
 // Use the Save Bookmark if the URL Bookmark has nothing
 if(!S.load()){
 	// Use the Default Bookmark if the Save Bookmark has nothing
@@ -1740,31 +1762,8 @@ if(!S.load()){
 
 // We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
 
-// Add the Showpony window to the document
-document.currentScript.insertAdjacentElement('afterend',S.window);
-
-// Put this on the containing element
-S.window.parentNode.dispatchEvent(
-	new CustomEvent(
-		'built'
-		,{
-			detail:{
-				object:S
-				,debug:<?php
-					if(DEBUG){
-						echo json_encode(
-							$debugMessages
-							.'\nProcessing Time: '. (microtime(true) - $time) . ' microseconds'
-						);
-					}
-					else{
-						echo json_encode('DEBUG = false. No PHP debug info will be passed.');
-					}
-				?>
-			}
-		}
-	)
-);
+S.appendChild(S.window);
+S.dispatchEvent(new CustomEvent('built'));
 
 }();<?php
 
