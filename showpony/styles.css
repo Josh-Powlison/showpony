@@ -393,8 +393,13 @@
 }
 
 .s-inactive{
-	pointer-events:none;
 	opacity:.5;
+}
+
+/* Disables all childrens' inputs and animations */
+.s-inactive *{
+	pointer-events:none !important;
+	animation-play-state:paused !important;
 }
 
 .s *::-webkit-scrollbar{
