@@ -29,7 +29,7 @@ new function(){
 		}
 		// Go back to the previous file otherwise
 		else{
-			if(file > 0) S.to({file:file - 1,time:'end'});
+			if(file > 0) to({file:file - 1,time:'end'});
 			else S.time = 0;
 		}
 	}
@@ -77,14 +77,14 @@ new function(){
 	}
 	
 	M.displaySubtitles = function(){
-		if(subtitles===null || !S.subtitlesAvailable[subtitles][M.currentFile]){
+		if(subtitles===null || !subtitlesAvailable[subtitles][M.currentFile]){
 			M.subtitles.innerHTML='';
 			return;
 		}
 		
 		M.subtitles.innerHTML='';
 		
-		var phrases=S.subtitlesAvailable[subtitles][M.currentFile];
+		var phrases=subtitlesAvailable[subtitles][M.currentFile];
 		var keys=Object.keys(phrases);
 		for(var i=0;i<keys.length;i++){
 			if(phrases[keys[i]].content==='') continue;

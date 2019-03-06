@@ -94,11 +94,10 @@ const S = document.currentScript.parentNode;
 const DEBUG = <?php echo DEBUG ? 'true' : 'false'; ?>;
 
 ///////////////////////////////////////
-///////////PUBLIC VARIABLES////////////
+///////////PRIVATE VARIABLES///////////
 ///////////////////////////////////////
 
 const view			= document.createElement('div');
-view.className		= 's s-' + S.readingDirection;
 view.tabIndex		= 0;
 view.innerHTML		= `
 	<div class="s-content"></div>
@@ -124,18 +123,89 @@ view.innerHTML		= `
 	</div>
 `;
 
+var file				= null;
+var time				= null;
+var module				= null;
+var language			= <?php echo json_encode($language); ?>;
+var subtitles			= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
+var quality				= <?php echo json_encode(QUALITY,JSON_NUMERIC_CHECK); ?>;
+var fullscreen			= false;
+var paused				= true;
+var active				= true;
+var notice 				= null;
+
+const content			= view.getElementsByClassName('s-content')[0];
+content.classList.add('s-loading');
+const overlay			= view.getElementsByClassName('s-menu')[0];
+const buffer			= view.getElementsByClassName('s-buffer')[0];
+const infoText			= view.getElementsByClassName('s-info-text')[0];
+const pause				= view.getElementsByClassName('s-pause')[0];
+const scrubber			= view.getElementsByClassName('s-scrubber')[0];
+const progress			= view.getElementsByClassName('s-progress')[0];
+const regress			= view.getElementsByClassName('s-regress')[0];
+const noticeEl			= view.getElementsByClassName('s-notice')[0];
+
+var actionTimeout		= null;		// Used to start running constant mousedown functions, like fast-forward and rewind
+var actionInterval		= null;		// Used to run constant mousedown functions, like fast-forward and rewind
+var clickStart			= false;	// Whether a click was started inside Showpony
+var checkGamepad		= null;
+var framerate			= 60;		// Connected to gamepad use and games
+var scrubbing			= false;	// Our state of scrubbing
+var searchParams		= new URLSearchParams(window.location.search);
+var queryBookmark		= <?php echo json_encode(NAME); ?>+'-bookmark';
+
+var readingDirection	= <?php echo json_encode($_GET['direction'] ?? DEFAULT_DIRECTION); ?>;
+
+var subtitlesAvailable				= {<?php
+
+	//Immediately load subtitles if called for
+	define('FILES_COUNT'		, count($files));
+	define('SUBTITLES_FETCHED'	, false);
+	define('SUBTITLES_PATH'		, 'subtitles/'.$subtitles);
+	
+	if($subtitles !== 'null' && !empty($subtitles)) require __DIR__.'/get-subtitles.php';
+	
+?>};
+
+var currentGamepad		= null;
+var modules				= {
+
+<?php
+
+// Load modules
+$e = array_keys($media);
+$l = count($e);
+for($i = 0; $i < $l; $i++){
+	echo $e[$i],':';
+	require __DIR__.'/modules/'.$e[$i].'/object.js';
+	if($i < $l - 1) echo '
+
+,';
+}
+
+?>
+
+};
+
+///////////////////////////////////////
+///////////PUBLIC VARIABLES////////////
+///////////////////////////////////////
+
 S.files					= <?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
 
 S.buffered				= [];
 
 Object.defineProperty(S, 'time', {
-	get: function() {
+	get: function(input) {
 		return time;
 	},
 	set: function(input){
-		if(isNaN(input) && input!=='end') input = timeToSeconds(input);
+		if(isNaN(input) && input !== 'end'){
+			S.notice = 'S.time must be a number or \'end\'.';
+			return;
+		}
 		
-		S.to({time:input});
+		to({time:input});
 	}
 });
 
@@ -150,7 +220,7 @@ Object.defineProperty(S, 'file', {
 			return;
 		}
 		
-		S.to({file:input});
+		to({file:input});
 	}
 });
 
@@ -219,8 +289,8 @@ Object.defineProperty(S, 'quality', {
 		if(quality === newQuality) return;
 		
 		// Error handling
-		if(isNaN(newQuality) || newQuality < 0 || newQuality > S.maxQuality){
-			S.notice = 'Error: quality must be an integer within the available range, 0 and ' + S.maxQuality;
+		if(isNaN(newQuality) || newQuality < 0 || newQuality > <?php echo $maxQuality; ?>){
+			S.notice = 'Error: quality must be an integer within the available range, 0 and ' + <?php echo $maxQuality; ?>;
 			return;
 		}
 		
@@ -229,7 +299,7 @@ Object.defineProperty(S, 'quality', {
 		view.querySelector('.s-popup-quality [data-value="'+newQuality+'"]').classList.add('s-selected');
 		
 		quality = newQuality;
-		S.to();
+		to();
 	}
 });
 
@@ -387,27 +457,7 @@ else{
 
 S.data					= {};
 S.duration				= S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
-S.gamepad				= null;
-S.maxQuality			= <?php echo $maxQuality; ?>;
-var modules				= {
 
-<?php
-
-// Load modules
-$e = array_keys($media);
-$l = count($e);
-for($i = 0; $i < $l; $i++){
-	echo $e[$i],':';
-	require __DIR__.'/modules/'.$e[$i].'/object.js';
-	if($i < $l - 1) echo '
-
-,';
-}
-
-?>
-
-};
-S.queryBookmark			= <?php echo json_encode(NAME); ?>+'-bookmark';
 S.saveName				= <?php echo json_encode(SAVE_NAME); ?>;
 S.saves					= {
 	currentSave	:<?php echo json_encode(CURRENT_SAVE); ?>,
@@ -416,17 +466,6 @@ S.saves					= {
 	system		:<?php echo json_encode(SAVE_SYSTEM); ?>,
 	timestamp	:Date.now()
 };
-S.readingDirection		= <?php echo json_encode($_GET['direction'] ?? DEFAULT_DIRECTION); ?>;
-S.subtitlesAvailable				= {<?php
-
-	//Immediately load subtitles if called for
-	define('FILES_COUNT'		, count($files));
-	define('SUBTITLES_FETCHED'	, false);
-	define('SUBTITLES_PATH'		, 'subtitles/'.$subtitles);
-	
-	if($subtitles !== 'null' && !empty($subtitles)) require __DIR__.'/get-subtitles.php';
-	
-?>};
 S.upcomingFiles			= <?php echo json_encode($releaseDates); ?>;
 
 // Make language change on changing value
@@ -490,45 +529,23 @@ Object.defineProperty(S, 'notice', {
 });
 
 ///////////////////////////////////////
-///////////PRIVATE VARIABLES///////////
-///////////////////////////////////////
-
-var file				= null;
-var time				= null;
-var module				= null;
-var language			= <?php echo json_encode($language); ?>;
-var subtitles			= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
-var quality				= <?php echo json_encode(QUALITY,JSON_NUMERIC_CHECK); ?>;
-var fullscreen			= false;
-var paused				= true;
-var active				= true;
-var notice 				= null;
-
-const content			= view.getElementsByClassName('s-content')[0];
-content.classList.add('s-loading');
-const overlay			= view.getElementsByClassName('s-menu')[0];
-const buffer			= view.getElementsByClassName('s-buffer')[0];
-const infoText			= view.getElementsByClassName('s-info-text')[0];
-const pause				= view.getElementsByClassName('s-pause')[0];
-const scrubber			= view.getElementsByClassName('s-scrubber')[0];
-const progress			= view.getElementsByClassName('s-progress')[0];
-const regress			= view.getElementsByClassName('s-regress')[0];
-const noticeEl			= view.getElementsByClassName('s-notice')[0];
-
-var actionTimeout		= null;		// Used to start running constant mousedown functions, like fast-forward and rewind
-var actionInterval		= null;		// Used to run constant mousedown functions, like fast-forward and rewind
-var clickStart			= false;	// Whether a click was started inside Showpony
-var checkGamepad		= null;
-var framerate			= 60;		// Connected to gamepad use and games
-var scrubbing			= false;	// Our state of scrubbing
-var searchParams		= new URLSearchParams(window.location.search);
-
-///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
 ///////////////////////////////////////
 
+S.regress = function(){
+	modules[module].regress();
+}
+
+S.progress = function(){
+	modules[module].progress();
+}
+
+///////////////////////////////////////
+///////////PRIVATE FUNCTIONS///////////
+///////////////////////////////////////
+
 // Go to another file
-S.to = async function(obj = {file:file, time:time}){
+async function to(obj = {file:file, time:time}){
 	content.classList.add('s-loading');
 	
 	/// GET TIME AND FILE ///
@@ -577,7 +594,7 @@ S.to = async function(obj = {file:file, time:time}){
 	
 	// Consider file quality
 	var filename = S.files[obj.file].path;
-	if(S.files[obj.file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[obj.file].quality, quality) + '$');
+	if(S.files[obj.file].quality > 0) filename = filename.replace(/q\d+/,'q' + Math.min(S.files[obj.file].quality, quality));
 	
 	// Update the module, and post a notice on failure
 	if(!await modules[module].src(obj.file, obj.time, filename)){
@@ -622,7 +639,7 @@ S.to = async function(obj = {file:file, time:time}){
 }
 
 // Returns true if loaded a savedata, false if none exists by the search terms
-S.load = function(){
+function loadBookmark(){
 	S.saves=JSON.parse(localStorage.getItem(S.saveName));
 	
 	switch(S.saves.system){
@@ -649,7 +666,7 @@ S.load = function(){
 	return false;
 }
 
-S.save = function(){
+function saveBookmark(){
 	// TODO: Don't save the bookmark if relevant data is the same
 	// if(
 		// oldValues!==null
@@ -687,19 +704,7 @@ S.save = function(){
 			+'&'+quality
 		)
 	;
-} 
-
-S.regress = function(){
-	modules[module].regress();
 }
-
-S.progress = function(){
-	modules[module].progress();
-}
-
-///////////////////////////////////////
-///////////PRIVATE FUNCTIONS///////////
-///////////////////////////////////////
 
 function checkCollision(x=0,y=0,element){
 	var bounds=element.getBoundingClientRect();
@@ -827,7 +832,7 @@ function scrub(inputPercent=null){
 	// If no inputPercent was set, get it!
 	if(inputPercent === null){
 		// Left-to-right reading
-		if(S.readingDirection === 'left-to-right'){
+		if(readingDirection === 'left-to-right'){
 			inputPercent = time/S.duration;
 		// Right-to-left reading
 		}else{
@@ -846,7 +851,7 @@ function scrub(inputPercent=null){
 		var displayTime;
 		
 		// Left-to-right reading
-		if(S.readingDirection === 'left-to-right'){
+		if(readingDirection === 'left-to-right'){
 			displayTime = S.duration * inputPercent;
 		// Right-to-left reading
 		}else{
@@ -860,7 +865,7 @@ function scrub(inputPercent=null){
 		else{
 			// Load the file if we sit in the same spot for a moment
 			scrubLoadTime=displayTime;
-			scrubLoad=setTimeout(S.to,400,{time:scrubLoadTime});
+			scrubLoad=setTimeout(to,400,{time:scrubLoadTime});
 		}
 		
 		var displayFile = 0;
@@ -1016,17 +1021,17 @@ function userScrub(event){
 
 S.displaySubtitles = async function(newSubtitles = subtitles){
 	// If the subtitles don't exist, make them exist
-	if(newSubtitles !== null && !S.subtitlesAvailable[newSubtitles]){
+	if(newSubtitles !== null && !subtitlesAvailable[newSubtitles]){
 		// If we have these subtitles available raw, get those
-		if(S.subtitlesAvailable[newSubtitles + '-RAW']){
+		if(subtitlesAvailable[newSubtitles + '-RAW']){
 			console.log('processing raw');
-			S.subtitlesAvailable[newSubtitles] = processSubtitles(S.subtitlesAvailable[newSubtitles + '-RAW'], false);
+			subtitlesAvailable[newSubtitles] = processSubtitles(subtitlesAvailable[newSubtitles + '-RAW'], false);
 		// Otherwise, fetch
 		}else{
 			await fetch('showpony/fetch-subtitles.php?path=<?php echo STORIES_PATH; ?>&lang=' + newSubtitles + '&files=' + S.files.length)
 			.then(response=>{if(response.ok) return response.text();})
 			.then(text=>{
-				S.subtitlesAvailable[newSubtitles] = processSubtitles(text);
+				subtitlesAvailable[newSubtitles] = processSubtitles(text);
 			});
 		}
 	}
@@ -1121,14 +1126,14 @@ function timeToSeconds(input=0){
 }
 
 function gamepadControls(){
-	if(S.gamepad===null) return;
+	if(currentGamepad===null) return;
 	if(!active) return;
 	if(document.hidden) return;
 	
 	// If we're not focused or fullscreen
 	if(document.activeElement!==view && !fullscreen) return;
 	
-	var gamepad=navigator.getGamepads()[S.gamepad.id];
+	var gamepad=navigator.getGamepads()[currentGamepad.id];
 	
 	// XBOX Gamepad
 	if(/xinput/i.test(gamepad.id)){
@@ -1151,35 +1156,35 @@ function gamepadControls(){
 	}
 	
 	// Register inputs
-	if(S.gamepad.menu==2) S.paused = 'toggle';
-	if(S.gamepad.input==2) S.progress();
-	if(S.gamepad.dpadL==2) S.regress();
-	if(S.gamepad.dpadR==2) S.progress();
-	if(S.gamepad.end==2) S.to({time:'end'});
-	if(S.gamepad.home==2) S.to({time:'start'});
-	if(S.gamepad.fullscreen==2) S.fullscreen = 'toggle';
+	if(currentGamepad.menu==2) S.paused = 'toggle';
+	if(currentGamepad.input==2) S.progress();
+	if(currentGamepad.dpadL==2) S.regress();
+	if(currentGamepad.dpadR==2) S.progress();
+	if(currentGamepad.end==2) to({time:'end'});
+	if(currentGamepad.home==2) to({time:'start'});
+	if(currentGamepad.fullscreen==2) S.fullscreen = 'toggle';
 	
 	// TODO: add joystick support back in (once it's working elsewhere)
 	/*
 	// Scrubbing with the analogue stick
-	if(S.gamepad.analogLPress===2){
+	if(currentGamepad.analogLPress===2){
 		overlay.style.opacity=1; // Show the overlay
 		pos=0;
 	}
 	
-	if(S.gamepad.analogL!==0){
+	if(currentGamepad.analogL!==0){
 		
-		scrubbing=S.gamepad.analogL;
-		userScrub(S.gamepad.analogL,true);
+		scrubbing=currentGamepad.analogL;
+		userScrub(currentGamepad.analogL,true);
 	}
 	
-	if(S.gamepad.analogLPress===-2){
+	if(currentGamepad.analogLPress===-2){
 		overlay.style.opacity=''; // Hide the overlay
 		// If we're not scrubbing, set scrubbing to false and return
 		if(scrubbing!==true){
 			scrubbing=false;
 		}else{
-			// userScrub(S.gamepad.analogL);
+			// userScrub(currentGamepad.analogL);
 			pos=0;
 		}
 	}*/
@@ -1187,30 +1192,30 @@ function gamepadControls(){
 
 function gamepadAxis(gamepad,number,type){
 	// Get amount between -1 and 1 based on distance between values
-	if(Math.abs(gamepad.axes[number])>=S.gamepad.axisMin){
-		if(gamepad.axes[number]>0) S.gamepad[type]=(gamepad.axes[number]-S.gamepad.axisMin)/(S.gamepad.axisMax-S.gamepad.axisMin);
-		else S.gamepad[type]=((gamepad.axes[number]-(-S.gamepad.axisMax))/(-S.gamepad.axisMin-(-S.gamepad.axisMax)))-1;
+	if(Math.abs(gamepad.axes[number])>=currentGamepad.axisMin){
+		if(gamepad.axes[number]>0) currentGamepad[type]=(gamepad.axes[number]-currentGamepad.axisMin)/(currentGamepad.axisMax-currentGamepad.axisMin);
+		else currentGamepad[type]=((gamepad.axes[number]-(-currentGamepad.axisMax))/(-currentGamepad.axisMin-(-currentGamepad.axisMax)))-1;
 		
 		// Set pressing values right
-		if(S.gamepad[type+'Press']<0) S.gamepad[type+'Press']=2;
-		else S.gamepad[type+'Press']=1;
+		if(currentGamepad[type+'Press']<0) currentGamepad[type+'Press']=2;
+		else currentGamepad[type+'Press']=1;
 	}else{
-		S.gamepad[type]=0;
+		currentGamepad[type]=0;
 		
 		// Set pressing values right
-		if(S.gamepad[type+'Press']>0) S.gamepad[type+'Press']=-2;
-		else S.gamepad[type+'Press']=-1;
+		if(currentGamepad[type+'Press']>0) currentGamepad[type+'Press']=-2;
+		else currentGamepad[type+'Press']=-1;
 	}
 }
 
 function gamepadButton(gamepad,number,type){
 	if(gamepad.buttons[number].pressed){
 		// Set pressing values right
-		if(S.gamepad[type]<0) S.gamepad[type]=2;
-		else S.gamepad[type]=1;
+		if(currentGamepad[type]<0) currentGamepad[type]=2;
+		else currentGamepad[type]=1;
 	}else{
-		if(S.gamepad[type]>0) S.gamepad[type]=-2;
-		else S.gamepad[type]=-1;
+		if(currentGamepad[type]>0) currentGamepad[type]=-2;
+		else currentGamepad[type]=-1;
 	}
 }
 
@@ -1384,7 +1389,7 @@ function addBookmark(obj){
 		// Saving the page name in the URL/querystring
 		case 'url':
 			nameEl.addEventListener('click',function(){
-				searchParams.set(S.queryBookmark,time|0);
+				searchParams.set(queryBookmark,time|0);
 				
 				var url = location.host + location.pathname + '?' + searchParams.toString() + location.hash;
 				var temporaryInput = document.createElement('textarea');
@@ -1414,17 +1419,17 @@ function addBookmark(obj){
 ///////////////////////////////////////
 
 // Save user bookmarks when leaving the page
-window.addEventListener('blur',S.save);
-window.addEventListener('beforeunload',S.save);
+window.addEventListener('blur',saveBookmark);
+window.addEventListener('beforeunload',saveBookmark);
 
 // Save the bookmark if the website is hidden
 document.addEventListener('visibilitychange',function(){
-	if(document.hidden) S.save();
+	if(document.hidden) saveBookmark();
 });
 
 // Showpony deselection (to help with Firefox and Edge's lack of support for 'beforeunload')
-view.addEventListener('focusout',S.save);
-view.addEventListener('blur',S.save);
+view.addEventListener('focusout',saveBookmark);
+view.addEventListener('blur',saveBookmark);
 
 // Shortcut keys
 view.addEventListener(
@@ -1440,10 +1445,10 @@ view.addEventListener(
 		switch(event.key){
 			case ' ':				S.progress();			break;
 			case 'Enter':			S.progress();			break;
-			case 'ArrowLeft':		(S.readingDirection === 'right-to-left' ? S.progress : S.regress)();	break;
-			case 'ArrowRight':		(S.readingDirection === 'right-to-left' ? S.regress : S.progress)();	break;
-			// case 'Home':			S.to({time:'start'});	break;
-			// case 'End':				S.to({time:'end'});		break;
+			case 'ArrowLeft':		(readingDirection === 'right-to-left' ? S.progress : S.regress)();	break;
+			case 'ArrowRight':		(readingDirection === 'right-to-left' ? S.regress : S.progress)();	break;
+			// case 'Home':			to({time:'start'});	break;
+			// case 'End':				to({time:'end'});		break;
 			case 'MediaPrevious':	S.file--;		break;
 			case 'MediaNext':		S.file++;		break;
 			case 'MediaPlayPause':	S.paused = 'toggle';				break;
@@ -1681,7 +1686,7 @@ window.addEventListener('touchmove',userScrub);
 // Gamepad support
 
 window.addEventListener('gamepadconnected',function(e){
-	S.gamepad={
+	currentGamepad={
 		id:e.gamepad.index
 		,menu:-1
 		,input:-1
@@ -1701,9 +1706,9 @@ window.addEventListener('gamepadconnected',function(e){
 
 window.addEventListener('gamepaddisconnected',function(e){
 	// Ignore if it's not the same gamepad
-	if(e.gamepad.index!==S.gamepad.id) return;
+	if(e.gamepad.index!==currentGamepad.id) return;
 	
-	S.gamepad=null;
+	currentGamepad=null;
 	clearInterval(checkGamepad);
 	checkGamepad=null;
 });
@@ -1734,11 +1739,12 @@ addBookmark({name:'Get Link',system:'url',type:'get'});
 // POWER: Hard Link > Bookmark > Soft Link > Default
 
 // Start with the URL Bookmark
-var start = searchParams.get(S.queryBookmark);
-searchParams.delete(S.queryBookmark);
+var start = searchParams.get(queryBookmark);
+searchParams.delete(queryBookmark);
 history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
 
 // Show we're paused
+view.className		= 's s-' + readingDirection;
 view.classList.add('s-paused');
 
 S.debug = <?php
@@ -1751,7 +1757,7 @@ S.debug = <?php
 ?>;
 
 // Use the Save Bookmark if the URL Bookmark has nothing
-if(!S.load()){
+if(!loadBookmark()){
 	// Use the Default Bookmark if the Save Bookmark has nothing
 	if(start === null || isNaN(start)) start = <?php echo $_GET['start'] ?? DEFAULT_START; ?>;
 

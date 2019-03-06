@@ -27,7 +27,7 @@ new function(){
 	}
 	
 	M.regress=function(){
-		if(M.currentTime<5) S.to({file:file - 1,time:'end'});
+		if(M.currentTime<5) to({file:file - 1,time:'end'});
 		else S.time -= 5;
 	}
 	
@@ -56,12 +56,12 @@ new function(){
 	}
 	
 	M.displaySubtitles=function(){
-		if(subtitles===null || !S.subtitlesAvailable[subtitles][M.currentFile]){
+		if(subtitles===null || !subtitlesAvailable[subtitles][M.currentFile]){
 			M.subtitles.style.display='none';
 			return;
 		}
 		
-		var phrases=S.subtitlesAvailable[subtitles][M.currentFile];
+		var phrases=subtitlesAvailable[subtitles][M.currentFile];
 		var keys=Object.keys(phrases);
 		for(var i=0;i<keys.length;i++){
 			

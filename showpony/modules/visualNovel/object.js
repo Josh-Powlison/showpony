@@ -112,7 +112,7 @@ new function(){
 			}
 		}
 		
-		if(M.currentFile>0) S.to({file:file - 1,time:'end'});
+		if(M.currentFile>0) to({file:file - 1,time:'end'});
 		else S.time = 0;
 	}
 	
@@ -278,7 +278,7 @@ new function(){
 	M.displaySubtitles=function(){
 		// When an audio file updates its time, display subtitles for it
 		if(subtitles === null
-			|| !S.subtitlesAvailable[subtitles][M.currentFile]
+			|| !subtitlesAvailable[subtitles][M.currentFile]
 		){
 			M.subtitles.style.display='none';
 			return;
@@ -286,7 +286,7 @@ new function(){
 		
 		var text='';
 		
-		var phrases=S.subtitlesAvailable[subtitles][M.currentFile];
+		var phrases=subtitlesAvailable[subtitles][M.currentFile];
 		var keys=Object.keys(phrases);
 		for(var i=0;i<keys.length;i++){
 			

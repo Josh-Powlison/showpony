@@ -17,7 +17,7 @@ new function(){
 		}
 		// Go back to the previous file otherwise
 		else{
-			if(file > 0) S.to({file:file - 1,time:'end'});
+			if(file > 0) to({file:file - 1,time:'end'});
 			else S.time = 0;
 		}
 	}
