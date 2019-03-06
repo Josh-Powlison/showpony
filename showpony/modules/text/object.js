@@ -12,7 +12,7 @@ new function(){
 	M.regress=function(){
 		// If we're not at the top of the file, scroll up
 		if(M.window.scrollTop > 0){
-			M.window.scrollTop -= S.window.clientHeight * .75;
+			M.window.scrollTop -= view.clientHeight * .75;
 			// M.window.scrollTop -= 10;
 		}
 		// Go back to the previous file otherwise
@@ -62,7 +62,7 @@ new function(){
 				getTotalBuffered();
 			}
 			
-			if(S.window.getBoundingClientRect().top<0) S.window.scrollIntoView();
+			if(view.getBoundingClientRect().top<0) view.scrollIntoView();
 			
 			M.currentTime = time;
 			M.currentFile = file;

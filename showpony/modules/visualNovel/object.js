@@ -1105,7 +1105,7 @@ new function(){
 											event.stopPropagation();
 											
 											// Focus again on the window so keyboard shortcuts work
-											S.window.focus();
+											view.focus();
 										});
 									}else{
 										// Set data to the defaults of these, in case the user just clicks through

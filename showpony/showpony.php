@@ -97,6 +97,33 @@ const DEBUG = <?php echo DEBUG ? 'true' : 'false'; ?>;
 ///////////PUBLIC VARIABLES////////////
 ///////////////////////////////////////
 
+const view			= document.createElement('div');
+view.className		= 's s-' + S.readingDirection;
+view.tabIndex		= 0;
+view.innerHTML		= `
+	<div class="s-content"></div>
+	<?php if(file_exists('cover.jpg')) echo '<img class="s-cover" src="',STORIES_PATH,'cover.jpg">'; ?>
+	<div class="s-menu">
+		<button class="s-progress"></button>
+		<button class="s-regress"></button>
+		<button class="s-pause"></button>
+		<div class="s-scrubber" style="left:0%;"></div>
+		<canvas class="s-buffer" width="1000" height="1"></canvas>
+		<div class="s-info-text"></div>
+		<div class="s-upcoming-file"></div>
+		<div class="s-buttons s-hide-on-hold">
+			<button class="s-button s-button-bookmark" data-type="bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
+		</div>
+		<div class="s-popups">
+			<div class="s-popup s-popup-bookmark"></div>
+		</div>
+		<div class="s-popup s-notice">
+			<div class="s-notice-text s-block-scrubbing"></div>
+			<button class="s-notice-close">Close Notice</button>
+		</div>
+	</div>
+`;
+
 S.files					= <?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
 
 S.buffered				= [];
@@ -139,14 +166,14 @@ Object.defineProperty(S, 'active', {
 		}
 		
 		if(input){
-			if(!paused && module && S.modules[module].pause) S.modules[module].play();
-			S.window.classList.remove('s-inactive');
+			if(!paused && module && modules[module].pause) modules[module].play();
+			view.classList.remove('s-inactive');
 			
 			S.dispatchEvent(new CustomEvent('active'));
 		}
 		else{
-			if(module && S.modules[module].pause) S.modules[module].pause();
-			S.window.classList.add('s-inactive');
+			if(module && modules[module].pause) modules[module].pause();
+			view.classList.add('s-inactive');
 			
 			S.dispatchEvent(new CustomEvent('inactive'));
 		}
@@ -157,11 +184,212 @@ Object.defineProperty(S, 'active', {
 	}
 });
 
+// Make language change on changing value
+Object.defineProperty(S, 'subtitles', {
+	get: function() {
+		return subtitles;
+	},
+	set: function(newSubtitles){
+		if(newSubtitles === subtitles) return;
+		
+		// Error handling
+		if(newSubtitles !== null && !view.querySelector('.s-popup-subtitles [data-value="'+newSubtitles+'"]')){
+			S.notice = 'Error: subtitles for "' + newSubtitles + '" not found';
+			return;
+		}
+		
+		// Remove selected class from previous selected item (if one was selected)
+		var previous = view.querySelector('.s-popup-subtitles .s-selected');
+		if(previous) previous.classList.remove('s-selected');
+		// console.log('hey','.s-popup-subtitles [data-value="'+newSubtitles+'"]');
+		if(newSubtitles) view.querySelector('.s-popup-subtitles [data-value="'+newSubtitles+'"]').classList.add('s-selected');
+		
+		// this.classList.add('s-selected');
+		subtitles = newSubtitles;
+		S.displaySubtitles(subtitles);
+	}
+});
+
+// Make language change on changing value
+Object.defineProperty(S, 'quality', {
+	get: function() {
+		return quality;
+	},
+	set: function(newQuality){
+		if(quality === newQuality) return;
+		
+		// Error handling
+		if(isNaN(newQuality) || newQuality < 0 || newQuality > S.maxQuality){
+			S.notice = 'Error: quality must be an integer within the available range, 0 and ' + S.maxQuality;
+			return;
+		}
+		
+		// Remove selected class from previous selected item (if one was selected)
+		view.querySelector('.s-popup-quality .s-selected').classList.remove('s-selected');
+		view.querySelector('.s-popup-quality [data-value="'+newQuality+'"]').classList.add('s-selected');
+		
+		quality = newQuality;
+		S.to();
+	}
+});
+
+// Make language change on changing value
+Object.defineProperty(S, 'language', {
+	get: function(){
+		return language;
+	},
+	set: function(newLanguage=<?php echo json_encode($language); ?>){
+		if(language === newLanguage) return;
+		
+		// Error handling
+		if(!view.querySelector('.s-popup-language [data-value="'+newLanguage+'"]')){
+			S.notice = 'Error: the language "'+newLanguage+'" is not supported. Did you mean to input the short name version?';
+			return;
+		}
+		
+		// Remove selected class from previous selected item
+		view.querySelector('.s-popup-language .s-selected').classList.remove('s-selected');
+		view.querySelector('.s-popup-language [data-value="'+newLanguage+'"]').classList.add('s-selected');
+		
+		fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
+		.then(response=>{return response.json();})
+		.then(json=>{
+			S.files=json;
+			language = newLanguage;
+			
+			S.time = time;
+		})
+		.catch(error=>{
+			S.notice = ('Failed to load language files. '+error);
+		});
+	}
+});
+
+// Toggle fullscreen, basing the functions on the browser's abilities
+// Standards fullscreen
+if(view.requestFullscreen){
+	Object.defineProperty(S, 'fullscreen', {
+		get: function() {
+			return fullscreen;
+		},
+		set: function(input){
+			if(input === 'toggle') input = !fullscreen;
+			
+			// Error handling
+			if(input !==true && input !== false){
+				S.notice = 'Error: fullscreen can only be set to true, false, or "toggle"';
+				return;
+			}
+			
+			if(input){
+				if(document.fullscreenElement) return;
+				
+				fullscreen=true;
+				view.requestFullscreen();
+				S.dispatchEvent(new CustomEvent('fullscreenEnter'));
+			}
+			else{
+				if(!document.fullscreenElement) return;
+				
+				document.exitFullscreen();
+				S.dispatchEvent(new CustomEvent('fullscreenExit'));
+			}
+		}
+	});
+	
+	document.addEventListener('fullscreenchange',function(){
+		fullscreen = (document.fullscreenElement === view);
+	});
+}
+// Webkit fullscreen
+else if(view.webkitRequestFullscreen){
+	Object.defineProperty(S, 'fullscreen', {
+		get: function() {
+			return fullscreen;
+		},
+		set: function(input){
+			if(input === 'toggle') input = !fullscreen;
+			
+			// Error handling
+			if(input !==true && input !== false){
+				S.notice = 'Error: fullscreen can only be set to true, false, or "toggle"';
+				return;
+			}
+			
+			if(input){
+				if(document.webkitFullscreenElement) return;
+				
+				view.webkitRequestFullscreen();
+				S.dispatchEvent(new CustomEvent('fullscreenEnter'));
+			}
+			else{
+				if(!document.webkitFullscreenElement) return;
+				
+				document.webkitExitFullscreen();
+				S.dispatchEvent(new CustomEvent('fullscreenExit'));
+			}
+		}
+	});
+	
+	document.addEventListener('webkitfullscreenchange',function(){
+		fullscreen = (document.webkitFullscreenElement === view);
+	});
+}
+// No fullscreen support fullscreen (like for iOS Safari)
+else{
+	Object.defineProperty(S, 'fullscreen', {
+		get: function() {
+			return fullscreen;
+		},
+		set: function(input){
+			if(input === 'toggle') input = !fullscreen;
+			
+			// Error handling
+			if(input !==true && input !== false){
+				S.notice = 'Error: fullscreen can only be set to true, false, or "toggle"';
+				return;
+			}
+			
+			if(input){
+				if(view.classList.contains('s-fullscreen-alt')) return;
+				
+				view.classList.add('s-fullscreen-alt');
+				document.getElementsByTagName('html')[0].classList.add('s-fullscreen-control');
+				
+				view.dataset.prevz=view.style.zIndex || 'initial';
+				
+				// From: https://stackoverflow.com/questions/1118198/how-can-you-figure-out-the-highest-z-index-in-your-document
+				view.style.zIndex=Array.from(document.querySelectorAll('body *'))
+				   .map(a => parseFloat(window.getComputedStyle(a).zIndex))
+				   .filter(a => !isNaN(a))
+				   .sort((a,b)=>a-b)
+				   .pop()+1;
+				   
+				fullscreen = true;
+				S.dispatchEvent(new CustomEvent('fullscreenEnter'));
+			}
+			else{
+				if(!view.classList.contains('s-fullscreen-alt')) return;
+				
+				view.classList.remove('s-fullscreen-alt');
+				document.getElementsByTagName('html')[0].classList.remove('s-fullscreen-control');
+				
+				// Get the original z-index value
+				view.style.zIndex=view.dataset.prevz;
+				view.removeAttribute('data-prevz');
+				
+				fullscreen = false;
+				S.dispatchEvent(new CustomEvent('fullscreenExit'));
+			}
+		}
+	});
+}
+
 S.data					= {};
 S.duration				= S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 S.gamepad				= null;
 S.maxQuality			= <?php echo $maxQuality; ?>;
-S.modules				= {
+var modules				= {
 
 <?php
 
@@ -201,70 +429,44 @@ S.subtitlesAvailable				= {<?php
 ?>};
 S.upcomingFiles			= <?php echo json_encode($releaseDates); ?>;
 
-S.window				= document.createElement('div');
-S.window.className		= 's s-' + S.readingDirection;
-S.window.tabIndex		= 0;
-S.window.innerHTML		= `
-	<div class="s-content"></div>
-	<?php if(file_exists('cover.jpg')) echo '<img class="s-cover" src="',STORIES_PATH,'cover.jpg">'; ?>
-	<div class="s-menu">
-		<button class="s-progress"></button>
-		<button class="s-regress"></button>
-		<button class="s-pause"></button>
-		<div class="s-scrubber" style="left:0%;"></div>
-		<canvas class="s-buffer" width="1000" height="1"></canvas>
-		<div class="s-info-text"></div>
-		<div class="s-upcoming-file"></div>
-		<div class="s-buttons s-hide-on-hold">
-			<button class="s-button s-button-bookmark" data-type="bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
-		</div>
-		<div class="s-popups">
-			<div class="s-popup s-popup-bookmark"></div>
-		</div>
-		<div class="s-popup s-notice">
-			<div class="s-notice-text s-block-scrubbing"></div>
-			<button class="s-notice-close">Close Notice</button>
-		</div>
-	</div>
-`;
-
-///////////////////////////////////////
-///////////PRIVATE VARIABLES///////////
-///////////////////////////////////////
-
-var file				= null;
-var time				= null;
-var module				= null;
-var language			= <?php echo json_encode($language); ?>;
-var subtitles			= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
-var quality				= <?php echo json_encode(QUALITY,JSON_NUMERIC_CHECK); ?>;
-var fullscreen			= false;
-var paused				= true;
-var active				= true;
-
-const content			= S.window.getElementsByClassName('s-content')[0];
-content.classList.add('s-loading');
-const overlay			= S.window.getElementsByClassName('s-menu')[0];
-const buffer			= S.window.getElementsByClassName('s-buffer')[0];
-const infoText			= S.window.getElementsByClassName('s-info-text')[0];
-const pause				= S.window.getElementsByClassName('s-pause')[0];
-const scrubber			= S.window.getElementsByClassName('s-scrubber')[0];
-const progress			= S.window.getElementsByClassName('s-progress')[0];
-const regress			= S.window.getElementsByClassName('s-regress')[0];
-const noticeEl			= S.window.getElementsByClassName('s-notice')[0];
-
-var actionTimeout		= null;		// Used to start running constant mousedown functions, like fast-forward and rewind
-var actionInterval		= null;		// Used to run constant mousedown functions, like fast-forward and rewind
-var clickStart			= false;	// Whether a click was started inside Showpony
-var checkGamepad		= null;
-var framerate			= 60;		// Connected to gamepad use and games
-var scrubbing			= false;	// Our state of scrubbing
-var searchParams		= new URLSearchParams(window.location.search);
-
-///////////////////////////////////////
-///////////PUBLIC FUNCTIONS////////////
-///////////////////////////////////////
-var notice = null;
+// Make language change on changing value
+Object.defineProperty(S, 'paused', {
+	get: function() {
+		return paused;
+	},
+	set: function(input){
+		if(input === 'toggle') input = !paused;
+		
+		// Error handling
+		if(input !==true && input !== false){
+			S.notice = 'Error: paused can only be set to true, false, or "toggle"';
+			return;
+		}
+		
+		// Play
+		if(!input){
+			if(paused===false) return;
+			
+			// Close popups
+			while(view.querySelector('.s-visible')) view.querySelector('.s-visible').classList.remove('s-visible');
+			
+			view.classList.remove('s-paused');
+			paused=false;
+			if(modules[module].play) modules[module].play();
+			S.dispatchEvent(new CustomEvent('play'));
+		}
+		// Pause
+		else{
+			if(paused===true) return;
+			
+			view.classList.add('s-paused');
+			paused=true;
+			
+			if(module && modules[module].pause) modules[module].pause();
+			S.dispatchEvent(new CustomEvent('pause'));
+		}
+	}
+});
 
 // Make language change on changing value
 Object.defineProperty(S, 'notice', {
@@ -286,6 +488,44 @@ Object.defineProperty(S, 'notice', {
 		noticeEl.focus();
 	}
 });
+
+///////////////////////////////////////
+///////////PRIVATE VARIABLES///////////
+///////////////////////////////////////
+
+var file				= null;
+var time				= null;
+var module				= null;
+var language			= <?php echo json_encode($language); ?>;
+var subtitles			= <?php echo ($subtitles==='null' ? 'null' : json_encode($subtitles)); ?>;
+var quality				= <?php echo json_encode(QUALITY,JSON_NUMERIC_CHECK); ?>;
+var fullscreen			= false;
+var paused				= true;
+var active				= true;
+var notice 				= null;
+
+const content			= view.getElementsByClassName('s-content')[0];
+content.classList.add('s-loading');
+const overlay			= view.getElementsByClassName('s-menu')[0];
+const buffer			= view.getElementsByClassName('s-buffer')[0];
+const infoText			= view.getElementsByClassName('s-info-text')[0];
+const pause				= view.getElementsByClassName('s-pause')[0];
+const scrubber			= view.getElementsByClassName('s-scrubber')[0];
+const progress			= view.getElementsByClassName('s-progress')[0];
+const regress			= view.getElementsByClassName('s-regress')[0];
+const noticeEl			= view.getElementsByClassName('s-notice')[0];
+
+var actionTimeout		= null;		// Used to start running constant mousedown functions, like fast-forward and rewind
+var actionInterval		= null;		// Used to run constant mousedown functions, like fast-forward and rewind
+var clickStart			= false;	// Whether a click was started inside Showpony
+var checkGamepad		= null;
+var framerate			= 60;		// Connected to gamepad use and games
+var scrubbing			= false;	// Our state of scrubbing
+var searchParams		= new URLSearchParams(window.location.search);
+
+///////////////////////////////////////
+///////////PUBLIC FUNCTIONS////////////
+///////////////////////////////////////
 
 // Go to another file
 S.to = async function(obj = {file:file, time:time}){
@@ -327,7 +567,7 @@ S.to = async function(obj = {file:file, time:time}){
 	// If switching types, do some cleanup
 	if(module!==S.files[obj.file].module){
 		while(content.firstChild) content.removeChild(content.firstChild);
-		content.appendChild(S.modules[S.files[obj.file].module].window);
+		content.appendChild(modules[S.files[obj.file].module].window);
 	}
 	
 	module=S.files[obj.file].module;
@@ -340,7 +580,7 @@ S.to = async function(obj = {file:file, time:time}){
 	if(S.files[obj.file].quality > 0) filename = filename.replace(/\d+\$/,Math.min(S.files[obj.file].quality, quality) + '$');
 	
 	// Update the module, and post a notice on failure
-	if(!await S.modules[module].src(obj.file, obj.time, filename)){
+	if(!await modules[module].src(obj.file, obj.time, filename)){
 		S.notice = 'Failed to load file '+obj.file;
 		return false;
 	}
@@ -380,45 +620,6 @@ S.to = async function(obj = {file:file, time:time}){
 		}
 	}
 }
-
-// Make language change on changing value
-Object.defineProperty(S, 'paused', {
-	get: function() {
-		return paused;
-	},
-	set: function(input){
-		if(input === 'toggle') input = !paused;
-		
-		// Error handling
-		if(input !==true && input !== false){
-			S.notice = 'Error: paused can only be set to true, false, or "toggle"';
-			return;
-		}
-		
-		// Play
-		if(!input){
-			if(paused===false) return;
-			
-			// Close popups
-			while(S.window.querySelector('.s-visible')) S.window.querySelector('.s-visible').classList.remove('s-visible');
-			
-			S.window.classList.remove('s-paused');
-			paused=false;
-			if(S.modules[module].play) S.modules[module].play();
-			S.dispatchEvent(new CustomEvent('play'));
-		}
-		// Pause
-		else{
-			if(paused===true) return;
-			
-			S.window.classList.add('s-paused');
-			paused=true;
-			
-			if(module && S.modules[module].pause) S.modules[module].pause();
-			S.dispatchEvent(new CustomEvent('pause'));
-		}
-	}
-});
 
 // Returns true if loaded a savedata, false if none exists by the search terms
 S.load = function(){
@@ -488,164 +689,12 @@ S.save = function(){
 	;
 } 
 
-// Make language change on changing value
-Object.defineProperty(S, 'language', {
-	get: function(){
-		return language;
-	},
-	set: function(newLanguage=<?php echo json_encode($language); ?>){
-		if(language === newLanguage) return;
-		
-		// Error handling
-		if(!S.window.querySelector('.s-popup-language [data-value="'+newLanguage+'"]')){
-			S.notice = 'Error: the language "'+newLanguage+'" is not supported. Did you mean to input the short name version?';
-			return;
-		}
-		
-		// Remove selected class from previous selected item
-		S.window.querySelector('.s-popup-language .s-selected').classList.remove('s-selected');
-		S.window.querySelector('.s-popup-language [data-value="'+newLanguage+'"]').classList.add('s-selected');
-		
-		fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
-		.then(response=>{return response.json();})
-		.then(json=>{
-			S.files=json;
-			language = newLanguage;
-			
-			S.time = time;
-		})
-		.catch(error=>{
-			S.notice = ('Failed to load language files. '+error);
-		});
-	}
-});
-
-// Toggle fullscreen, basing the functions on the browser's abilities
-// Standards fullscreen
-if(S.window.requestFullscreen){
-	Object.defineProperty(S, 'fullscreen', {
-		get: function() {
-			return fullscreen;
-		},
-		set: function(input){
-			if(input === 'toggle') input = !fullscreen;
-			
-			// Error handling
-			if(input !==true && input !== false){
-				S.notice = 'Error: fullscreen can only be set to true, false, or "toggle"';
-				return;
-			}
-			
-			if(input){
-				if(document.fullscreenElement) return;
-				
-				fullscreen=true;
-				S.window.requestFullscreen();
-				S.dispatchEvent(new CustomEvent('fullscreenEnter'));
-			}
-			else{
-				if(!document.fullscreenElement) return;
-				
-				document.exitFullscreen();
-				S.dispatchEvent(new CustomEvent('fullscreenExit'));
-			}
-		}
-	});
-	
-	document.addEventListener('fullscreenchange',function(){
-		fullscreen = (document.fullscreenElement === S.window);
-	});
-}
-// Webkit fullscreen
-else if(S.window.webkitRequestFullscreen){
-	Object.defineProperty(S, 'fullscreen', {
-		get: function() {
-			return fullscreen;
-		},
-		set: function(input){
-			if(input === 'toggle') input = !fullscreen;
-			
-			// Error handling
-			if(input !==true && input !== false){
-				S.notice = 'Error: fullscreen can only be set to true, false, or "toggle"';
-				return;
-			}
-			
-			if(input){
-				if(document.webkitFullscreenElement) return;
-				
-				S.window.webkitRequestFullscreen();
-				S.dispatchEvent(new CustomEvent('fullscreenEnter'));
-			}
-			else{
-				if(!document.webkitFullscreenElement) return;
-				
-				document.webkitExitFullscreen();
-				S.dispatchEvent(new CustomEvent('fullscreenExit'));
-			}
-		}
-	});
-	
-	document.addEventListener('webkitfullscreenchange',function(){
-		fullscreen = (document.webkitFullscreenElement === S.window);
-	});
-}
-// No fullscreen support fullscreen (like for iOS Safari)
-else{
-	Object.defineProperty(S, 'fullscreen', {
-		get: function() {
-			return fullscreen;
-		},
-		set: function(input){
-			if(input === 'toggle') input = !fullscreen;
-			
-			// Error handling
-			if(input !==true && input !== false){
-				S.notice = 'Error: fullscreen can only be set to true, false, or "toggle"';
-				return;
-			}
-			
-			if(input){
-				if(S.window.classList.contains('s-fullscreen-alt')) return;
-				
-				S.window.classList.add('s-fullscreen-alt');
-				document.getElementsByTagName('html')[0].classList.add('s-fullscreen-control');
-				
-				S.window.dataset.prevz=S.window.style.zIndex || 'initial';
-				
-				// From: https://stackoverflow.com/questions/1118198/how-can-you-figure-out-the-highest-z-index-in-your-document
-				S.window.style.zIndex=Array.from(document.querySelectorAll('body *'))
-				   .map(a => parseFloat(window.getComputedStyle(a).zIndex))
-				   .filter(a => !isNaN(a))
-				   .sort((a,b)=>a-b)
-				   .pop()+1;
-				   
-				fullscreen = true;
-				S.dispatchEvent(new CustomEvent('fullscreenEnter'));
-			}
-			else{
-				if(!S.window.classList.contains('s-fullscreen-alt')) return;
-				
-				S.window.classList.remove('s-fullscreen-alt');
-				document.getElementsByTagName('html')[0].classList.remove('s-fullscreen-control');
-				
-				// Get the original z-index value
-				S.window.style.zIndex=S.window.dataset.prevz;
-				S.window.removeAttribute('data-prevz');
-				
-				fullscreen = false;
-				S.dispatchEvent(new CustomEvent('fullscreenExit'));
-			}
-		}
-	});
-}
-
 S.regress = function(){
-	S.modules[module].regress();
+	modules[module].regress();
 }
 
 S.progress = function(){
-	S.modules[module].progress();
+	modules[module].progress();
 }
 
 ///////////////////////////////////////
@@ -666,7 +715,7 @@ function checkCollision(x=0,y=0,element){
 
 async function timeUpdate(){
 	// Get the current time in the midst of the entire Showpony
-	time = parseFloat(S.modules[module].currentTime);
+	time = parseFloat(modules[module].currentTime);
 	for(let i=0;i<file;i++) time += parseFloat(S.files[i].duration);
 	
 	if(scrubbing!==true) scrub(null);
@@ -859,7 +908,7 @@ function scrub(inputPercent=null){
 	
 	// Add info about upcoming parts if not added already
 	if(displayFile===S.files.length-1 && S.upcomingFiles.length
-		&& !S.window.querySelector('.s-upcoming-file').innerHTML){
+		&& !view.querySelector('.s-upcoming-file').innerHTML){
 		var upcoming='';
 		for(var i=0;i<S.upcomingFiles.length;i++){
 			upcoming+='Next Update: '+new Intl.DateTimeFormat(
@@ -879,7 +928,7 @@ function scrub(inputPercent=null){
 			if(i<S.upcomingFiles.length-1) upcoming+='<br>';
 		}
 		
-		S.window.querySelector('.s-upcoming-file').innerHTML='<p>'+upcoming+'</p>';
+		view.querySelector('.s-upcoming-file').innerHTML='<p>'+upcoming+'</p>';
 	}
 	
 	if(info !== infoText.innerHTML) infoText.innerHTML = info;
@@ -903,7 +952,7 @@ function userScrub(event){
 	
 	event.preventDefault();
 	
-	var percent = (pointer.clientX-S.window.getBoundingClientRect().left)/(S.window.getBoundingClientRect().width);
+	var percent = (pointer.clientX-view.getBoundingClientRect().left)/(view.getBoundingClientRect().width);
 	
 	// We give ourselves a little snap near the edges
 	const scrubSnap=.0025;
@@ -924,7 +973,7 @@ function userScrub(event){
 			// Remove active button, if one exists
 			while(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
 			
-			// S.window.classList.add('s-hold');
+			// view.classList.add('s-hold');
 			
 			scrubbing=true;
 			
@@ -983,7 +1032,7 @@ S.displaySubtitles = async function(newSubtitles = subtitles){
 	}
 
 	subtitles = newSubtitles;
-	if(S.modules[module].displaySubtitles) S.modules[module].displaySubtitles();
+	if(modules[module].displaySubtitles) modules[module].displaySubtitles();
 }
 
 function processSubtitles(text,fromFetch = true){
@@ -1077,7 +1126,7 @@ function gamepadControls(){
 	if(document.hidden) return;
 	
 	// If we're not focused or fullscreen
-	if(document.activeElement!==S.window && !fullscreen) return;
+	if(document.activeElement!==view && !fullscreen) return;
 	
 	var gamepad=navigator.getGamepads()[S.gamepad.id];
 	
@@ -1168,17 +1217,17 @@ function gamepadButton(gamepad,number,type){
 ////////////
 
 // Toggle popups on clicking buttons
-S.window.getElementsByClassName('s-button-bookmark')[0].addEventListener('click',popupToggle);
+view.getElementsByClassName('s-button-bookmark')[0].addEventListener('click',popupToggle);
 
 function popupToggle(){
-	var closePopups = S.window.querySelectorAll('.s-visible:not(.s-popup-'+this.dataset.type+')');
+	var closePopups = view.querySelectorAll('.s-visible:not(.s-popup-'+this.dataset.type+')');
 	for(var i = 0; i < closePopups.length; i++) closePopups[i].classList.remove('s-visible');
 	
-	S.window.querySelector('.s-popup-'+this.dataset.type).classList.toggle('s-visible');
+	view.querySelector('.s-popup-'+this.dataset.type).classList.toggle('s-visible');
 }
 
-S.window.querySelector('.s-notice-close').addEventListener('click',function(){
-	S.window.querySelector('.s-notice').classList.remove('s-visible');
+view.querySelector('.s-notice-close').addEventListener('click',function(){
+	view.querySelector('.s-notice').classList.remove('s-visible');
 });
 
 function buildButtons(call, array, onClick, nullPossible){
@@ -1203,7 +1252,7 @@ function buildButtons(call, array, onClick, nullPossible){
 			dropdown.appendChild(buttonEl);
 		}
 		
-		S.window.querySelector('.s-popups').appendChild(dropdown);
+		view.querySelector('.s-popups').appendChild(dropdown);
 	}
 	
 	// Add button
@@ -1217,57 +1266,8 @@ function buildButtons(call, array, onClick, nullPossible){
 	if(array !== null) button.addEventListener('click',popupToggle);
 	else button.addEventListener('click',onClick);
 	
-	S.window.querySelector('.s-buttons').appendChild(button);
+	view.querySelector('.s-buttons').appendChild(button);
 }
-
-// Make language change on changing value
-Object.defineProperty(S, 'subtitles', {
-	get: function() {
-		return subtitles;
-	},
-	set: function(newSubtitles){
-		if(newSubtitles === subtitles) return;
-		
-		// Error handling
-		if(newSubtitles !== null && !S.window.querySelector('.s-popup-subtitles [data-value="'+newSubtitles+'"]')){
-			S.notice = 'Error: subtitles for "' + newSubtitles + '" not found';
-			return;
-		}
-		
-		// Remove selected class from previous selected item (if one was selected)
-		var previous = S.window.querySelector('.s-popup-subtitles .s-selected');
-		if(previous) previous.classList.remove('s-selected');
-		// console.log('hey','.s-popup-subtitles [data-value="'+newSubtitles+'"]');
-		if(newSubtitles) S.window.querySelector('.s-popup-subtitles [data-value="'+newSubtitles+'"]').classList.add('s-selected');
-		
-		// this.classList.add('s-selected');
-		subtitles = newSubtitles;
-		S.displaySubtitles(subtitles);
-	}
-});
-
-// Make language change on changing value
-Object.defineProperty(S, 'quality', {
-	get: function() {
-		return quality;
-	},
-	set: function(newQuality){
-		if(quality === newQuality) return;
-		
-		// Error handling
-		if(isNaN(newQuality) || newQuality < 0 || newQuality > S.maxQuality){
-			S.notice = 'Error: quality must be an integer within the available range, 0 and ' + S.maxQuality;
-			return;
-		}
-		
-		// Remove selected class from previous selected item (if one was selected)
-		S.window.querySelector('.s-popup-quality .s-selected').classList.remove('s-selected');
-		S.window.querySelector('.s-popup-quality [data-value="'+newQuality+'"]').classList.add('s-selected');
-		
-		quality = newQuality;
-		S.to();
-	}
-});
 
 <?php
 	// Get languages
@@ -1341,7 +1341,7 @@ buildButtons('fullscreen'
 // Bookmarks
 function toggleBookmark(){
 	// Remove selected class from previous selected item
-	var previous=S.window.querySelector('.s-popup-bookmark .s-selected');
+	var previous=view.querySelector('.s-popup-bookmark .s-selected');
 	if(previous){
 		previous.classList.remove('s-selected');
 	}
@@ -1406,7 +1406,7 @@ function addBookmark(obj){
 	
 	bookmarkEl.appendChild(nameEl);
 	
-	S.window.querySelector(".s-popup-bookmark").appendChild(bookmarkEl);
+	view.querySelector(".s-popup-bookmark").appendChild(bookmarkEl);
 }
 
 ///////////////////////////////////////
@@ -1423,11 +1423,11 @@ document.addEventListener('visibilitychange',function(){
 });
 
 // Showpony deselection (to help with Firefox and Edge's lack of support for 'beforeunload')
-S.window.addEventListener('focusout',S.save);
-S.window.addEventListener('blur',S.save);
+view.addEventListener('focusout',S.save);
+view.addEventListener('blur',S.save);
 
 // Shortcut keys
-S.window.addEventListener(
+view.addEventListener(
 	'keydown'
 	,function(event){
 		if(!active) return;
@@ -1512,8 +1512,8 @@ function pointerDown(event){
     if(pointer.offsetX>pointer.target.clientWidth || pointer.offsetY>pointer.target.clientHeight) return;
 
     // Remove the cover image when this is the first time interacting with showpony
-    if(S.window.querySelector('.s-cover')){
-        S.window.querySelector('.s-cover').remove();
+    if(view.querySelector('.s-cover')){
+        view.querySelector('.s-cover').remove();
     }
     
 	// One event listener for all of the buttons
@@ -1527,7 +1527,7 @@ function pointerDown(event){
 			pointerYStart = null;
 			
 			// Add the display class
-            S.window.classList.add('s-hold');
+            view.classList.add('s-hold');
         },500);
 	// Progress
     } else if(checkCollision(pointer.clientX,pointer.clientY,progress)){
@@ -1539,7 +1539,7 @@ function pointerDown(event){
 			pointerYStart = null;
 			
 			// Add the display class
-            S.window.classList.add('s-hold');
+            view.classList.add('s-hold');
             actionInterval=setInterval(S.progress,50);
         },500);
 	// Regress
@@ -1552,7 +1552,7 @@ function pointerDown(event){
 			pointerYStart = null;
 			
 			// Add the display class
-            S.window.classList.add('s-hold');
+            view.classList.add('s-hold');
             actionInterval=setInterval(S.regress,50);
         },500);
     }
@@ -1615,8 +1615,8 @@ function pointerUp(event){
     if(pointer.offsetX>pointer.target.clientWidth || pointer.offsetY>pointer.target.clientHeight) return;
     
 	// If we were holding the button, remove the class
-	if(S.window.classList.contains('s-hold')){
-		S.window.classList.remove('s-hold');
+	if(view.classList.contains('s-hold')){
+		view.classList.remove('s-hold');
 		
 		// Next and previous buttons shouldn't be activated again on release if they were held down
 		if(buttonDown !== 'pause' || paused === false) return;
@@ -1665,10 +1665,10 @@ function pointerUp(event){
 // Resets to 0 on touch/start click; tracks how much we've moved the pointer since putting it down
 var pointerMovement = 0;
 
-S.window.addEventListener('mousedown',pointerDown);
+view.addEventListener('mousedown',pointerDown);
 window.addEventListener('mouseup',pointerUp);
 
-S.window.addEventListener('touchstart',pointerDown);
+view.addEventListener('touchstart',pointerDown);
 window.addEventListener('touchend',pointerUp);
 
 // On dragging
@@ -1739,7 +1739,7 @@ searchParams.delete(S.queryBookmark);
 history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
 
 // Show we're paused
-S.window.classList.add('s-paused');
+view.classList.add('s-paused');
 
 S.debug = <?php
 	if(DEBUG){
@@ -1762,7 +1762,7 @@ if(!S.load()){
 
 // We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
 
-S.appendChild(S.window);
+S.appendChild(view);
 S.dispatchEvent(new CustomEvent('built'));
 
 }();<?php
