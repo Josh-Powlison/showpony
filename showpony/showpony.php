@@ -261,6 +261,9 @@ Object.defineProperty(S, 'subtitles', {
 	set: function(newSubtitles){
 		if(newSubtitles === subtitles) return;
 		
+		// Make false null
+		if(newSubtitles === false) newSubtitles = null;
+		
 		// Error handling
 		if(newSubtitles !== null && !view.querySelector('.s-popup-subtitles [data-value="'+newSubtitles+'"]')){
 			notice('Error: subtitles for "' + newSubtitles + '" not found');
@@ -312,7 +315,7 @@ Object.defineProperty(S, 'language', {
 		
 		// Error handling
 		if(!view.querySelector('.s-popup-language [data-value="'+newLanguage+'"]')){
-			notice('Error: the language "'+newLanguage+'" is not supported. Did you mean to input the short name version?');
+			notice('Error: the language "'+newLanguage+'" is not supported.');
 			return;
 		}
 		
