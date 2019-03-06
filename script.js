@@ -1,30 +1,20 @@
-var showponies=[];
-
-var currentShowpony=/#([^\?]+)/.exec(location.href);
-if(currentShowpony) currentShowpony=currentShowpony[1];
-else currentShowpony=document.getElementById('example-list').children[0].value;
+var currentShowpony = /#([^\?]+)/.exec(location.href);
+if(currentShowpony) currentShowpony = currentShowpony[1];
+else currentShowpony = document.getElementById('example-list').children[0].value;
 
 document.getElementById("example-list").addEventListener("change",function(){
 	chooseStory(this.value);
 });
 
-// Initial setup for Showponies
-var keys=Object.keys(showponies);
-for(var i=0;i<keys.length;i++){
-	document.getElementById(keys[i]).dataset.waspaused='true';
-}
-
 //Choose the right input value
 function chooseStory(id){
-	console.log('RUN chooseStory');
-	
 	// Set the dropdown's value
-	if(document.getElementById("example-list").value!==id){ 
-		document.getElementById("example-list").value=id;
+	if(document.getElementById("example-list").value !== id){ 
+		document.getElementById("example-list").value = id;
 	}
 	
 	// Load Showponies dynamically
-	if(typeof showponies[id] === 'undefined'){
+	if(document.getElementById(id).children.length === 0){
 		var script = document.createElement('script');
 		script.defer = true;
 		script.async = true;
@@ -32,11 +22,7 @@ function chooseStory(id){
 		var showponyWindow = document.getElementById(id);
 		script.src = showponyWindow.dataset.path;
 		
-		
 		showponyWindow.addEventListener('built',function(event){
-			console.log('BUILT');
-			showponies[id]=event.detail.object;
-			console.log(event.detail.message);
 			displayStory(id);
 		});
 		
@@ -46,37 +32,22 @@ function chooseStory(id){
 	}
 }
 
+var showponies = document.getElementById('showponies').children;
+
 function displayStory(id){
-	var keys=Object.keys(showponies);
-	for(var i=0;i<keys.length;i++){
+	for(var i = 0; i < showponies.length; i++){
 		
-		if(keys[i]==id){
-			if(document.getElementById(keys[i]).classList.contains("hidden")){
-				document.getElementById(keys[i]).classList.remove("hidden");
-				showponies[keys[i]].active = true;
-				
-				if(document.getElementById(keys[i]).dataset.waspaused=='false'){
-					showponies[keys[i]].paused = false;
-				}else{
-					showponies[keys[i]].paused = true;
-				}
-			}
+		if(showponies[i].id == id){
+			showponies[i].classList.remove("hidden");
+			showponies[i].active = true;
 			
 			//Update URL and history
-			history.replaceState(null,null,location.href.replace(/#[^$?]+|$/,"#"+keys[i]));
+			history.replaceState(null,null,location.href.replace(/#[^$?]+|$/,"#"+showponies[i].id));
 		}else{
-			if(!document.getElementById(keys[i]).classList.contains("hidden")){
-				document.getElementById(keys[i]).classList.add("hidden");
-				showponies[keys[i]].active = false;
-				
-				document.getElementById(keys[i]).dataset.waspaused=showponies[keys[i]].paused ? 'true' : 'false';
-				
-				showponies[keys[i]].paused = true;
-			}
+			showponies[i].classList.add("hidden");
+			showponies[i].active = false;
 		}
 	}
-	
-	currentShowpony=id;
 }
 
 // Start
