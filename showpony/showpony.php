@@ -132,6 +132,7 @@ var quality				= <?php echo json_encode(QUALITY,JSON_NUMERIC_CHECK); ?>;
 var fullscreen			= false;
 var paused				= true;
 var active				= true;
+var data				= {};
 
 const content			= view.getElementsByClassName('s-content')[0];
 content.classList.add('s-loading');
@@ -455,7 +456,6 @@ else{
 	});
 }
 
-S.data					= {};
 S.duration				= S.files.map(function(e){
 	if(e.hidden) return 0;
 	return e.duration;
@@ -687,7 +687,7 @@ function saveBookmark(){
 			// Update the save file before setting it
 			S.saves.local[S.saves.currentSave]={
 				bookmark:	time
-				,data:		S.data
+				,data:		data
 				,language:	language
 				,subtitles:	subtitles
 				,quality:	quality
