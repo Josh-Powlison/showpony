@@ -132,7 +132,6 @@ var quality				= <?php echo json_encode(QUALITY,JSON_NUMERIC_CHECK); ?>;
 var fullscreen			= false;
 var paused				= true;
 var active				= true;
-var notice 				= null;
 
 const content			= view.getElementsByClassName('s-content')[0];
 content.classList.add('s-loading');
@@ -141,22 +140,24 @@ const buffer			= view.getElementsByClassName('s-buffer')[0];
 const infoText			= view.getElementsByClassName('s-info-text')[0];
 const pause				= view.getElementsByClassName('s-pause')[0];
 const scrubber			= view.getElementsByClassName('s-scrubber')[0];
-const progress			= view.getElementsByClassName('s-progress')[0];
-const regress			= view.getElementsByClassName('s-regress')[0];
+const progressEl		= view.getElementsByClassName('s-progress')[0];
+const regressEl			= view.getElementsByClassName('s-regress')[0];
 const noticeEl			= view.getElementsByClassName('s-notice')[0];
+
+const framerate			= 60;		// Connected to gamepad use and games
+const queryBookmark		= <?php echo json_encode(NAME); ?>+'-bookmark';
+const readingDirection	= <?php echo json_encode($_GET['direction'] ?? DEFAULT_DIRECTION); ?>;
+const saveName			= <?php echo json_encode(SAVE_NAME); ?>;
 
 var actionTimeout		= null;		// Used to start running constant mousedown functions, like fast-forward and rewind
 var actionInterval		= null;		// Used to run constant mousedown functions, like fast-forward and rewind
 var clickStart			= false;	// Whether a click was started inside Showpony
 var checkGamepad		= null;
-var framerate			= 60;		// Connected to gamepad use and games
 var scrubbing			= false;	// Our state of scrubbing
 var searchParams		= new URLSearchParams(window.location.search);
-var queryBookmark		= <?php echo json_encode(NAME); ?>+'-bookmark';
+var currentGamepad		= null;
 
-var readingDirection	= <?php echo json_encode($_GET['direction'] ?? DEFAULT_DIRECTION); ?>;
-
-var subtitlesAvailable				= {<?php
+const subtitlesAvailable				= {<?php
 
 	//Immediately load subtitles if called for
 	define('FILES_COUNT'		, count($files));
@@ -167,8 +168,7 @@ var subtitlesAvailable				= {<?php
 	
 ?>};
 
-var currentGamepad		= null;
-var modules				= {
+const modules				= {
 
 <?php
 
@@ -193,15 +193,13 @@ for($i = 0; $i < $l; $i++){
 
 S.files					= <?php echo json_encode($files,JSON_NUMERIC_CHECK); ?>;
 
-S.buffered				= [];
-
 Object.defineProperty(S, 'time', {
 	get: function(input) {
 		return time;
 	},
 	set: function(input){
 		if(isNaN(input) && input !== 'end'){
-			S.notice = 'S.time must be a number or \'end\'.';
+			notice('S.time must be a number or \'end\'.');
 			return;
 		}
 		
@@ -216,7 +214,7 @@ Object.defineProperty(S, 'file', {
 	set: function(input){
 		// Error handling
 		if(isNaN(input)){
-			S.notice = 'Error: file can only be set to an integer';
+			notice('Error: file can only be set to an integer');
 			return;
 		}
 		
@@ -231,7 +229,7 @@ Object.defineProperty(S, 'active', {
 	set: function(input){
 		// Error handling
 		if(input !== true && input !== false){
-			S.notice = 'Error: active can only be set to true or false';
+			notice('Error: active can only be set to true or false');
 			return;
 		}
 		
@@ -264,7 +262,7 @@ Object.defineProperty(S, 'subtitles', {
 		
 		// Error handling
 		if(newSubtitles !== null && !view.querySelector('.s-popup-subtitles [data-value="'+newSubtitles+'"]')){
-			S.notice = 'Error: subtitles for "' + newSubtitles + '" not found';
+			notice('Error: subtitles for "' + newSubtitles + '" not found');
 			return;
 		}
 		
@@ -290,7 +288,7 @@ Object.defineProperty(S, 'quality', {
 		
 		// Error handling
 		if(isNaN(newQuality) || newQuality < 0 || newQuality > <?php echo $maxQuality; ?>){
-			S.notice = 'Error: quality must be an integer within the available range, 0 and ' + <?php echo $maxQuality; ?>;
+			notice('Error: quality must be an integer within the available range, 0 and ' + <?php echo $maxQuality; ?>);
 			return;
 		}
 		
@@ -313,7 +311,7 @@ Object.defineProperty(S, 'language', {
 		
 		// Error handling
 		if(!view.querySelector('.s-popup-language [data-value="'+newLanguage+'"]')){
-			S.notice = 'Error: the language "'+newLanguage+'" is not supported. Did you mean to input the short name version?';
+			notice('Error: the language "'+newLanguage+'" is not supported. Did you mean to input the short name version?');
 			return;
 		}
 		
@@ -324,13 +322,15 @@ Object.defineProperty(S, 'language', {
 		fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
 		.then(response=>{return response.json();})
 		.then(json=>{
-			S.files=json;
+			S.files = json;
+			S.duration = S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
+			
 			language = newLanguage;
 			
 			S.time = time;
 		})
 		.catch(error=>{
-			S.notice = ('Failed to load language files. '+error);
+			notice('Failed to load language files. '+error);
 		});
 	}
 });
@@ -347,7 +347,7 @@ if(view.requestFullscreen){
 			
 			// Error handling
 			if(input !==true && input !== false){
-				S.notice = 'Error: fullscreen can only be set to true, false, or "toggle"';
+				notice('Error: fullscreen can only be set to true, false, or "toggle"');
 				return;
 			}
 			
@@ -382,7 +382,7 @@ else if(view.webkitRequestFullscreen){
 			
 			// Error handling
 			if(input !==true && input !== false){
-				S.notice = 'Error: fullscreen can only be set to true, false, or "toggle"';
+				notice('Error: fullscreen can only be set to true, false, or "toggle"');
 				return;
 			}
 			
@@ -416,7 +416,7 @@ else{
 			
 			// Error handling
 			if(input !==true && input !== false){
-				S.notice = 'Error: fullscreen can only be set to true, false, or "toggle"';
+				notice('Error: fullscreen can only be set to true, false, or "toggle"');
 				return;
 			}
 			
@@ -456,9 +456,11 @@ else{
 }
 
 S.data					= {};
-S.duration				= S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
+S.duration				= S.files.map(function(e){
+	if(e.hidden) return 0;
+	return e.duration;
+}).reduce((a,b) => a+b,0);
 
-S.saveName				= <?php echo json_encode(SAVE_NAME); ?>;
 S.saves					= {
 	currentSave	:<?php echo json_encode(CURRENT_SAVE); ?>,
 	language	:<?php echo json_encode($language); ?>,
@@ -466,7 +468,6 @@ S.saves					= {
 	system		:<?php echo json_encode(SAVE_SYSTEM); ?>,
 	timestamp	:Date.now()
 };
-S.upcomingFiles			= <?php echo json_encode($releaseDates); ?>;
 
 // Make language change on changing value
 Object.defineProperty(S, 'paused', {
@@ -478,7 +479,7 @@ Object.defineProperty(S, 'paused', {
 		
 		// Error handling
 		if(input !==true && input !== false){
-			S.notice = 'Error: paused can only be set to true, false, or "toggle"';
+			notice('Error: paused can only be set to true, false, or "toggle"');
 			return;
 		}
 		
@@ -507,42 +508,35 @@ Object.defineProperty(S, 'paused', {
 	}
 });
 
-// Make language change on changing value
-Object.defineProperty(S, 'notice', {
-	get: function() {
-		return notice;
-	},
-	set: function(input){
-		S.paused = true;
-	
-		var noticeText=noticeEl.querySelector('.s-notice-text');
-		
-		// If a message is currently up, add new messages to the list rather than overwriting them
-		if(noticeEl.classList.contains('s-visible')) noticeText.innerHTML += '<hr class="s-block-scrubbing"><p class="s-block-scrubbing">'+input+'</p>';
-		else noticeText.innerHTML = '<p class="s-block-scrubbing">'+input+'</p>';
-		
-		noticeEl.classList.add('s-visible');
-		
-		notice = input;
-		noticeEl.focus();
-	}
-});
-
 ///////////////////////////////////////
 ///////////PUBLIC FUNCTIONS////////////
 ///////////////////////////////////////
 
-S.regress = function(){
-	modules[module].regress();
-}
-
-S.progress = function(){
-	modules[module].progress();
-}
-
 ///////////////////////////////////////
 ///////////PRIVATE FUNCTIONS///////////
 ///////////////////////////////////////
+
+function notice(input){
+	S.paused = true;
+
+	var noticeText=noticeEl.querySelector('.s-notice-text');
+	
+	// If a message is currently up, add new messages to the list rather than overwriting them
+	if(noticeEl.classList.contains('s-visible')) noticeText.innerHTML += '<hr class="s-block-scrubbing"><p class="s-block-scrubbing">'+input+'</p>';
+	else noticeText.innerHTML = '<p class="s-block-scrubbing">'+input+'</p>';
+	
+	noticeEl.classList.add('s-visible');
+	
+	noticeEl.focus();
+}
+
+function regress(){
+	modules[module].regress();
+}
+
+function progress(){
+	modules[module].progress();
+}
 
 // Go to another file
 async function to(obj = {file:file, time:time}){
@@ -551,7 +545,12 @@ async function to(obj = {file:file, time:time}){
 	/// GET TIME AND FILE ///
 	
 	// Special values
-	if(obj.file === 'last' ) obj.file = S.files.length-1;
+	if(obj.file === 'last' ){
+		obj.file = S.files.length-1;
+		
+		// Go back until find an unhidden file
+		while(S.files[obj.file].hidden) obj.file--;
+	}
 	obj.file = Math.max(0,obj.file || 0);
 	
 	// If we're not going to the end, adjust time values; 'end' gets passed to the modules
@@ -561,6 +560,9 @@ async function to(obj = {file:file, time:time}){
 		
 		// Based on time, get the right file
 		for(obj.file; obj.file < S.files.length;obj.file++){
+			// End if find a hidden file
+			if(S.files[obj.file].hidden) break;
+			
 			if(obj.time<S.files[obj.file].duration) break; // We've reached the file
 			
 			obj.time-=S.files[obj.file].duration;
@@ -568,8 +570,11 @@ async function to(obj = {file:file, time:time}){
 	}
 		
 	// If we're past the end, go to the very end
-	if(obj.file >= S.files.length){
+	if(obj.file >= S.files.length || S.files[obj.file].hidden){
+		while(obj.file >= S.files.length || S.files[obj.file].hidden) obj.file--;
+		
 		obj.file = S.files.length-1;
+		
 		obj.time = S.files[obj.file].duration;
 		
 		// Run the event that users can read
@@ -598,7 +603,7 @@ async function to(obj = {file:file, time:time}){
 	
 	// Update the module, and post a notice on failure
 	if(!await modules[module].src(obj.file, obj.time, filename)){
-		S.notice = 'Failed to load file '+obj.file;
+		notice('Failed to load file '+obj.file);
 		return false;
 	}
 	
@@ -614,6 +619,9 @@ async function to(obj = {file:file, time:time}){
 	
 	// Preload upcoming files
 	for(let i=file;i<S.files.length;i++){
+		// End if find a hidden file
+		if(S.files[i].hidden) break;
+		
 		// Check if we can preload this
 		preloadBytes-=S.files[file].size;
 		
@@ -632,7 +640,7 @@ async function to(obj = {file:file, time:time}){
 					return true;
 				}
 				
-				S.notice = ('Error buffering file '+S.files[i].path);
+				notice('Error buffering file '+S.files[i].path);
 			});
 		}
 	}
@@ -640,7 +648,7 @@ async function to(obj = {file:file, time:time}){
 
 // Returns true if loaded a savedata, false if none exists by the search terms
 function loadBookmark(){
-	S.saves=JSON.parse(localStorage.getItem(S.saveName));
+	S.saves=JSON.parse(localStorage.getItem(saveName));
 	
 	switch(S.saves.system){
 		case 'local':
@@ -692,10 +700,10 @@ function saveBookmark(){
 			break;
 	}
 	
-	localStorage.setItem(S.saveName,JSON.stringify(S.saves));
+	localStorage.setItem(saveName,JSON.stringify(S.saves));
 	
 	// Some information is saved to cookies so PHP can access them. We compress it for simplicity and using minimal cookie space.
-	document.cookie=S.saveName+'='
+	document.cookie=saveName+'='
 		+encodeURIComponent(
 			S.saves.system
 			+'&'+S.saves.currentSave
@@ -739,16 +747,18 @@ async function timeUpdate(){
 	);
 }
 
+var currentBuffer = [];
+
 // See if the time passed has been buffered
 function checkBuffered(time=0){
-	if(S.buffered===true) return true;
+	if(currentBuffer===true) return true;
 	
-	for(var i=0;i<S.buffered.length;i++){
+	for(var i=0;i<currentBuffer.length;i++){
 		// If before the start time, exit
-		// if(time<S.buffered[i][0]) break;
+		// if(time<currentBuffer[i][0]) break;
 		
 		// If the time passed is within the range, it's true
-		if(S.buffered[i][0]<=time && time<=S.buffered[i][1]){
+		if(currentBuffer[i][0]<=time && time<=currentBuffer[i][1]){
 			return true;
 		}
 	}
@@ -758,10 +768,13 @@ function checkBuffered(time=0){
 
 async function getTotalBuffered(){
 	var time=0;
-	S.buffered=[];
+	var buffered=[];
 	
 	// Update amount buffered total
 	for(let i=0;i<S.files.length;i++){
+		// End if find a hidden file
+		if(S.files[i].hidden) break;
+		
 		var bufferTrack=false;
 		
 		if(S.files[i].buffered===true){
@@ -769,47 +782,50 @@ async function getTotalBuffered(){
 			
 			if(bufferTrack){
 				// Combine buffered arrays, if we're moving forward
-				if(S.buffered.length>0 && bufferTrack[0]<=S.buffered[S.buffered.length-1][1]) S.buffered[S.buffered.length-1][1]=bufferTrack[1];
-				else S.buffered.push(bufferTrack);
+				if(buffered.length>0 && bufferTrack[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=bufferTrack[1];
+				else buffered.push(bufferTrack);
 			}
 		}
 		else if(Array.isArray(S.files[i].buffered)){
 			// Get working for multiple contained buffers
 			for(let ii=0;ii<S.files[i].buffered.length;ii++){
+				
 				bufferTrack=[
 					time+parseFloat(S.files[i].buffered[ii][0])
 					,time+parseFloat(S.files[i].buffered[ii][1])
 				];
 				
 				// Combine buffered arrays, if we're moving forward
-				if(S.buffered.length>0 && bufferTrack[0]<=S.buffered[S.buffered.length-1][1]) S.buffered[S.buffered.length-1][1]=bufferTrack[1];
-				else S.buffered.push(bufferTrack);
+				if(buffered.length>0 && bufferTrack[0]<=buffered[buffered.length-1][1]) buffered[buffered.length-1][1]=bufferTrack[1];
+				else buffered.push(bufferTrack);
 			}
 		}
 		
 		time+=parseFloat(S.files[i].duration);
 	}
 	
-	if(S.buffered.length===1 && S.buffered[0][0]===0 && S.buffered[0][1]>=S.duration) S.buffered=true;
-	if(S.buffered.length===0) S.buffered=[];
+	if(buffered.length===1 && buffered[0][0]===0 && buffered[0][1]>=S.duration) buffered=true;
+	if(buffered.length===0) buffered=[];
 	
 	// Show buffer
 	var ctx = buffer.getContext('2d');
 	
 	// Update info on popup
-	if(S.buffered === true){
+	if(buffered === true){
 		ctx.fillRect(0,0,buffer.width,1);
-	}else if(Array.isArray(S.buffered)){
+	}else if(Array.isArray(buffered)){
 		ctx.clearRect(0,0,buffer.width,1);
-		for(let i=0;i<S.buffered.length;i++){
+		for(let i=0;i<buffered.length;i++){
 			ctx.fillRect(
-				Math.floor(S.buffered[i][0]/S.duration*buffer.width)
+				Math.floor(buffered[i][0]/S.duration*buffer.width)
 				,0
-				,Math.floor((S.buffered[i][1]-S.buffered[i][0])/S.duration*buffer.width)
+				,Math.floor((buffered[i][1]-buffered[i][0])/S.duration*buffer.width)
 				,1
 			);
 		}
 	}
+	
+	currentBuffer = buffered;
 }
 
 var scrubLoad=null;
@@ -872,6 +888,9 @@ function scrub(inputPercent=null){
 		var timeCheck = displayTime;
 		// Based on time, get the right file
 		for(displayFile; displayFile < S.files.length - 1; displayFile++){
+			// End if the next file's hidden
+			if(S.files[displayFile + 1].hidden) break;
+			
 			if(timeCheck < S.files[displayFile].duration) break; // We've reached the file
 			
 			timeCheck -= S.files[displayFile].duration;
@@ -888,7 +907,11 @@ function scrub(inputPercent=null){
 		case 'file':
 			?>
 	var completed = infoFile(displayFile + 1);
-    var remaining = infoFile(S.files.length - (displayFile + 1));
+	
+	var filesTotal = S.files.length;
+	while(S.files[filesTotal - 1].hidden) filesTotal--;
+	
+    var remaining = infoFile(filesTotal - (displayFile + 1));
 			<?php
 			break;
 		case 'time':
@@ -911,11 +934,11 @@ function scrub(inputPercent=null){
 	if(S.files[displayFile].title) info+=S.files[displayFile].title;
 	info+='</p><p>'+remaining+'</p>';
 	
-	// Add info about upcoming parts if not added already
-	if(displayFile===S.files.length-1 && S.upcomingFiles.length
+	// Add info about upcoming parts if not added already //XXX
+	if(displayFile < S.files.length-1 && S.files[displayFile + 1].hidden
 		&& !view.querySelector('.s-upcoming-file').innerHTML){
-		var upcoming='';
-		for(var i=0;i<S.upcomingFiles.length;i++){
+		var upcoming = '';
+		for(var i = displayFile + 1; i < S.files.length; i++){
 			upcoming+='Next Update: '+new Intl.DateTimeFormat(
 				undefined //Uses the default locale
 				,{
@@ -928,12 +951,12 @@ function scrub(inputPercent=null){
 					,second:'numeric'
 					,timeZoneName:'short'
 				}
-			).format(new Date(S.upcomingFiles[i])*1000);;
+			).format(new Date(S.files[i].release) * 1000);
 			
-			if(i<S.upcomingFiles.length-1) upcoming+='<br>';
+			if(i < S.files.length - 1) upcoming += '<br>';
 		}
 		
-		view.querySelector('.s-upcoming-file').innerHTML='<p>'+upcoming+'</p>';
+		view.querySelector('.s-upcoming-file').innerHTML = '<p>' + upcoming + '</p>';
 	}
 	
 	if(info !== infoText.innerHTML) infoText.innerHTML = info;
@@ -1157,9 +1180,9 @@ function gamepadControls(){
 	
 	// Register inputs
 	if(currentGamepad.menu==2) S.paused = 'toggle';
-	if(currentGamepad.input==2) S.progress();
-	if(currentGamepad.dpadL==2) S.regress();
-	if(currentGamepad.dpadR==2) S.progress();
+	if(currentGamepad.input==2) progress();
+	if(currentGamepad.dpadL==2) regress();
+	if(currentGamepad.dpadR==2) progress();
 	if(currentGamepad.end==2) to({time:'end'});
 	if(currentGamepad.home==2) to({time:'start'});
 	if(currentGamepad.fullscreen==2) S.fullscreen = 'toggle';
@@ -1401,11 +1424,11 @@ function addBookmark(obj){
 				document.execCommand('copy');
 				temporaryInput.remove();
 				
-				S.notice = 'Copied the link to your clipboard!';
+				notice('Copied the link to your clipboard!');
 			});
 			break;
 		default:
-			S.notice = 'Save system not recognized!';
+			notice('Save system not recognized!');
 			break;
 	}
 	
@@ -1443,10 +1466,10 @@ view.addEventListener(
 		if(event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) return;
 		
 		switch(event.key){
-			case ' ':				S.progress();			break;
-			case 'Enter':			S.progress();			break;
-			case 'ArrowLeft':		(readingDirection === 'right-to-left' ? S.progress : S.regress)();	break;
-			case 'ArrowRight':		(readingDirection === 'right-to-left' ? S.regress : S.progress)();	break;
+			case ' ':				progress();			break;
+			case 'Enter':			progress();			break;
+			case 'ArrowLeft':		(readingDirection === 'right-to-left' ? progress : regress)();	break;
+			case 'ArrowRight':		(readingDirection === 'right-to-left' ? regress : progress)();	break;
 			// case 'Home':			to({time:'start'});	break;
 			// case 'End':				to({time:'end'});		break;
 			case 'MediaPrevious':	S.file--;		break;
@@ -1535,9 +1558,9 @@ function pointerDown(event){
             view.classList.add('s-hold');
         },500);
 	// Progress
-    } else if(checkCollision(pointer.clientX,pointer.clientY,progress)){
+    } else if(checkCollision(pointer.clientX,pointer.clientY,progressEl)){
         buttonDown = 'progress';
-		progress.classList.add('s-active');
+		progressEl.classList.add('s-active');
         actionTimeout=setTimeout(function(){
 			// Don't let moving the cursor stop this function
 			pointerXStart = null;
@@ -1545,12 +1568,12 @@ function pointerDown(event){
 			
 			// Add the display class
             view.classList.add('s-hold');
-            actionInterval=setInterval(S.progress,50);
+            actionInterval=setInterval(progress,50);
         },500);
 	// Regress
-    } else if(checkCollision(pointer.clientX,pointer.clientY,regress)){
+    } else if(checkCollision(pointer.clientX,pointer.clientY,regressEl)){
         buttonDown = 'regress';
-		regress.classList.add('s-active');
+		regressEl.classList.add('s-active');
         actionTimeout=setTimeout(function(){
 			// Don't let moving the cursor stop this function
 			pointerXStart = null;
@@ -1558,7 +1581,7 @@ function pointerDown(event){
 			
 			// Add the display class
             view.classList.add('s-hold');
-            actionInterval=setInterval(S.regress,50);
+            actionInterval=setInterval(regress,50);
         },500);
     }
 	
@@ -1656,12 +1679,12 @@ function pointerUp(event){
 		S.paused = 'toggle';
 	}
 	// Progress
-	else if(checkCollision(pointer.clientX,pointer.clientY,progress) && buttonDown === 'progress'){
-		S.progress();
+	else if(checkCollision(pointer.clientX,pointer.clientY,progressEl) && buttonDown === 'progress'){
+		progress();
 	}
 	// Regress
-	else if(checkCollision(pointer.clientX,pointer.clientY,regress) && buttonDown === 'regress'){
-		S.regress();
+	else if(checkCollision(pointer.clientX,pointer.clientY,regressEl) && buttonDown === 'regress'){
+		regress();
 	}
     
     buttonDown = null;
@@ -1718,9 +1741,9 @@ window.addEventListener('gamepaddisconnected',function(e){
 ///////////////////////////////////////
 
 // Priority Saves: Newest > Default Start
-if(localStorage.getItem(S.saveName)===null){
+if(localStorage.getItem(saveName)===null){
 	// Set defaults
-	localStorage.setItem(S.saveName,JSON.stringify({
+	localStorage.setItem(saveName,JSON.stringify({
 		currentSave	:'Autosave',
 		language	:<?php echo json_encode($language); ?>,
 		local		:{},
@@ -1728,7 +1751,7 @@ if(localStorage.getItem(S.saveName)===null){
 		timestamp	:Date.now()
 	}));
 }else{
-	S.saves=JSON.parse(localStorage.getItem(S.saveName));
+	S.saves=JSON.parse(localStorage.getItem(saveName));
 }
 
 // For now, we'll just support this bookmark

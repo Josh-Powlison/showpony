@@ -22,7 +22,7 @@ if(empty($_SESSION['showpony_admin']) && file_exists('public-cache.json')){
 $files				= [];
 $maxQuality			= 0;
 $media				= [];
-$releaseDates		= [];
+$upcomingFiles		= [];
 $success			= true;
 $unhideSubtitles	= [];
 $unhideSubfiles		= [];
@@ -55,7 +55,7 @@ function readFolder($folder){
 	global $files;
 	global $maxQuality;
 	global $media;
-	global $releaseDates;
+	global $upcomingFiles;
 	global $success;
 	global $unhideSubtitles;
 	global $unhideSubfiles;
@@ -167,13 +167,8 @@ function readFolder($folder){
 					}
 				}
 				
-				// The time the next file will go live
-				if(RELEASE_DATES && count($releaseDates)<RELEASE_DATES){
-					$releaseDates[]=strtotime($release);
-				}
-				
-				// Don't add hidden files if we aren't logged in
-				if(empty($_SESSION['showpony_admin'])) continue;
+				// Ignore if we need to
+				if(count($upcomingFiles) >= RELEASE_DATES && empty($_SESSION['showpony_admin'])) continue;
 			}
 		}else{
 			// Still skip hidden files
@@ -187,23 +182,36 @@ function readFolder($folder){
 			else $title = $sectionTitle;
 		}
 		
-		// There must be a better way to get some of this info...
-		$fileInfo=[
-			'buffered'		=>	[]
-			,'duration'		=>	$duration ?? DEFAULT_FILE_DURATION
-			,'name'			=>	$file
-			,'path'			=>	$hidden ? 'showpony/get-hidden-file.php?file='.STORIES_PATH.$folder.'/'.$file  : STORIES_PATH.$folder.'/'.$file
-			,'quality'		=>	0 // Defaults to 0; if higher quality files are found, we consider those
-			,'release'		=>	$release
-			,'size'			=>	filesize($folder.'/'.$file)
-			,'title'		=>	str_replace(
-				// Dissallowed in Windows files: \ / : * ? " < > |
-				['[bs]','[fs]','[c]','[a]','[q]','[dq]','[lt]','[gt]','[b]']
-				,['\\','/',':','*','?','"','<','>','|']
-				,$title
-			) ?? null
-			,'hidden'		=>	$hidden ?? false
-		];
+		// Hidden files
+		if($hidden){
+			$upcomingFiles[]=[
+				'hidden'		=>	true
+				,'release'		=>	strtotime($release)
+				,'duration'		=>	0
+			];
+			
+			continue;
+		}
+		// Public files
+		else{
+			// There must be a better way to get some of this info...
+			$fileInfo=[
+				'buffered'		=>	[]
+				,'duration'		=>	$duration ?? DEFAULT_FILE_DURATION
+				,'name'			=>	$file
+				,'path'			=>	$hidden ? 'showpony/get-hidden-file.php?file='.STORIES_PATH.$folder.'/'.$file  : STORIES_PATH.$folder.'/'.$file
+				,'quality'		=>	0 // Defaults to 0; if higher quality files are found, we consider those
+				,'release'		=>	strtotime($release)
+				,'size'			=>	filesize($folder.'/'.$file)
+				,'title'		=>	str_replace(
+					// Dissallowed in Windows files: \ / : * ? " < > |
+					['[bs]','[fs]','[c]','[a]','[q]','[dq]','[lt]','[gt]','[b]']
+					,['\\','/',':','*','?','"','<','>','|']
+					,$title
+				) ?? null
+				,'hidden'		=>	$hidden ?? false
+			];
+		}
 		
 		$extension = pathinfo($folder.'/'.$file,PATHINFO_EXTENSION);
 		$mimeType = mime_content_type($folder.'/'.$file);
@@ -254,6 +262,10 @@ if($language[0] !== HIDING_CHAR || !empty($_SESSION['showpony_admin'])) readFold
 
 // Set them back in alphabetical order (HIDDEN_CHAR being removed can mess with order)
 sort($files);
+sort($upcomingFiles);
+
+// Add files and upcomingFiles together in order
+$files = array_merge($files,$upcomingFiles);
 
 // Load modules
 foreach(array_keys($media) as $moduleName){
