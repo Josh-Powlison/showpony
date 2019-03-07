@@ -87,12 +87,6 @@ function readFolder($folder){
 		$filename = pathinfo($file)['filename'];
 		
 		// Get file info
-		preg_match('/(?<={).+(?=})/',$filename,$match);
-		$title		= $match[0] ?? null;
-		
-		preg_match('/(?<=q)[\d]+/',$filename,$match);
-		$quality	= $match[0] ?? null;
-		
 		preg_match('/[\d]+-[\d-]+/',$filename,$match);
 		if($match){
 			$release = '';
@@ -116,26 +110,6 @@ function readFolder($folder){
 			
 			$release .= ' UTC';
 		}else $release = null;
-		
-		preg_match('/[\d\.]+(?=s)/',$filename,$match);
-		$duration	= $match[0] ?? null;
-		
-		/*
-			$match[0] = Whole Match
-			$match[1] = Quality
-			$match[2] = Release
-			$match[3] = Title
-			$match[4] = Length
-		*/
-		
-		// The base quality is always 0- so if we've found higher than that, just increase the value of the previously added file in the array
-		if(!empty($quality)){
-			$files[count($files)-1]['quality'] = intval($quality);
-			
-			// Update max quality
-			if($maxQuality < intval($quality)) $maxQuality = intval($quality);
-			continue;
-		}
 		
 		// Ignore files that have dates in their filenames set to later
 		if(!empty($release)){ // Get the release date from the file's name; if there is one:
@@ -177,11 +151,6 @@ function readFolder($folder){
 			$release=null;
 		}
 		
-		if($sectionTitle){
-			if($title) $title = $sectionTitle.': '.$title;
-			else $title = $sectionTitle;
-		}
-		
 		// Hidden files
 		if($hidden){
 			$upcomingFiles[]=[
@@ -194,6 +163,29 @@ function readFolder($folder){
 		}
 		// Public files
 		else{
+			preg_match('/(?<=q)[\d]+/',$filename,$match);
+			$quality	= $match[0] ?? null;
+			
+			// The base quality is always 0- so if we've found higher than that, just increase the value of the previously added file in the array
+			if(!empty($quality)){
+				$files[count($files)-1]['quality'] = intval($quality);
+				
+				// Update max quality
+				if($maxQuality < intval($quality)) $maxQuality = intval($quality);
+				continue;
+			}
+			
+			preg_match('/[\d\.]+(?=s)/',$filename,$match);
+			$duration	= $match[0] ?? null;
+			
+			preg_match('/(?<={).+(?=})/',$filename,$match);
+			$title		= $match[0] ?? null;
+			
+			if($sectionTitle){
+				if($title) $title = $sectionTitle.': '.$title;
+				else $title = $sectionTitle;
+			}
+			
 			// There must be a better way to get some of this info...
 			$fileInfo=[
 				'buffered'		=>	[]
