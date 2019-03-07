@@ -1032,7 +1032,7 @@ function userScrub(event){
 				+ Math.pow(pointerYStart - pointer.clientY,2)
 			)
 		)
-		> screen.width/20 // 25 is made to not interrupt scrubbing, while still meaning that if we move far enough, we'll ignore scrubbing (like if we're vertically scrolling
+		> screen.width/30 // 30 is made to not interrupt scrubbing, while still meaning that if we move far enough, we'll ignore scrubbing (like if we're vertically scrolling
 	){
 		pointerMoved = true;
 		scrubbing = false;
