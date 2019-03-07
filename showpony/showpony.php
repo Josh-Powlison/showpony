@@ -1696,6 +1696,7 @@ function pointerUp(event){
 	}
     
     buttonDown = null;
+	event.preventDefault(); // Prevents a click event firing right after touchend
 }
 
 // Resets to 0 on touch/start click; tracks how much we've moved the pointer since putting it down
