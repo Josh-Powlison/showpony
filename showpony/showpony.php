@@ -985,8 +985,6 @@ function userScrub(event){
 	// Don't scrub if touching with 2 or more fingers at once
 	// if(event.touches && event.touches.length>1) return;
 	
-	event.preventDefault();
-	
 	var percent = (pointer.clientX-view.getBoundingClientRect().left)/(view.getBoundingClientRect().width);
 	
 	// We give ourselves a little snap near the edges
@@ -1046,7 +1044,10 @@ function userScrub(event){
 		return;
 	};
 	
-	if(scrubbing == true) scrub(percent);
+	if(scrubbing == true){
+		event.preventDefault();
+		scrub(percent);
+	}
 }
 
 S.displaySubtitles = async function(newSubtitles = subtitles){
@@ -1708,7 +1709,12 @@ window.addEventListener('touchend',pointerUp);
 
 // On dragging
 window.addEventListener('mousemove',userScrub);
-window.addEventListener('touchmove',userScrub);
+window.addEventListener('touchmove',userScrub,{passive:false});
+
+// Ignore the context menu on Showpony (for now, later it'd be nice to allow it for copy-pasting and the like)
+S.addEventListener('contextmenu',function(event){
+	event.preventDefault();
+});
 
 // On touch end, don't keep moving the bar to the user's touch
 // overlay.addEventListener('touchend',userScrub);
