@@ -1044,8 +1044,12 @@ function userScrub(event){
 		return;
 	};
 	
-	if(scrubbing == true){
+	// Prevent scrolling on mobile
+	if(scrubbing === true || view.classList.contains('s-hold')){
 		event.preventDefault();
+	}
+	
+	if(scrubbing == true){
 		scrub(percent);
 	}
 }
