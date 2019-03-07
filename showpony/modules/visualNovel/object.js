@@ -150,7 +150,7 @@ new function(){
 		if(M.window.dataset.filename === filename){
 			
 			// Get the keyframe
-			var keyframeSelect=Math.round(keyframes.length*(time/S.files[M.currentFile].duration));
+			var keyframeSelect=Math.floor(keyframes.length*(time/S.files[M.currentFile].duration));
 			if(keyframeSelect>=keyframes.length) keyframeSelect=keyframes[keyframes.length-1];
 			else keyframeSelect=keyframes[keyframeSelect];
 			
@@ -567,8 +567,17 @@ new function(){
 		
 		// Update the scrubbar if the frame we're on is a keyframe
 		if(runTo===false && keyframes.includes(lineNumber) && M.currentFile !== null){
-			M.currentTime = (keyframes.indexOf(lineNumber)/keyframes.length)*S.files[M.currentFile].duration;
-			timeUpdate();
+			// See if the display time is within acceptable range; if so, don't update it (so users don't think it went to the wrong time)
+			var thisKeyframe = keyframes.indexOf(lineNumber);
+			var baseTime = (thisKeyframe/keyframes.length)*S.files[M.currentFile].duration;
+			
+			if(thisKeyframe + 1 < keyframes.length) var maxTime = ((thisKeyframe + 1)/keyframes.length)*S.files[M.currentFile].duration;
+			else var maxTime = S.files[M.currentFile].duration + 1;
+			
+			if(M.currentTime < baseTime || M.currentTime >= maxTime){
+				M.currentTime = baseTime;
+				timeUpdate();
+			}
 		}
 		
 		// Engine command
