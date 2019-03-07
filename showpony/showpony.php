@@ -975,9 +975,13 @@ function scrub(inputPercent=null){
 var pointerXStart = null;
 var pointerYStart = null;
 var pointerMoved = false;
+var multitouch = false; // If set to true, own't perform actions on Showpony; the user may be trying to zoom, etc
 
 // When the user scrubs, this function runs
 function userScrub(event){
+	// Don't run this if the user is touching with multiple fingers; they may be trying to zoom
+	if(multitouch) return;
+	
 	var pointer;
 	if(event.changedTouches) pointer=event.changedTouches[0];
 	else pointer=event;
@@ -1504,11 +1508,34 @@ var touching = false;
 function pointerDown(event){
 	if(!active) return;
 	
+	// Don't run this if the user is touching with multiple fingers; they may be trying to zoom
+	if(multitouch) return;
+	
 	buttonDown = null; // We don't want to carry any previous states from buttonDown
 	pointerMoved = false;
 	
 	// Don't scrub if touching with 2 or more fingers at once
-	if(event.touches && event.touches.length>1) return;
+	if(event.touches && event.touches.length>1){
+		multitouch = true;
+		
+		// Remove these values
+		pointerXStart = null;
+		pointerYStart = null;
+		
+		clickStart = false;
+		
+		clearTimeout(actionTimeout);
+		actionTimeout=null;
+		clearInterval(actionInterval);
+		actionInterval=null;
+		
+		// Get rid of any active coloring
+		while(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
+		
+		var prevScrubState = scrubbing;
+		scrubbing=false;
+		return;
+	}
 	
 	var pointer;
 	
@@ -1604,6 +1631,12 @@ function pointerDown(event){
 
 function pointerUp(event){
 	if(!active) return;
+	
+	// Don't run this if the user is touching with multiple fingers; they may be trying to zoom
+	if(multitouch){
+		if(event.touches && event.touches.length < 2) multitouch = false;
+		return;
+	}
 	
 	// Don't scrub if touching with	2 or more fingers at once
 	// if(event.touches && event.touches.length>1) return;
