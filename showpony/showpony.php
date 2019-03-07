@@ -296,6 +296,8 @@ Object.defineProperty(S, 'quality', {
 			return;
 		}
 		
+		content.classList.add('s-loading');
+		
 		// Remove selected class from previous selected item (if one was selected)
 		view.querySelector('.s-popup-quality .s-selected').classList.remove('s-selected');
 		view.querySelector('.s-popup-quality [data-value="'+newQuality+'"]').classList.add('s-selected');
@@ -318,6 +320,8 @@ Object.defineProperty(S, 'language', {
 			notice('Error: the language "'+newLanguage+'" is not supported.');
 			return;
 		}
+		
+		content.classList.add('s-loading');
 		
 		// Remove selected class from previous selected item
 		view.querySelector('.s-popup-language .s-selected').classList.remove('s-selected');
