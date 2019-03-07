@@ -301,7 +301,7 @@ Object.defineProperty(S, 'quality', {
 		view.querySelector('.s-popup-quality [data-value="'+newQuality+'"]').classList.add('s-selected');
 		
 		quality = newQuality;
-		to();
+		S.time = time;
 	}
 });
 
