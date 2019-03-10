@@ -97,6 +97,9 @@ new function(){
 	}
 	
 	M.regress = function(){
+		// Check if skipped over the current or most recent keyframe; we need to in order to regress
+		var skipKeyframe = true;
+		
 		// Get the correct keyframe
 		for(var i = M.currentLine - 1; i > 0; i--){
 			var goTo = keyframes.indexOf(i);
@@ -105,6 +108,12 @@ new function(){
 				
 				// Skip over comments
 				if(/^\s*\/\//.test(lineText)) continue;
+				
+				// Skip a keyframe, whether it's the current one or most recent one
+				if(!skipKeyframe){
+					skipKeyframe = true;
+					continue;
+				}
 				
 				runTo = keyframes[goTo];
 				M.run(0);
@@ -144,15 +153,19 @@ new function(){
 	}
 
 	M.src = async function(file=0,time=0,filename){
-		if(time==='end') time = S.files[file].duration;
-		
 		// If this is the current file
 		if(M.window.dataset.filename === filename){
 			
-			// Get the keyframe
-			var keyframeSelect=Math.floor(keyframes.length*(time/S.files[M.currentFile].duration));
-			if(keyframeSelect>=keyframes.length) keyframeSelect=keyframes[keyframes.length-1];
-			else keyframeSelect=keyframes[keyframeSelect];
+			// Get the last keyframe based on 'end'
+			if(time === 'end'){
+				var keyframeSelect = keyframes[keyframes.length - 1];
+				time = S.files[file].duration * ((keyframes.length -1) / keyframes.length);
+			// Get the keyframe based on time
+			}else{
+				var keyframeSelect=Math.floor(keyframes.length*(time/S.files[M.currentFile].duration));
+				if(keyframeSelect>=keyframes.length) keyframeSelect=keyframes[keyframes.length-1];
+				else keyframeSelect=keyframes[keyframeSelect];
+			}
 			
 			M.currentFile=file;
 			M.currentTime=time;
@@ -222,7 +235,7 @@ new function(){
 				// Text lines
 				if(/^\t+/.test(M.lines[i])){
 					// Ignore text lines that are appending
-					if(/^\t+\+/.test(M.lines[i])) continue;
+					// if(/^\t+\+/.test(M.lines[i])) continue;
 					
 					// See if it's part of a tag
 					// Anything with a space we'll ignore; you should only have self-closing tags or closing tags at the end of the line
@@ -250,12 +263,19 @@ new function(){
 				}
 			}
 			
-			// Get the keyframe
-			var keyframeSelect=Math.round(keyframes.length*(time/S.files[file].duration));
-			if(keyframeSelect>=keyframes.length) keyframeSelect=keyframes[keyframes.length-1];
-			else keyframeSelect=keyframes[keyframeSelect];
+			// Get the last keyframe based on 'end'
+			if(time === 'end'){
+				var keyframeSelect = keyframes[keyframes.length - 1];
+				time = S.files[file].duration * ((keyframes.length -1) / keyframes.length);
+			// Get a keyframe based on time
+			}else{
+				// Get the keyframe
+				var keyframeSelect=Math.round(keyframes.length*(time/S.files[file].duration));
+				if(keyframeSelect>=keyframes.length) keyframeSelect=keyframes[keyframes.length-1];
+				else keyframeSelect=keyframes[keyframeSelect];
+			}
 			
-			runTo=keyframeSelect;
+			runTo = keyframeSelect;
 			
 			content.classList.remove('s-loading');
 			M.run(0);
@@ -335,6 +355,8 @@ new function(){
 		for(M.currentLine; M.currentLine < M.lines.length; M.currentLine++){
 			if(!M.readLine(M.currentLine, M.lines[M.currentLine])) break;
 		}
+		
+		if(runTo === 'ending') runTo = false;
 
 		if(M.currentLine >= M.lines.length) S.file++;
 	}
@@ -473,14 +495,14 @@ new function(){
 			
 			target={};
 
-			runTo=false;
+			runTo = 'ending';
 			
 			M.window.offsetHeight; // Trigger reflow to flush CSS changes
 			M.loading--;
 		}
 		
 		// If we're running through to a point, add the info to the target
-		if(runTo!==false)
+		if(runTo !== false && runTo !== 'ending')
 		{
 			// Creating elements with the engine
 			if(type !== 'engine'){
@@ -503,6 +525,28 @@ new function(){
 			
 			switch(command){
 				case 'content':
+					// Keyframes never end with >, so get rid of it if it's for automatically continuing
+					if(parameter[parameter.length - 1] === '>'){
+						//See if it's an ending tag
+						var test=document.createElement('div');
+						test.innerHTML=parameter;
+						var text=test.innerText;
+						
+						//If it's not an ending tag
+						if(text[text.length-1] === '>'){
+							var skip=1;
+							var j = parameter.length-2;
+							while(parameter[j]==='\\'){
+								skip*=-1;
+								j--;
+							}
+							if(skip===1){
+								console.log('THIS CONTINUES',parameter);
+								parameter = parameter.substring(0,parameter.length - 1);
+							}
+						}
+					}
+				
 					// Append textbox content if it starts with a "+" this time
 					if(target[component].type === 'textbox'
 						&& parameter[0] === '+'
@@ -566,7 +610,8 @@ new function(){
 		}
 		
 		// Update the scrubbar if the frame we're on is a keyframe
-		if(runTo===false && keyframes.includes(lineNumber) && M.currentFile !== null){
+		if(keyframes.includes(lineNumber) && M.currentFile !== null){
+			console.log('update to keyframe');
 			// See if the display time is within acceptable range; if so, don't update it (so users don't think it went to the wrong time)
 			var thisKeyframe = keyframes.indexOf(lineNumber);
 			var baseTime = (thisKeyframe/keyframes.length)*S.files[M.currentFile].duration;
@@ -904,6 +949,14 @@ new function(){
 			return true;
 		}
 		
+		O.preload = function(){
+			// Preload images
+			for(let i = 0; i < M.lines.length; i++){
+				var value = new RegExp(O.name + '(\s{3,}|\t+)(.+$)').exec(M.lines[i]);
+				if(value) O.content(value[2],true);
+			}
+		}
+		
 		function loadingSuccess(e){
 			M.loading--;
 		}
@@ -915,11 +968,7 @@ new function(){
 		
 		objectAddCommonFunctions(O);
 		
-		// Preload images
-		for(let i = 0; i < M.lines.length; i++){
-			var value = new RegExp(O.name + '(\s{3,}|\t+)(.+$)').exec(M.lines[i]);
-			if(value) O.content(value[2],true);
-		}
+		O.preload();
 	}
 	
 	M.textbox=function(input){
@@ -1260,7 +1309,7 @@ new function(){
 	
 	// What to do when we aren't sure whether to proceed automatically or wait for input
 	function junction(){
-		if(runTo !== false) return;
+		if(runTo !== false && runTo !== 'ending') return;
 		
 		// If we aren't waiting to continue, continue
 		if(!wait){
