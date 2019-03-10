@@ -278,8 +278,12 @@ new function(){
 			runTo = keyframeSelect;
 			
 			content.classList.remove('s-loading');
-			M.run(0);
 			
+			// Set file now so M.run knows
+			M.currentFile=file;
+			M.currentTime=time;
+			
+			M.run(0);
 			
 			if(S.files[file].buffered!==true){
 				S.files[file].buffered=true;
@@ -288,9 +292,6 @@ new function(){
 			
 			S.displaySubtitles();
 			
-			// Set file at end? Or maybe even pass an object of the file's data rather than reading from Showpony?
-			M.currentFile=file;
-			M.currentTime=time;
 			return true;
 		});
 	}
@@ -463,6 +464,11 @@ new function(){
 				else{
 					objects[compTarget].style(null);
 					objects[compTarget].class(null);
+					
+					// Preload the files for this object
+					if(S.file !== M.currentFile){
+						objects[compTarget].preload();
+					}
 				}
 				
 				// Go through the object's functions and reset them to their base or passed values
@@ -541,7 +547,6 @@ new function(){
 								j--;
 							}
 							if(skip===1){
-								console.log('THIS CONTINUES',parameter);
 								parameter = parameter.substring(0,parameter.length - 1);
 							}
 						}
@@ -610,8 +615,7 @@ new function(){
 		}
 		
 		// Update the scrubbar if the frame we're on is a keyframe
-		if(keyframes.includes(lineNumber) && M.currentFile !== null){
-			console.log('update to keyframe');
+		if(keyframes.includes(lineNumber) && M.currentFile !== null && S.file !== null){
 			// See if the display time is within acceptable range; if so, don't update it (so users don't think it went to the wrong time)
 			var thisKeyframe = keyframes.indexOf(lineNumber);
 			var baseTime = (thisKeyframe/keyframes.length)*S.files[M.currentFile].duration;
@@ -845,6 +849,8 @@ new function(){
 			
 			return true;
 		}
+		
+		O.preload = function(){}
 		
 		// O.el.addEventListener('load',function(){});
 		
@@ -1282,6 +1288,8 @@ new function(){
 			
 			return false;
 		}
+		
+		O.preload = function(){}
 		
 		function scrollText(event){
 			if(this != event.target) return;
