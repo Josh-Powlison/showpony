@@ -1002,6 +1002,11 @@ new function(){
 			return true;
 		}
 		
+		O.defaultWaitTime	= .03;
+		O.defaultConstant	= false;
+		O.defaultAnimation	= 0;
+		O.defaultWait		= true;
+		
 		var charElement = document.createElement('span');
 		charElement.className = 'm-vn-letter-container';
 		
@@ -1009,7 +1014,7 @@ new function(){
 			O.el.dataset.state = 'normal';
 			O.el.dataset.done = 'false';
 			
-			wait = true; // Assume we're waiting at the end time //XXX
+			wait = O.defaultWait; // Assume we're waiting at the end time, unless otherwise set //XXX
 			
 			var fragment = document.createDocumentFragment();
 			var currentParent = fragment;
@@ -1017,9 +1022,9 @@ new function(){
 			var letters = ''; // Have to save actual letters separately; special tags and such can mess with our calculations
 			
 			// Values for change; the first value is the default
-			var baseWaitTime	= [.03];
-			var constant		= [false];
-			var animation		= [0];
+			var baseWaitTime	= [O.defaultWaitTime];
+			var constant		= [O.defaultConstant];
+			var animation		= [O.defaultAnimation];
 			
 			var l = input.length;
 			
