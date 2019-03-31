@@ -375,6 +375,8 @@ new function(){
 		var component	= typeof(text[1]) !== 'undefined' ? text[1] : 'textbox';
 		var command		= typeof(text[2]) !== 'undefined' ? text[2] : 'content';
 		var parameter	= typeof(text[3]) !== 'undefined' ? text[3] : null;
+		if(parameter === 'false')	parameter = false;
+		if(parameter === 'true')	parameter = true;
 		
 		// Operations
 		switch(command){
@@ -827,7 +829,7 @@ new function(){
 		}
 		
 		O.loop=function(input=false){
-			O.el.loop=(input=="false" ? false : true);
+			O.el.loop=input;
 			
 			return true;
 		}
