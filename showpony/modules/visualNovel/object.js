@@ -339,7 +339,17 @@ new function(){
 	M['=']	= function(a,b){return b;}
 	M['+']	= function(a,b){return a + b;}
 	M['-']	= function(a,b){return a - b;}
-	M['==']	= function(a,b){return a == b;}
+	M['==']	= function(a,b){
+		// Test regex, if a regex was passed
+		var regexTest = /^\/([^\/]+)\/(.)*$/.exec(b);
+		console.log(regexTest);
+		if(regexTest[0] !== null){
+			console.log("Regular expression ",a,b,regexTest);
+			return new RegExp(regexTest[1],regexTest[2]).test(a);
+		}
+		
+		return a == b;
+	}
 	M['<']	= function(a,b){return a < b;}
 	M['>']	= function(a,b){return a > b;}
 	M['<=']	= function(a,b){return a <= b;}
