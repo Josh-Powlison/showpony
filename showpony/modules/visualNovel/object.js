@@ -4,7 +4,6 @@ new function(){
 	M.currentTime=null;
 	M.currentFile=null;
 	M.currentLine=null;
-	M.file = null;
 	M.lines=null;
 	M.loading=0; // Tracks how many items are currently loading
 	M.variables = {};
