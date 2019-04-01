@@ -9,8 +9,14 @@ new function(){
 	M.variables = {};
 	
 	M.window=document.createElement('div');
-	M.window.className='m-vn';
+	M.window.className='m-vn paused';
 	M.window.dataset.filename = null;
+	
+	var styles = document.createElement('style');
+	styles.innerHTML = `<?php
+		addslashes(readfile(__DIR__.'/styles.css'));
+	?>`;
+	M.window.appendChild(styles);
 	
 	M.subtitles=document.createElement('p');
 	M.subtitles.className='m-vn-subtitles';
@@ -61,6 +67,7 @@ new function(){
 	};
 	
 	M.play=function(){
+		M.window.classList.remove('paused');
 		// Go through objects that were playing- unpause them
 		for(var name in objects){
 			if(objects[name].playing){
@@ -78,6 +85,8 @@ new function(){
 	}
 	
 	M.pause = function(){
+		M.window.classList.add('paused');
+		
 		// Go through objects that can be played- pause them, and track that
 		for(var name in objects){
 			// If it can play, and it is playing

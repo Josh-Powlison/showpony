@@ -52,45 +52,21 @@ if(!empty($_GET['export'])){
 header('Content-type: application/javascript');
 ?>'use strict';
 
-// Add styles if not added already
-if(!document.getElementById('s-styles')){
-	var styles = document.createElement('style');
-	styles.id = 's-styles';
-	styles.innerHTML = `<?php addslashes(readfile(__DIR__.'/styles.css')); ?>`;
-	document.head.appendChild(styles);
-}
-
-<?php
-
-// Load modules CSS
-foreach(array_keys($media) as $moduleName){
-	
-?>
-// Add <?php echo $moduleName; ?> styles if not added already
-if(!document.getElementById('s-<?php echo $moduleName; ?>-styles')){
-	var styles = document.createElement('style');
-	styles.id = 's-<?php echo $moduleName; ?>-styles';
-	styles.innerHTML = `<?php addslashes(readfile(__DIR__.'/modules/'.$moduleName.'/styles.css')); ?>`;
-	document.head.appendChild(styles);
-}
-
-<?php }
-
-// If the story has its own css file, add it in here
-if(file_exists('styles.css')){
-	
-?>
-// Load story-specific css
-var styles = document.createElement('style');
-styles.innerHTML = `<?php addslashes(readfile('styles.css')); ?>`;
-document.head.appendChild(styles);
-
-<?php } ?>
-
 new function(){
 
 // All of these attributes get put on the parent element, so they're easy to reference and call
 const S = document.currentScript.parentNode;
+var shadow = S.attachShadow({mode: 'open'});
+
+var styles = document.createElement('style');
+styles.innerHTML = `<?php
+	echo '/* SHOWPONY CSS */\r\n\r\n';
+	addslashes(readfile(__DIR__.'/styles.css'));
+?>
+`;
+
+shadow.appendChild(styles);
+
 const DEBUG = <?php echo DEBUG ? 'true' : 'false'; ?>;
 
 ///////////////////////////////////////
@@ -144,6 +120,19 @@ const scrubber			= view.getElementsByClassName('s-scrubber')[0];
 const progressEl		= view.getElementsByClassName('s-progress')[0];
 const regressEl			= view.getElementsByClassName('s-regress')[0];
 const noticeEl			= view.getElementsByClassName('s-notice')[0];
+
+const contentShadow		= content.attachShadow({mode:'open'});
+
+var contentStyles = document.createElement('style');
+contentStyles.innerHTML = `<?php
+	// If the story has its own css file, add it in here
+	if(file_exists('styles.css')){
+		addslashes(readfile('styles.css'));
+	} else {
+		echo '/* styles.css not found in story folder */';
+	}
+?>`;
+contentShadow.appendChild(contentStyles);
 
 const framerate			= 60;		// Connected to gamepad use and games
 const queryBookmark		= <?php echo json_encode(NAME); ?>+'-bookmark';
@@ -535,6 +524,8 @@ function notice(input){
 	noticeEl.classList.add('s-visible');
 	
 	noticeEl.focus();
+	
+	if(debug) console.log(input);
 }
 
 function regress(){
@@ -595,8 +586,9 @@ async function to(obj = {file:file, time:time}){
 	
 	// If switching types, do some cleanup
 	if(module!==S.files[obj.file].module){
-		while(content.firstChild) content.removeChild(content.firstChild);
-		content.appendChild(modules[S.files[obj.file].module].window);
+		// The first element is the styles, so keep that
+		while(contentShadow.children[1]) contentShadow.removeChild(contentShadow.children[1]);
+		contentShadow.appendChild(modules[S.files[obj.file].module].window);
 	}
 	
 	module=S.files[obj.file].module;
@@ -1503,6 +1495,38 @@ view.addEventListener(
 // TODO: put this somewhere sensible, or decide that here is fine
 var buttonDown = null;
 
+contentShadow.addEventListener('click',stop);
+contentShadow.addEventListener('mousedown',stop);
+contentShadow.addEventListener('touchdown',stop);
+
+function stop(event){
+	var pointer;
+	
+	if(event.touches) pointer = event.touches[0];
+	else pointer = event;
+	
+	// Ignore if grabbing a scrollbar
+    if(pointer.offsetX > pointer.target.clientWidth || pointer.offsetY>pointer.target.clientHeight){
+		event.stopPropagation();
+		return;
+	}
+	
+	// Run through the targeted element and its parents; don't allow it to bubble up to the menu if it's an input, button, or anchor
+	var node = pointer.target;
+	while(node !== null){
+		if(node.tagName==='INPUT'
+		|| node.tagName==='BUTTON'
+		|| node.tagName==='A'){
+			event.stopPropagation();
+			return;
+		}
+		
+		node = node.parentNode;
+	}
+	
+	
+}
+
 var touching = false;
 
 function pointerDown(event){
@@ -1842,7 +1866,7 @@ if(!loadBookmark()){
 
 // We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
 
-S.appendChild(view);
+shadow.appendChild(view);
 S.dispatchEvent(new CustomEvent('built'));
 
 }();<?php

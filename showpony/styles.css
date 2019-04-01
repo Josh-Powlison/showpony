@@ -42,12 +42,6 @@
 	}
 }
 
-/*Automatic loading with these, and disable animations*/
-.s-loading *
-,.s-paused  .s-content *{
-	animation-play-state:paused !important; /*Disables general animations and text animations, so we freeze while loading*/
-}
-
 .s-paused .s-content{
 	pointer-events:none;
 }

@@ -3,6 +3,10 @@
 	width:100%;
 }
 
+.paused *{
+	animation-play-state:paused !important;
+}
+
 /* Textbox */
 
 .m-vn-textbox{
