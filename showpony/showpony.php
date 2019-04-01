@@ -134,8 +134,7 @@ contentStyles.innerHTML = `<?php
 	}
 ?>`;
 contentShadow.appendChild(document.createElement('style'));	// Module styles
-contentShadow.appendChild(contentStyles);						// Story styles
-contentShadow.appendChild(document.createElement('div'));		// Module content
+contentShadow.appendChild(contentStyles);					// Story styles
 
 const framerate			= 60;		// Connected to gamepad use and games
 const queryBookmark		= <?php echo json_encode(NAME); ?>+'-bookmark';
@@ -596,9 +595,9 @@ async function to(obj = {file:file, time:time}){
 		// The second element is story styles, so keep that
 		
 		// Empty and replace the third element's children
-		while(contentShadow.children[2].firstChild) contentShadow.children[2].removeChild(contentShadow.children[2].firstChild);
+		while(contentShadow.children[2]) contentShadow.removeChild(contentShadow.children[2]);
 
-		contentShadow.children[2].appendChild(modules[S.files[obj.file].module].window);
+		contentShadow.appendChild(modules[S.files[obj.file].module].window);
 	}
 	
 	module=S.files[obj.file].module;
