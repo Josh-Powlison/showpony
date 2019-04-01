@@ -365,7 +365,7 @@ if(view.requestFullscreen){
 	});
 	
 	document.addEventListener('fullscreenchange',function(){
-		fullscreen = (document.fullscreenElement === view);
+		fullscreen = (document.fullscreenElement === S);
 	});
 }
 // Webkit fullscreen
@@ -399,7 +399,7 @@ else if(view.webkitRequestFullscreen){
 	});
 	
 	document.addEventListener('webkitfullscreenchange',function(){
-		fullscreen = (document.webkitFullscreenElement === view);
+		fullscreen = (document.webkitFullscreenElement === S);
 	});
 }
 // No fullscreen support fullscreen (like for iOS Safari)
