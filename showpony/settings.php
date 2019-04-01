@@ -11,7 +11,7 @@ const DEFAULT_DIRECTION		= 'left-to-right';	// 'left-to-right' or 'right-to-left
 const HIDING_CHAR			= '~';				// Start a filename with this char to hide it. Change in .htaccess too, to block direct URL access
 const PRELOAD_BYTES			= .5 * 1048576;		// How many file bytes to preload
 const RELEASE_DATES			= 1;				// How many upcoming files to show release dates for
-const DEBUG					= false;			// Passes PHP notices and errors to Showpony's creation event
+const DEBUG					= true;				// Passes PHP notices and errors to Showpony's creation event
 date_default_timezone_set('UTC');				// The timezone we're reading times in
 
 const QUALITY_NAMES = [
@@ -29,6 +29,7 @@ const FILE_GET_MODULE = [
 	,'mime:audio'		=> 'audio'
 	,'mime:video'		=> 'video'
 	,'ext:vn'			=> 'visualNovel'
+	,'ext:php'			=> 'visualNovel'
 	,'mime:application'	=> null
 ];
 

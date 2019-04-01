@@ -350,10 +350,19 @@ new function(){
 	M['==']	= function(a,b){
 		// Test regex, if a regex was passed
 		var regexTest = /^\/([^\/]+)\/(.)*$/.exec(b);
-		console.log(regexTest);
-		if(regexTest[0] !== null){
+		console.log(regexTest,a,b);
+		if(regexTest !== null){
 			console.log("Regular expression ",a,b,regexTest);
-			return new RegExp(regexTest[1],regexTest[2]).test(a);
+			console.log(M.variables);
+			if(regexTest[2] != null){
+				var regex = new RegExp(regexTest[1],regexTest[2]);
+			}else{
+				var regex = new RegExp(regexTest[1]);
+			}
+			
+			console.log('TEST THIS',regex,a,regex.test(String(a)));
+			
+			return regex.test(String(a));
 		}
 		
 		return a == b;
@@ -384,6 +393,8 @@ new function(){
 		var match;
 		while(match = /[^\[]+(?=\])/g.exec(text)) text = text.replace('[' + match[0] + ']', M.variables[match[0]]);
 		
+		console.log('TEXT HERE',text);
+		
 		text = /(^[^\t\.\+\-=<>!]+)?\.?([^\t]+|[+\-=<>!]+)?\t*(.+$)?/.exec(text);
 		
 		// Skip comments
@@ -413,8 +424,10 @@ new function(){
 			case '<=':
 			case '>=':
 			case '!':
+				console.log('what is passed',component,parameter);
+			
 				// If returns false, skip the next line
-				if(!M[command](M.variables[component],parameter)) M.currentLine++;
+				if(!M[command](component,parameter)) M.currentLine++;
 				
 				return true;
 				break;
@@ -1030,6 +1043,7 @@ new function(){
 		O.empty=function(){
 			O.el.dataset.state = 'hidden';
 			O.el.dataset.done = 'true';
+			while(O.el.firstChild) O.el.removeChild(O.el.firstChild);
 			return true;
 		}
 		
