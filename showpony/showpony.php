@@ -112,7 +112,7 @@ var data				= {};
 var debug				= <?php echo DEBUG ? 'true' : 'false'; ?>;
 
 const content			= view.getElementsByClassName('s-content')[0];
-content.classList.add('loading');
+content.classList.add('s-loading');
 const overlay			= view.getElementsByClassName('s-menu')[0];
 const buffer			= view.getElementsByClassName('s-buffer')[0];
 const infoText			= view.getElementsByClassName('s-info-text')[0];
@@ -133,8 +133,7 @@ contentStyles.innerHTML = `<?php
 		echo '/* styles.css not found in story folder */';
 	}
 ?>`;
-contentShadow.appendChild(document.createElement('style'));	// Module styles
-contentShadow.appendChild(contentStyles);					// Story styles
+contentShadow.appendChild(contentStyles);
 
 const framerate			= 60;		// Connected to gamepad use and games
 const queryBookmark		= <?php echo json_encode(NAME); ?>+'-bookmark';
@@ -287,7 +286,7 @@ Object.defineProperty(S, 'quality', {
 			return;
 		}
 		
-		content.classList.add('loading');
+		content.classList.add('s-loading');
 		
 		// Remove selected class from previous selected item (if one was selected)
 		view.querySelector('.s-popup-quality .s-selected').classList.remove('s-selected');
@@ -312,7 +311,7 @@ Object.defineProperty(S, 'language', {
 			return;
 		}
 		
-		content.classList.add('loading');
+		content.classList.add('s-loading');
 		
 		// Remove selected class from previous selected item
 		view.querySelector('.s-popup-language .s-selected').classList.remove('s-selected');
