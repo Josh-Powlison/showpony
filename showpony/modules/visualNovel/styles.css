@@ -86,8 +86,8 @@
 	display:none;
 }
 
-.m-vn-textbox-form[data-state="inactive"] input,
-.m-vn-textbox-form[data-state="inactive"] button{
+.m-vn-textbox-form[data-done="true"] input,
+.m-vn-textbox-form[data-done="true"] button{
 	pointer-events:none;
 	opacity:.5;
 }
@@ -266,6 +266,15 @@
 	
 	font-size:1em;
 	border-radius:1em;
+}
+
+.choices{
+	top:0;
+	height:100%;
+	display:flex;
+	align-items:center;
+	flex-direction:column;
+	justify-content:center;
 }
 
 /* CUSTOM LETTER ANIMATIONS */

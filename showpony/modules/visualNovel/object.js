@@ -1008,15 +1008,29 @@ new function(){
 		O.el.dataset.name=input;
 		O.el.dataset.state='hidden';
 		O.el.dataset.done='true';
+		O.target = null;
 		
-		O.el.addEventListener('submit',function(event){
+		O.el.addEventListener('submit',function(event){ 
+			// Focus again on the window so keyboard shortcuts work
+			view.focus();
+			
 			event.preventDefault();
+			
+			if(O.el.checkValidity()){
+				O.el.dataset.done = 'true';
+				if(O.target === null) M.run();
+				else{
+					M.run(O.target);
+					O.target = null;
+				}
+			}
 		});
 		
 		M.window.appendChild(O.el);
 		
 		O.empty=function(){
-			O.el.dataset.state='hidden';
+			O.el.dataset.state = 'hidden';
+			O.el.dataset.done = 'true';
 			return true;
 		}
 		
@@ -1052,6 +1066,10 @@ new function(){
 				// Won't interfere with tags, no worries!
 				if(i == l-1 && input[i] === '>'){
 					wait = false; //XXX
+					continue;
+				}
+				
+				if(i == l && !wait){
 					continue;
 				}
 				
@@ -1158,9 +1176,9 @@ new function(){
 								currentParent.appendChild(document.createElement('br'));
 								break;
 							default:
-								var newElement=document.createElement(tag);
+								var newElement = document.createElement(tag);
 								
-								for(let ii=0;ii<attributes.length;ii++){
+								for(let ii = 0; ii < attributes.length; ii++){
 									if(attributes[ii][4]) newElement.setAttribute(attributes[ii][4],true);
 									else newElement.setAttribute(attributes[ii][1],attributes[ii][3]);
 								}
@@ -1169,39 +1187,47 @@ new function(){
 								
 								// If it's not a self-closing tag, make it the new parent
 								if(!/^(area|br|col|embed|hr|img|input|link|meta|param|wbr)$/i.test(tag)){
-									currentParent=newElement;
+									currentParent = newElement;
 								}
 								
 								// If an input type, wait until input is set and stuff
-								if(tag==='input'){
+								if(tag === 'input' || tag === 'button'){
 									// Update data based on this
-									if(newElement.type==='button' || newElement.type==='submit'){
+									if(tag === 'button' || newElement.type === 'button' || newElement.type === 'submit'){
+										O.el.dataset.done = 'form';
+										
 										newElement.addEventListener('click',function(event){
-											if(!O.el.checkValidity()) return false;
-											
-											O.el.dataset.state='inactive';
+											if(typeof(this.dataset.var) !== 'undefined'){
+												M.variables[this.dataset.var] = this.dataset.val;
+												
+												if(debug){
+													console.log('Set variable ' + this.dataset.var + ' to ' + this.dataset.val);
+												}
+											}
 											
 											// This might just be a continue button, so we need to check
-											if(this.dataset.var) M.variables[this.dataset.var]=this.dataset.val;
-											
-											if(this.dataset.go){
-												M.currentLine=M.lines.indexOf(this.dataset.go);
-												return true;
+											if(typeof(this.dataset.go) !== 'undefined'){
+												O.target = M.lines.indexOf(this.dataset.go);
+												
+												if(typeof(O.target) === 'undefined' || O.target === null){
+													notice('Error: tried to go to a nonexistent line labeled ' + this.dataset.go);
+													O.target = null;
+												}
 											}
-											else return true;
 											
-											// We don't want to run S.input here by clicking on a button
 											event.stopPropagation();
-											
-											// Focus again on the window so keyboard shortcuts work
-											view.focus();
+											// Form submits
 										});
 									}else{
 										// Set data to the defaults of these, in case the user just clicks through
-										if(newElement.dataset.var) M.variables[newElement.dataset.var]=newElement.value;
+										if(newElement.dataset.var) M.variables[newElement.dataset.var] = newElement.value;
 										
 										newElement.addEventListener('change',function(){
-											M.variables[this.dataset.var]=this.value;
+											M.variables[this.dataset.var] = this.value;
+											
+											if(debug){
+												console.log('Set variable ' + this.dataset.var + ' to ' + this.value);
+											}
 										});
 									}
 								}
@@ -1332,7 +1358,7 @@ new function(){
 		function lastLetterAppear(event){
 			if(this!==event.target) return;
 			
-			O.el.dataset.done='true';
+			if(O.el.dataset.done !== 'form') O.el.dataset.done='true';
 			
 			junction();
 		}
@@ -1342,13 +1368,15 @@ new function(){
 	
 	// What to do when we aren't sure whether to proceed automatically or wait for input
 	function junction(){
+		
 		if(runTo !== false && runTo !== 'ending') return;
 		
+		console.log('test click',runTo);
 		// If we aren't waiting to continue, continue
 		if(!wait){
 			M.run();
-		// Don't add a continue notice if we ran through a textbox
-		}else if(!M.window.querySelector('input') && !M.window.querySelector('.m-vn-textbox[data-done="false"]')){
+		// Don't add a continue notice if we ran through a textbox or are waiting for form input
+		}else if(!M.window.querySelector('.m-vn-textbox[data-done="false"]') && !M.window.querySelector('.m-vn-textbox[data-done="form"]')){
 			M.window.appendChild(continueNotice);
 			skipping = false;
 		}
