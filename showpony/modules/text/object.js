@@ -9,6 +9,11 @@ new function(){
 	M.window.className='m-text';
 	M.window.dataset.filename = null;
 	
+	M.styles = document.createElement('style');
+	M.styles.innerHTML = `<?php
+		addslashes(readfile(__DIR__.'/styles.css'));
+	?>`;
+	
 	M.regress=function(){
 		// If we're not at the top of the file, scroll up
 		if(M.window.scrollTop > 0){
@@ -35,7 +40,7 @@ new function(){
 		// If this is the current file
 		if(M.window.dataset.filename === filename){
 			M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
-			content.classList.remove('s-loading');
+			content.classList.remove('loading');
 			
 			M.currentTime = time;
 			M.currentFile = file;
@@ -55,7 +60,7 @@ new function(){
 			M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
 			
 			// Stop loading
-			content.classList.remove('s-loading');
+			content.classList.remove('loading');
 			
 			if(S.files[file].buffered!==true){
 				S.files[file].buffered=true;

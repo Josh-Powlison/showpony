@@ -109,9 +109,10 @@ var fullscreen			= false;
 var paused				= true;
 var active				= true;
 var data				= {};
+var debug				= <?php echo DEBUG ? 'true' : 'false'; ?>;
 
 const content			= view.getElementsByClassName('s-content')[0];
-content.classList.add('s-loading');
+content.classList.add('loading');
 const overlay			= view.getElementsByClassName('s-menu')[0];
 const buffer			= view.getElementsByClassName('s-buffer')[0];
 const infoText			= view.getElementsByClassName('s-info-text')[0];
@@ -132,7 +133,9 @@ contentStyles.innerHTML = `<?php
 		echo '/* styles.css not found in story folder */';
 	}
 ?>`;
-contentShadow.appendChild(contentStyles);
+contentShadow.appendChild(document.createElement('style'));	// Module styles
+contentShadow.appendChild(contentStyles);						// Story styles
+contentShadow.appendChild(document.createElement('div'));		// Module content
 
 const framerate			= 60;		// Connected to gamepad use and games
 const queryBookmark		= <?php echo json_encode(NAME); ?>+'-bookmark';
@@ -285,7 +288,7 @@ Object.defineProperty(S, 'quality', {
 			return;
 		}
 		
-		content.classList.add('s-loading');
+		content.classList.add('loading');
 		
 		// Remove selected class from previous selected item (if one was selected)
 		view.querySelector('.s-popup-quality .s-selected').classList.remove('s-selected');
@@ -310,7 +313,7 @@ Object.defineProperty(S, 'language', {
 			return;
 		}
 		
-		content.classList.add('s-loading');
+		content.classList.add('loading');
 		
 		// Remove selected class from previous selected item
 		view.querySelector('.s-popup-language .s-selected').classList.remove('s-selected');
@@ -538,7 +541,7 @@ function progress(){
 
 // Go to another file
 async function to(obj = {file:file, time:time}){
-	content.classList.add('s-loading');
+	content.classList.add('loading');
 	
 	/// GET TIME AND FILE ///
 	
@@ -586,9 +589,16 @@ async function to(obj = {file:file, time:time}){
 	
 	// If switching types, do some cleanup
 	if(module!==S.files[obj.file].module){
-		// The first element is the styles, so keep that
-		while(contentShadow.children[1]) contentShadow.removeChild(contentShadow.children[1]);
-		contentShadow.appendChild(modules[S.files[obj.file].module].window);
+		// Replace the old styles with the new ones
+		console.log(contentShadow,contentShadow.firstChild,contentShadow.firstChild.innerHTML);
+		contentShadow.firstChild.innerHTML = modules[S.files[obj.file].module].styles.innerHTML;
+		
+		// The second element is story styles, so keep that
+		
+		// Empty and replace the third element's children
+		while(contentShadow.children[2].firstChild) contentShadow.children[2].removeChild(contentShadow.children[2].firstChild);
+
+		contentShadow.children[2].appendChild(modules[S.files[obj.file].module].window);
 	}
 	
 	module=S.files[obj.file].module;

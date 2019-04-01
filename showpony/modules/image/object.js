@@ -9,6 +9,11 @@ new function(){
 	M.window.className='m-img-window';
 	M.window.dataset.filename = null;
 	
+	M.styles = document.createElement('style');
+	M.styles.innerHTML = `<?php
+		addslashes(readfile(__DIR__.'/styles.css'));
+	?>`;
+	
 	M.container=document.createElement('div');
 	M.container.className='m-img-container';
 	M.window.appendChild(M.container);
@@ -48,7 +53,7 @@ new function(){
 		if(M.window.dataset.filename === filename){
 			// Go to a scroll point dependent on time
 			M.window.scrollTop = M.window.scrollHeight * (time/S.files[file].duration);
-			content.classList.remove('s-loading');
+			content.classList.remove('loading');
 			
 			M.currentFile=file;
 			M.currentTime=time;
@@ -66,7 +71,7 @@ new function(){
 					
 					M.window.scrollTop=M.window.scrollHeight*(time/S.files[file].duration);
 					
-					content.classList.remove('s-loading');
+					content.classList.remove('loading');
 					
 					M.currentFile=file;
 					M.currentTime=time;

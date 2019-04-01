@@ -9,6 +9,11 @@ new function(){
 	M.window.className='m-video-window';
 	M.window.dataset.filename = null;
 	
+	M.styles = document.createElement('style');
+	M.styles.innerHTML = `<?php
+		addslashes(readfile(__DIR__.'/styles.css'));
+	?>`;
+	
 	M.video=document.createElement('video');
 	M.video.className='m-video';
 	M.video.disableRemotePlayback = true;
@@ -90,7 +95,7 @@ new function(){
 	});
 
 	M.video.addEventListener('canplay',function(){
-		content.classList.remove('s-loading');
+		content.classList.remove('loading');
 		// Consider how much has already been loaded; this isn't run on first chunk loaded
 		M.window.dispatchEvent(new CustomEvent('progress'));
 	});

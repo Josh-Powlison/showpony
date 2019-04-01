@@ -10,7 +10,7 @@
 	height:100%;
 }
 
-.s-loading:before{
+.loading:before{
     position: absolute;
     width:100%;
     height:100%;
@@ -28,10 +28,10 @@
     pointer-events: none;
 	
 	visibility:hidden;
-	animation:s-loading 1s linear .5s infinite;
+	animation:loading 1s linear .5s infinite;
 }
 
-@keyframes s-loading{
+@keyframes loading{
 	0%{
 		visibility:visible;
 		transform:rotate(0deg);

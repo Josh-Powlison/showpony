@@ -12,11 +12,10 @@ new function(){
 	M.window.className='m-vn paused';
 	M.window.dataset.filename = null;
 	
-	var styles = document.createElement('style');
-	styles.innerHTML = `<?php
+	M.styles = document.createElement('style');
+	M.styles.innerHTML = `<?php
 		addslashes(readfile(__DIR__.'/styles.css'));
 	?>`;
-	M.window.appendChild(styles);
 	
 	M.subtitles=document.createElement('p');
 	M.subtitles.className='m-vn-subtitles';
@@ -180,13 +179,13 @@ new function(){
 			
 			// If this is the current keyframe, resolve
 			if(keyframeSelect === M.currentLine){
-				content.classList.remove('s-loading');
+				content.classList.remove('loading');
 				return true;
 			}
 			
 			runTo = keyframeSelect;
 			
-			content.classList.remove('s-loading');
+			content.classList.remove('loading');
 			M.run(0);
 			S.displaySubtitles();
 			return true;
@@ -285,7 +284,7 @@ new function(){
 			
 			runTo = keyframeSelect;
 			
-			content.classList.remove('s-loading');
+			content.classList.remove('loading');
 			
 			// Set file now so M.run knows
 			M.currentFile=file;

@@ -9,6 +9,11 @@ new function(){
 	M.window.className='m-audio-window';
 	M.window.dataset.filename = null;
 	
+	M.styles = document.createElement('style');
+	M.styles.innerHTML = `<?php
+		addslashes(readfile(__DIR__.'/styles.css'));
+	?>`;
+	
 	M.audio=document.createElement('audio');
 	M.audio.className='m-audio';
 	M.audio.disableRemotePlayback = true;
@@ -90,7 +95,7 @@ new function(){
 	});
 
 	M.audio.addEventListener('canplay',function(){
-		content.classList.remove('s-loading');
+		content.classList.remove('loading');
 		// Consider how much has already been loaded; this isn't run on first chunk loaded
 		M.window.dispatchEvent(new CustomEvent('progress'));
 	});
