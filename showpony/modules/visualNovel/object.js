@@ -7,6 +7,7 @@ new function(){
 	M.lines=null;
 	M.loading=0; // Tracks how many items are currently loading
 	M.variables = {};
+	M.editor = null;
 	
 	M.window=document.createElement('div');
 	M.window.className='m-vn paused';
@@ -159,7 +160,86 @@ new function(){
 		junction();
 	}
 
-	M.src = async function(file=0,time=0,filename){
+	// Parse a file correctly, and return the lines
+	function parseFile(text){
+		// Remove multiline comments
+		text = text.replace(/\/\*[^]*?\*\//g,'');
+		
+		// Get all non-blank lines
+		M.lines = text.match(/.+(?=\S).+/g);
+		
+		// Get keyframes from the waiting points in the text
+		var keyframes = [];
+		
+		// Go through each line
+		for(let i = 0; i < M.lines.length; i++){
+			// Throw an error if too many keyframes crop up; we're likely creating an accidental infinite loop
+			if(keyframes.length > 1000){
+				notice("Error: likely recursion. Over 1000 keyframes read.");
+				throw "ERROR: too many keyframes";
+			}
+			
+			// Prevent recursion
+			if(keyframes.length > 0 && keyframes.indexOf(i) !== -1){
+				notice("Error: recursion detected. Revisited keyframe on line "+i+ " reading: "+M.lines[i]);
+				return false;
+			}
+			
+			// Look for keyframes
+			if(/^engine\.wait$/.test(M.lines[i])){
+				keyframes.push(i);
+				continue;
+			}
+			
+			// Get "engine.go" keyframes, where possible (where not based on a variable)
+			if(/^engine\.go/.test(M.lines[i])){
+				var goTo = /\t+(.+)$/.exec(M.lines[i]);
+				
+				if(M.lines.indexOf(goTo[1]) !== -1) i = M.lines.indexOf(goTo[1]);
+				continue;
+			}
+			
+			// Add comments (messes with time display, disabled for now)
+			/*if(/^\/\//.test(M.lines[i])){
+				keyframes.push(i);
+				continue;
+			}*/
+			
+			// Text lines
+			if(/^\t+/.test(M.lines[i])){
+				// Ignore text lines that are appending
+				// if(/^\t+\+/.test(M.lines[i])) continue;
+				
+				// See if it's part of a tag
+				// Anything with a space we'll ignore; you should only have self-closing tags or closing tags at the end of the line
+				
+				// See if the line ends with an unescaped >; if so, don't add the line
+				if(M.lines[i][M.lines[i].length-1] === '>'){
+					//See if it's an ending tag
+					var test=document.createElement('div');
+					test.innerHTML=M.lines[i];
+					var text=test.innerText;
+					
+					//If it's not an ending tag
+					if(text[text.length-1] === '>'){
+						var skip=1;
+						var j=M.lines[i].length-2;
+						while(M.lines[i][j]==='\\'){
+							skip*=-1;
+							j--;
+						}
+						if(skip===1) continue;
+					}
+				}
+				
+				keyframes.push(i);
+			}
+		}
+		
+		return keyframes;
+	}
+	
+	M.src = async function(file = 0,time = 0,filename = null,refresh = false){
 		// If this is the current file
 		if(M.window.dataset.filename === filename){
 			
@@ -178,7 +258,7 @@ new function(){
 			M.currentTime=time;
 			
 			// If this is the current keyframe, resolve
-			if(keyframeSelect === M.currentLine){
+			if(keyframeSelect === M.currentLine && !refresh){
 				content.classList.remove('loading');
 				return true;
 			}
@@ -196,79 +276,10 @@ new function(){
 		.then(text=>{
 			M.window.dataset.filename = filename;
 			
-			// Remove multiline comments
-			text = text.replace(/\/\*[^]*?\*\//g,'');
+			// Update the editor
+			if(M.editor) M.editor.update(text);
 			
-			// Get all non-blank lines
-			M.lines = text.match(/.+(?=\S).+/g);
-			
-			// Get keyframes from the waiting points in the text
-			keyframes = [];
-			
-			// Go through each line
-			for(let i = 0; i < M.lines.length; i++){
-				// Throw an error if too many keyframes crop up; we're likely creating an accidental infinite loop
-				if(keyframes.length > 1000){
-					notice("Error: likely recursion. Over 1000 keyframes read.");
-					throw "ERROR: too many keyframes";
-				}
-				
-				// Prevent recursion
-				if(keyframes.length > 0 && keyframes.indexOf(i) !== -1){
-					notice("Error: recursion detected. Revisited keyframe on line "+i+ " reading: "+M.lines[i]);
-					return false;
-				}
-				
-				// Look for keyframes
-				if(/^engine\.wait$/.test(M.lines[i])){
-					keyframes.push(i);
-					continue;
-				}
-				
-				// Get "engine.go" keyframes, where possible (where not based on a variable)
-				if(/^engine\.go/.test(M.lines[i])){
-					var goTo = /\t+(.+)$/.exec(M.lines[i]);
-					
-					if(M.lines.indexOf(goTo[1]) !== -1) i = M.lines.indexOf(goTo[1]);
-					continue;
-				}
-				
-				// Add comments (messes with time display, disabled for now)
-				/*if(/^\/\//.test(M.lines[i])){
-					keyframes.push(i);
-					continue;
-				}*/
-				
-				// Text lines
-				if(/^\t+/.test(M.lines[i])){
-					// Ignore text lines that are appending
-					// if(/^\t+\+/.test(M.lines[i])) continue;
-					
-					// See if it's part of a tag
-					// Anything with a space we'll ignore; you should only have self-closing tags or closing tags at the end of the line
-					
-					// See if the line ends with an unescaped >; if so, don't add the line
-					if(M.lines[i][M.lines[i].length-1] === '>'){
-						//See if it's an ending tag
-						var test=document.createElement('div');
-						test.innerHTML=M.lines[i];
-						var text=test.innerText;
-						
-						//If it's not an ending tag
-						if(text[text.length-1] === '>'){
-							var skip=1;
-							var j=M.lines[i].length-2;
-							while(M.lines[i][j]==='\\'){
-								skip*=-1;
-								j--;
-							}
-							if(skip===1) continue;
-						}
-					}
-					
-					keyframes.push(i);
-				}
-			}
+			keyframes = parseFile(text);
 			
 			// Get the last keyframe based on 'end'
 			if(time === 'end'){
@@ -1394,4 +1405,7 @@ new function(){
 			skipping = false;
 		}
 	}
+	
+	// Load editor
+	<?php include 'editor.js'; ?>
 }()
