@@ -5,6 +5,7 @@ M.editor = new function(){
 	//,left=' + S.window.offsetLeft + ',top=' + S.window.offsetTop
 	E.rawText = null;
 	
+	E.keyframePositions = [];
 	
 	E.window.document.write(`
 	<!DOCTYPE html>
@@ -87,16 +88,24 @@ M.editor = new function(){
 		content.style.height = '';
 		content.style.height = content.scrollHeight + 16 + 'px';
 		
-		// FIX: TABS BREAK DISPLAY
-		// Can run through string, padding to the right amount each time
 		
+	}
+	
+	E.updateCurrentLine = function(line){
 		//Highlights
 		var lines = E.rawText.split(/\r\n?|\n/);
-		console.log(lines);
+		// console.log(lines);
 		var html = '';
+		
+		// Track which line we correspond to
+		var currentLine = -1;
+		
+		// Check if we're in a multiline comment
+		var multilineComment = false;
 		
 		var yPos = 0;
 		for(var i = 0; i < lines.length; i ++){
+			
 			var linesTall = 1;
 			
 			var lineLength = 0;
@@ -107,7 +116,7 @@ M.editor = new function(){
 				else lineLength ++;
 			}
 			
-			console.log(lines[i],lineLength);
+			// console.log(lines[currentLine],lineLength);
 			
 			if(lineLength){
 				// How many lines the text is estimated to take up
@@ -116,6 +125,23 @@ M.editor = new function(){
 			
 			var color = null;
 			
+			// Check if this line counts- it's not blank space or part of a multiline comment
+			if(!/^\s*$/.test(lines[i]) && !multilineComment){
+				currentLine++;
+				
+				// Current Line
+				if(currentLine === line){
+					color = 'orange';
+				}
+				
+				// See if the line is an obvious error
+			}
+			
+			if(color){
+				html += '<div style="top:' + (yPos * 16) + 'px;height:' + (linesTall * 16) + 'px;background-color:' + color + ';"></div>';
+			}
+			
+			/*
 			// Nothing
 			if(lines[i].length == 0){}
 			// Content
@@ -129,16 +155,12 @@ M.editor = new function(){
 			// Variable
 			else if(/[^\=]=\s+/.test(lines[i])){
 				color = 'yellow';
-			}
+			}*/
 			
-			if(color){
-				html += '<div style="top:' + (yPos * 16) + 'px;height:' + (linesTall * 16) + 'px;background-color:' + color + ';"></div>';
-			}
+			
 			
 			yPos += linesTall;
 		}
-		
-		console.log("These highlights",html);
 		
 		E.window.document.getElementById('highlights').innerHTML = html;
 	}

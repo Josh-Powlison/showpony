@@ -371,7 +371,7 @@ new function(){
 				var regex = new RegExp(regexTest[1]);
 			}
 			
-			console.log('TEST THIS',regex,a,regex.test(String(a)));
+			// console.log('TEST THIS',regex,a,regex.test(String(a)));
 			
 			return regex.test(String(a));
 		}
@@ -400,11 +400,16 @@ new function(){
 	}
 	
 	M.readLine = function(lineNumber, text){
+		// Update editor
+		if(M.editor){
+			M.editor.updateCurrentLine(lineNumber);
+		}
+		
 		// Replace all variables (including variables inside variables) with the right component
 		var match;
 		while(match = /[^\[]+(?=\])/g.exec(text)) text = text.replace('[' + match[0] + ']', M.variables[match[0]]);
 		
-		console.log('TEXT HERE',text);
+		// console.log('TEXT HERE',text);
 		
 		text = /(^[^\t\.\+\-=<>!]+)?\.?([^\t]+|[+\-=<>!]+)?\t*(.+$)?/.exec(text);
 		
@@ -1395,7 +1400,7 @@ new function(){
 		
 		if(runTo !== false && runTo !== 'ending') return;
 		
-		console.log('test click',runTo);
+		// console.log('test click',runTo);
 		// If we aren't waiting to continue, continue
 		if(!wait){
 			M.run();
