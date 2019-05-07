@@ -402,7 +402,8 @@ new function(){
 	M.readLine = function(lineNumber, text){
 		// Update editor
 		if(M.editor){
-			M.editor.updateCurrentLine(lineNumber);
+			M.editor.line = lineNumber;
+			M.editor.updateHighlights();
 		}
 		
 		// Replace all variables (including variables inside variables) with the right component
