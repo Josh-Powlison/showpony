@@ -1,5 +1,6 @@
 M.editor = new function(){
 	const E = this;
+	
 	E.window = window.open('','','width=500,height=300,location=0,menubar=0,status=0,toolbar=0,titlebar=0');
 	//,left=' + S.window.offsetLeft + ',top=' + S.window.offsetTop
 	E.rawText = null;
@@ -34,6 +35,9 @@ M.editor = new function(){
 				padding:0;
 				
 				line-height:16px;
+				
+				-moz-tab-size:4;
+				tab-size:4;
 			}
 			
 			#highlights{
@@ -72,34 +76,43 @@ M.editor = new function(){
 		resizeThis();
 	}
 	
+	// Get the length of a letter (it's monospace, so we're fine)
+	var canvas = document.createElement('canvas');
+	var context = canvas.getContext('2d');
+	context.font = '16px Courier';
+	var charWidth = context.measureText('_').width;
+	
 	function resizeThis(){
 		var content = E.window.document.getElementById('content');
 		content.style.height = '';
 		content.style.height = content.scrollHeight + 16 + 'px';
 		
 		// FIX: TABS BREAK DISPLAY
+		// Can run through string, padding to the right amount each time
 		
 		//Highlights
 		var lines = E.rawText.split(/\r\n?|\n/);
 		console.log(lines);
 		var html = '';
 		
-		var canvas = document.createElement('canvas');
-		var context = canvas.getContext('2d');
-		context.font = '16px Courier';
-		
-		console.log("HIGHLIGHTS!!!");
 		var yPos = 0;
 		for(var i = 0; i < lines.length; i ++){
 			var linesTall = 1;
-			if(lines[i].length){
-				// How many lines the text is estimated to take up
-				linesTall = Math.ceil(context.measureText(lines[i]).width / E.window.document.getElementById('content').offsetWidth);
-				// if(!linesTall) linesTall = 1;
-				// console.log('Testing lines',E.window.document.getElementById('content').offsetWidth,context.measureText(lines[i]).width);
+			
+			var lineLength = 0;
+			
+			//Register actual line length (remember, we got a monospace font)
+			for(var j = 0; j < lines[i].length; j ++){
+				if(lines[i][j] === '\t') lineLength += 4 - (lineLength % 4);
+				else lineLength ++;
 			}
 			
-			// console.log(lines[i],"Lines Tall ", linesTall);
+			console.log(lines[i],lineLength);
+			
+			if(lineLength){
+				// How many lines the text is estimated to take up
+				linesTall = Math.ceil((charWidth * lineLength) / E.window.document.getElementById('content').offsetWidth);
+			}
 			
 			var color = null;
 			
@@ -135,6 +148,8 @@ M.editor = new function(){
 		resizeThis();
 	});
 	
+	E.window.addEventListener('resize',resizeThis);
+	
 	// Save
 	E.window.document.getElementById('update').addEventListener('click',function(){
 		// Update the file and push the changes to the user
@@ -147,4 +162,6 @@ M.editor = new function(){
 		M.src(M.currentFile, M.currentTime, M.window.dataset.filename, true);
 	});
 	
+	// Close editor on closing showpony
+	window.addEventListener('beforeunload',function(){E.window.close();})
 }();
