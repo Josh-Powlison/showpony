@@ -72,7 +72,8 @@ M.editor = new function(){
 			<div id="highlights"></div>
 		</div>
 		<button id="update">Update</button>
-		<p>[Asset Manager]</p>
+		<h1>In Scene</h1>
+		<div id="assets"></div>
 	</body>
 	</html>
 	`);
@@ -98,8 +99,45 @@ M.editor = new function(){
 	}
 	
 	E.line = 0;
+	
+	var assets = E.window.document.getElementById('assets');
+	
 	E.updateHighlights = function(){
-		//Highlights
+		
+		/*
+		
+		1. Everything should be centered around the text editor
+		2. Show icons for object type besides its line
+		3. Line numbers
+		4. Have a place showing the current objects and variables in the scene
+		
+		*/
+		
+		/// ASSETS ///
+		
+		// Objects
+		while(assets.firstChild) assets.removeChild(assets.firstChild);
+		
+		var assetHTML = '';
+		
+		var objectKeys = Object.keys(objects);
+		
+		for(var i = 0; i < objectKeys.length; i++){
+			var obj = document.createElement('p');
+			obj.innerHTML = objectKeys[i] + ' (' + objects[objectKeys[i]].type + ')';
+			assets.appendChild(obj);
+		}
+		
+		// Variables
+		var variableKeys = Object.keys(M.variables);
+		
+		for(var i = 0; i < variableKeys.length; i++){
+			var input = document.createElement('input');
+			input.value = M.variables[variableKeys[i]];
+			assets.appendChild(input);
+		}
+		
+		/// HIGHLIGHT LINES ///
 		var lines = E.rawText.split(/\r\n?|\n/);
 		// console.log(lines);
 		var html = '';
@@ -209,10 +247,12 @@ M.editor = new function(){
 					case 'Tab':
 						E.window.document.execCommand('insertText',false,'\t');
 					break;
-					default:				return;					break;
+					default:
+						return;
+						break;
 				}
 			}
-		event.preventDefault();
+			event.preventDefault();
 		}
 	);
 	
