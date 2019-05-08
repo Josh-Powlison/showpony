@@ -394,18 +394,18 @@ new function(){
 			if(!M.readLine(M.currentLine, M.lines[M.currentLine])) break;
 		}
 		
+		// Update editor
+		if(M.editor){
+			M.editor.line = M.currentLine;
+			M.editor.updateHighlights();
+		}
+		
 		if(runTo === 'ending') runTo = false;
 
 		if(M.currentLine >= M.lines.length) S.file++;
 	}
 	
 	M.readLine = function(lineNumber, text){
-		// Update editor
-		if(M.editor){
-			M.editor.line = lineNumber;
-			M.editor.updateHighlights();
-		}
-		
 		// Replace all variables (including variables inside variables) with the right component
 		var match;
 		while(match = /[^\[]+(?=\])/g.exec(text)) text = text.replace('[' + match[0] + ']', M.variables[match[0]]);
