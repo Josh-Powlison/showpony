@@ -1,0 +1,316 @@
+.m-vn{
+	height:100%;
+	width:100%;
+}
+
+/* Textbox */
+
+.m-vn-textbox{
+	width:100%;
+	background-color:rgba(0,0,0,.8);
+	box-sizing:border-box;
+	color:#fff;
+	font-family:Arial;
+	z-index:10;
+	position:absolute;
+	bottom:0;
+	padding:1em;
+	height:4em;
+	max-height:100%;
+	overflow:auto;
+	opacity:1;
+	
+	user-select:none;
+	-webkit-user-select:none;
+	-ms-user-select:none;
+	-moz-user-select:none;
+	font-size:2em;
+	
+	word-wrap:break-word;
+	word-break:normal;
+	break-word:normal;
+	overflow-wrap:break-word;
+	white-space:nowrap;
+	
+	pointer-events:auto;
+	
+	will-change:scroll-position, contents;
+}
+
+.m-vn-textbox::-webkit-scrollbar{
+	width:.5em;
+	background-color:#000;
+}
+
+.m-vn-textbox::-webkit-scrollbar-thumb{
+	background-color:#fff;
+}
+
+/* Don't let textbox elements exceed textbox width */
+.m-vn-textbox>*{
+	max-width:100%;
+}
+
+.m-vn-textbox input{
+	pointer-events:auto;
+	font-size:1em;
+	padding:0;
+	border:none;
+	padding:.25em;
+	background-color:#fff;
+}
+
+.m-vn-textbox input[type="button"]
+,.m-vn-textbox input[type="submit"]{
+	cursor:pointer;
+	background-color:#e9e9e9;
+}
+
+.m-vn-textbox input[type="button"]:hover
+,.m-vn-textbox input[type="submit"]:hover{
+	background-color:#bcbcbc;
+}
+
+.m-vn-textbox input[type="button"]{
+	cursor:pointer;
+	background-color:#e9e9e9;
+	margin:.25em;
+}
+
+.m-vn-textbox[data-state="hidden"]{
+	pointer-events:none;
+	display:none;
+}
+
+.m-vn-textbox-form[data-done="true"] input,
+.m-vn-textbox-form[data-done="true"] button{
+	pointer-events:none;
+	opacity:.5;
+}
+
+.m-vn-letter-container{
+	visibility:hidden;
+	position:relative;
+}
+
+.m-vn-letter{
+	position:absolute;
+	bottom:0;
+	display:inline-block;
+	animation:m-vn-display 1s linear forwards;
+}
+
+.m-vn-letter-animation{
+	position:relative;
+	display:inline-block;
+}
+
+@keyframes m-vn-display{
+	0% {visibility:visible;}
+	100% {visibility:visible;}
+}
+
+/* Character */
+
+.m-vn-character{
+	height:100%;
+	width:100%;
+	position:absolute;
+	
+	pointer-events:none;
+}
+
+.m-vn-character>div{
+	width:100%;
+	height:100%;
+	position:absolute;
+}
+
+.m-vn-character-image{
+	width:100%;
+	height:100%;
+	position:absolute;
+	
+	/* You can add a transition here to have images fade in and out */
+	/* transition: opacity .2s; */
+	
+	object-fit:contain;
+	
+	will-change:transform;
+}
+
+.m-vn-character-image[data-state="visible"]{
+	opacity:1;
+}
+
+.m-vn-character-image[data-state="hidden"]{
+	opacity:0;
+}
+
+/* Other */
+
+.m-vn-continue{
+	color:white;
+	position:absolute;
+	bottom:0;
+	z-index:11;
+	margin:1.75em 2em;
+	width:3em;
+	height:3em;
+	pointer-events:none;
+	visibility:hidden;
+	background-size:contain;
+	background-repeat:no-repeat;
+	background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none' viewBox='0 0 10 10'%3E%3Cg fill='%23fff'%3E%3Cpath d='M.35 3.14h3.27v3.71H.35z'/%3E%3Cpath d='M2.23.7L9.65 5 2.23 9.3z'/%3E%3C/g%3E%3C/svg%3E");
+	filter:drop-shadow(0 0 1px #000);
+}
+
+/* Put arrow on the right side for reading left-to-right */
+.s-left-to-right .m-vn-continue{
+	right:0;
+	animation:arrow-point-right 1s ease infinite alternate 3s;
+}
+
+@keyframes arrow-point-right{
+	0%{
+		transform:translate(0em,0);
+		visibility:visible;
+	}
+	100%{
+		transform:translate(-.5em,0);
+		visibility:visible;
+	}
+}
+
+/* Reverse arrow for reading right-to-left */
+.s-right-to-left .m-vn-continue{
+	transform:scaleX(-1);
+	left:0;
+	animation:arrow-point-left 1s ease infinite alternate 3s;
+}
+
+@keyframes arrow-point-left{
+	0%{
+		transform:translate(0em,0) scaleX(-1);
+		visibility:visible;
+	}
+	100%{
+		transform:translate(-.5em,0) scaleX(-1);
+		visibility:visible;
+	}
+}
+
+/* SUBTITLES */
+
+.m-vn-subtitles{
+	position:absolute;
+	background-color:rgba(0,0,0,0.5);
+	color:white;
+	overflow:auto;
+	font-size:2rem;
+	padding:1rem;
+	box-sizing:border-box;
+	margin:0;
+	pointer-events:auto;
+	
+	left:20%;
+	right:20%;
+	bottom:5%;
+	
+	z-index:100;
+}
+
+/* CUSTOM CLASSES */
+.character{
+	height:90%;
+	bottom:0%;
+}
+
+.background .m-vn-character-image{
+	object-fit:cover;
+	z-index:-1;
+}
+
+.cg .m-vn-character-image{
+	object-fit:cover;
+	z-index:1;
+}
+
+.name{
+	height:auto;
+	width:auto;
+	
+	background-color:#000;
+	padding:.4em;
+	left:0;
+	position:absolute;
+	z-index:11;
+	bottom:4em;
+	font-size:2em;
+	font-family:Arial;
+	font-weight:bold;
+	margin:0;
+}
+
+.thoughts{
+	top:10%;
+	left:15%;
+	width:20em;
+	max-width:100%;
+	height:5em;
+	max-height:100%;
+	
+	font-size:1em;
+	border-radius:1em;
+}
+
+.choices{
+	top:0;
+	height:100%;
+	display:flex;
+	align-items:center;
+	flex-direction:column;
+	justify-content:center;
+}
+
+/* CUSTOM LETTER ANIMATIONS */
+
+.shout .m-vn-letter{
+	animation:shout .1s linear forwards;
+}
+
+@keyframes shout{
+	0% {visibility:visible;transform:scale(2);}
+	100% {visibility:visible;transform:scale(1);}
+}
+
+.fade .m-vn-letter{
+	animation:fade .1s linear forwards;
+}
+
+@keyframes fade{
+	0% {visibility:visible;opacity:0;}
+	100% {visibility:visible;opacity:1;}
+}
+
+.sing .m-vn-letter-animation{
+	animation:sing 1.5s ease-in-out infinite;
+}
+
+@keyframes sing{
+	0%{transform:translate(0,-.2em);}
+	50%{transform:translate(0,.2em);}
+	100%{transform:translate(0,-.2em);}
+}
+
+.shake .m-vn-letter-animation{
+	animation:shake .2s linear infinite;
+}
+
+@keyframes shake{
+	0%{transform:translate(.05em,.125em);}
+	25%{transform:translate(-.05em,-.125em);}
+	50%{transform:translate(-.05em,.125em);}
+	75%{transform:translate(.05em,-.125em);}
+	100%{transform:translate(.05em,.125em);}
+}
