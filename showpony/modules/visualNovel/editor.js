@@ -122,12 +122,6 @@ M.editor = new function(){
 		resizeThis();
 	}
 	
-	// Get the length of a letter (it's monospace, so we're fine)
-	var canvas = document.createElement('canvas');
-	var context = canvas.getContext('2d');
-	context.font = '16px Courier';
-	var charWidth = context.measureText('_').width;
-	
 	function resizeThis(){
 		var content = E.window.document.getElementById('content');
 		content.style.height = '';
