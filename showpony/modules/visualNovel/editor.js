@@ -24,10 +24,36 @@ M.editor = new function(){
 				position:relative;
 			}
 			
-			#content{
+			#data{
+				position:absolute;
+				width:3em;
+				padding:0;
+				padding-right:1em;
+				left:0;
+				
+				
+				background:none;
+				
+				font-size:16px;
+				font-family:'Courier';
+				border:0;
+				box-shadow:none;
+				
+				line-height:16px;
+				
+				resize:none;
+			}
+			
+			#data p{
+				margin:0;
+				text-align:right;
+			}
+			
+			#content, #content-sizing{
 				position:absolute;
 				margin:0;
-				width:100%;
+				width:90%;
+				right:0;
 				padding:0;
 				
 				background:none;
@@ -43,6 +69,15 @@ M.editor = new function(){
 				tab-size:4;
 				
 				resize:none;
+			}
+			
+			#content-sizing{
+				pointer-events:none;
+				visibility:hidden;
+				
+				white-space:-moz-pre-wrap;
+				white-space:pre-wrap;
+				word-wrap:break-word;
 			}
 			
 			#highlights{
@@ -67,7 +102,10 @@ M.editor = new function(){
 		</style>
 	</head>
 	<body>
+		<div id="track"></div>
 		<div id="thing">
+			<div id="data"></div>
+			<pre id="content-sizing" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">Loading...</pre>
 			<textarea id="content" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">Loading...</textarea>
 			<div id="highlights"></div>
 		</div>
@@ -101,22 +139,31 @@ M.editor = new function(){
 	E.line = 0;
 	
 	var assets = E.window.document.getElementById('assets');
+	var data = E.window.document.getElementById('data');
+	
+	var contentSizing = E.window.document.getElementById('content-sizing');
 	
 	E.updateHighlights = function(){
 		
 		/*
 		
-		1. Everything should be centered around the text editor
+	X	1. Everything should be centered around the text editor
 		2. Show icons for object type besides its line
-		3. Line numbers
-		4. Have a place showing the current objects and variables in the scene
+	X	3. Line numbers
+	X	4. Have a place showing the current objects and variables in the scene
 		
 		*/
 		
-		/// ASSETS ///
+		/// Clear Data
 		
 		// Objects
 		while(assets.firstChild) assets.removeChild(assets.firstChild);
+		
+		// Line Info
+		while(data.firstChild) data.removeChild(data.firstChild);
+		
+		/// ASSETS ///
+		
 		
 		var assetHTML = '';
 		
@@ -148,23 +195,14 @@ M.editor = new function(){
 		// Check if we're in a multiline comment
 		var multilineComment = false;
 		
+		var dataFragment = document.createDocumentFragment();
+		var highlightFragment = document.createDocumentFragment();
+		
 		var yPos = 0;
 		for(var i = 0; i < lines.length; i ++){
 			
-			var linesTall = 1;
-			var lineLength = 0;
-			
-			//Register actual line length (remember, we got a monospace font)
-			for(var j = 0; j < lines[i].length; j ++){
-				if(lines[i][j] === '\t') lineLength += 4 - (lineLength % 4);
-				else lineLength ++;
-			}
-			
-			if(lineLength){
-				// How many lines the text is estimated to take up
-				linesTall = Math.ceil((charWidth * lineLength) / E.window.document.getElementById('content').offsetWidth);
-			}
-			
+			contentSizing.innerText = lines[i];
+			var height = contentSizing.clientHeight;
 			
 			// Check if multiline comment starts
 			if(/^\s*\/\*/.test(lines[i])){
@@ -197,7 +235,14 @@ M.editor = new function(){
 				
 				// Add style
 				if(style){
-					html += '<div class="highlight" style="top:' + (yPos * 16) + 'px;height:' + (linesTall * 16) + 'px;' + style + '" data-line="' + currentLine + '|' + E.line + '"></div>';
+					var highlight = document.createElement('div');
+					highlight.className = 'highlight';
+					highlight.style.top = yPos + 'px';
+					highlight.style.height = height + 'px';
+					highlight.dataset.line = currentLine + '|' + i;
+					highlight.style.cssText += style;
+					// console.log('highlight this',highlight,highlightFragment);
+					highlightFragment.appendChild(highlight);
 				}
 			}
 			
@@ -206,15 +251,24 @@ M.editor = new function(){
 				multilineComment = false;
 			}
 			
-			yPos += linesTall;
+			/// LINE INFO ///
+			var lineData = document.createElement('p');
+			lineData.innerHTML = i;
+			if(height > 1) lineData.style.height = height + 'px';
+			dataFragment.appendChild(lineData);
+			
+			yPos += height;
 		}
 		
+		// Data HTML
+		E.window.document.getElementById('data').appendChild(dataFragment);
+		
 		var els = E.window.document.getElementById('thing').children;
-		for(var i = els.length - 1; i > 0; i--){
+		for(var i = els.length - 1; i > 2; i--){
 			els[i].remove();
 		}
 		
-		E.window.document.getElementById('content').insertAdjacentHTML('afterend',html);
+		E.window.document.getElementById('thing').appendChild(highlightFragment);
 	}
 	
 	E.window.document.getElementById('content').addEventListener('input',function(){
