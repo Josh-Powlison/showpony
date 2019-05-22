@@ -26,7 +26,7 @@ M.editor = new function(){
 			
 			#data{
 				position:absolute;
-				width:3em;
+				width:4em;
 				padding:0;
 				padding-right:1em;
 				left:0;
@@ -49,10 +49,10 @@ M.editor = new function(){
 				text-align:right;
 			}
 			
-			#content, #content-sizing{
+			#content, #content-sizing, #content-autocomplete{
 				position:absolute;
 				margin:0;
-				width:90%;
+				width:calc(100% - 5em);
 				right:0;
 				padding:0;
 				
@@ -80,6 +80,15 @@ M.editor = new function(){
 				word-wrap:break-word;
 			}
 			
+			#content-autocomplete{
+				pointer-events:none;
+				opacity:.5;
+				
+				white-space:-moz-pre-wrap;
+				white-space:pre-wrap;
+				word-wrap:break-word;
+			}
+			
 			#highlights{
 				position:absolute;
 				left:0;
@@ -99,6 +108,39 @@ M.editor = new function(){
 				
 				height:1em;
 			}
+			
+			/* Icons */
+			.icon{
+				height:1em;
+				width:1em;
+				
+				display:inline-block;
+				float:left;
+			}
+			
+			.engine{
+				background-color:yellow;
+			}
+			
+			.audio{
+				background-color:orange;
+			}
+			
+			.character{
+				background-color:blue;
+			}
+			
+			.comment{
+				background-color:green;
+			}
+			
+			.textbox{
+				background-color:black;
+			}
+			
+			.set, .comparison{
+				background-color:purple;
+			}
 		</style>
 	</head>
 	<body>
@@ -106,6 +148,7 @@ M.editor = new function(){
 		<div id="thing">
 			<div id="data"></div>
 			<pre id="content-sizing" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">Loading...</pre>
+			<pre id="content-autocomplete" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">Test test test test</pre>
 			<textarea id="content" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">Loading...</textarea>
 			<div id="highlights"></div>
 		</div>
@@ -122,8 +165,9 @@ M.editor = new function(){
 		resizeThis();
 	}
 	
+	var content = E.window.document.getElementById('content');
+	
 	function resizeThis(){
-		var content = E.window.document.getElementById('content');
 		content.style.height = '';
 		content.style.height = content.scrollHeight + 16 + 'px';
 		
@@ -142,7 +186,7 @@ M.editor = new function(){
 		/*
 		
 	X	1. Everything should be centered around the text editor
-		2. Show icons for object type besides its line
+	X	2. Show icons for object type besides its line
 	X	3. Line numbers
 	X	4. Have a place showing the current objects and variables in the scene
 		5. Have a section where can upload resources (audio, images, video).
@@ -154,7 +198,7 @@ M.editor = new function(){
 
 		- Auto-indents with sensitivity to context so you don't have to manually position
 		- Button to provide the formatting
-		- Code suggestions as you type (including character names)
+	X	- Code suggestions as you type (including character names)
 		- Syntax highlighting? (maybe not with Showpony's code)
 		- Scene folding or something so you can collapse all but the live scene
 		
@@ -168,11 +212,9 @@ M.editor = new function(){
 		// Line Info
 		while(data.firstChild) data.removeChild(data.firstChild);
 		
+		var objectTypes = {};
+		
 		/// ASSETS ///
-		
-		
-		var assetHTML = '';
-		
 		var objectKeys = Object.keys(objects);
 		
 		for(var i = 0; i < objectKeys.length; i++){
@@ -192,8 +234,6 @@ M.editor = new function(){
 		
 		/// HIGHLIGHT LINES ///
 		var lines = E.rawText.split(/\r\n?|\n/);
-		// console.log(lines);
-		var html = '';
 		
 		// Track which line we correspond to
 		var currentLine = -1;
@@ -221,9 +261,16 @@ M.editor = new function(){
 				multilineComment = true;
 			}
 			
-			// Ignore empty lines
+			var component	= null;
+			var command		= null;
+			var parameter	= null;
+			var type		= null;
+			
+			// The styling of the highlight problem
+			var style = null;
+			
+			// If a line is not empty
 			if(!/^\s*$/.test(lines[i])){
-				var style = null;
 				
 				// Highlight multiline comments
 				if(multilineComment){
@@ -234,7 +281,7 @@ M.editor = new function(){
 					
 					// Current Line
 					if(currentLine === E.line){
-						console.log('LINE CHECK', M.lines[E.line]);
+						// console.log('LINE CHECK', M.lines[E.line]);
 						style = 'background-color:rgba(0,255,0,.25);z-index:-1;';
 					}
 					
@@ -245,18 +292,8 @@ M.editor = new function(){
 						style = 'background-color:rgba(255,0,0,.25);z-index:-1;';
 					}
 				}
-				
-				// Add style
-				if(style){
-					var highlight = document.createElement('div');
-					highlight.className = 'highlight';
-					highlight.style.top = yPos + 'px';
-					highlight.style.height = height + 'px';
-					highlight.dataset.line = currentLine + '|' + i;
-					highlight.style.cssText += style;
-					// console.log('highlight this',highlight,highlightFragment);
-					highlightFragment.appendChild(highlight);
-				}
+			}else{
+				type = '';
 			}
 			
 			// Check if multiline comment ends
@@ -264,9 +301,137 @@ M.editor = new function(){
 				multilineComment = false;
 			}
 			
+			/// AUTOCOMPLETE ///
+			
+			
+			// Get current line
+			var contentToNow = content.value.substr(0, content.selectionStart);
+			if(content.selectionStart
+				&& i === (contentToNow.match(/\n/g) || '').length
+			){
+				var helpText = '';
+				var match = /[^\n]*$/.exec(contentToNow)[0];
+				
+				if(match !== ''){
+					console.log('current line!', match);
+					
+					// See if there's something for us to autocomplete
+					var keys = Object.keys(objectTypes).sort();
+					for(var j = 0; j < keys.length; j++){
+						console.log('COMPARE',match,keys[j],new RegExp('^' + match));
+						
+						// If this key exists, don't bother passing autocomplete text
+						if(match === keys[j]){
+							helpText = '';
+							break;
+						}
+						
+						// See if it matches
+						if(new RegExp('^' + match).test(keys[j])){
+							if(helpText !== '' && helpText.length > keys[j]) continue;
+							helpText = keys[j];
+						}
+					}
+					
+					style = 'background-color:rgba(255,255,0,.25);z-index:-1;';
+				}
+				
+				var autocomplete = E.window.document.getElementById('content-autocomplete');
+				console.log('SHOW',helpText);
+				if(helpText === ''){
+					autocomplete.style.visibility = 'hidden';
+				}else{
+					autocomplete.style.visibility = 'visible';
+					autocomplete.innerHTML = helpText;
+					autocomplete.style.top = yPos + 'px';
+				}
+			}
+			
+			/// READ STUFF ///
+			
+			// Replace all variables (including variables inside variables) with the right component
+			var text = /(^[^\t\.\+\-=<>!]+)?\.?([^\t]+|[+\-=<>!]+)?\t*(.+$)?/.exec(lines[i]);
+			
+			// Skip comments
+			if(/^\t*\/\//.test(text)){
+				type = 'comment';
+			}else if(type === null){
+				component	= typeof(text[1]) !== 'undefined' ? text[1] : 'textbox';
+				command		= typeof(text[2]) !== 'undefined' ? text[2] : 'content';
+				parameter	= typeof(text[3]) !== 'undefined' ? text[3] : null;
+				
+				// Operations
+				switch(command){
+					case '=':
+					case '+':
+					case '-':
+						type = 'set';
+						break;
+					case '==':
+					case '<':
+					case '>':
+					case '<=':
+					case '>=':
+					case '!':
+						type = 'comparison';
+						break;
+					default:
+						// Continue; no operation command found
+						break;
+				}
+				
+				if(type === null){
+					// Determine type
+					if(objectTypes[component]) type = objectTypes[component];
+					else{
+						type = 'character';
+						if(/\.mp3/i.test(parameter)) type = 'audio';
+						
+						if(component === 'textbox') type = 'textbox';
+						else if(component === 'engine') type = 'engine';
+					}
+				}
+				
+				// Creating a new element using the engine command
+				if(type === 'engine'){
+					switch(command){
+						case 'audio':
+						case 'textbox':
+						case 'character':
+							component = parameter;
+							type = command;
+							command = null;
+
+							// If the object already exists, show a warning
+							if(objectTypes[component]){
+								style = 'background-color:rgba(255,0,0,.25);z-index:-1;';
+							}
+							break;
+						default:
+							break;
+					}
+				}
+				
+				// Keep track of existing objects
+				objectTypes[component] = type;
+			}
+			
+			// Add style
+			if(style){
+				var highlight = document.createElement('div');
+				highlight.className = 'highlight';
+				highlight.style.top = yPos + 'px';
+				highlight.style.height = height + 'px';
+				highlight.dataset.line = currentLine + '|' + i;
+				highlight.style.cssText += style;
+				// console.log('highlight this',highlight,highlightFragment);
+				highlightFragment.appendChild(highlight);
+			}
+			
 			/// LINE INFO ///
 			var lineData = document.createElement('p');
-			lineData.innerHTML = i;
+			lineData.innerHTML = '<span class="icon ' + type + '"></span>' + i;
+			
 			if(height > 1) lineData.style.height = height + 'px';
 			dataFragment.appendChild(lineData);
 			
@@ -276,8 +441,8 @@ M.editor = new function(){
 		// Data HTML
 		E.window.document.getElementById('data').appendChild(dataFragment);
 		
-		var els = E.window.document.getElementById('thing').children;
-		for(var i = els.length - 1; i > 2; i--){
+		var els = E.window.document.getElementsByClassName('highlight');
+		for(var i = els.length - 1; i > 0; i--){
 			els[i].remove();
 		}
 		
@@ -286,6 +451,7 @@ M.editor = new function(){
 	
 	E.window.document.getElementById('content').addEventListener('input',function(){
 		E.rawText = this.value;
+		
 		resizeThis();
 	});
 	
