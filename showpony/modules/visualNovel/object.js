@@ -276,9 +276,6 @@ new function(){
 		.then(text=>{
 			M.window.dataset.filename = filename;
 			
-			// Update the editor
-			if(M.editor) M.editor.update(text);
-			
 			keyframes = parseFile(text);
 			
 			// Get the last keyframe based on 'end'
@@ -300,6 +297,9 @@ new function(){
 			// Set file now so M.run knows
 			M.currentFile=file;
 			M.currentTime=time;
+			
+			// Update the editor
+			if(M.editor) M.editor.update(text);
 			
 			M.run(0);
 			
@@ -397,6 +397,7 @@ new function(){
 		// Update editor
 		if(M.editor){
 			M.editor.line = M.currentLine;
+			console.log(M.lines[M.currentLine]);
 			M.editor.updateHighlights();
 		}
 		

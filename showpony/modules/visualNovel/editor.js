@@ -145,6 +145,18 @@ M.editor = new function(){
 		2. Show icons for object type besides its line
 	X	3. Line numbers
 	X	4. Have a place showing the current objects and variables in the scene
+		5. Have a section where can upload resources (audio, images, video).
+			- In this section, can see/hear pieces stacked on
+			- Will figure out potential displays based on folder names, and allow toggling images (for example, will display sub-folders of characters in same section, and allow toggling between) (I should probably just allow layering as many as desired, since not everyone will follow that structure exactly)
+			
+		Inkhana ideas:
+		///////////////
+
+		- Auto-indents with sensitivity to context so you don't have to manually position
+		- Button to provide the formatting
+		- Code suggestions as you type (including character names)
+		- Syntax highlighting? (maybe not with Showpony's code)
+		- Scene folding or something so you can collapse all but the live scene
 		
 		*/
 		
@@ -196,6 +208,12 @@ M.editor = new function(){
 		for(var i = 0; i < lines.length; i ++){
 			
 			contentSizing.innerText = lines[i];
+			
+			// If no characters are in it, height will be 0. But l is the thinnest letter we can use.
+			if(lines[i].length === 0){
+				contentSizing.innerText = 'l';
+			}
+			
 			var height = contentSizing.clientHeight;
 			
 			// Check if multiline comment starts
@@ -216,6 +234,7 @@ M.editor = new function(){
 					
 					// Current Line
 					if(currentLine === E.line){
+						console.log('LINE CHECK', M.lines[E.line]);
 						style = 'background-color:rgba(0,255,0,.25);z-index:-1;';
 					}
 					
