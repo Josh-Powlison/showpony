@@ -159,29 +159,27 @@ M.editor = new function(){
 	</html>
 	`);
 	
-	E.update = function(input){
-		E.rawText = input;
-		E.window.document.getElementById('content').innerHTML = E.rawText;
-		resizeThis();
-	}
-	
-	var content = E.window.document.getElementById('content');
-	
-	function resizeThis(){
-		content.style.height = '';
-		content.style.height = content.scrollHeight + 16 + 'px';
-		
-		E.updateHighlights();
-	}
-	
-	E.line = 0;
-	
 	var assets = E.window.document.getElementById('assets');
 	var data = E.window.document.getElementById('data');
 	
 	var contentSizing = E.window.document.getElementById('content-sizing');
 	
-	E.updateHighlights = function(){
+	E.update = function(input){
+		E.rawText = input;
+		E.window.document.getElementById('content').innerHTML = E.rawText;
+		E.resizeThis();
+	}
+	
+	var content = E.window.document.getElementById('content');
+	
+	// We need to figure out the maximum size that can fit within a line; that can speed it up, vs calculating everything
+	contentSizing.innerText = 'l';
+	var minHeight = contentSizing.clientHeight;
+	var heightChars = [0];
+	
+	E.resizeThis = function(){
+		content.style.height = '';
+		content.style.height = content.scrollHeight + 16 + 'px';
 		
 		/*
 		
@@ -197,6 +195,7 @@ M.editor = new function(){
 		///////////////
 
 		- Auto-indents with sensitivity to context so you don't have to manually position
+			(which, after testing, I think is easy enough although I'm still thinking an optional auto-indent for writing dialogue would be great...haha)
 		- Button to provide the formatting
 	X	- Code suggestions as you type (including character names)
 		- Syntax highlighting? (maybe not with Showpony's code)
@@ -207,12 +206,9 @@ M.editor = new function(){
 		/// Clear Data
 		
 		// Objects
-		while(assets.firstChild) assets.removeChild(assets.firstChild);
-		
-		// Line Info
-		while(data.firstChild) data.removeChild(data.firstChild);
-		
 		var objectTypes = {};
+		/*while(assets.firstChild) assets.removeChild(assets.firstChild);
+		
 		
 		/// ASSETS ///
 		var objectKeys = Object.keys(objects);
@@ -230,7 +226,7 @@ M.editor = new function(){
 			var input = document.createElement('input');
 			input.value = M.variables[variableKeys[i]];
 			assets.appendChild(input);
-		}
+		}*/
 		
 		/// HIGHLIGHT LINES ///
 		var lines = E.rawText.split(/\r\n?|\n/);
@@ -241,21 +237,53 @@ M.editor = new function(){
 		// Check if we're in a multiline comment
 		var multilineComment = false;
 		
-		var dataFragment = document.createDocumentFragment();
 		var highlightFragment = document.createDocumentFragment();
 		
 		var yPos = 0;
+		
 		for(var i = 0; i < lines.length; i ++){
 			
-			contentSizing.innerText = lines[i];
+			/*
+				Can we trust heightChars as an array, or only for the first one?
+				
+				If only for the first one, we need to remove the arrays.
+				
+				It will get later values, and in checking those rather than calculating we'll get stuff being on one line but calculated as more lines.
+				
+				Maybe we need > max instead? Rather than < min? But that could still be wrong.
+			*/
 			
-			// If no characters are in it, height will be 0. But l is the thinnest letter we can use.
-			if(lines[i].length === 0){
-				contentSizing.innerText = 'l';
+			var height = null;/*
+			// Go through each calculated minHeight and find one
+			for(var j = 0; j < heightChars.length; j++){
+				// If the height isn't set in this value, break
+				if(typeof(heightChars[j]) === 'undefined'){
+					break;
+				}
+				
+				// If we know the height already, get it
+				if(lines[i].length <= heightChars[j]){
+					height = minHeight * (j + 1);
+					break;
+				}
 			}
 			
-			var height = contentSizing.clientHeight;
-			
+			if(height === null){
+				// clientHeight IS REALLY SLOW!!! It causes the whole thing to hang. So we estimate this only if we don't have a corresponding minHeight, and then set that immediately.*/
+				contentSizing.innerText = lines[i] || 'l';
+				height = contentSizing.clientHeight;
+				/*
+				// Overwrite or add the amount
+				var x = Math.round((height / minHeight) - 1);
+				console.log('Write to ',x,heightChars.length);
+				if(x >= heightChars.length
+					|| typeof(heightChars[x]) === 'undefined'
+					|| height <= Math.round(height / minHeight))
+				{
+					heightChars[x] = lines[i].length;
+				}
+			}
+			*/
 			// Check if multiline comment starts
 			if(/^\s*\/\*/.test(lines[i])){
 				multilineComment = true;
@@ -303,22 +331,23 @@ M.editor = new function(){
 			
 			/// AUTOCOMPLETE ///
 			
-			
 			// Get current line
-			var contentToNow = content.value.substr(0, content.selectionStart);
-			if(content.selectionStart
+			var contentToNow = content.value.substr(0, content.selectionEnd);
+			if(
+				content.selectionStart === content.selectionEnd
+				&& content.selectionStart
 				&& i === (contentToNow.match(/\n/g) || '').length
 			){
 				var helpText = '';
 				var match = /[^\n]*$/.exec(contentToNow)[0];
 				
 				if(match !== ''){
-					console.log('current line!', match);
+					// console.log('current line!', match);
 					
 					// See if there's something for us to autocomplete
 					var keys = Object.keys(objectTypes).sort();
 					for(var j = 0; j < keys.length; j++){
-						console.log('COMPARE',match,keys[j],new RegExp('^' + match));
+						// console.log('COMPARE',match,keys[j],new RegExp('^' + match));
 						
 						// If this key exists, don't bother passing autocomplete text
 						if(match === keys[j]){
@@ -332,12 +361,10 @@ M.editor = new function(){
 							helpText = keys[j];
 						}
 					}
-					
-					style = 'background-color:rgba(255,255,0,.25);z-index:-1;';
 				}
 				
 				var autocomplete = E.window.document.getElementById('content-autocomplete');
-				console.log('SHOW',helpText);
+				// console.log('SHOW',helpText);
 				if(helpText === ''){
 					autocomplete.style.visibility = 'hidden';
 				}else{
@@ -424,22 +451,30 @@ M.editor = new function(){
 				highlight.style.height = height + 'px';
 				highlight.dataset.line = currentLine + '|' + i;
 				highlight.style.cssText += style;
-				// console.log('highlight this',highlight,highlightFragment);
 				highlightFragment.appendChild(highlight);
 			}
 			
 			/// LINE INFO ///
-			var lineData = document.createElement('p');
-			lineData.innerHTML = '<span class="icon ' + type + '"></span>' + i;
+			if(data.children.length <= i){
+				var lineData = document.createElement('p');
+				lineData.innerHTML = i + 1;
+				// dataFragment.appendChild(lineData);
+				data.appendChild(lineData);
+			}
 			
-			if(height > 1) lineData.style.height = height + 'px';
-			dataFragment.appendChild(lineData);
+			// Change height if needed
+			if(data.children[i].style.height !== height + 'px'){
+				data.children[i].style.height = height + 'px';
+			}
+			
+			data.children[i].className = type;
 			
 			yPos += height;
 		}
 		
-		// Data HTML
-		E.window.document.getElementById('data').appendChild(dataFragment);
+		console.log('TEST',heightChars,minHeight);
+		
+		while(data.children[lines.length]) data.removeChild(data.children[lines.length]);
 		
 		var els = E.window.document.getElementsByClassName('highlight');
 		for(var i = els.length - 1; i > 0; i--){
@@ -449,13 +484,18 @@ M.editor = new function(){
 		E.window.document.getElementById('thing').appendChild(highlightFragment);
 	}
 	
+	E.line = 0;
+	
 	E.window.document.getElementById('content').addEventListener('input',function(){
 		E.rawText = this.value;
 		
-		resizeThis();
+		E.resizeThis();
 	});
 	
-	E.window.addEventListener('resize',resizeThis);
+	E.window.addEventListener('resize',function(){
+		heightChars = [0];
+		E.resizeThis();
+	});
 	
 	// Writing shortcut keys
 	E.window.document.getElementById('content').addEventListener(

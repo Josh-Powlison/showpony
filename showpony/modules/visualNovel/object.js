@@ -398,7 +398,7 @@ new function(){
 		if(M.editor){
 			M.editor.line = M.currentLine;
 			// console.log(M.lines[M.currentLine]);
-			M.editor.updateHighlights();
+			M.editor.resizeThis();
 		}
 		
 		if(runTo === 'ending') runTo = false;
