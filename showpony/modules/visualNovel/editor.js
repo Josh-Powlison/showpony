@@ -173,9 +173,9 @@ M.editor = new function(){
 	var content = E.window.document.getElementById('content');
 	
 	// We need to figure out the maximum size that can fit within a line; that can speed it up, vs calculating everything
-	contentSizing.innerText = 'l';
+	contentSizing.innerHTML = '<span id="letter-width">_</span>';
+	var letterWidth = E.window.document.getElementById('letter-width').clientWidth;
 	var minHeight = contentSizing.clientHeight;
-	var heightChars = [0];
 	
 	E.resizeThis = function(){
 		content.style.height = '';
@@ -241,6 +241,9 @@ M.editor = new function(){
 		
 		var yPos = 0;
 		
+		// Calculate the maximum number of characters on a line
+		var oneLineMaxChars	= Math.floor(content.innerWidth / letterWidth);
+		
 		for(var i = 0; i < lines.length; i ++){
 			
 			/*
@@ -253,37 +256,20 @@ M.editor = new function(){
 				Maybe we need > max instead? Rather than < min? But that could still be wrong.
 			*/
 			
-			var height = null;/*
-			// Go through each calculated minHeight and find one
-			for(var j = 0; j < heightChars.length; j++){
-				// If the height isn't set in this value, break
-				if(typeof(heightChars[j]) === 'undefined'){
-					break;
-				}
+			var height = null;
+			
+			// If this is shorter than the total length that fits on one line, just get that height
+			if(lines[i].length <= oneLineMaxChars){
+				height = minHeight;
+			// Otherwise, calculate the line's height
+			} else {
+				contentSizing.innerText = lines[i];
+				height = contentSizing.clientHeight;
 				
-				// If we know the height already, get it
-				if(lines[i].length <= heightChars[j]){
-					height = minHeight * (j + 1);
-					break;
-				}
+				// Change the max length a line can be befoe spilling over; this can save us processing power
+				if(height <= minHeight) oneLineMaxChars = lines[i].length;
 			}
 			
-			if(height === null){
-				// clientHeight IS REALLY SLOW!!! It causes the whole thing to hang. So we estimate this only if we don't have a corresponding minHeight, and then set that immediately.*/
-				contentSizing.innerText = lines[i] || 'l';
-				height = contentSizing.clientHeight;
-				/*
-				// Overwrite or add the amount
-				var x = Math.round((height / minHeight) - 1);
-				console.log('Write to ',x,heightChars.length);
-				if(x >= heightChars.length
-					|| typeof(heightChars[x]) === 'undefined'
-					|| height <= Math.round(height / minHeight))
-				{
-					heightChars[x] = lines[i].length;
-				}
-			}
-			*/
 			// Check if multiline comment starts
 			if(/^\s*\/\*/.test(lines[i])){
 				multilineComment = true;
@@ -320,138 +306,137 @@ M.editor = new function(){
 						style = 'background-color:rgba(255,0,0,.25);z-index:-1;';
 					}
 				}
-			}else{
-				type = '';
-			}
-			
-			// Check if multiline comment ends
-			if(/^\s*\*\/\s*$/.test(lines[i])){
-				multilineComment = false;
-			}
-			
-			/// AUTOCOMPLETE ///
-			
-			// Get current line
-			var contentToNow = content.value.substr(0, content.selectionEnd);
-			if(
-				content.selectionStart === content.selectionEnd
-				&& content.selectionStart
-				&& i === (contentToNow.match(/\n/g) || '').length
-			){
-				var helpText = '';
-				var match = /[^\n]*$/.exec(contentToNow)[0];
 				
-				if(match !== ''){
-					// console.log('current line!', match);
+				// Check if multiline comment ends
+				if(/^\s*\*\/\s*$/.test(lines[i])){
+					multilineComment = false;
+				}
+				
+				/// AUTOCOMPLETE ///
+				// Get current line
+				var contentToNow = content.value.substr(0, content.selectionEnd);
+				if(
+					content.selectionStart === content.selectionEnd
+					&& content.selectionStart
+					&& i === (contentToNow.match(/\n/g) || '').length
+				){
+					var helpText = '';
+					var match = /[^\n]*$/.exec(contentToNow)[0];
 					
-					// See if there's something for us to autocomplete
-					var keys = Object.keys(objectTypes).sort();
-					for(var j = 0; j < keys.length; j++){
-						// console.log('COMPARE',match,keys[j],new RegExp('^' + match));
+					if(match !== ''){
+						// console.log('current line!', match);
 						
-						// If this key exists, don't bother passing autocomplete text
-						if(match === keys[j]){
-							helpText = '';
-							break;
-						}
-						
-						// See if it matches
-						if(new RegExp('^' + match).test(keys[j])){
-							if(helpText !== '' && helpText.length > keys[j]) continue;
-							helpText = keys[j];
-						}
-					}
-				}
-				
-				var autocomplete = E.window.document.getElementById('content-autocomplete');
-				// console.log('SHOW',helpText);
-				if(helpText === ''){
-					autocomplete.style.visibility = 'hidden';
-				}else{
-					autocomplete.style.visibility = 'visible';
-					autocomplete.innerHTML = helpText;
-					autocomplete.style.top = yPos + 'px';
-				}
-			}
-			
-			/// READ STUFF ///
-			
-			// Replace all variables (including variables inside variables) with the right component
-			var text = /(^[^\t\.\+\-=<>!]+)?\.?([^\t]+|[+\-=<>!]+)?\t*(.+$)?/.exec(lines[i]);
-			
-			// Skip comments
-			if(/^\t*\/\//.test(text)){
-				type = 'comment';
-			}else if(type === null){
-				component	= typeof(text[1]) !== 'undefined' ? text[1] : 'textbox';
-				command		= typeof(text[2]) !== 'undefined' ? text[2] : 'content';
-				parameter	= typeof(text[3]) !== 'undefined' ? text[3] : null;
-				
-				// Operations
-				switch(command){
-					case '=':
-					case '+':
-					case '-':
-						type = 'set';
-						break;
-					case '==':
-					case '<':
-					case '>':
-					case '<=':
-					case '>=':
-					case '!':
-						type = 'comparison';
-						break;
-					default:
-						// Continue; no operation command found
-						break;
-				}
-				
-				if(type === null){
-					// Determine type
-					if(objectTypes[component]) type = objectTypes[component];
-					else{
-						type = 'character';
-						if(/\.mp3/i.test(parameter)) type = 'audio';
-						
-						if(component === 'textbox') type = 'textbox';
-						else if(component === 'engine') type = 'engine';
-					}
-				}
-				
-				// Creating a new element using the engine command
-				if(type === 'engine'){
-					switch(command){
-						case 'audio':
-						case 'textbox':
-						case 'character':
-							component = parameter;
-							type = command;
-							command = null;
-
-							// If the object already exists, show a warning
-							if(objectTypes[component]){
-								style = 'background-color:rgba(255,0,0,.25);z-index:-1;';
+						// See if there's something for us to autocomplete
+						var keys = Object.keys(objectTypes).sort();
+						for(var j = 0; j < keys.length; j++){
+							// console.log('COMPARE',match,keys[j],new RegExp('^' + match));
+							
+							// If this key exists, don't bother passing autocomplete text
+							if(match === keys[j]){
+								helpText = '';
+								break;
 							}
+							
+							// See if it matches
+							if(new RegExp('^' + match).test(keys[j])){
+								if(helpText !== '' && helpText.length > keys[j]) continue;
+								helpText = keys[j];
+							}
+						}
+					}
+					
+					var autocomplete = E.window.document.getElementById('content-autocomplete');
+					// console.log('SHOW',helpText);
+					if(helpText === ''){
+						autocomplete.style.visibility = 'hidden';
+					}else{
+						autocomplete.style.visibility = 'visible';
+						autocomplete.innerHTML = helpText;
+						autocomplete.style.top = yPos + 'px';
+					}
+				}
+				
+				/// READ STUFF ///
+				
+				// Replace all variables (including variables inside variables) with the right component
+				var text = /(^[^\t\.\+\-=<>!]+)?\.?([^\t]+|[+\-=<>!]+)?\t*(.+$)?/.exec(lines[i]);
+				
+				// Skip comments
+				if(/^\t*\/\//.test(text)){
+					type = 'comment';
+				}else if(type === null){
+					component	= typeof(text[1]) !== 'undefined' ? text[1] : 'textbox';
+					command		= typeof(text[2]) !== 'undefined' ? text[2] : 'content';
+					parameter	= typeof(text[3]) !== 'undefined' ? text[3] : null;
+					
+					// Operations
+					switch(command){
+						case '=':
+						case '+':
+						case '-':
+							type = 'set';
+							break;
+						case '==':
+						case '<':
+						case '>':
+						case '<=':
+						case '>=':
+						case '!':
+							type = 'comparison';
 							break;
 						default:
+							// Continue; no operation command found
 							break;
 					}
+					
+					if(type === null){
+						// Determine type
+						if(objectTypes[component]) type = objectTypes[component];
+						else{
+							type = 'character';
+							if(/\.mp3/i.test(parameter)) type = 'audio';
+							
+							if(component === 'textbox') type = 'textbox';
+							else if(component === 'engine') type = 'engine';
+						}
+					}
+					
+					// Creating a new element using the engine command
+					if(type === 'engine'){
+						switch(command){
+							case 'audio':
+							case 'textbox':
+							case 'character':
+								component = parameter;
+								type = command;
+								command = null;
+
+								// If the object already exists, show a warning
+								if(objectTypes[component]){
+									style = 'background-color:rgba(255,0,0,.25);z-index:-1;';
+								}
+								break;
+							default:
+								break;
+						}
+					}
+					
+					// Keep track of existing objects
+					objectTypes[component] = type;
 				}
 				
-				// Keep track of existing objects
-				objectTypes[component] = type;
-			}
-			
-			// Add style
-			if(style){
-				var highlight = document.createElement('div');
-				highlight.className = 'highlight';
-				highlight.style.top = yPos + 'px';
-				highlight.style.height = height + 'px';
-				highlight.dataset.line = currentLine + '|' + i;
-				highlight.style.cssText += style;
-				highlightFragment.appendChild(highlight);
+				// Add style
+				if(style){
+					var highlight = document.createElement('div');
+					highlight.className = 'highlight';
+					highlight.style.top = yPos + 'px';
+					highlight.style.height = height + 'px';
+					highlight.dataset.line = currentLine + '|' + i;
+					highlight.style.cssText += style;
+					highlightFragment.appendChild(highlight);
+				}
+			}else{
+				type = '';
 			}
 			
 			/// LINE INFO ///
@@ -462,17 +447,16 @@ M.editor = new function(){
 				data.appendChild(lineData);
 			}
 			
+			var child = data.children[i];
 			// Change height if needed
-			if(data.children[i].style.height !== height + 'px'){
-				data.children[i].style.height = height + 'px';
+			if(child.style.height !== height + 'px'){
+				child.style.height = height + 'px';
 			}
 			
-			data.children[i].className = type;
+			if(child.className !== type) child.className = type;
 			
 			yPos += height;
 		}
-		
-		console.log('TEST',heightChars,minHeight);
 		
 		while(data.children[lines.length]) data.removeChild(data.children[lines.length]);
 		
@@ -493,7 +477,6 @@ M.editor = new function(){
 	});
 	
 	E.window.addEventListener('resize',function(){
-		heightChars = [0];
 		E.resizeThis();
 	});
 	
