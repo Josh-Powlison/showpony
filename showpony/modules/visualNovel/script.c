@@ -21,15 +21,33 @@ https://stackoverflow.com/questions/46748572/how-to-access-webassembly-linear-me
 */
 
 const int SIZE = 10;
-int data[SIZE];
+// char data[SIZE];
+char data[SIZE] = { 'a','p','p','l','e',' ','j','a','c','k' };
+// int data[SIZE] = { 'こ','ん','に','ち','は',' ','~','!','_','=' };
 
-int* getData(){
+/*
+こんにちは
+*/
+
+char* getData(){
+	return &data[0];
+}
+
+void add(char value){
+	data[0] = value;
+}
+
+
+// const int SIZE = 10;
+/*
+char* getData(){
 	return &data[0];
 }
 
 void add(int value){
 	data[0] = value;
 }
+*/
 
 float getMaxChars(float textboxWidth, float letterWidth) {
 	return (textboxWidth / letterWidth);

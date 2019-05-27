@@ -1,3 +1,18 @@
+// FROM GOOGLE: https://developers.google.com/web/updates/2012/06/How-to-convert-ArrayBuffer-to-and-from-String
+
+function ab2str(buf) {
+  return String.fromCharCode.apply(null, new Uint16Array(buf));
+}
+function str2ab(str) {
+  var buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
+  var bufView = new Uint16Array(buf);
+  for (var i=0, strLen=str.length; i < strLen; i++) {
+    bufView[i] = str.charCodeAt(i);
+  }
+  return buf;
+}
+
+
 fetch('showpony/modules/visualNovel/script.wasm')
 .then(response => response.arrayBuffer())
 .then(bits => WebAssembly.compile(bits))
@@ -14,10 +29,18 @@ fetch('showpony/modules/visualNovel/script.wasm')
 .then(instance => {
 	console.log('WASM LOADED');
 	var offset = instance.exports.getData();
-	var buffer = new Uint32Array(instance.exports.memory.buffer, offset, 10);
+	var length = 10;
+	var buffer = new Uint8Array(instance.exports.memory.buffer, offset, length);
 	console.log(buffer);
-	instance.exports.add(1043);
-	console.log(buffer);
+	
+	var string = String.fromCharCode.apply(null, buffer);
+	console.log("THIS IS THE STRING READ FROM WASM: ",string);
+	
+	// for(var i = 0; i < length; i ++){
+		// console.log(
+	// }
+	// instance.exports.add(1043);
+	// console.log(buffer);
 	
 	// Start the script; should main() run automatically with WebAssembly compilation? It doesn't seem to.
 	// instance.exports.main();
