@@ -193,9 +193,6 @@ int readLine(){
 	// If a line is not empty
 	/*if(!lineEmpty()){
 		
-		// Highlight multiline comments
-		if(multilineComment){
-			//style = 'background-color:rgba(255,255,255,.5);z-index:1;';
 		// Other lines
 		}else{
 			// currentLine++;
@@ -213,59 +210,7 @@ int readLine(){
 			}
 		}*/
 		
-		// Check if multiline comment ends
-		/*if(/^\s*\*\/\s*$/.test(lines[i])){
-			multilineComment = false;
-		}*/
-		
-		/// AUTOCOMPLETE ///
-		// Get current line
-		/*var contentToNow = content.value.substr(0, content.selectionEnd);
-		if(
-			content.selectionStart === content.selectionEnd
-			&& content.selectionStart
-			&& i === (contentToNow.match(/\n/g) || '').length
-		){
-			var helpText = '';
-			var match = /[^\n]*$/.exec(contentToNow)[0];
-			
-			if(match !== ''){
-				// console.log('current line!', match);
-				
-				// See if there's something for us to autocomplete
-				var keys = Object.keys(objectTypes).sort();
-				for(var j = 0; j < keys.length; j++){
-					// console.log('COMPARE',match,keys[j],new RegExp('^' + match));
-					
-					// If this key exists, don't bother passing autocomplete text
-					if(match === keys[j]){
-						helpText = '';
-						break;
-					}
-					
-					// See if it matches
-					if(new RegExp('^' + match).test(keys[j])){
-						if(helpText !== '' && helpText.length > keys[j]) continue;
-						helpText = keys[j];
-					}
-				}
-			}
-			
-			var autocomplete = E.window.document.getElementById('content-autocomplete');
-			// console.log('SHOW',helpText);
-			if(helpText === ''){
-				autocomplete.style.visibility = 'hidden';
-			}else{
-				autocomplete.style.visibility = 'visible';
-				autocomplete.innerHTML = helpText;
-				autocomplete.style.top = yPos + 'px';
-			}
-		}*/
-		
 		/// READ STUFF ///
-		
-		// Get command, etc
-		// var text = /(^[^\t\.\+\-=<>!]+)?\.?([^\t]+|[+\-=<>!]+)?\t*(.+$)?/.exec(lines[i]);
 		
 		// Chars are smaller, so we used them in this case
 		signed char componentPosition	= -1;
@@ -414,14 +359,15 @@ int readLine(){
 				
 			}
 			
-			char STR_ENGINE[] = "engine";
-			char STR_TEXTBOX[] = "textbox";
+			char STR_CMP_ENGINE[]		= "engine";
+			char STR_CMD_TEXTBOX[]		= ".textbox";
+			char STR_CMD_AUDIO[]		= ".audio";
+			char STR_CMD_CHARACTER[]	= ".character";
 			
 			// See if the value is "engine"
 			if(componentPosition == 5
-				&& compareStrings(component, STR_ENGINE, componentPosition, 5) == 6
+				&& compareStrings(component, STR_CMP_ENGINE, componentPosition, 5) == 6
 			){
-				return -3;
 				type = ENGINE;
 			}
 			/*
@@ -434,37 +380,41 @@ int readLine(){
 			
 			// If it's an engine, read the command
 			if(type == ENGINE){
-				/*switch(command){
-					case AUDIO:
-					case TEXTBOX:
-					case IMAGE:
-						// component = parameter;
-						// type		= command;
-						command[0]	= '\0';
-
-						// If the object already exists, show a warning
-						// if(objectTypes[component]){
-							// style = 'background-color:rgba(255,0,0,.25);z-index:-1;';
-						// }
-						break;
-					default:
-						break;
-				}*/
+				if(commandPosition == 5
+					&& compareStrings(command, STR_CMD_AUDIO, commandPosition, 5) == 6
+				){
+					type = AUDIO;
+				} else if(commandPosition == 7
+					&& compareStrings(command, STR_CMD_TEXTBOX, commandPosition, 7) == 8
+				){
+					type = TEXTBOX;
+				} else if(commandPosition == 9
+					&& compareStrings(command, STR_CMD_CHARACTER, commandPosition, 9) == 10
+				){
+					type = IMAGE;
+				}
+				
+				// If a new element was created
+				if(type != ENGINE){
+					command[0] = '\0';
+					// component = parameter;
+					
+					// If the object already exists, show a warning
+					// if(objectTypes[component]){
+						// style = 'background-color:rgba(255,0,0,.25);z-index:-1;';
+					// }
+				}
 			}
-			
-			// type = ENGINE;
 			
 			/*
 			// Determine type
 			
-				
 				if(component === 'textbox') type = 'textbox';
 				else if(component === 'engine') type = 'engine';
 			}
 			*/
 			/*
 			// Creating a new element using the engine command
-			
 			
 			// Keep track of existing objects
 			objectTypes[component] = type;
@@ -481,6 +431,55 @@ int readLine(){
 			highlightFragment.appendChild(highlight);
 		}*/
 	}
+	
+	/// AUTOCOMPLETE ///
+	if(type == IMAGE
+		|| 0
+	){
+		
+	}
+	// Get current line
+	/*var contentToNow = content.value.substr(0, content.selectionEnd);
+	if(
+		content.selectionStart === content.selectionEnd
+		&& content.selectionStart
+		&& i === (contentToNow.match(/\n/g) || '').length
+	){
+		var helpText = '';
+		var match = /[^\n]*$/.exec(contentToNow)[0];
+		
+		if(match !== ''){
+			// console.log('current line!', match);
+			
+			// See if there's something for us to autocomplete
+			var keys = Object.keys(objectTypes).sort();
+			for(var j = 0; j < keys.length; j++){
+				// console.log('COMPARE',match,keys[j],new RegExp('^' + match));
+				
+				// If this key exists, don't bother passing autocomplete text
+				if(match === keys[j]){
+					helpText = '';
+					break;
+				}
+				
+				// See if it matches
+				if(new RegExp('^' + match).test(keys[j])){
+					if(helpText !== '' && helpText.length > keys[j]) continue;
+					helpText = keys[j];
+				}
+			}
+		}
+		
+		var autocomplete = E.window.document.getElementById('content-autocomplete');
+		// console.log('SHOW',helpText);
+		if(helpText === ''){
+			autocomplete.style.visibility = 'hidden';
+		}else{
+			autocomplete.style.visibility = 'visible';
+			autocomplete.innerHTML = helpText;
+			autocomplete.style.top = yPos + 'px';
+		}
+	}*/
 	
 	return type;
 	/*
@@ -508,7 +507,7 @@ int readLine(){
 	 0: No match
 	 N: Array position where match ends
 */
-int compareStrings(int a[], int b[], int aMax, int bMax){
+int compareStrings(char a[], char b[], int aMax, int bMax){
 	int i = 0;
 	
 	while(i < 30){

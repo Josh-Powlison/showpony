@@ -359,7 +359,7 @@ fetch('showpony/modules/visualNovel/script.wasm')
 				// Log out the type
 				var typeInt = instance.exports.readLine();
 				
-				console.log('TYPE',typeInt);
+				// console.log('TYPE',typeInt);
 				var type = [
 					''
 					,'engine'
@@ -372,7 +372,7 @@ fetch('showpony/modules/visualNovel/script.wasm')
 				][typeInt];
 				// console.log('TYPE',type);
 				// Log out the component
-				console.log('COMPONENT', String.fromCharCode.apply(null, new Uint8Array(instance.exports.memory.buffer, instance.exports.getData(1), 30)));
+				// console.log('COMPONENT', String.fromCharCode.apply(null, new Uint8Array(instance.exports.memory.buffer, instance.exports.getData(1), 30)));
 				// Log out the command
 				// console.log('COMMAND', String.fromCharCode.apply(null, new Uint8Array(instance.exports.memory.buffer, instance.exports.getData(2), 30)));
 				// Log out the parameter
