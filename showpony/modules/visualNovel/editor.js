@@ -3,14 +3,7 @@
 function ab2str(buf) {
   return String.fromCharCode.apply(null, new Uint16Array(buf));
 }
-function str2ab(str) {
-  var buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
-  var bufView = new Uint16Array(buf);
-  for (var i=0, strLen=str.length; i < strLen; i++) {
-    bufView[i] = str.charCodeAt(i);
-  }
-  return buf;
-}
+
 
 
 fetch('showpony/modules/visualNovel/script.wasm')
@@ -27,14 +20,23 @@ fetch('showpony/modules/visualNovel/script.wasm')
 	}
 }))
 .then(instance => {
-	console.log('WASM LOADED');
-	var offset = instance.exports.getData();
-	var length = 10;
-	var buffer = new Uint8Array(instance.exports.memory.buffer, offset, length);
-	console.log(buffer);
+	/*
+	console.log("THIS IS THE STRING READ FROM WASM: ",String.fromCharCode.apply(null, buffer));
 	
-	var string = String.fromCharCode.apply(null, buffer);
-	console.log("THIS IS THE STRING READ FROM WASM: ",string);
+	
+	str2ab('Testing ab');
+	console.log('WASM REPORT FOR STRING: ' + instance.exports.returnString());
+	
+	str2ab('a spacebar');
+	console.log('WASM REPORT FOR STRING: ' + instance.exports.returnString());
+	
+	str2ab('1234567890');
+	console.log('WASM REPORT FOR STRING: ' + instance.exports.returnString());
+	
+	str2ab('this word!');
+	console.log('WASM REPORT FOR STRING: ' + instance.exports.returnString());*/
+	
+	// console.log("THIS IS THE STRING READ FROM JS EDITS: ",String.fromCharCode.apply(null, buffer));
 	
 	// for(var i = 0; i < length; i ++){
 		// console.log(
@@ -173,7 +175,7 @@ fetch('showpony/modules/visualNovel/script.wasm')
 					background-color:orange;
 				}
 				
-				.character{
+				.image{
 					background-color:blue;
 				}
 				
@@ -185,7 +187,7 @@ fetch('showpony/modules/visualNovel/script.wasm')
 					background-color:black;
 				}
 				
-				.set, .comparison{
+				.set, .get{
 					background-color:purple;
 				}
 			</style>
@@ -205,6 +207,22 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		</body>
 		</html>
 		`);
+		
+		console.log('WASM LOADED');
+		var buffer = new Uint8Array(instance.exports.memory.buffer, instance.exports.getData(0), instance.exports.getLength());
+		
+		function str2ab(str) {
+			var strLen=str.length;
+		  for (var i=0; i < strLen; i++) {
+			buffer[i] = str.charCodeAt(i);
+		  }
+		  
+		  // Set end to null. This will tell C that the line is done. (otherwise if later in the buffer other chars exist, we'll keep going)
+		  buffer[strLen] = 0;
+		  
+		  // buffer[strLen] = 0;
+		  // buffer[strLen] = str.charCodeAt(i);
+		}
 		
 		var assets = E.window.document.getElementById('assets');
 		var data = E.window.document.getElementById('data');
@@ -227,6 +245,9 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		E.resizeThis = function(){
 			// Don't bother if no text is passed
 			if(E.rawText === null) return;
+			
+			// Put into buffer for WASM to read
+			str2ab(E.rawText);
 			
 			content.style.height = '';
 			content.style.height = content.scrollHeight + 16 + 'px';
@@ -284,9 +305,6 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			// Track which line we correspond to
 			var currentLine = -1;
 			
-			// Check if we're in a multiline comment
-			var multilineComment = false;
-			
 			var highlightFragment = document.createDocumentFragment();
 			
 			var yPos = 0;
@@ -335,165 +353,35 @@ fetch('showpony/modules/visualNovel/script.wasm')
 					if(height <= minHeight) oneLineMaxChars = lines[i].length;
 				}
 				
-				// Check if multiline comment starts
-				if(/^\s*\/\*/.test(lines[i])){
-					multilineComment = true;
-				}
+				// Set buffer to current line (for testing)
+				str2ab(lines[i]);
 				
-				var component	= null;
-				var command		= null;
-				var parameter	= null;
-				var type		= null;
+				// Log out the type
+				var typeInt = instance.exports.readLine();
+				
+				console.log('TYPE',typeInt);
+				var type = [
+					''
+					,'engine'
+					,'set'
+					,'get'
+					,'comment'
+					,'textbox'
+					,'image'
+					,'audio'
+				][typeInt];
+				// console.log('TYPE',type);
+				// Log out the component
+				console.log('COMPONENT', String.fromCharCode.apply(null, new Uint8Array(instance.exports.memory.buffer, instance.exports.getData(1), 30)));
+				// Log out the command
+				// console.log('COMMAND', String.fromCharCode.apply(null, new Uint8Array(instance.exports.memory.buffer, instance.exports.getData(2), 30)));
+				// Log out the parameter
+				// console.log('PARAMETER', String.fromCharCode.apply(null, new Uint8Array(instance.exports.memory.buffer, instance.exports.getData(3), 1000)));
+				
+				
 				
 				// The styling of the highlight problem
 				var style = null;
-				
-				// If a line is not empty
-				if(!/^\s*$/.test(lines[i])){
-					
-					// Highlight multiline comments
-					if(multilineComment){
-						style = 'background-color:rgba(255,255,255,.5);z-index:1;';
-					// Other lines
-					}else{
-						currentLine++;
-						
-						// Current Line
-						if(currentLine === E.line){
-							// console.log('LINE CHECK', M.lines[E.line]);
-							style = 'background-color:rgba(0,255,0,.25);z-index:-1;';
-						}
-						
-						/// ERROR CHECKING ///
-						
-						// Check if using spaces instead of tabs for separate command and parameter
-						if(/^(?!\/{2,})[^\t]* /.test(lines[i])){
-							style = 'background-color:rgba(255,0,0,.25);z-index:-1;';
-						}
-					}
-					
-					// Check if multiline comment ends
-					if(/^\s*\*\/\s*$/.test(lines[i])){
-						multilineComment = false;
-					}
-					
-					/// AUTOCOMPLETE ///
-					// Get current line
-					var contentToNow = content.value.substr(0, content.selectionEnd);
-					if(
-						content.selectionStart === content.selectionEnd
-						&& content.selectionStart
-						&& i === (contentToNow.match(/\n/g) || '').length
-					){
-						var helpText = '';
-						var match = /[^\n]*$/.exec(contentToNow)[0];
-						
-						if(match !== ''){
-							// console.log('current line!', match);
-							
-							// See if there's something for us to autocomplete
-							var keys = Object.keys(objectTypes).sort();
-							for(var j = 0; j < keys.length; j++){
-								// console.log('COMPARE',match,keys[j],new RegExp('^' + match));
-								
-								// If this key exists, don't bother passing autocomplete text
-								if(match === keys[j]){
-									helpText = '';
-									break;
-								}
-								
-								// See if it matches
-								if(new RegExp('^' + match).test(keys[j])){
-									if(helpText !== '' && helpText.length > keys[j]) continue;
-									helpText = keys[j];
-								}
-							}
-						}
-						
-						var autocomplete = E.window.document.getElementById('content-autocomplete');
-						// console.log('SHOW',helpText);
-						if(helpText === ''){
-							autocomplete.style.visibility = 'hidden';
-						}else{
-							autocomplete.style.visibility = 'visible';
-							autocomplete.innerHTML = helpText;
-							autocomplete.style.top = yPos + 'px';
-						}
-					}
-					
-					/// READ STUFF ///
-					
-					// Get command, etc
-					var text = /(^[^\t\.\+\-=<>!]+)?\.?([^\t]+|[+\-=<>!]+)?\t*(.+$)?/.exec(lines[i]);
-					
-					// Skip comments
-					if(/^\t*\/\//.test(text)){
-						type = 'comment';
-					}else if(type === null){
-						component	= typeof(text[1]) !== 'undefined' ? text[1] : 'textbox';
-						command		= typeof(text[2]) !== 'undefined' ? text[2] : 'content';
-						parameter	= typeof(text[3]) !== 'undefined' ? text[3] : null;
-						
-						// WASM
-						var types = [null,'set','comparison'];
-						var inputs = {
-							'=':0
-							,'+':1
-							,'-':2
-						};
-						type = types[instance.exports.getType(inputs[command])];
-						console.log('TESTING VALUE',type);
-						
-						if(type === null){
-							
-							// Determine type
-							if(objectTypes[component]) type = objectTypes[component];
-							else{
-								type = 'character';
-								if(/\.mp3/i.test(parameter)) type = 'audio';
-								
-								if(component === 'textbox') type = 'textbox';
-								else if(component === 'engine') type = 'engine';
-							}
-						}
-						
-						// Creating a new element using the engine command
-						if(type === 'engine'){
-							switch(command){
-								case 'audio':
-								case 'textbox':
-								case 'character':
-									component = parameter;
-									type = command;
-									command = null;
-
-									// If the object already exists, show a warning
-									if(objectTypes[component]){
-										style = 'background-color:rgba(255,0,0,.25);z-index:-1;';
-									}
-									break;
-								default:
-									break;
-							}
-						}
-						
-						// Keep track of existing objects
-						objectTypes[component] = type;
-					}
-					
-					// Add style
-					if(style){
-						var highlight = document.createElement('div');
-						highlight.className = 'highlight';
-						highlight.style.top = yPos + 'px';
-						highlight.style.height = height + 'px';
-						highlight.dataset.line = currentLine + '|' + i;
-						highlight.style.cssText += style;
-						highlightFragment.appendChild(highlight);
-					}
-				}else{
-					type = '';
-				}
 				
 				/// LINE INFO ///
 				if(data.children.length <= i){
@@ -541,6 +429,8 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			'keydown'
 			,function(event){
 				
+				// console.log('testing');
+				
 				if(event.altKey || event.shiftKey || event.metaKey) return;
 				
 				// Ctrl key functions
@@ -557,6 +447,8 @@ fetch('showpony/modules/visualNovel/script.wasm')
 				} else {
 					switch(event.key){
 						case 'Tab':
+							console.log('Add tab');
+							// E.window.document.execCommand('insertText',false,'\t');
 							E.window.document.execCommand('insertText',false,'\t');
 						break;
 						default:
