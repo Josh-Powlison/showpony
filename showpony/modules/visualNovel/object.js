@@ -932,7 +932,7 @@ new function(){
 		O.name = input;
 		
 		O.filepath = 'images/'+O.name+'/';
-		O.defaultExtension = '.png';
+		O.ext = '.png';
 		
 		M.window.appendChild(O.el);
 
@@ -949,7 +949,7 @@ new function(){
 				
 				var resource = imageNames[i];
 				// If no extension, assume png
-				if(!/\./.test(resource)) resource += O.defaultExtension;
+				if(!/\./.test(resource)) resource += O.ext;
 				
 				var ext = resource.slice((resource.lastIndexOf(".") - 1 >>> 0) + 2);
 				
