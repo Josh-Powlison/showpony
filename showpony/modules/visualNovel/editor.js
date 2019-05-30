@@ -315,92 +315,11 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			// var oneLineMaxChars	= Math.floor(content.innerWidth / letterWidth);
 			var oneLineMaxChars	= Math.floor(instance.exports.getMaxChars(content.innerWidth, letterWidth));
 			
-			for(var i = 0; i < lines.length; i ++){
-				
-				/*
-					Can we trust heightChars as an array, or only for the first one?
-					
-					If only for the first one, we need to remove the arrays.
-					
-					It will get later values, and in checking those rather than calculating we'll get stuff being on one line but calculated as more lines.
-					
-					Maybe we need > max instead? Rather than < min? But that could still be wrong.
-				*/
-				
-				/*
-				
-					USE WASM TO ESTIMATE PROPER LINE HEIGHTS, ETC
-					
-					This should allow us to get reasonable times when updating this data. (probably)
-					
-					But take it a step at a time.
-				
-				*/
-				
-				// var height = instance.exports.getLineHeight();
-				
-				var height = null;
-				
-				// If this is shorter than the total length that fits on one line, just get that height
-				if(lines[i].length <= oneLineMaxChars){
-					height = minHeight;
-				// Otherwise, calculate the line's height
-				} else {
-					contentSizing.innerText = lines[i];
-					height = contentSizing.clientHeight;
-					
-					// Change the max length a line can be befoe spilling over; this can save us processing power
-					if(height <= minHeight) oneLineMaxChars = lines[i].length;
-				}
-				
-				// Set buffer to current line (for testing)
-				str2ab(lines[i]);
-				
-				// Log out the type
-				var typeInt = instance.exports.readLine();
-				
-				// console.log('TYPE',typeInt);
-				var type = [
-					''
-					,'engine'
-					,'set'
-					,'get'
-					,'comment'
-					,'textbox'
-					,'image'
-					,'audio'
-				][typeInt];
-				// console.log('TYPE',type);
-				// Log out the component
-				// console.log('COMPONENT', String.fromCharCode.apply(null, new Uint8Array(instance.exports.memory.buffer, instance.exports.getData(1), 30)));
-				// Log out the command
-				// console.log('COMMAND', String.fromCharCode.apply(null, new Uint8Array(instance.exports.memory.buffer, instance.exports.getData(2), 30)));
-				// Log out the parameter
-				// console.log('PARAMETER', String.fromCharCode.apply(null, new Uint8Array(instance.exports.memory.buffer, instance.exports.getData(3), 1000)));
-				
-				
-				
-				// The styling of the highlight problem
-				var style = null;
-				
-				/// LINE INFO ///
-				if(data.children.length <= i){
-					var lineData = document.createElement('p');
-					lineData.innerHTML = i + 1;
-					// dataFragment.appendChild(lineData);
-					data.appendChild(lineData);
-				}
-				
-				var child = data.children[i];
-				// Change height if needed
-				if(child.style.height !== height + 'px'){
-					child.style.height = height + 'px';
-				}
-				
-				if(child.className !== type) child.className = type;
-				
-				yPos += height;
-			}
+			// Read the file in WASM
+			// instance.exports.readFile();
+			console.log('WASM RETURN',ab2str(new Uint8Array(instance.exports.memory.buffer, instance.exports.readFile(), 10)));
+			
+			return;
 			
 			while(data.children[lines.length]) data.removeChild(data.children[lines.length]);
 			
