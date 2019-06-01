@@ -84,9 +84,8 @@ const int FILE_START = 50;
 
 void jsLogString(char *position, int length);
 void jsLogInt(int input);
-void jsLineData(int input);
-void jsCreateLine(int fileLine,int type,char *position);
-void jsCreateHighlight(float top,float height);
+float jsCreateLine(int fileLine, int type, char *position, int length);
+void jsCreateHighlight(float top, float height);
 
 ///////////////////////
 ///// C FUNCTIONS /////
@@ -162,7 +161,6 @@ void readFile(int line){
 	
 	/*while(assets.firstChild) assets.removeChild(assets.firstChild);
 	
-	
 	/// ASSETS ///
 	var objectKeys = Object.keys(objects);
 	
@@ -181,8 +179,6 @@ void readFile(int line){
 		assets.appendChild(input);
 	}*/
 	/*
-	/// HIGHLIGHT LINES ///
-	var highlightFragment = document.createDocumentFragment();
 	
 	var yPos = 0;
 	
@@ -190,7 +186,7 @@ void readFile(int line){
 	
 	var oneLineMaxChars	= Math.floor(content.innerWidth / letterWidth);
 	
-	dataFragment = document.createDocumentFragment();*/
+	*/
 	
 	// We don't have to reset all the memory; we just have to reset our tracking
 	objPosition = 0;
@@ -210,10 +206,10 @@ void readFile(int line){
 	int logged = 0;
 	
 	int spaced = 0;
-	int lineStart = 0;
+	int lineStart = FILE_START;
 	
-	// Reset line displays
-	jsLineData(0);
+	float yPosition = 0;
+	float height = 16;
 	
 	// Loop through the file. w00t!
 	for(int i = FILE_START; i < SIZE; i++){
@@ -238,8 +234,6 @@ void readFile(int line){
 			*/
 			if(data[i] == '\r' && data[i + 1] == '\n') continue;
 			// Pass info on the line to JS
-			
-			lineStart = i + 1;
 			
 			type = TYPE_EMPTY;
 			
@@ -344,25 +338,12 @@ void readFile(int line){
 			// If the defaults are all the same, and the parameter is empty, we're empty
 			else if(componentPosition == CALL_TEXTBOX && commandPosition == CALL_CONTENT && parameterPosition == 0) type = TYPE_EMPTY;
 			
-			/*
-			var height = null;
-
-			// If this is shorter than the total length that fits on one line, just get that height
-			if(lines[i].length <= oneLineMaxChars){
-				height = minHeight;
-			// Otherwise, calculate the line's height
-			} else {
-				contentSizing.innerText = lines[i];
-				height = contentSizing.clientHeight;
-				
-				// Change the max length a line can be befoe spilling over; this can save us processing power
-				if(height <= minHeight) oneLineMaxChars = lines[i].length;
-			}*/
-			
 			// The styling of the highlight problem
 			// int style		= 0;
 			
 			/// HIGHLIGHT
+			height = jsCreateLine(fileLine,type,&data[lineStart],i - lineStart);
+			
 			// Check the line as after the file has been parsed by JS (removing multiline comments, removing adjacent whitespace
 			if(type != TYPE_EMPTY && commenting != 2){
 				// jsLogString(&data[lineStart],10);
@@ -370,9 +351,7 @@ void readFile(int line){
 				
 				// If it's the line we're on in the player, highlight it
 				if(parseLine == line){
-					float top = fileLine * 16;
-					float height = 16;
-					jsCreateHighlight(top, height);
+					jsCreateHighlight(yPosition, height);
 				}
 				
 				parseLine++;
@@ -380,7 +359,10 @@ void readFile(int line){
 			
 			/// LINE INFO
 			fileLine++;
-			jsCreateLine(fileLine,type,&data[lineStart]);
+			
+			lineStart = i + 1;
+			
+			yPosition += height;
 			
 			/*
 			
@@ -402,6 +384,8 @@ void readFile(int line){
 			type				= TYPE_EMPTY;
 			
 			spaced				= 0;
+			
+			// height = 16;
 			continue;
 		}
 		
@@ -474,9 +458,6 @@ void readFile(int line){
 		
 	// We've now got pointers for the beginning of each component, command, and parameter. w00t!
 	
-	// Draw all the lines in JS to the DOM
-	// jsLineData(fileLine);
-	
 	/*
 	
 	/// AUTOCOMPLETE ///
@@ -527,25 +508,6 @@ void readFile(int line){
 			autocomplete.style.top = yPos + 'px';
 		}
 	}*/
-	
-	/*
-	/// LINE INFO ///
-	if(data.children.length <= i){
-		var lineData = document.createElement('p');
-		lineData.innerHTML = i + 1;
-		// dataFragment.appendChild(lineData);
-		data.appendChild(lineData);
-	}
-	
-	var child = data.children[i];
-	// Change height if needed
-	if(child.style.height !== height + 'px'){
-		child.style.height = height + 'px';
-	}
-	
-	if(child.className !== type) child.className = type;
-	
-	yPos += height;*/
 }
 
 /*

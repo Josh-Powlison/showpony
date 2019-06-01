@@ -9,6 +9,20 @@ var instanceLive;
 var data;
 var dataFragment;
 var highlightFragment;
+var contentSizing;
+var minHeight;
+var oneLineMaxChars;
+
+var types = [
+	''
+	,'engine'
+	,'set'
+	,'get'
+	,'comment'
+	,'textbox'
+	,'image'
+	,'audio'
+];
 
 fetch('showpony/modules/visualNovel/script.wasm')
 .then(response => response.arrayBuffer())
@@ -23,44 +37,47 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		,jsLogInt: function(input){
 			console.log('Log from WASM:',input);
 		}
-		,jsCreateLine: function(number,type,position){
-			let test = document.createElement('p');
-			test.innerHTML = number;
-		
-			var types = [
-				''
-				,'engine'
-				,'set'
-				,'get'
-				,'comment'
-				,'textbox'
-				,'image'
-				,'audio'
-			];
-		
-			test.className = types[type];
+		,jsCreateLine: function(number,type,position,length){
+			var string = ab2str(new Uint8Array(instanceLive.exports.memory.buffer, position, length));
+			// console.log(string);
+			// var string = '_';
+			// console.log(string);
 			
-			// console.log('test',number,types[type],'CLASS',test.className);
+			// var height = null;
+
+			var height;
 			
-			dataFragment.appendChild(test);
-		}
-		,jsLineData: function(lineCount){
-			/// TODO: pass the beginning of an array containing all of the line heights
-			/*
-			var dataFragment = document.createDocumentFragment();
+			// If this is shorter than the total length that fits on one line, just get that height
+			if(string.length <= oneLineMaxChars){
+				height = minHeight;
+			// Otherwise, calculate the line's height
+			} else {
+				contentSizing.innerText = (string.length ? string : '_');
 			
-			// data.children.length <= lineCount
-			for(var i = data.children.length; i < lineCount; i++){
-				var lineData = document.createElement('p');
-				lineData.innerHTML = i + 1;
-				dataFragment.appendChild(lineData);
-			}*/
-			while(data.firstChild) data.removeChild(data.firstChild);
+				height = contentSizing.clientHeight;
+				
+				// Change the max length a line can be befoe spilling over; this can save us processing power
+				if(height <= minHeight) oneLineMaxChars = string.length;
+			}
 			
-			//data.appendChild(dataFragment);
+			// Create line if it doesn't exist
+			if(!data.children[number]){
+				let test = document.createElement('p');
+				test.innerHTML = number + 1;
+				dataFragment.appendChild(test);
+				test.className = types[type];
+				test.style.height = height + 'px';
+			}
+			// Change line's class name if needbe
+			else{
+				data.children[number].className = types[type];
+				data.children[number].style.height = height + 'px';
+			}
+			
+			return height;
 		}
 		,jsCreateHighlight: function(top,height){
-			console.log('HIGHLIGHT',top,height);
+			// console.log('HIGHLIGHT',top,height);
 			
 			var highlight = document.createElement('div');
 			highlight.className = 'highlight';
@@ -75,10 +92,9 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			
 			// Error
 			// highlight.style.cssText = 'background-color:rgba(255,0,0,.25);z-index:-1;';
-
 			
 			highlightFragment.appendChild(highlight);
-			console.log(highlight);
+			// console.log(highlight);
 		}
 		/*
 			Line number:
@@ -240,15 +256,15 @@ fetch('showpony/modules/visualNovel/script.wasm')
 				}
 				
 				.image{
-					background-color:blue;
+					background-color:#ccf;
 				}
 				
 				.comment{
-					background-color:green;
+					background-color:#cfc;
 				}
 				
 				.textbox{
-					background-color:black;
+					background-color:#ccc;
 				}
 				
 				.set, .get{
@@ -288,7 +304,7 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		var assets = E.window.document.getElementById('assets');
 		data = E.window.document.getElementById('data');
 		
-		var contentSizing = E.window.document.getElementById('content-sizing');
+		contentSizing = E.window.document.getElementById('content-sizing');
 		
 		E.update = function(input){
 			E.rawText = input;
@@ -305,7 +321,7 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		// We need to figure out the maximum size that can fit within a line; that can speed it up, vs calculating everything
 		contentSizing.innerHTML = '<span id="letter-width">_</span>';
 		var letterWidth = E.window.document.getElementById('letter-width').clientWidth;
-		var minHeight = contentSizing.clientHeight;
+		minHeight = contentSizing.clientHeight;
 		
 		var run = false;
 		
@@ -315,6 +331,9 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			
 			content.style.height = '';
 			content.style.height = content.scrollHeight + 16 + 'px';
+			
+			// Calculate the maximum number of characters on a line
+			oneLineMaxChars	= Math.floor(content.innerWidth / letterWidth);
 			
 			/*
 			
@@ -361,18 +380,10 @@ fetch('showpony/modules/visualNovel/script.wasm')
 				assets.appendChild(input);
 			}*/
 			
-			/// HIGHLIGHT LINES ///
-			
-			// Calculate the maximum number of characters on a line
-			var oneLineMaxChars	= Math.floor(content.innerWidth / letterWidth);
-			
-			var yPos = 0;
-			
 			dataFragment = document.createDocumentFragment();
 			highlightFragment = document.createDocumentFragment();
 			
 			// Read the file in WASM
-			// console.log(M.currentLine);
 			instance.exports.readFile(M.currentLine);
 			
 			data.appendChild(dataFragment);
@@ -390,10 +401,14 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		E.window.document.getElementById('content').addEventListener('input',function(){
 			E.rawText = this.value;
 			
-			// Put into buffer for WASM to read
-			str2ab('\0engine\0textbox\0image\0audio\0content\0remove\0\0\0\0' + this.value + '\n');
-			
-			E.resizeThis();
+			if(this.value.length > 28000){
+				alert('Maximum file character length exceeded! (28000)');
+			}else{
+				// Put into buffer for WASM to read
+				str2ab('\0engine\0textbox\0image\0audio\0content\0remove\0\0\0\0' + this.value + '\n');
+				
+				E.resizeThis();
+			}
 		});
 		
 		E.window.addEventListener('resize',function(){
