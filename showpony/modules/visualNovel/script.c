@@ -85,7 +85,8 @@ const int FILE_START = 50;
 void jsLogString(char *position, int length);
 void jsLogInt(int input);
 void jsLineData(int input);
-void jsCreateLine(int currentLine,int type,char *position);
+void jsCreateLine(int fileLine,int type,char *position);
+void jsCreateHighlight(float top,float height);
 
 ///////////////////////
 ///// C FUNCTIONS /////
@@ -156,7 +157,41 @@ int compareStrings(int a, int b){
 	}
 }
 
-void readFile(){
+void readFile(int line){
+	/// Clear Data
+	
+	/*while(assets.firstChild) assets.removeChild(assets.firstChild);
+	
+	
+	/// ASSETS ///
+	var objectKeys = Object.keys(objects);
+	
+	for(var i = 0; i < objectKeys.length; i++){
+		var obj = document.createElement('p');
+		obj.innerHTML = objectKeys[i] + ' (' + objects[objectKeys[i]].type + ')';
+		assets.appendChild(obj);
+	}
+	
+	// Variables
+	var variableKeys = Object.keys(M.variables);
+	
+	for(var i = 0; i < variableKeys.length; i++){
+		var input = document.createElement('input');
+		input.value = M.variables[variableKeys[i]];
+		assets.appendChild(input);
+	}*/
+	/*
+	/// HIGHLIGHT LINES ///
+	var highlightFragment = document.createDocumentFragment();
+	
+	var yPos = 0;
+	
+	// Calculate the maximum number of characters on a line
+	
+	var oneLineMaxChars	= Math.floor(content.innerWidth / letterWidth);
+	
+	dataFragment = document.createDocumentFragment();*/
+	
 	// We don't have to reset all the memory; we just have to reset our tracking
 	objPosition = 0;
 	varPosition = 0;
@@ -169,7 +204,8 @@ void readFile(){
 	
 	int commenting = 0;
 	
-	int currentLine = 0;
+	int fileLine = 0;		// The actual line in the file
+	int parseLine = 0;		// The lines as parsed later on
 	
 	int logged = 0;
 	
@@ -205,8 +241,6 @@ void readFile(){
 			
 			lineStart = i + 1;
 			
-			// Consider the next line
-			currentLine++;
 			type = TYPE_EMPTY;
 			
 			// Run commands if not commenting, and if something was passed for parameter
@@ -281,7 +315,7 @@ void readFile(){
 					// If no match, add it
 					if(!match){
 						// jsLogString(&data[componentPosition],7);
-						// jsLogInt(currentLine);
+						// jsLogInt(fileLine);
 						
 						// Update the current struct
 						list[objPosition].active = 1;
@@ -309,7 +343,54 @@ void readFile(){
 			if(commenting) type = TYPE_COMMENT;
 			// If the defaults are all the same, and the parameter is empty, we're empty
 			else if(componentPosition == CALL_TEXTBOX && commandPosition == CALL_CONTENT && parameterPosition == 0) type = TYPE_EMPTY;
-			jsCreateLine(currentLine,type,&data[lineStart]);
+			
+			/*
+			var height = null;
+
+			// If this is shorter than the total length that fits on one line, just get that height
+			if(lines[i].length <= oneLineMaxChars){
+				height = minHeight;
+			// Otherwise, calculate the line's height
+			} else {
+				contentSizing.innerText = lines[i];
+				height = contentSizing.clientHeight;
+				
+				// Change the max length a line can be befoe spilling over; this can save us processing power
+				if(height <= minHeight) oneLineMaxChars = lines[i].length;
+			}*/
+			
+			// The styling of the highlight problem
+			// int style		= 0;
+			
+			/// HIGHLIGHT
+			// Check the line as after the file has been parsed by JS (removing multiline comments, removing adjacent whitespace
+			if(type != TYPE_EMPTY && commenting != 2){
+				// jsLogString(&data[lineStart],10);
+				// jsLogInt(type);
+				
+				// If it's the line we're on in the player, highlight it
+				if(parseLine == line){
+					float top = fileLine * 16;
+					float height = 16;
+					jsCreateHighlight(top, height);
+				}
+				
+				parseLine++;
+			}
+			
+			/// LINE INFO
+			fileLine++;
+			jsCreateLine(fileLine,type,&data[lineStart]);
+			
+			/*
+			
+			/// ERROR CHECKING ///
+			
+			// Check if using spaces instead of tabs for separate command and parameter
+			if(/^(?!\/{2,})[^\t]* /.test(lines[i])){
+				style = STYLE_ERROR;
+			}
+			*/
 			
 			// Reset single-line commenting
 			if(commenting == 1) commenting = 0;
@@ -394,50 +475,9 @@ void readFile(){
 	// We've now got pointers for the beginning of each component, command, and parameter. w00t!
 	
 	// Draw all the lines in JS to the DOM
-	// jsLineData(currentLine);
+	// jsLineData(fileLine);
 	
 	/*
-	var height = null;
-
-	// If this is shorter than the total length that fits on one line, just get that height
-	if(lines[i].length <= oneLineMaxChars){
-		height = minHeight;
-	// Otherwise, calculate the line's height
-	} else {
-		contentSizing.innerText = lines[i];
-		height = contentSizing.clientHeight;
-		
-		// Change the max length a line can be befoe spilling over; this can save us processing power
-		if(height <= minHeight) oneLineMaxChars = lines[i].length;
-	}*/
-	
-	// The styling of the highlight problem
-	int style		= -1;
-	/*
-	// Current Line
-	if(currentLine === E.line){
-		style = 'background-color:rgba(0,255,0,.25);z-index:-1;';
-	}
-	
-	/// ERROR CHECKING ///
-	
-	// Check if using spaces instead of tabs for separate command and parameter
-	if(/^(?!\/{2,})[^\t]* /.test(lines[i])){
-		style = 'background-color:rgba(255,0,0,.25);z-index:-1;';
-	}
-		
-		/// READ STUFF ///
-		// Add style
-		if(style){
-			var highlight = document.createElement('div');
-			highlight.className = 'highlight';
-			highlight.style.top = yPos + 'px';
-			highlight.style.height = height + 'px';
-			highlight.dataset.line = currentLine + '|' + i;
-			highlight.style.cssText += style;
-			highlightFragment.appendChild(highlight);
-		}
-	}
 	
 	/// AUTOCOMPLETE ///
 	if(type == IMAGE

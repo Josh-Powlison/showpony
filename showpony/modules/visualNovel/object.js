@@ -396,8 +396,6 @@ new function(){
 		
 		// Update editor
 		if(M.editor){
-			M.editor.line = M.currentLine;
-			// console.log(M.lines[M.currentLine]);
 			M.editor.resizeThis();
 		}
 		

@@ -8,6 +8,7 @@ function ab2str(buf) {
 var instanceLive;	
 var data;
 var dataFragment;
+var highlightFragment;
 
 fetch('showpony/modules/visualNovel/script.wasm')
 .then(response => response.arrayBuffer())
@@ -57,6 +58,27 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			while(data.firstChild) data.removeChild(data.firstChild);
 			
 			//data.appendChild(dataFragment);
+		}
+		,jsCreateHighlight: function(top,height){
+			console.log('HIGHLIGHT',top,height);
+			
+			var highlight = document.createElement('div');
+			highlight.className = 'highlight';
+			
+			highlight.style.top = top + 'px';
+			highlight.style.height = height + 'px';
+			// highlight.dataset.line = currentLine + '|' + i;
+
+			// Current Line
+			highlight.style.backgroundColor = 'rgba(0,255,0,.25)';
+			highlight.style.zIndex = '-1';
+			
+			// Error
+			// highlight.style.cssText = 'background-color:rgba(255,0,0,.25);z-index:-1;';
+
+			
+			highlightFragment.appendChild(highlight);
+			console.log(highlight);
 		}
 		/*
 			Line number:
@@ -261,9 +283,6 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		  
 		  // Set end to null. This will tell C that the line is done. (otherwise if later in the buffer other chars exist, we'll keep going)
 		  buffer[strLen] = 0;
-		  
-		  // buffer[strLen] = 0;
-		  // buffer[strLen] = str.charCodeAt(i);
 		}
 		
 		var assets = E.window.document.getElementById('assets');
@@ -343,22 +362,20 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			}*/
 			
 			/// HIGHLIGHT LINES ///
-			var highlightFragment = document.createDocumentFragment();
+			
+			// Calculate the maximum number of characters on a line
+			var oneLineMaxChars	= Math.floor(content.innerWidth / letterWidth);
 			
 			var yPos = 0;
 			
-			// Calculate the maximum number of characters on a line
-			
-			var oneLineMaxChars	= Math.floor(content.innerWidth / letterWidth);
-			
 			dataFragment = document.createDocumentFragment();
+			highlightFragment = document.createDocumentFragment();
 			
 			// Read the file in WASM
-			instance.exports.readFile();
+			// console.log(M.currentLine);
+			instance.exports.readFile(M.currentLine);
 			
 			data.appendChild(dataFragment);
-				
-			return;
 			
 			var els = E.window.document.getElementsByClassName('highlight');
 			for(var i = els.length - 1; i > 0; i--){
