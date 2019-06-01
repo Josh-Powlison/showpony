@@ -44,9 +44,6 @@ const int SIZE = 28000;
 
 // change to an int later to cover more characters?
 char data[SIZE] = {'\0'};
-int fileStart = 20;
-int TEXTBOX_CALL = 1;
-int CONTENT_CALL = 9;
 
 int currentLine = 0;
 int objPosition = 0;
@@ -56,18 +53,24 @@ int components[50];		// Where object names start in the data string/array. We ju
 struct Object list[50];			// A list of all structs in use
 
 // CONSTANTS
-const int EMPTY			= 0;
-const int ENGINE		= 1;
-const int SET			= 2;
-const int GET			= 3;
-const int COMMENT		= 4;
-const int TEXTBOX		= 5;
-const int IMAGE			= 6;
-const int AUDIO			= 7;
+const int TYPE_EMPTY	= 0;
+const int TYPE_ENGINE	= 1;
+const int TYPE_SET		= 2;
+const int TYPE_GET		= 3;
+const int TYPE_COMMENT	= 4;
+const int TYPE_TEXTBOX	= 5;
+const int TYPE_IMAGE	= 6;
+const int TYPE_AUDIO	= 7;
 
 const int DEBUG_INT		= 0;
 const int DEBUG_ARRAY	= 1;
 const int DEBUG_STRING	= 2;
+
+const int CALL_TEXTBOX = 1;
+const int CALL_ENGINE = 9;
+const int CALL_CONTENT = 17;
+const int FILE_START = 30;
+// const int REMOVE_CALL = 9;
 
 ///////////////////////
 //// JS FUNCTIONS /////
@@ -165,20 +168,20 @@ int compareStringsFromPointers(int a, int b){
 
 void readFile(){
 	// Chars are smaller, so we used them in this case
-	int componentPosition	= TEXTBOX_CALL;
-	int commandPosition		= CONTENT_CALL;
+	int componentPosition	= CALL_TEXTBOX;
+	int commandPosition		= CALL_CONTENT;
 	int parameterPosition	= 0;
 	
 	int commenting = 0;
 	
-	int type = EMPTY;
+	int type = TYPE_EMPTY;
 	
 	int logged = 0;
 	
 	int spaced = 0;
 	
 	// Loop through the file. w00t!
-	for(int i = fileStart; i < SIZE; i++){
+	for(int i = FILE_START; i < SIZE; i++){
 		// jsLogInt(i);
 		
 		// Break on null char
@@ -248,12 +251,29 @@ void readFile(){
 					// Show the matches
 					// jsLogString(&data[components[id]],3);
 					// jsLogString(&data[componentPosition],3);
+					
+					// Update the struct
+					// if(compareStrings(commandPosition + 1, REMOVE_CALL + 1)) list[id].active = 0;
 				}
 				
 				// If no match, add it
 				if(!match){
 					jsLogString(&data[componentPosition],7);
+					
 					components[objPosition] = componentPosition;
+					
+					// Update the current struct
+					list[objPosition].active = 1;
+					
+					/// SET TYPE
+					// Engine
+					if(compareStringsFromPointers(componentPosition,CALL_ENGINE)) list[objPosition].type = TYPE_ENGINE;
+					// Other call
+					else list[objPosition].type = TYPE_EMPTY;
+					
+					jsLogInt(list[objPosition].type);
+					
+					// Move the position
 					objPosition++;
 				}
 			}
@@ -261,8 +281,8 @@ void readFile(){
 			// Reset single-line commenting
 			commenting = 0;
 			
-			componentPosition	= TEXTBOX_CALL;
-			commandPosition		= CONTENT_CALL;
+			componentPosition	= CALL_TEXTBOX;
+			commandPosition		= CALL_CONTENT;
 			parameterPosition	= 0;
 			
 			spaced				= 0;
@@ -290,7 +310,7 @@ void readFile(){
 		// If we're on a delimiter, and it's not a tab (tabs were already checked), this must be a command
 		if(isDelimiter(data[i])) commandPosition = i;
 		// If we're not on a delimiter, but are on defaults for componentPosition and commandPosition, we must be at the beginning of a component
-		else if(componentPosition == TEXTBOX_CALL && commandPosition == CONTENT_CALL){
+		else if(componentPosition == CALL_TEXTBOX && commandPosition == CALL_CONTENT){
 			componentPosition = i;
 		}
 	}
