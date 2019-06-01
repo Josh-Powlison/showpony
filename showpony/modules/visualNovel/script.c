@@ -194,6 +194,22 @@ void readFile(){
 		// Break on null char
 		if(data[i] == '\0') break;
 		
+		/*
+		This will check if we're on a new line or not.
+		
+		Windows:	\r\n
+		Mac (old):	\r
+		Unix:		\n
+		
+		If we're on \n but the previous char is \r, we don't consider ourselves as being on a new line.
+		
+		First line is not 0; first line is 1, like for a text editor.
+		*/
+		if(data[i] == '\n' || data[i] == '\r'){
+			if(data[i] == '\n' && data[i - 1] == '\r') continue;
+			currentLine++;
+		}
+		
 		/// COMMENTS ///
 		// Check for comment
 		/*
@@ -202,47 +218,41 @@ void readFile(){
 			2: Multi-line comment
 		*/
 		
-		// Single-line comments
-		if(data[i] == '/' && data[i + 1] == '/'){
-			commenting = 1;
-			continue;
+		// If we aren't already commenting, we can start single or multiline commenting
+		if(commenting == 0){
+			// Single-line comments
+			if(data[i] == '/' && data[i + 1] == '/'){
+				commenting = 1;
+				continue;
+			}
+			
+			// Check for multiline comment start
+			if(data[i] == '/'
+				&& data[i + 1] == '*'
+			){
+				commenting = 2;
+				i++;
+				continue;
+			}
 		}
 		
-		// Check for multiline comment start
-		if(data[i] == '/'
-			&& data[i + 1] == '*'
-		){
-			commenting = 2;
-			i++;
+		// If we're in the middle of a multiline comment
+		if(commenting == 2){
+			// Multiline comment end
+			if(data[i] == '*'
+				&& i + 1 < SIZE
+				&& data[i + 1] == '/'
+			){
+				commenting = 0;
+				i++;
+			}
+			
+			// Continue regardless
 			continue;
 		}
-		
-		// Multiline comment end
-		if(data[i] == '*'
-			&& i + 1 < SIZE
-			&& data[i + 1] == '/'
-		){
-			commenting = 0;
-			i++;
-			continue;
-		}
-		
-		// Skip in the middle of multiline commenting
-		if(commenting == 2) continue;
 		
 		// Line break, reset
 		if(data[i] == '\n' || data[i] == '\r'){
-			/* This will check if we're on a new line or not.
-			
-			\r\n
-			\r
-			\n
-			
-			If we're on \n but the previous char is \r, we don't consider ourselves as being on a new line.
-			*/
-			if(data[i] == '\n' && data[i - 1] == '\r') continue;
-			
-			currentLine++;
 			
 			// Run commands if not commenting
 			if(commenting == 0){
