@@ -5,7 +5,9 @@ function ab2str(buf) {
 }
 
 
-var instanceLive;
+var instanceLive;	
+var data;
+var dataFragment;
 
 fetch('showpony/modules/visualNovel/script.wasm')
 .then(response => response.arrayBuffer())
@@ -19,6 +21,42 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		}
 		,jsLogInt: function(input){
 			console.log('Log from WASM:',input);
+		}
+		,jsCreateLine: function(number,type,position){
+			let test = document.createElement('p');
+			test.innerHTML = number;
+		
+			var types = [
+				''
+				,'engine'
+				,'set'
+				,'get'
+				,'comment'
+				,'textbox'
+				,'image'
+				,'audio'
+			];
+		
+			test.className = types[type];
+			
+			console.log('test',number,types[type],'CLASS',test.className);
+			
+			dataFragment.appendChild(test);
+		}
+		,jsLineData: function(lineCount){
+			/// TODO: pass the beginning of an array containing all of the line heights
+			/*
+			var dataFragment = document.createDocumentFragment();
+			
+			// data.children.length <= lineCount
+			for(var i = data.children.length; i < lineCount; i++){
+				var lineData = document.createElement('p');
+				lineData.innerHTML = i + 1;
+				dataFragment.appendChild(lineData);
+			}*/
+			while(data.children[0]) data.removeChild(data.children[0]);
+			
+			//data.appendChild(dataFragment);
 		}
 		/*
 			Line number:
@@ -50,23 +88,6 @@ fetch('showpony/modules/visualNovel/script.wasm')
 }))
 .then(instance => {
 	instanceLive = instance;
-	/*
-	str2ab('Testing ab');
-	console.log('WASM REPORT FOR STRING: ' + instance.exports.returnString());
-	
-	str2ab('a spacebar');
-	console.log('WASM REPORT FOR STRING: ' + instance.exports.returnString());
-	
-	str2ab('1234567890');
-	console.log('WASM REPORT FOR STRING: ' + instance.exports.returnString());
-	
-	str2ab('this word!');
-	console.log('WASM REPORT FOR STRING: ' + instance.exports.returnString());*/
-	
-	// console.log("THIS IS THE STRING READ FROM JS EDITS: ",String.fromCharCode.apply(null, buffer));
-	
-	// Start the script; should main() run automatically with WebAssembly compilation? It doesn't seem to.
-	// instance.exports.main();
 
 	M.editor = new function(){
 		const E = this;
@@ -246,13 +267,17 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		}
 		
 		var assets = E.window.document.getElementById('assets');
-		var data = E.window.document.getElementById('data');
+		data = E.window.document.getElementById('data');
 		
 		var contentSizing = E.window.document.getElementById('content-sizing');
 		
 		E.update = function(input){
 			E.rawText = input;
 			E.window.document.getElementById('content').innerHTML = E.rawText;
+			
+			// Put into buffer for WASM to read
+			str2ab('\0engine\0textbox\0image\0audio\0content\0remove\0\0\0\0' + E.window.document.getElementById('content').innerHTML + '\n');
+			
 			E.resizeThis();
 		}
 		
@@ -268,11 +293,6 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		E.resizeThis = function(){
 			// Don't bother if no text is passed
 			if(E.rawText === null) return;
-			
-			// Put into buffer for WASM to read
-			str2ab('\0engine\0textbox\0image\0audio\0content\0remove\0\0\0\0' + E.rawText + '\n');
-			
-			// console.log("THIS IS THE STRING READ FROM WASM: ",String.fromCharCode.apply(null, buffer));
 			
 			content.style.height = '';
 			content.style.height = content.scrollHeight + 16 + 'px';
@@ -301,8 +321,6 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			
 			/// Clear Data
 			
-			// Objects
-			var objectTypes = {};
 			/*while(assets.firstChild) assets.removeChild(assets.firstChild);
 			
 			
@@ -331,22 +349,21 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			
 			// Calculate the maximum number of characters on a line
 			
-			// WASM test
-			// var oneLineMaxChars	= Math.floor(content.innerWidth / letterWidth);
 			var oneLineMaxChars	= Math.floor(content.innerWidth / letterWidth);
 			
+			dataFragment = document.createDocumentFragment();
+			
 			// Read the file in WASM
-			// instance.exports.readFile();
-			// console.log('WASM RETURN',ab2str(new Uint8Array(instance.exports.memory.buffer, , 10)));
 			if(!run){
-				run = true;
 				instance.exports.readFile();
-				console.log('it has run');
+				run = true;
 			}
 			
+			console.log(dataFragment);
+			data.appendChild(dataFragment);
+			console.log(data);
+				
 			return;
-			
-			while(data.children[lines.length]) data.removeChild(data.children[lines.length]);
 			
 			var els = E.window.document.getElementsByClassName('highlight');
 			for(var i = els.length - 1; i > 0; i--){
@@ -360,6 +377,9 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		
 		E.window.document.getElementById('content').addEventListener('input',function(){
 			E.rawText = this.value;
+			
+			// Put into buffer for WASM to read
+			str2ab('\0engine\0textbox\0image\0audio\0content\0remove\0\0\0\0' + this.value + '\n');
 			
 			E.resizeThis();
 		});

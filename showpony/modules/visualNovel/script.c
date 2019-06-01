@@ -83,6 +83,8 @@ const int FILE_START = 50;
 
 void jsLogString(char *position, int length);
 void jsLogInt(int input);
+void jsLineData(int input);
+void jsCreateLine(int currentLine,int type,char *position);
 
 ///////////////////////
 ///// C FUNCTIONS /////
@@ -118,23 +120,6 @@ int getLength(){
 	
 	But take it a step at a time.
 */
-/*
-// Point to a string that seems to match this one
-char* getLikePointer(char *pointer){
-	// Run through all components and see what matches
-	for(int i = 0; i < 50; i++){
-		if(components[i] == 0) break;
-		
-		for(int j = 0; j < 30; j++){
-			if((pointer + i) == (components[i] + i))
-		}
-	}
-	
-	return;
-}*/
-
-
-char test;
 
 int isDelimiter(char a){
 	switch(a){
@@ -149,8 +134,6 @@ int isDelimiter(char a){
 		case '+':
 		case '!':
 		case '\0':
-			// test = a;
-			// jsLogString(&test,1);
 			return 1;
 			break;
 		default:
@@ -186,6 +169,10 @@ void readFile(){
 	int logged = 0;
 	
 	int spaced = 0;
+	int lineStart = 0;
+	
+	// Reset line displays
+	jsLineData(0);
 	
 	// Loop through the file. w00t!
 	for(int i = FILE_START; i < SIZE; i++){
@@ -194,70 +181,31 @@ void readFile(){
 		// Break on null char
 		if(data[i] == '\0') break;
 		
-		/*
-		This will check if we're on a new line or not.
-		
-		Windows:	\r\n
-		Mac (old):	\r
-		Unix:		\n
-		
-		If we're on \n but the previous char is \r, we don't consider ourselves as being on a new line.
-		
-		First line is not 0; first line is 1, like for a text editor.
-		*/
-		if(data[i] == '\n' || data[i] == '\r'){
-			if(data[i] == '\n' && data[i - 1] == '\r') continue;
-			currentLine++;
-		}
-		
-		/// COMMENTS ///
-		// Check for comment
-		/*
-			0: No comment
-			1: Single-line comment
-			2: Multi-line comment
-		*/
-		
-		// If we aren't already commenting, we can start single or multiline commenting
-		if(commenting == 0){
-			// Single-line comments
-			if(data[i] == '/' && data[i + 1] == '/'){
-				commenting = 1;
-				continue;
-			}
-			
-			// Check for multiline comment start
-			if(data[i] == '/'
-				&& data[i + 1] == '*'
-			){
-				commenting = 2;
-				i++;
-				continue;
-			}
-		}
-		
-		// If we're in the middle of a multiline comment
-		if(commenting == 2){
-			// Multiline comment end
-			if(data[i] == '*'
-				&& i + 1 < SIZE
-				&& data[i + 1] == '/'
-			){
-				commenting = 0;
-				i++;
-			}
-			
-			// Continue regardless
-			continue;
-		}
 		
 		// Line break, reset
 		if(data[i] == '\n' || data[i] == '\r'){
+			/*
+			This will check if we're on a new line or not.
 			
-			// Run commands if not commenting
-			if(commenting == 0){
-				/// TODO: see if items are original and if so, add them. Otherwise, refer to them and adjust any values that need to be adjusted.
-				
+			Windows:	\r\n
+			Mac (old):	\r
+			Unix:		\n
+			
+			If we're on \n but the previous char is \r, we don't consider ourselves as being on a new line.
+			
+			First line is not 0; first line is 1, like for a text editor.
+			*/
+			if(data[i] == '\r' && data[i + 1] == '\n') continue;
+			// Pass info on the line to JS
+			
+			lineStart = i + 1;
+			
+			// Consider the next line
+			currentLine++;
+			type = TYPE_EMPTY;
+			
+			// Run commands if not commenting, and if something was passed for parameter
+			if(!commenting){
 				// loop through pointers
 				// see how far one matches
 				// If it doesn't completely match, move on
@@ -316,52 +264,54 @@ void readFile(){
 				int id = 0;
 				// Look for a match from other pointers
 				for(id = 0; id < objPosition; id++){
-					// jsLogInt(components[id]);
-					// jsLogInt(componentPosition);
-					
+					// Found a match
 					if(compareStrings(components[id], componentPosition)){
 						// jsLogString(&data[components[objPosition]],1);
 						match = 1;
+						
+						// Set type to current component's type
+						type = list[id].type;
+						
+						// Update the struct
+						// if(compareStrings(commandPosition + 1, REMOVE_CALL + 1)) list[id].active = 0;
 						break;
 					}
 				}
 				
-				if(match){
-					// Show the matches
-					// jsLogString(&data[components[id]],3);
-					// jsLogString(&data[componentPosition],3);
-					
-					// Update the struct
-					// if(compareStrings(commandPosition + 1, REMOVE_CALL + 1)) list[id].active = 0;
-				}
-				
 				// If no match, add it
 				if(!match){
-					jsLogString(&data[componentPosition],7);
-					jsLogInt(currentLine);
+					// jsLogString(&data[componentPosition],7);
+					// jsLogInt(currentLine);
 					
 					// Update the current struct
 					list[objPosition].active = 1;
 					
 					/// SET TYPE
 					// Engine
-					if(compareStrings(componentPosition,CALL_ENGINE)) list[objPosition].type = TYPE_ENGINE;
+					if(compareStrings(componentPosition,CALL_ENGINE)) type = TYPE_ENGINE;
 					// Textbox
-					else if(compareStrings(componentPosition,CALL_TEXTBOX)) list[objPosition].type = TYPE_TEXTBOX;
+					else if(compareStrings(componentPosition,CALL_TEXTBOX)) type = TYPE_TEXTBOX;
 					
-					// Other call
-					else list[objPosition].type = TYPE_IMAGE;
+					// If neither of the above are true, then if we haven't set a type, assume image
+					else if(type == TYPE_EMPTY) type = TYPE_IMAGE;
 					
 					components[objPosition] = componentPosition;
-					// jsLogInt(list[objPosition].type);
+					list[objPosition].type = type;
+					
+					jsLogInt(type);
 					
 					// Move the position
 					objPosition++;
 				}
 			}
 			
+			if(commenting) type = TYPE_COMMENT;
+			// If the defaults are all the same, and the parameter is empty, we're empty
+			else if(componentPosition == CALL_TEXTBOX && commandPosition == CALL_CONTENT && parameterPosition == 0) type = TYPE_EMPTY;
+			jsCreateLine(currentLine,type,&data[lineStart]);
+			
 			// Reset single-line commenting
-			commenting = 0;
+			if(commenting == 1) commenting = 0;
 			
 			// Reset settings for the new line
 			componentPosition	= CALL_TEXTBOX;
@@ -370,6 +320,47 @@ void readFile(){
 			type				= TYPE_EMPTY;
 			
 			spaced				= 0;
+			continue;
+		}
+		
+		/// COMMENTS ///
+		// Check for comment
+		/*
+			0: No comment
+			1: Single-line comment
+			2: Multi-line comment
+		*/
+		
+		// If we aren't already commenting, we can start single or multiline commenting
+		if(commenting == 0){
+			// Single-line comments
+			if(data[i] == '/' && data[i + 1] == '/'){
+				commenting = 1;
+				continue;
+			}
+			
+			// Check for multiline comment start
+			if(data[i] == '/'
+				&& data[i + 1] == '*'
+			){
+				commenting = 2;
+				i++;
+				continue;
+			}
+		}
+		
+		// If we're in the middle of a multiline comment
+		if(commenting == 2){
+			// Multiline comment end
+			if(data[i] == '*'
+				&& i + 1 < SIZE
+				&& data[i + 1] == '/'
+			){
+				commenting = 0;
+				i++;
+			}
+			
+			// Continue regardless
 			continue;
 		}
 		
@@ -401,6 +392,9 @@ void readFile(){
 		
 	// We've now got pointers for the beginning of each component, command, and parameter. w00t!
 	
+	// Draw all the lines in JS to the DOM
+	// jsLineData(currentLine);
+	
 	/*
 	var height = null;
 
@@ -419,8 +413,6 @@ void readFile(){
 	// The styling of the highlight problem
 	int style		= -1;
 	/*
-	// currentLine++;
-	
 	// Current Line
 	if(currentLine === E.line){
 		style = 'background-color:rgba(0,255,0,.25);z-index:-1;';
@@ -432,11 +424,8 @@ void readFile(){
 	if(/^(?!\/{2,})[^\t]* /.test(lines[i])){
 		style = 'background-color:rgba(255,0,0,.25);z-index:-1;';
 	}
-*/
 		
 		/// READ STUFF ///
-		
-		/*
 		// Add style
 		if(style){
 			var highlight = document.createElement('div');
