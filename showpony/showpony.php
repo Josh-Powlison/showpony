@@ -588,7 +588,7 @@ async function to(obj = {file:file, time:time}){
 	// If switching types, do some cleanup
 	if(module!==S.files[obj.file].module){
 		// Replace the old styles with the new ones
-		console.log(contentShadow,contentShadow.firstChild,contentShadow.firstChild.innerHTML);
+		// console.log(contentShadow,contentShadow.firstChild,contentShadow.firstChild.innerHTML);
 		contentShadow.firstChild.innerHTML = modules[S.files[obj.file].module].styles.innerHTML;
 		
 		// The second element is story styles, so keep that

@@ -5,25 +5,52 @@ function ab2str(buf) {
 }
 
 
+var instanceLive;
 
 fetch('showpony/modules/visualNovel/script.wasm')
 .then(response => response.arrayBuffer())
 .then(bits => WebAssembly.compile(bits))
 .then(module => new WebAssembly.Instance(module, {
 	env:{
-		/*draw: function(x, y, w, h){
-			context.fillRect(x, y, w, h);
+		jsLogString: function(position, length){
+			var string = new Uint8Array(instanceLive.exports.memory.buffer, position, length);
+			
+			console.log('Log from WASM:','A:',string, 'B:',ab2str(string));
 		}
-		,clear: function(){
-			context.clearRect(0,0,canvas.width,canvas.height);
+		,jsLogInt: function(input){
+			console.log('Log from WASM:',input);
+		}
+		/*
+			Line number:
+			Value:
+			Name of the value:
+		*/
+		/*,jsLog: function(pointer, type, length){
+			var memory = new Int32Array(instanceLive.exports.memory.buffer, position, length);
+			switch(type){
+				// INT
+				case 8:
+					console.log('WASM INT:',memory);
+					break;
+				// ARRAY
+				case 16:
+					var memory = new Int32Array(instanceLive.exports.memory.buffer, position, length);
+					console.log('WASM ARR:',input);
+					break;
+				// STRING
+				case 32:
+					var memory = new Int32Array(instanceLive.exports.memory.buffer, position, length);
+					console.log('WASM STR:',ab2str(input));
+					break;
+				case 64:
+					break;
+			}
 		}*/
 	}
 }))
 .then(instance => {
+	instanceLive = instance;
 	/*
-	console.log("THIS IS THE STRING READ FROM WASM: ",String.fromCharCode.apply(null, buffer));
-	
-	
 	str2ab('Testing ab');
 	console.log('WASM REPORT FOR STRING: ' + instance.exports.returnString());
 	
@@ -37,12 +64,6 @@ fetch('showpony/modules/visualNovel/script.wasm')
 	console.log('WASM REPORT FOR STRING: ' + instance.exports.returnString());*/
 	
 	// console.log("THIS IS THE STRING READ FROM JS EDITS: ",String.fromCharCode.apply(null, buffer));
-	
-	// for(var i = 0; i < length; i ++){
-		// console.log(
-	// }
-	// instance.exports.add(1043);
-	// console.log(buffer);
 	
 	// Start the script; should main() run automatically with WebAssembly compilation? It doesn't seem to.
 	// instance.exports.main();
@@ -242,12 +263,16 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		var letterWidth = E.window.document.getElementById('letter-width').clientWidth;
 		var minHeight = contentSizing.clientHeight;
 		
+		var run = false;
+		
 		E.resizeThis = function(){
 			// Don't bother if no text is passed
 			if(E.rawText === null) return;
 			
 			// Put into buffer for WASM to read
-			str2ab(E.rawText);
+			str2ab('\0textbox\0.content\0\0\0' + E.rawText + '\n');
+			
+			// console.log("THIS IS THE STRING READ FROM WASM: ",String.fromCharCode.apply(null, buffer));
 			
 			content.style.height = '';
 			content.style.height = content.scrollHeight + 16 + 'px';
@@ -313,11 +338,16 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			
 			// WASM test
 			// var oneLineMaxChars	= Math.floor(content.innerWidth / letterWidth);
-			var oneLineMaxChars	= Math.floor(instance.exports.getMaxChars(content.innerWidth, letterWidth));
+			var oneLineMaxChars	= Math.floor(content.innerWidth / letterWidth);
 			
 			// Read the file in WASM
 			// instance.exports.readFile();
-			console.log('WASM RETURN',ab2str(new Uint8Array(instance.exports.memory.buffer, instance.exports.readFile(), 10)));
+			// console.log('WASM RETURN',ab2str(new Uint8Array(instance.exports.memory.buffer, , 10)));
+			if(!run){
+				run = true;
+				instance.exports.readFile();
+				console.log('it has run');
+			}
 			
 			return;
 			
