@@ -378,7 +378,7 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			data.appendChild(dataFragment);
 			
 			var els = E.window.document.getElementsByClassName('highlight');
-			for(var i = els.length - 1; i > 0; i--){
+			for(var i = els.length - 1; i >= 0; i--){
 				els[i].remove();
 			}
 			
