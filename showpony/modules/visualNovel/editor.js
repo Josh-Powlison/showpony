@@ -4,15 +4,6 @@ function ab2str(buf) {
   return String.fromCharCode.apply(null, new Uint16Array(buf));
 }
 
-
-var instanceLive;	
-var data;
-var dataFragment;
-var highlightFragment;
-var contentSizing;
-var minHeight;
-var oneLineMaxChars;
-
 var types = [
 	''
 	,'engine'
@@ -24,13 +15,20 @@ var types = [
 	,'audio'
 ];
 
+var data;
+var dataFragment;
+var highlightFragment;
+var contentSizing;
+var minHeight;
+var oneLineMaxChars;
+
 fetch('showpony/modules/visualNovel/script.wasm')
 .then(response => response.arrayBuffer())
 .then(bits => WebAssembly.compile(bits))
 .then(module => new WebAssembly.Instance(module, {
 	env:{
 		jsLogString: function(position, length){
-			var string = new Uint8Array(instanceLive.exports.memory.buffer, position, length);
+			var string = new Uint8Array(M.wasm.exports.memory.buffer, position, length);
 			
 			console.log('Log from WASM:','A:',string, 'B:',ab2str(string));
 		}
@@ -38,7 +36,7 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			console.log('Log from WASM:',input);
 		}
 		,jsCreateLine: function(number,type,position,length){
-			var string = ab2str(new Uint8Array(instanceLive.exports.memory.buffer, position, length));
+			var string = ab2str(new Uint8Array(M.wasm.exports.memory.buffer, position, length));
 			// console.log(string);
 			// var string = '_';
 			// console.log(string);
@@ -96,38 +94,39 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			highlightFragment.appendChild(highlight);
 			// console.log(highlight);
 		}
-		/*
-			Line number:
-			Value:
-			Name of the value:
-		*/
-		/*,jsLog: function(pointer, type, length){
-			var memory = new Int32Array(instanceLive.exports.memory.buffer, position, length);
-			switch(type){
-				// INT
-				case 8:
-					console.log('WASM INT:',memory);
-					break;
-				// ARRAY
-				case 16:
-					var memory = new Int32Array(instanceLive.exports.memory.buffer, position, length);
-					console.log('WASM ARR:',input);
-					break;
-				// STRING
-				case 32:
-					var memory = new Int32Array(instanceLive.exports.memory.buffer, position, length);
-					console.log('WASM STR:',ab2str(input));
-					break;
-				case 64:
-					break;
+		,jsRecommendation: function(position,length){
+			var helpText = ab2str(new Uint8Array(M.wasm.exports.memory.buffer, position, length));
+			var autocomplete = M.editor.window.document.getElementById('content-autocomplete');
+			
+			// console.log('hey');
+			
+			// If we got passed a null chars
+			if(helpText[0] === '\0'){
+				autocomplete.style.visibility = 'hidden';
+			// If there is text we can use
+			}else{
+				var content = M.editor.window.document.getElementById('content');
+				autocomplete.style.visibility = 'visible';
+				autocomplete.innerHTML = helpText;
+				
+				// Get the line number
+				var line = content.value.substr(0,content.selectionStart).match(/\n/g);
+				// If no previous lines exist, get the first line.
+				line = (line ? line.length : 0);
+				// Get the top of the line number element
+				var top = data.children[line].offsetTop;
+				autocomplete.style.top = top + 'px';
 			}
-		}*/
+		}
 	}
-}))
-.then(instance => {
-	instanceLive = instance;
-
+})).
+then(instance =>{
+	M.wasm = instance;
+	
 	M.editor = new function(){
+		var content;
+		var assets;
+		
 		const E = this;
 		
 		E.window = window.open('','','width=500,height=300,location=0,menubar=0,status=0,toolbar=0,titlebar=0');
@@ -299,11 +298,11 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			}
 		}
 		
-		var assets = E.window.document.getElementById('assets');
+		assets = E.window.document.getElementById('assets');
 		data = E.window.document.getElementById('data');
 		
 		contentSizing = E.window.document.getElementById('content-sizing');
-		var content = E.window.document.getElementById('content');
+		content = E.window.document.getElementById('content');
 				
 		// We need to figure out the maximum size that can fit within a line; that can speed it up, vs calculating everything
 		contentSizing.innerHTML = '<span id="letter-width">_</span>';
@@ -414,18 +413,7 @@ fetch('showpony/modules/visualNovel/script.wasm')
 				content.selectionStart
 				&& content.selectionStart === content.selectionEnd
 			){
-				var helpText = ab2str(new Uint8Array(instanceLive.exports.memory.buffer, instance.exports.autocomplete(content.selectionEnd), 10));
-				var autocomplete = E.window.document.getElementById('content-autocomplete');
-				
-				// If we got passed a null chars
-				if(helpText[0] === '\0'){
-					autocomplete.style.visibility = 'hidden';
-				// If there is text we can use
-				}else{
-					autocomplete.style.visibility = 'visible';
-					autocomplete.innerHTML = helpText;
-					autocomplete.style.top = yPos + 'px';
-				}
+				instance.exports.autocomplete(content.selectionEnd);
 			}
 		}
 		
@@ -487,5 +475,6 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		
 		// Close editor on closing showpony
 		window.addEventListener('beforeunload',function(){E.window.close();})
+
 	}();
 });

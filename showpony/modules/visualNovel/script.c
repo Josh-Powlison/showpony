@@ -86,6 +86,7 @@ void jsLogString(char *position, int length);
 void jsLogInt(int input);
 float jsCreateLine(int fileLine, int type, char *position, int length);
 void jsCreateHighlight(float top, float height);
+void jsRecommendation(char *position, int length);
 
 ///////////////////////
 ///// C FUNCTIONS /////
@@ -494,13 +495,16 @@ void readFile(int line){
 }
 
 // When the user is typing a value, recommend like ones to them
-char* autocomplete(int pos){
+void autocomplete(int pos){
 	int i = pos + FILE_START;
 	
 	// If we're on a delimiter, check if we're at the end of a line
 	if(isDelimiter(data[i])) i--;
 	// But if we're still on a delimiter, don't bother
-	if(isDelimiter(data[i])) return &data[0];
+	if(isDelimiter(data[i])){
+		jsRecommendation(&data[0],1);
+		return;
+	}
 
 	// if(isDelimiter(data[i])) return &data[0];
 	
@@ -509,6 +513,10 @@ char* autocomplete(int pos){
 		2: Command
 	*/
 	int searchType = 1;
+	
+	// Get the end position
+	int end = i;
+	while(!isDelimiter(data[end])) end++;
 	
 	// We look back to see how this is called, to figure out if it's a component, command, or parameter
 	for(i; i > 0; i--){
@@ -527,7 +535,8 @@ char* autocomplete(int pos){
 			// Parameter (chars only allowed here)
 			case '\t':
 			case ' ':
-				return 0;
+				jsRecommendation(&data[0],1);
+				return;
 				break;
 			default:
 				break;
@@ -535,28 +544,26 @@ char* autocomplete(int pos){
 	}
 	endLoop: ;
 	
-	// return &data[i];
-	
 	// For now, we'll just work with components
 	int match = 0;
-	int minMatched = 50;
+	int minBeyond = 50;
 	
 	// Loop through all components
 	for(int j = 0; j < objPosition; j++){
 		// Positive if a's longer than b and partially matches; negative if b's longer than a and partially matches; 0 if exact matches
-		int lengthMatched = matchStringsPartial(components[j],i);
+		int lengthBeyond = matchStringsPartial(components[j],i);
 
 		// jsLogInt(lengthMatched);
 		// jsLogString(&data[components[j]],10);
 		
-		if(lengthMatched > 0 && lengthMatched < minMatched){
+		if(lengthBeyond > 0 && lengthBeyond < minBeyond){
 			match = components[j];
-			minMatched = lengthMatched;
+			minBeyond = lengthBeyond;
 		}
 	}
 	
-	return &data[match];
 	
+	jsRecommendation(&data[match],end - i + minBeyond);
 	/*var contentToNow = content.value.substr(0, content.selectionEnd);
 	if(
 		content.selectionStart === content.selectionEnd
