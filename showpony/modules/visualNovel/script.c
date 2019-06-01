@@ -191,7 +191,7 @@ void readFile(){
 			1: Single-line comment
 			2: Multi-line comment
 		*/
-		/*
+		
 		// Single-line comments
 		if(data[i] == '/' && data[i + 1] == '/'){
 			commenting = 1;
@@ -200,7 +200,6 @@ void readFile(){
 		
 		// Check for multiline comment start
 		if(data[i] == '/'
-			&& SIZE < data + 1
 			&& data[i + 1] == '*'
 		){
 			commenting = 2;
@@ -210,7 +209,7 @@ void readFile(){
 		
 		// Multiline comment end
 		if(data[i] == '*'
-			&& SIZE < i + 1
+			&& i + 1 < SIZE
 			&& data[i + 1] == '/'
 		){
 			commenting = 0;
@@ -219,52 +218,48 @@ void readFile(){
 		}
 		
 		// Skip in the middle of multiline commenting
-		if(commenting == 2) continue;*/
+		if(commenting == 2) continue;
 		
 		// Line break, reset
 		if(data[i] == '\n' || data[i] == '\r'){
-			// Just go to the next line if we've already done this
-			if(data[i + 1] == '\n' || data[i + 1] == '\r') continue;
-			
-			// Reset single-line commenting
-			if(commenting == 1) commenting = 0;
-			
-			/// TODO: see if items are original and if so, add them. Otherwise, refer to them and adjust any values that need to be adjusted.
-			
-			// loop through pointers
-			// see how far one matches
-			// If it doesn't completely match, move on
-			int match = 0;
-			
-			int id = 0;
-			// Look for a match from other pointers
-			for(id = 0; id < objPosition; id++){
-				// jsLogInt(components[id]);
-				// jsLogInt(componentPosition);
+			// Run commands if not commenting
+			if(commenting == 0){
+				/// TODO: see if items are original and if so, add them. Otherwise, refer to them and adjust any values that need to be adjusted.
 				
-				if(compareStringsFromPointers(components[id], componentPosition)){
-					// jsLogString(&data[components[objPosition]],1);
-					match = 1;
-					break;
+				// loop through pointers
+				// see how far one matches
+				// If it doesn't completely match, move on
+				int match = 0;
+				
+				int id = 0;
+				// Look for a match from other pointers
+				for(id = 0; id < objPosition; id++){
+					// jsLogInt(components[id]);
+					// jsLogInt(componentPosition);
+					
+					if(compareStringsFromPointers(components[id], componentPosition)){
+						// jsLogString(&data[components[objPosition]],1);
+						match = 1;
+						break;
+					}
+				}
+				
+				if(match){
+					// Show the matches
+					// jsLogString(&data[components[id]],3);
+					// jsLogString(&data[componentPosition],3);
+				}
+				
+				// If no match, add it
+				if(!match){
+					jsLogString(&data[componentPosition],7);
+					components[objPosition] = componentPosition;
+					objPosition++;
 				}
 			}
 			
-			if(match){
-				// Show the matches
-				// jsLogString(&data[components[id]],3);
-				// jsLogString(&data[componentPosition],3);
-			}
-			
-			// If no match, add it
-			if(!match){
-				jsLogString(&data[componentPosition],7);
-				components[objPosition] = componentPosition;
-				objPosition++;
-			}
-			
-			jsLogString(&data[commandPosition],7);
-			jsLogString(&data[parameterPosition],7);
-			
+			// Reset single-line commenting
+			commenting = 0;
 			
 			componentPosition	= TEXTBOX_CALL;
 			commandPosition		= CONTENT_CALL;
