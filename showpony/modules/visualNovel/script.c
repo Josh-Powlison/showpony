@@ -45,12 +45,14 @@ const int SIZE = 28000;
 // change to an int later to cover more characters?
 char data[SIZE] = {'\0'};
 
-int currentLine = 0;
 int objPosition = 0;
 
 // ARRAYS
 int components[50];		// Where object names start in the data string/array. We just loop through this first because it's faster than iterating objects, and this will return a pointer to the object we actually want.
 struct Object list[50];			// A list of all structs in use
+
+// int var[50];					// Pointers to all our variable names
+// int varVals[50];				// Pointers to all our variable values
 
 // CONSTANTS
 const int TYPE_EMPTY	= 0;
@@ -179,6 +181,7 @@ void readFile(){
 	
 	int commenting = 0;
 	
+	int currentLine = 0;
 	
 	int logged = 0;
 	
@@ -229,6 +232,18 @@ void readFile(){
 		
 		// Line break, reset
 		if(data[i] == '\n' || data[i] == '\r'){
+			/* This will check if we're on a new line or not.
+			
+			\r\n
+			\r
+			\n
+			
+			If we're on \n but the previous char is \r, we don't consider ourselves as being on a new line.
+			*/
+			if(data[i] == '\n' && data[i - 1] == '\r') continue;
+			
+			currentLine++;
+			
 			// Run commands if not commenting
 			if(commenting == 0){
 				/// TODO: see if items are original and if so, add them. Otherwise, refer to them and adjust any values that need to be adjusted.
@@ -262,6 +277,32 @@ void readFile(){
 					}
 				}
 				
+				/*
+				// Comments
+				if(commenting > 0){
+					type = COMMENT;
+				// If empty
+				}else if(component[0] == '\0' && command[0] == '\0' && parameter[0] == '\0'){
+					type = EMPTY;
+				}
+				// Set
+				else  if(command[0] == '='
+					|| command[0] == '+'
+					|| command[0] == '-'
+				){
+					type = SET;
+				}
+				// Get
+				else if(command[0] == '<'
+					|| command[0] == '>'
+					|| command[0] == '!'
+				){
+					type = GET;
+				}
+				
+				// if(/\.mp3/i.test(parameter)) type = 'audio';
+				}*/
+				
 				int id = 0;
 				// Look for a match from other pointers
 				for(id = 0; id < objPosition; id++){
@@ -287,7 +328,7 @@ void readFile(){
 				// If no match, add it
 				if(!match){
 					jsLogString(&data[componentPosition],7);
-					
+					jsLogInt(currentLine);
 					
 					// Update the current struct
 					list[objPosition].active = 1;
@@ -299,10 +340,10 @@ void readFile(){
 					else if(compareStrings(componentPosition,CALL_TEXTBOX)) list[objPosition].type = TYPE_TEXTBOX;
 					
 					// Other call
-					else list[objPosition].type = type;
+					else list[objPosition].type = TYPE_IMAGE;
 					
 					components[objPosition] = componentPosition;
-					jsLogInt(list[objPosition].type);
+					// jsLogInt(list[objPosition].type);
 					
 					// Move the position
 					objPosition++;
@@ -386,106 +427,6 @@ void readFile(){
 		/// READ STUFF ///
 		
 		/*
-		// Comments
-		if(commenting > 0){
-			type = COMMENT;
-		// If empty
-		}else if(component[0] == '\0' && command[0] == '\0' && parameter[0] == '\0'){
-			type = EMPTY;
-		}
-		// Set
-		else  if(command[0] == '='
-			|| command[0] == '+'
-			|| command[0] == '-'
-		){
-			type = SET;
-		}
-		// Get
-		else if(command[0] == '<'
-			|| command[0] == '>'
-			|| command[0] == '!'
-		){
-			type = GET;
-		}
-		// If no component was set, default to textbox
-		else{
-			
-			// if(objectTypes[component]) type = objectTypes[component];
-			// else{
-				// type = 'character';
-				// if(/\.mp3/i.test(parameter)) type = 'audio';
-			
-			if(component[0] == '\0'){
-				type = TEXTBOX;
-			} else {
-				type = IMAGE;
-			}
-			
-			if(command[0] == '\0') {
-				
-			}
-			
-			char STR_CMP_ENGINE[]		= "engine";
-			char STR_CMD_TEXTBOX[]		= ".textbox";
-			char STR_CMD_AUDIO[]		= ".audio";
-			char STR_CMD_CHARACTER[]	= ".character";
-			
-			// See if the value is "engine"
-			if(componentPosition == 5
-				&& compareStrings(component, STR_CMP_ENGINE, componentPosition, 5) == 6
-			){
-				type = ENGINE;
-			}
-			
-			// See if the value is "textbox"
-			if(componentPosition == 6
-				&& compareStrings(component, STR_TEXTBOX, componentPosition, 6)
-			){
-				type = TEXTBOX;
-			}
-			
-			// If it's an engine, read the command
-			if(type == ENGINE){
-				if(commandPosition == 5
-					&& compareStrings(command, STR_CMD_AUDIO, commandPosition, 5) == 6
-				){
-					type = AUDIO;
-				} else if(commandPosition == 7
-					&& compareStrings(command, STR_CMD_TEXTBOX, commandPosition, 7) == 8
-				){
-					type = TEXTBOX;
-				} else if(commandPosition == 9
-					&& compareStrings(command, STR_CMD_CHARACTER, commandPosition, 9) == 10
-				){
-					type = IMAGE;
-				}
-				
-				// If a new element was created
-				if(type != ENGINE){
-					command[0] = '\0';
-					// component = parameter;
-					
-					// If the object already exists, show a warning
-					// if(objectTypes[component]){
-						// style = 'background-color:rgba(255,0,0,.25);z-index:-1;';
-					// }
-				}
-			}*/
-			
-			/*
-			// Determine type
-			
-				if(component === 'textbox') type = 'textbox';
-				else if(component === 'engine') type = 'engine';
-			}
-			*/
-			/*
-			// Creating a new element using the engine command
-			
-			// Keep track of existing objects
-			objectTypes[component] = type;
-		}
-		
 		// Add style
 		if(style){
 			var highlight = document.createElement('div');

@@ -325,11 +325,6 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			}*/
 			
 			/// HIGHLIGHT LINES ///
-			var lines = E.rawText.split(/\r\n?|\n/);
-			
-			// Track which line we correspond to
-			var currentLine = -1;
-			
 			var highlightFragment = document.createDocumentFragment();
 			
 			var yPos = 0;
