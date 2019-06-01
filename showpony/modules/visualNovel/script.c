@@ -51,7 +51,8 @@ int objPosition = 0;
 int components[50];		// Where object names start in the data string/array. We just loop through this first because it's faster than iterating objects, and this will return a pointer to the object we actually want.
 struct Object list[50];			// A list of all structs in use
 
-// int var[50];					// Pointers to all our variable names
+int var[50];					// Pointers to all our variable names
+int varPosition = 0;
 // int varVals[50];				// Pointers to all our variable values
 
 // CONSTANTS
@@ -156,6 +157,10 @@ int compareStrings(int a, int b){
 }
 
 void readFile(){
+	// We don't have to reset all the memory; we just have to reset our tracking
+	objPosition = 0;
+	varPosition = 0;
+	
 	// Chars are smaller, so we used them in this case
 	int componentPosition	= CALL_TEXTBOX;
 	int commandPosition		= CALL_CONTENT;
@@ -235,73 +240,69 @@ void readFile(){
 					}
 				}
 				
-				/*
-				// Comments
-				if(commenting > 0){
-					type = COMMENT;
-				// If empty
-				}else if(component[0] == '\0' && command[0] == '\0' && parameter[0] == '\0'){
-					type = EMPTY;
-				}
-				// Set
-				else  if(command[0] == '='
-					|| command[0] == '+'
-					|| command[0] == '-'
-				){
-					type = SET;
-				}
-				// Get
-				else if(command[0] == '<'
-					|| command[0] == '>'
-					|| command[0] == '!'
-				){
-					type = GET;
-				}
-				
-				// if(/\.mp3/i.test(parameter)) type = 'audio';
-				}*/
-				
-				int id = 0;
-				// Look for a match from other pointers
-				for(id = 0; id < objPosition; id++){
-					// Found a match
-					if(compareStrings(components[id], componentPosition)){
-						// jsLogString(&data[components[objPosition]],1);
-						match = 1;
-						
-						// Set type to current component's type
-						type = list[id].type;
-						
-						// Update the struct
-						// if(compareStrings(commandPosition + 1, REMOVE_CALL + 1)) list[id].active = 0;
+				// Check if variable type
+				switch(data[commandPosition]){
+					case '=':
+					case '+':
+					case '-':
+						type = TYPE_SET;
 						break;
-					}
+					case '<':
+					case '>':
+					case '!':
+						type = TYPE_GET;
+						break;
+					default:
+						break;
 				}
 				
-				// If no match, add it
-				if(!match){
-					// jsLogString(&data[componentPosition],7);
-					// jsLogInt(currentLine);
+				// If not a variable
+				if(type != TYPE_SET && type != TYPE_GET){
+					// Test for audio
+					// if(/\.mp3/i.test(parameter)) type = 'audio';
 					
-					// Update the current struct
-					list[objPosition].active = 1;
+					int id = 0;
+					// Look for a match from other pointers
+					for(id = 0; id < objPosition; id++){
+						// Found a match
+						if(compareStrings(components[id], componentPosition)){
+							// jsLogString(&data[components[objPosition]],1);
+							match = 1;
+							
+							// Set type to current component's type
+							type = list[id].type;
+							
+							// Update the struct
+							// if(compareStrings(commandPosition + 1, REMOVE_CALL + 1)) list[id].active = 0;
+							break;
+						}
+					}
 					
-					/// SET TYPE
-					// Engine
-					if(compareStrings(componentPosition,CALL_ENGINE)) type = TYPE_ENGINE;
-					// Textbox
-					else if(compareStrings(componentPosition,CALL_TEXTBOX)) type = TYPE_TEXTBOX;
-					
-					// If neither of the above are true, then if we haven't set a type, assume image
-					else if(type == TYPE_EMPTY) type = TYPE_IMAGE;
-					
-					components[objPosition] = componentPosition;
-					list[objPosition].type = type;
-					
-					jsLogInt(type);
-					
-					// Move the position
-					objPosition++;
+					// If no match, add it
+					if(!match){
+						// jsLogString(&data[componentPosition],7);
+						// jsLogInt(currentLine);
+						
+						// Update the current struct
+						list[objPosition].active = 1;
+						
+						/// SET TYPE
+						// Engine
+						if(compareStrings(componentPosition,CALL_ENGINE)) type = TYPE_ENGINE;
+						// Textbox
+						else if(compareStrings(componentPosition,CALL_TEXTBOX)) type = TYPE_TEXTBOX;
+						
+						// If neither of the above are true, then if we haven't set a type, assume image
+						else if(type == TYPE_EMPTY) type = TYPE_IMAGE;
+						
+						components[objPosition] = componentPosition;
+						list[objPosition].type = type;
+						
+						// jsLogInt(type);
+						
+						// Move the position
+						objPosition++;
+					}
 				}
 			}
 			
