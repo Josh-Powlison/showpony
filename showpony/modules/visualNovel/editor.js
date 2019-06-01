@@ -39,7 +39,7 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		
 			test.className = types[type];
 			
-			console.log('test',number,types[type],'CLASS',test.className);
+			// console.log('test',number,types[type],'CLASS',test.className);
 			
 			dataFragment.appendChild(test);
 		}
@@ -54,7 +54,7 @@ fetch('showpony/modules/visualNovel/script.wasm')
 				lineData.innerHTML = i + 1;
 				dataFragment.appendChild(lineData);
 			}*/
-			while(data.children[0]) data.removeChild(data.children[0]);
+			while(data.firstChild) data.removeChild(data.firstChild);
 			
 			//data.appendChild(dataFragment);
 		}
@@ -354,14 +354,9 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			dataFragment = document.createDocumentFragment();
 			
 			// Read the file in WASM
-			if(!run){
-				instance.exports.readFile();
-				run = true;
-			}
+			instance.exports.readFile();
 			
-			console.log(dataFragment);
 			data.appendChild(dataFragment);
-			console.log(data);
 				
 			return;
 			
