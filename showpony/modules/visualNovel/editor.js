@@ -291,39 +291,36 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		console.log('WASM LOADED');
 		var buffer = new Uint8Array(instance.exports.memory.buffer, instance.exports.getData(0), instance.exports.getLength());
 		
-		function str2ab(str) {
-			var strLen=str.length;
-		  for (var i=0; i < strLen; i++) {
-			buffer[i] = str.charCodeAt(i);
-		  }
-		  
-		  // Set end to null. This will tell C that the line is done. (otherwise if later in the buffer other chars exist, we'll keep going)
-		  buffer[strLen] = 0;
+		function saveStringToBuffer(str) {
+			// Need the right amount of null chars to initiate correctly; otherwise everything will be off
+			str = '\0engine\0textbox\0image\0audio\0content\0remove\0\0\0\0\0\0\0\0' + str + '\n\0';
+			for(var i = 0, l = str.length; i < l; i++) {
+				buffer[i] = str.charCodeAt(i);
+			}
 		}
 		
 		var assets = E.window.document.getElementById('assets');
 		data = E.window.document.getElementById('data');
 		
 		contentSizing = E.window.document.getElementById('content-sizing');
-		
-		E.update = function(input){
-			E.rawText = input;
-			E.window.document.getElementById('content').innerHTML = E.rawText;
-			
-			// Put into buffer for WASM to read
-			str2ab('\0engine\0textbox\0image\0audio\0content\0remove\0\0\0\0' + E.window.document.getElementById('content').innerHTML + '\n');
-			
-			E.resizeThis();
-		}
-		
 		var content = E.window.document.getElementById('content');
-		
+				
 		// We need to figure out the maximum size that can fit within a line; that can speed it up, vs calculating everything
 		contentSizing.innerHTML = '<span id="letter-width">_</span>';
 		var letterWidth = E.window.document.getElementById('letter-width').clientWidth;
 		minHeight = contentSizing.clientHeight;
 		
 		var run = false;
+		
+		E.update = function(input){
+			E.rawText = input;
+			content.innerHTML = E.rawText;
+			
+			// Put into buffer for WASM to read
+			saveStringToBuffer(content.value);
+			
+			E.resizeThis();
+		}
 		
 		E.resizeThis = function(){
 			// Don't bother if no text is passed
@@ -337,9 +334,6 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			
 			/*
 			
-		X	1. Everything should be centered around the text editor
-		X	2. Show icons for object type besides its line
-		X	3. Line numbers
 		X	4. Have a place showing the current objects and variables in the scene
 			5. Have a section where can upload resources (audio, images, video).
 				- In this section, can see/hear pieces stacked on
@@ -353,7 +347,6 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			- Button to provide the formatting
 		X	- Code suggestions as you type (including character names)
 			- Syntax highlighting? (maybe not with Showpony's code)
-			- Scene folding or something so you can collapse all but the live scene
 			
 			*/
 			
@@ -398,25 +391,52 @@ fetch('showpony/modules/visualNovel/script.wasm')
 		
 		E.line = 0;
 		
-		E.window.document.getElementById('content').addEventListener('input',function(){
+		content.addEventListener('input',function(){
 			E.rawText = this.value;
 			
 			if(this.value.length > 28000){
 				alert('Maximum file character length exceeded! (28000)');
 			}else{
 				// Put into buffer for WASM to read
-				str2ab('\0engine\0textbox\0image\0audio\0content\0remove\0\0\0\0' + this.value + '\n');
+				saveStringToBuffer(this.value);
 				
 				E.resizeThis();
+				jsAutocomplete();
 			}
 		});
+		
+		function jsAutocomplete(){
+			// console.log("SELECTION POSITION",content.selectionStart);
+			// console.log(buffer);
+			
+			/// AUTOCOMPLETE
+			if(
+				content.selectionStart
+				&& content.selectionStart === content.selectionEnd
+			){
+				var helpText = ab2str(new Uint8Array(instanceLive.exports.memory.buffer, instance.exports.autocomplete(content.selectionEnd), 10));
+				var autocomplete = E.window.document.getElementById('content-autocomplete');
+				
+				// If we got passed a null chars
+				if(helpText[0] === '\0'){
+					autocomplete.style.visibility = 'hidden';
+				// If there is text we can use
+				}else{
+					autocomplete.style.visibility = 'visible';
+					autocomplete.innerHTML = helpText;
+					autocomplete.style.top = yPos + 'px';
+				}
+			}
+		}
+		
+		content.addEventListener('click',jsAutocomplete);
 		
 		E.window.addEventListener('resize',function(){
 			E.resizeThis();
 		});
 		
 		// Writing shortcut keys
-		E.window.document.getElementById('content').addEventListener(
+		content.addEventListener(
 			'keydown'
 			,function(event){
 				
@@ -460,7 +480,7 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			// Update the file
 			
 			// Update the text
-			keyframes = parseFile(E.window.document.getElementById('content').value);
+			keyframes = parseFile(content.value);
 			
 			M.src(M.currentFile, M.currentTime, M.window.dataset.filename, true);
 		}

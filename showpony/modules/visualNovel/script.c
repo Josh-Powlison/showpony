@@ -154,6 +154,31 @@ int compareStrings(int a, int b){
 		
 		// Otherwise, keep looping
 	}
+	
+}
+
+// Gets two positions in the text file and sees if the strings from there are the same
+int matchStringsPartial(int a, int b){
+	int aEnds = 0;
+	int bEnds = 0;
+	
+	// When there's a delimiter with one and not another, there's a difference
+	for(int i = 0; i < 50; i++){
+		// Save the end
+		if(isDelimiter(data[a + i]) && !aEnds) aEnds = i;
+		if(isDelimiter(data[b + i]) && !bEnds) bEnds = i;
+		
+		if(aEnds && bEnds) break;
+		
+		// If they're not equal and neither's delimited, return false
+		if(
+			!aEnds && !bEnds
+			&& data[a + i] != data[b + i]
+		) return 0;
+	}
+	
+	// When there's a delimiter with one and not another, there's a difference
+	return aEnds - bEnds;
 }
 
 void readFile(int line){
@@ -466,7 +491,72 @@ void readFile(int line){
 	){
 		
 	}*/
-	// Get current line
+}
+
+// When the user is typing a value, recommend like ones to them
+char* autocomplete(int pos){
+	int i = pos + FILE_START;
+	
+	// If we're on a delimiter, check if we're at the end of a line
+	if(isDelimiter(data[i])) i--;
+	// But if we're still on a delimiter, don't bother
+	if(isDelimiter(data[i])) return &data[0];
+
+	// if(isDelimiter(data[i])) return &data[0];
+	
+	/*
+		1: Component
+		2: Command
+	*/
+	int searchType = 1;
+	
+	// We look back to see how this is called, to figure out if it's a component, command, or parameter
+	for(i; i > 0; i--){
+		switch(data[i]){
+			// End loop on getting to the line's start
+			case '\0':
+			case '\n':
+			case '\r':
+				i++;
+				goto endLoop;
+				break;
+			// We're working with the command
+			case '.':
+				searchType = 2;
+				break;
+			// Parameter (chars only allowed here)
+			case '\t':
+			case ' ':
+				return 0;
+				break;
+			default:
+				break;
+		}
+	}
+	endLoop: ;
+	
+	// return &data[i];
+	
+	// For now, we'll just work with components
+	int match = 0;
+	int minMatched = 50;
+	
+	// Loop through all components
+	for(int j = 0; j < objPosition; j++){
+		// Positive if a's longer than b and partially matches; negative if b's longer than a and partially matches; 0 if exact matches
+		int lengthMatched = matchStringsPartial(components[j],i);
+
+		// jsLogInt(lengthMatched);
+		// jsLogString(&data[components[j]],10);
+		
+		if(lengthMatched > 0 && lengthMatched < minMatched){
+			match = components[j];
+			minMatched = lengthMatched;
+		}
+	}
+	
+	return &data[match];
+	
 	/*var contentToNow = content.value.substr(0, content.selectionEnd);
 	if(
 		content.selectionStart === content.selectionEnd
