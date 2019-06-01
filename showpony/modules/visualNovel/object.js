@@ -462,7 +462,7 @@ new function(){
 		// Determine type
 		if(objects[component]) var type = objects[component].type;
 		else{
-			var type = 'character';
+			var type = 'image';
 			if(/\.mp3/i.test(parameter)) type = 'audio';
 			
 			if(component === 'textbox') type = 'textbox';
@@ -474,7 +474,7 @@ new function(){
 			switch(command){
 				case 'audio':
 				case 'textbox':
-				case 'character':
+				case 'image':
 					component = parameter;
 					type = command;
 					command = null;
@@ -581,34 +581,40 @@ new function(){
 			
 			switch(command){
 				case 'content':
-					// Keyframes never end with >, so get rid of it if it's for automatically continuing
-					if(parameter[parameter.length - 1] === '>'){
-						//See if it's an ending tag
-						var test=document.createElement('div');
-						test.innerHTML=parameter;
-						var text=test.innerText;
-						
-						//If it's not an ending tag
-						if(text[text.length-1] === '>'){
-							var skip=1;
-							var j = parameter.length-2;
-							while(parameter[j]==='\\'){
-								skip*=-1;
-								j--;
-							}
-							if(skip===1){
-								parameter = parameter.substring(0,parameter.length - 1);
+					// If nothing was passed for the parameter
+					if(parameter === null){
+						console.log('Nothing was passed',component,command);
+					// If we're all good
+					} else {
+						// Keyframes never end with >, so get rid of it if it's for automatically continuing
+						if(parameter[parameter.length - 1] === '>'){
+							//See if it's an ending tag
+							var test=document.createElement('div');
+							test.innerHTML=parameter;
+							var text=test.innerText;
+							
+							//If it's not an ending tag
+							if(text[text.length-1] === '>'){
+								var skip=1;
+								var j = parameter.length-2;
+								while(parameter[j]==='\\'){
+									skip*=-1;
+									j--;
+								}
+								if(skip===1){
+									parameter = parameter.substring(0,parameter.length - 1);
+								}
 							}
 						}
-					}
-				
-					// Append textbox content if it starts with a "+" this time
-					if(target[component].type === 'textbox'
-						&& parameter[0] === '+'
-					){
-						target[component][command]+=parameter.replace(/^\+/,'');
-						
-						return true;
+					
+						// Append textbox content if it starts with a "+" this time
+						if(target[component].type === 'textbox'
+							&& parameter[0] === '+'
+						){
+							target[component][command]+=parameter.replace(/^\+/,'');
+							
+							return true;
+						}
 					}
 					break;
 				
@@ -921,10 +927,10 @@ new function(){
 		objectAddCommonFunctions(O);
 	}
 	
-	M.character = function(input){
+	M.image = function(input){
 		objects[input] = this;
 		const O = this;
-		O.type = 'character';
+		O.type = 'image';
 		
 		O.el = document.createElement('div');
 		O.el.className = 'm-vn-character';

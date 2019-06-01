@@ -270,7 +270,7 @@ fetch('showpony/modules/visualNovel/script.wasm')
 			if(E.rawText === null) return;
 			
 			// Put into buffer for WASM to read
-			str2ab('\0textbox\0engine\0.content\0\0\0' + E.rawText + '\n');
+			str2ab('\0engine\0textbox\0image\0audio\0content\0remove\0\0\0\0' + E.rawText + '\n');
 			
 			// console.log("THIS IS THE STRING READ FROM WASM: ",String.fromCharCode.apply(null, buffer));
 			

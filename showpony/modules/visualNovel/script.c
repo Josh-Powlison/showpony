@@ -66,11 +66,14 @@ const int DEBUG_INT		= 0;
 const int DEBUG_ARRAY	= 1;
 const int DEBUG_STRING	= 2;
 
-const int CALL_TEXTBOX = 1;
-const int CALL_ENGINE = 9;
-const int CALL_CONTENT = 17;
-const int FILE_START = 30;
-// const int REMOVE_CALL = 9;
+// String Positions
+const int CALL_ENGINE = 1;
+const int CALL_TEXTBOX = 8;
+const int CALL_IMAGE = 16;
+const int CALL_AUDIO = 22;
+const int CALL_CONTENT = 28;
+const int CALL_REMOVE = 36;
+const int FILE_START = 50;
 
 ///////////////////////
 //// JS FUNCTIONS /////
@@ -154,7 +157,8 @@ int isDelimiter(char a){
 	}
 }
 
-int compareStringsFromPointers(int a, int b){
+// Gets two positions in the text file and sees if the strings from there are the same
+int compareStrings(int a, int b){
 	for(int i = 0; i < 50; i++){
 		// If they're both delimiters, return true
 		if(isDelimiter(data[a + i]) && isDelimiter(data[b + i])) return 1;
@@ -171,10 +175,10 @@ void readFile(){
 	int componentPosition	= CALL_TEXTBOX;
 	int commandPosition		= CALL_CONTENT;
 	int parameterPosition	= 0;
+	int type				= TYPE_EMPTY;
 	
 	int commenting = 0;
 	
-	int type = TYPE_EMPTY;
 	
 	int logged = 0;
 	
@@ -234,13 +238,37 @@ void readFile(){
 				// If it doesn't completely match, move on
 				int match = 0;
 				
+				// Some commands make new components, in which case the line type is really of the created component. Check type.
+				if(compareStrings(componentPosition,CALL_ENGINE)){
+					// Creating an image
+					if(compareStrings(commandPosition + 1,CALL_IMAGE)){
+						type = TYPE_IMAGE;
+						componentPosition = parameterPosition;
+						parameterPosition = 0;
+					}
+					
+					// Creating audio
+					else if(compareStrings(commandPosition + 1,CALL_AUDIO)){
+						type = TYPE_AUDIO;
+						componentPosition = parameterPosition;
+						parameterPosition = 0;
+					}
+					
+					// Creating a textbox
+					else if(compareStrings(commandPosition + 1,CALL_TEXTBOX)){
+						type = TYPE_TEXTBOX;
+						componentPosition = parameterPosition;
+						parameterPosition = 0;
+					}
+				}
+				
 				int id = 0;
 				// Look for a match from other pointers
 				for(id = 0; id < objPosition; id++){
 					// jsLogInt(components[id]);
 					// jsLogInt(componentPosition);
 					
-					if(compareStringsFromPointers(components[id], componentPosition)){
+					if(compareStrings(components[id], componentPosition)){
 						// jsLogString(&data[components[objPosition]],1);
 						match = 1;
 						break;
@@ -260,17 +288,20 @@ void readFile(){
 				if(!match){
 					jsLogString(&data[componentPosition],7);
 					
-					components[objPosition] = componentPosition;
 					
 					// Update the current struct
 					list[objPosition].active = 1;
 					
 					/// SET TYPE
 					// Engine
-					if(compareStringsFromPointers(componentPosition,CALL_ENGINE)) list[objPosition].type = TYPE_ENGINE;
-					// Other call
-					else list[objPosition].type = TYPE_EMPTY;
+					if(compareStrings(componentPosition,CALL_ENGINE)) list[objPosition].type = TYPE_ENGINE;
+					// Textbox
+					else if(compareStrings(componentPosition,CALL_TEXTBOX)) list[objPosition].type = TYPE_TEXTBOX;
 					
+					// Other call
+					else list[objPosition].type = type;
+					
+					components[objPosition] = componentPosition;
 					jsLogInt(list[objPosition].type);
 					
 					// Move the position
@@ -281,9 +312,11 @@ void readFile(){
 			// Reset single-line commenting
 			commenting = 0;
 			
+			// Reset settings for the new line
 			componentPosition	= CALL_TEXTBOX;
 			commandPosition		= CALL_CONTENT;
 			parameterPosition	= 0;
+			type				= TYPE_EMPTY;
 			
 			spaced				= 0;
 			continue;
@@ -538,7 +571,7 @@ void readFile(){
 	 0: No match
 	 N: Array position where match ends
 */
-int compareStrings(char a[], char b[], int aMax, int bMax){
+/*int compareStrings(char a[], char b[], int aMax, int bMax){
 	int i = 0;
 	
 	while(i < 30){
@@ -552,4 +585,4 @@ int compareStrings(char a[], char b[], int aMax, int bMax){
 	}
 	
 	return i;
-}
+}*/
