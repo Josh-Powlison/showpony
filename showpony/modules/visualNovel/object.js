@@ -10,7 +10,9 @@ new function(){
 	M.editor = null;
 	
 	M.window=document.createElement('div');
-	M.window.className='m-vn paused';
+	console.log('START UP');
+	// M.class (function call for the user) is based on the initial class name, set here.
+	M.window.className='m-vn';
 	M.window.dataset.filename = null;
 	
 	M.styles = document.createElement('style');
