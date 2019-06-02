@@ -593,13 +593,15 @@ async function to(obj = {file:file, time:time}){
 		
 		// The second element is story styles, so keep that
 		
+		
 		// Empty and replace the third element's children
 		while(contentShadow.children[2]) contentShadow.removeChild(contentShadow.children[2]);
 
 		contentShadow.appendChild(modules[S.files[obj.file].module].window);
+		
+		module = S.files[obj.file].module;
 	}
 	
-	module=S.files[obj.file].module;
 	
 	// Load the file
 	if(S.files[obj.file].buffered === false) S.files[obj.file].buffered = 'buffering';
