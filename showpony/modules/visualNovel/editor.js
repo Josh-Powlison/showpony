@@ -200,6 +200,7 @@ M.editor = new function(){
 	
 	E.update = function(input){
 		content.innerHTML = input;
+		// console.log('hello, set to ',M.currentFile);
 		
 		new Promise((resolve, reject) => {
 			if(M.wasm === null){
@@ -452,12 +453,23 @@ M.editor = new function(){
 	E.save = function(){
 		// Update the file and push the changes to the user
 		
+		var formdata = new FormData();
+		formdata.append('text',content.value);
+		formdata.append('path',S.files[M.currentFile].path);
+		
 		// Update the file
-		
-		// Update the text
-		keyframes = parseFile(content.value);
-		
-		M.src(M.currentFile, M.currentTime, M.window.dataset.filename, true);
+		fetch('showpony/modules/visualNovel/editor.php',{
+			method:'POST'
+			,body:formdata
+		})
+		.then(response => response.text())
+		.then(text => {
+			console.log(text);
+			
+			// Update the text
+			keyframes = parseFile(content.value);
+			M.src(M.currentFile, M.currentTime, M.window.dataset.filename, true);
+		});
 	}
 	
 	// Close editor on closing showpony
