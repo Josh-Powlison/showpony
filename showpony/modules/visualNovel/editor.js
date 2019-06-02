@@ -482,30 +482,121 @@ M.editor = new function(){
 							if(linePosition > maxTabbedTo && tabbed > 0) maxTabbedTo = linePosition;
 						}
 						
-						// Default start to selection start
-						var start = content.selectionStart;
-						
-						// Skip forward if we're on a tab though; we want to calculate how much tabbing to add to this line
-						while(dataD[start] == '\t') start++;
-						
-						// Get the current line
-						var lineText = /[^\n\r]+$/.exec(dataD.substr(0,start));
-						
-						// Get the result, or an empty string
-						lineText = (lineText ? lineText[0] : '').replace(/\t/g,'1234');
-						
-						
-						var length = Math.ceil((maxTabbedTo - lineText.length) / 4);
-						
-						console.log('MAX TABBED TO',maxTabbedTo,'LENGTH',length);
-						
-						for(var i = 1; i < length; i++){
-							tabs += '\t';
+						// If we haven't selected a section, perform this action
+						if(content.selectionStart === content.selectionEnd){
+							// Default start to selection start
+							var start = content.selectionStart;
+							
+							// Skip forward if we're on a tab though; we want to calculate how much tabbing to add to this line
+							while(dataD[start] == '\t') start++;
+							
+							// Get the current line
+							var lineText = /[^\n\r]+$/.exec(dataD.substr(0,start));
+							
+							// Get the result, or an empty string
+							lineText = (lineText ? lineText[0] : '').replace(/\t/g,'1234');
+							
+							var length = Math.ceil((maxTabbedTo - lineText.length) / 4);
+							
+							console.log('MAX TABBED TO',maxTabbedTo,'LENGTH',length);
+							
+							for(var i = 1; i < length; i++){
+								tabs += '\t';
+							}
+							
+							E.window.document.execCommand('insertText',false,tabs);
+						// If we've selected a section
+						} else {
+							var multiline = 0;
+							
+							// Check if it spans multiple lines
+							for(var i = content.selectionStart; i < content.selectionEnd; i ++){
+								if(dataD[i] == '\n' || dataD[i] == '\r'){
+									multiline = 1;
+									break;
+								}
+							}
+							
+							// If it spans multiple lines, we'll fix tabbing for them all
+							if(multiline){
+								var s = content.selectionStart;
+								var e = content.selectionEnd;
+								
+								// console.log('text',dataD.substr(s,e-s));
+								
+								// Find the beginning of the first line
+								while(s > 0 && dataD[s - 1] !== '\r' && dataD[s - 1] !== '\n') s--; 
+								
+								// Find the end of the last line
+								while(e < dataD.length && dataD[e + 1] !== '\r' && dataD[e + 1] !== '\n') e++;
+								
+								linePosition = 0;
+								lineStart = 0;
+								tabbed = 0;
+								
+								// Get lines
+								for(var i = s; i < e; i ++){
+									switch(dataD[i]){
+										case '\n':
+										case '\r':
+											lineStart = 0;
+											linePosition = 0;
+											tabbed = 0;
+											continue;
+											break;
+										// Add tab spacing
+										case '\t':
+											// If we're tabbing in the parameter, ignore
+											if(tabbed < 2){
+												linePosition += (4 - (linePosition % 4)) || 4;
+												tabbed = 1;
+											}
+											continue;
+											break;
+										case '\0':
+											// Exit here
+											break;
+										default:
+											break;
+									}
+									
+									// Move position if we haven't tabbed yet
+									if(tabbed == 0) linePosition++;
+									else if(tabbed == 1){
+										tabbed = 2;
+										
+										// Consider how many more tabs we need. Add them in.
+										
+										var length = Math.ceil((maxTabbedTo - linePosition) / 4);
+										var tabsHere = '';
+										// continue;
+										
+										for(var j = 0; j < length; j++){
+											tabsHere += '\t';
+										}
+										
+										console.log('tabs needed:',length);
+										
+										// Add in the extra tabs
+										if(length > 0){
+											console.log('Tabbing...');
+											
+											dataD = dataD.slice(0,i) + tabsHere + dataD.slice(i);
+											// Skip ahead by the # of tabs we added
+											i += length;
+											e += length;
+										}
+									}
+								}
+								// E.window.document.execCommand('insertText',false,dataD);
+								content.value = dataD;
+							// Otherwise, just write a tab
+							} else {
+								E.window.document.execCommand('insertText',false,tabs);
+							}
 						}
 						
-						// Math: a tab takes us to the next spot divisible by 4
 						
-						E.window.document.execCommand('insertText',false,tabs);
 					break;
 					default:
 						return;
