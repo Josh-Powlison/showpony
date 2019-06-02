@@ -178,7 +178,8 @@ M.editor = new function(){
 			<textarea id="content" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">Loading...</textarea>
 			<div id="highlights"></div>
 		</div>
-		<button id="update">Update</button>
+		<button id="saveFile">Save File</button>
+		<button id="newFile">New File</button>
 		<h1>In Scene</h1>
 		<div id="assets"></div>
 	</body>
@@ -425,7 +426,7 @@ M.editor = new function(){
 			if(event.ctrlKey){
 				switch(event.key){
 					case 's':
-						E.save();
+						E.saveFile();
 						break;
 					default:
 						return;
@@ -447,15 +448,24 @@ M.editor = new function(){
 		}
 	);
 	
-	// Save
-	E.window.document.getElementById('update').addEventListener('click',E.save);
+	// Save file
+	E.window.document.getElementById('saveFile').addEventListener('click',function(){
+		E.saveFile();
+	});
 	
-	E.save = function(){
+	// Create a new file
+	E.window.document.getElementById('newFile').addEventListener('click',function(){
+		E.newFile();
+	});
+	
+	E.saveFile = function(){
 		// Update the file and push the changes to the user
 		
 		var formdata = new FormData();
 		formdata.append('text',content.value);
 		formdata.append('path',S.files[M.currentFile].path);
+		formdata.append('type','save');
+		formdata.append('fileCount',S.files.length);
 		
 		// Update the file
 		fetch('showpony/modules/visualNovel/editor.php',{
@@ -469,6 +479,48 @@ M.editor = new function(){
 			// Update the text
 			keyframes = parseFile(content.value);
 			M.src(M.currentFile, M.currentTime, M.window.dataset.filename, true);
+		});
+	}
+	
+	E.newFile = function(){
+		// Update the file and push the changes to the user
+		
+		var formdata = new FormData();
+		formdata.append('type','new');
+		formdata.append('path',S.files[M.currentFile].path);
+		formdata.append('fileCount',S.files.length);
+		
+		console.log('new');
+		
+		// Update the file
+		fetch('showpony/modules/visualNovel/editor.php',{
+			method:'POST'
+			,body:formdata
+		})
+		.then(response => response.text())
+		.then(text => {
+			console.log(text);
+			
+			var editorJson = JSON.parse(text);
+
+			// Load the new file list
+			fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang=' + S.language)
+			.then(response=>{return response.json();})
+			.then(json=>{
+				S.files = json;
+				S.duration = S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
+				
+				// Go to the newly created file
+				for(var i = 0; i < S.files.length; i ++){
+					if(S.files[i].name === editorJson.filename){
+						S.file = i;
+						break;
+					}
+				}
+			})
+			.catch(error=>{
+				notice('Failed to reload file list. '+error);
+			});
 		});
 	}
 	
