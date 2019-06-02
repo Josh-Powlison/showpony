@@ -482,8 +482,14 @@ M.editor = new function(){
 							if(linePosition > maxTabbedTo && tabbed > 0) maxTabbedTo = linePosition;
 						}
 						
+						// Default start to selection start
+						var start = content.selectionStart;
+						
+						// Skip forward if we're on a tab though; we want to calculate how much tabbing to add to this line
+						while(dataD[start] == '\t') start++;
+						
 						// Get the current line
-						var lineText = /[^\n\r]+$/.exec(dataD.substr(0,content.selectionStart));
+						var lineText = /[^\n\r]+$/.exec(dataD.substr(0,start));
 						
 						// Get the result, or an empty string
 						lineText = (lineText ? lineText[0] : '').replace(/\t/g,'1234');
@@ -536,8 +542,6 @@ M.editor = new function(){
 		})
 		.then(response => response.text())
 		.then(text => {
-			console.log(text);
-			
 			// Update the text
 			keyframes = parseFile(content.value);
 			M.src(M.currentFile, M.currentTime, M.window.dataset.filename, true);
@@ -552,8 +556,6 @@ M.editor = new function(){
 		formdata.append('path',S.files[M.currentFile].path);
 		formdata.append('fileCount',S.files.length);
 		
-		console.log('new');
-		
 		// Update the file
 		fetch('showpony/modules/visualNovel/editor.php',{
 			method:'POST'
@@ -561,8 +563,6 @@ M.editor = new function(){
 		})
 		.then(response => response.text())
 		.then(text => {
-			console.log(text);
-			
 			var editorJson = JSON.parse(text);
 
 			// Load the new file list
