@@ -1079,6 +1079,8 @@ new function(){
 		var charElement = document.createElement('span');
 		charElement.className = 'm-vn-letter-container';
 		
+		var lastLetter;
+		
 		O.content=function(input = 'NULL: No text was passed.'){
 			O.el.dataset.state = 'normal';
 			O.el.dataset.done = 'false';
@@ -1098,20 +1100,17 @@ new function(){
 			var l = input.length;
 			
 			// We check beyond the length of the text because that lets us place characters that allow text wrapping in Firefox; if it starts with '+' we skip that character though
-			for(let i = ((input[0] === '+') ? 1 : 0); i <= l; i++){
-				// If a > is at the end of a text line, continue automatically.
-				// Won't interfere with tags, no worries!
-				if(i == l-1 && input[i] === '>'){
-					wait = false; //XXX
-					continue;
-				}
+			for(let i = ((input[0] === '+') ? 1 : 0); i < l; i++){
 				
-				if(i == l && !wait){
-					continue;
+				// If we're at the end, check for a skipping tag
+				if(i === l - 1 && input[i] === '>'){
+					wait = false;
+					console.log('> found!');
+					break;
 				}
 				
 				// If HTML
-				if(input[i]==='<'){
+				if(input[i] === '<'){
 					// Skip over the opening bracket
 					i++;
 				
@@ -1119,7 +1118,7 @@ new function(){
 					
 					// Wait until a closing bracket (or the end of the text)
 					// TODO: add support for > inside of quotes; for example, <input value="Go Right >">
-					while(input[i]!='>' && i<input.length){
+					while(input[i]!='>' && i < l){
 						values+=input[i];
 						i++;
 					}
@@ -1277,16 +1276,17 @@ new function(){
 				// If letters
 				}else{
 					// Escape character
-					if(input[i] === '\\' && i + 1 < input.length) i++;
+					if(input[i] === '\\' && i + 1 < l) i++;
 					
+					var waitTime;
 					// If skipping multiple lines of text, display immediately
 					if(skipping) waitTime = 0;
-					else var waitTime = baseWaitTime[baseWaitTime.length-1];
+					else waitTime = baseWaitTime[baseWaitTime.length-1];
 					
 					letters += input[i];
 				
 					// Handle punctuation- at spaces we check, if constant isn't true
-					if(input[i]===' ' && !constant[constant.length-1] && i!==input.length){
+					if(input[i] === ' ' && !constant[constant.length-1]){
 						letterLoop:
 						for(var testLetter = letters.length - 2; testLetter > 0; testLetter--){
 							switch(letters[testLetter]){
@@ -1323,6 +1323,7 @@ new function(){
 					var charPerpetualAnimation = document.createElement('span') // Perpetual animation character (singing, shaking...)
 					charPerpetualAnimation.className = 'm-vn-letter-animation';
 					
+					totalWait += waitTime;
 					// Set the display time here- but if we're paused, or running through the text with runTo, no delay!
 					if(!paused && runTo === false) charAppearAnimation.style.animationDelay = totalWait+'s';
 					
@@ -1339,29 +1340,34 @@ new function(){
 						charPerpetualAnimation.style.animationDelay=-(letters.length/parseFloat(thisAnimation))+'s';
 					}
 					
-					totalWait += waitTime;
 					
 					// Spaces
-					// and Ending! (needs this to wrap lines correctly on Firefox)
-					if(input[i] === ' ' || i === l){
+					if(input[i] === ' '){
 						charContainer.style.whiteSpace = 'pre-line';
 						charPositioning.innerHTML= ' <wbr>';
 						
 						if(runTo !== false) charAppearAnimation.style.visibility = 'visible';
-					
-						// Last character
-						if(i === l){
-							charAppearAnimation.addEventListener('animationstart',lastLetterAppear);
-						}
-					
 					// Regular characters
 					}else{
 						charPositioning.innerText = charPerpetualAnimation.innerText = input[i];
 						
 						charAppearAnimation.addEventListener('animationstart',scrollText);
 					}
+					
+					lastLetter = charAppearAnimation;
 				}
 			}
+			
+			console.log('Last Letter is:',lastLetter);
+			
+			// Last character
+			lastLetter.addEventListener('animationstart',lastLetterAppear);
+			
+			// Add this element for Firefox's spacing to work
+			var endingWhitespace = document.createElement('span');
+			endingWhitespace.style.whiteSpace = 'pre-line';
+			endingWhitespace.innerHTML= ' <wbr>';
+			fragment.appendChild(endingWhitespace);
 			
 			// Remove old text if we aren't appending
 			if(input[0] !== '+'){
