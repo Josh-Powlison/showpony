@@ -85,7 +85,9 @@ M.editor = new function(){
 				
 				font-size:16px;
 				font-family:'Courier';
-				border:0;
+				
+				border:none;
+				outline:none;
 				box-shadow:none;
 				
 				line-height:16px;
