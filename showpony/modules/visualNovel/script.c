@@ -77,7 +77,8 @@ const int CALL_AUDIO = 22;
 const int CALL_CONTENT = 28;
 const int CALL_REMOVE = 36;
 const int CALL_MP3 = 43;
-const int FILE_START = 50;
+const int CALL_OGG = 47;
+const int FILE_START = 51;
 
 ///////////////////////
 //// JS FUNCTIONS /////
@@ -350,7 +351,7 @@ int readFile(int line){
 						// Textbox
 						else if(compareStrings(componentPosition,CALL_TEXTBOX)) type = TYPE_TEXTBOX;
 						// Audio
-						else if(compareStrings(extPosition + 1,CALL_MP3)) type = TYPE_AUDIO;
+						else if(compareStrings(extPosition + 1,CALL_MP3) || compareStrings(extPosition + 1,CALL_OGG)) type = TYPE_AUDIO;
 						// If neither of the above are true, and if we haven't set a type, assume image
 						else if(type == TYPE_EMPTY) type = TYPE_IMAGE;
 						

@@ -10,7 +10,7 @@ ob_start();
 
 preg_match('/^(.+?)([^\/]+)$/',$_POST['path'],$matches);
 
-$path = '../../../' . $matches[1];
+$path = '../' . $matches[1];
 $name = $matches[2];
 
 /// Safety checks

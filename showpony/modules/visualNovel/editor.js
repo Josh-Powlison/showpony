@@ -168,7 +168,7 @@ M.editor = new function(){
 	
 	function saveStringToBuffer(str) {
 		// Need the right amount of null chars to initiate correctly; otherwise everything will be off
-		str = '\0engine\0textbox\0image\0audio\0content\0remove\0mp3\0\0\0\0' + str + '\n\0';
+		str = '\0engine\0textbox\0image\0audio\0content\0remove\0mp3\0ogg\0' + str + '\n\0';
 		for(var i = 0, l = str.length; i < l; i++) {
 			E.buffer[i] = str.charCodeAt(i);
 		}
@@ -306,13 +306,18 @@ M.editor = new function(){
 		
 		/*
 		
+		
 		4. Have a place showing the current objects and variables in the scene
 		5. Have a section where can upload resources (audio, images, video).
 			- In this section, can see/hear pieces stacked on
 			- Will figure out potential displays based on folder names, and allow toggling images (for example, will display sub-folders of characters in same section, and allow toggling between) (I should probably just allow layering as many as desired, since not everyone will follow that structure exactly)
 			
+		Josh ideas:
+		1. A shortcut to jump to the current line in the file
+		2. A shortcut to move the story to the currently selected line in the file
+		3. Shortcuts to control the KN in general? Like progress, regress, etc from within the editor?
+			
 		Inkhana ideas:
-		///////////////
 
 		- Button to provide the formatting
 		- Syntax highlighting? (maybe not with Showpony's code)
@@ -606,7 +611,7 @@ M.editor = new function(){
 		formdata.append('fileCount',S.files.length);
 		
 		// Update the file
-		fetch('showpony/modules/visualNovel/editor.php',{
+		fetch('showpony/editor.php',{
 			method:'POST'
 			,body:formdata
 		})
@@ -627,7 +632,7 @@ M.editor = new function(){
 		formdata.append('fileCount',S.files.length);
 		
 		// Update the file
-		fetch('showpony/modules/visualNovel/editor.php',{
+		fetch('showpony/editor.php',{
 			method:'POST'
 			,body:formdata
 		})
@@ -635,11 +640,15 @@ M.editor = new function(){
 		.then(text => {
 			var editorJson = JSON.parse(text);
 
+			// console.log('WHERE WE GET IT','showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang=' + S.language);
+			
 			// Load the new file list
 			fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang=' + S.language)
-			.then(response=>{return response.json();})
-			.then(json=>{
-				S.files = json;
+			.then(response=>{return response.text();})
+			.then(text=>{
+				// console.log(text);
+				
+				S.files = JSON.parse(text);
 				S.duration = S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
 				
 				// Go to the newly created file

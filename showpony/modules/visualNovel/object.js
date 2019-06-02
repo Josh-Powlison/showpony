@@ -87,6 +87,7 @@ new function(){
 	}
 	
 	M.pause = function(){
+		console.log('paused');
 		M.window.classList.add('paused');
 		
 		// Go through objects that can be played- pause them, and track that
@@ -301,7 +302,10 @@ new function(){
 			M.currentTime=time;
 			
 			// Update the editor
-			if(M.editor) M.editor.update(text);
+			if(M.editor){
+				// console.log('update me');
+				M.editor.update(text);
+			}
 			
 			M.run(0);
 			
@@ -463,7 +467,7 @@ new function(){
 		if(objects[component]) var type = objects[component].type;
 		else{
 			var type = 'image';
-			if(/\.mp3/i.test(parameter)) type = 'audio';
+			if(/\.(?:mp3|ogg|oga|wav|flac)/i.test(parameter)) type = 'audio';
 			
 			if(component === 'textbox') type = 'textbox';
 			else if(component === 'engine') type = 'engine';
@@ -845,6 +849,7 @@ new function(){
 		O.playing=false;
 		
 		O.content=function(input){
+			// If no extension is specified, assume mp3
 			if(!/\..+/.test(input)) input+='.mp3';
 			var name=input;
 			
@@ -1105,7 +1110,6 @@ new function(){
 				// If we're at the end, check for a skipping tag
 				if(i === l - 1 && input[i] === '>'){
 					wait = false;
-					console.log('> found!');
 					break;
 				}
 				
@@ -1357,8 +1361,6 @@ new function(){
 					lastLetter = charAppearAnimation;
 				}
 			}
-			
-			console.log('Last Letter is:',lastLetter);
 			
 			// Last character
 			lastLetter.addEventListener('animationstart',lastLetterAppear);
