@@ -346,8 +346,12 @@ M.editor = new function(){
 		highlightFragment = document.createDocumentFragment();
 		
 		// Read the file in WASM
-		M.wasm.exports.readFile(M.currentLine);
+		var totalLines = M.wasm.exports.readFile(M.currentLine);
 		
+		// Remove extra line numbers
+		while(data.children[totalLines]) data.removeChild(data.children[totalLines]);
+		
+		// Add needed line numbers
 		data.appendChild(dataFragment);
 		
 		var els = E.window.document.getElementsByClassName('highlight');

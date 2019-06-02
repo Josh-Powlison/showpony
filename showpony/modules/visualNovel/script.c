@@ -186,7 +186,7 @@ int matchStringsPartial(int a, int b){
 	return aEnds - bEnds;
 }
 
-void readFile(int line){
+int readFile(int line){
 	/// Clear Data
 	
 	/*while(assets.firstChild) assets.removeChild(assets.firstChild);
@@ -492,16 +492,10 @@ void readFile(int line){
 		}
 	}
 		
-	// We've now got pointers for the beginning of each component, command, and parameter. w00t!
-	
-	/*
-	
-	/// AUTOCOMPLETE ///
-	if(type == IMAGE
-		|| 0
-	){
+	// Return the total number of linse
+	return fileLine;
 		
-	}*/
+	// We've now got pointers for the beginning of each component, command, and parameter. w00t!
 }
 
 // When the user is typing a value, recommend like ones to them
