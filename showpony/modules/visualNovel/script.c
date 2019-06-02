@@ -344,17 +344,15 @@ void readFile(int line){
 						list[objPosition].active = 1;
 						
 						/// SET TYPE
-						if(type == TYPE_EMPTY){
-							// Engine
-							if(compareStrings(componentPosition,CALL_ENGINE)) type = TYPE_ENGINE;
-							// Textbox
-							else if(compareStrings(componentPosition,CALL_TEXTBOX)) type = TYPE_TEXTBOX;
-							// Audio
-							else if(compareStrings(extPosition + 1,CALL_MP3)) type = TYPE_AUDIO;
-							
-							// If neither of the above are true, and if we haven't set a type, assume image
-							else type = TYPE_IMAGE;
-						}
+						
+						// Engine
+						if(compareStrings(componentPosition,CALL_ENGINE)) type = TYPE_ENGINE;
+						// Textbox
+						else if(compareStrings(componentPosition,CALL_TEXTBOX)) type = TYPE_TEXTBOX;
+						// Audio
+						else if(compareStrings(extPosition + 1,CALL_MP3)) type = TYPE_AUDIO;
+						// If neither of the above are true, and if we haven't set a type, assume image
+						else if(type == TYPE_EMPTY) type = TYPE_IMAGE;
 						
 						components[objPosition] = componentPosition;
 						list[objPosition].type = type;
@@ -415,6 +413,7 @@ void readFile(int line){
 			commandPosition		= CALL_CONTENT;
 			parameterPosition	= 0;
 			type				= TYPE_EMPTY;
+			extPosition			= 0;
 			
 			spaced				= 0;
 			

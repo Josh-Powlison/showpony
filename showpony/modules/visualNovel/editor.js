@@ -143,30 +143,9 @@ M.editor = new function(){
 				
 				display:inline-block;
 				float:left;
-			}
-			
-			.engine{
-				background-color:yellow;
-			}
-			
-			.audio{
-				background-color:orange;
-			}
-			
-			.image{
-				background-color:#ccf;
-			}
-			
-			.comment{
-				background-color:#cfc;
-			}
-			
-			.textbox{
-				background-color:#ccc;
-			}
-			
-			.set, .get{
-				background-color:purple;
+				
+				background-image:url('showpony/modules/visualNovel/icons.svg');
+				background-size:cover;
 			}
 		</style>
 	</head>
@@ -240,7 +219,7 @@ M.editor = new function(){
 							// Create line if it doesn't exist
 							if(!data.children[number]){
 								target = document.createElement('p');
-								target.innerHTML = number + 1;
+								target.innerHTML = '<span class="icon"></span><span>' + (number + 1) + '</span>';
 								dataFragment.appendChild(target);
 							}
 							// Change line's class name if needbe
@@ -248,7 +227,8 @@ M.editor = new function(){
 								target = data.children[number];
 							}
 							
-							if(target.className !== types[type]) target.className = types[type];
+							// if(target.className !== types[type]) target.className = types[type];
+							target.children[0].style.backgroundPosition = '50% ' + type + '0%';
 							if(parseFloat(target.style.height) !== height) target.style.height = height + 'px';
 							
 							return height;
@@ -334,8 +314,6 @@ M.editor = new function(){
 		Inkhana ideas:
 		///////////////
 
-		- Auto-indents with sensitivity to context so you don't have to manually position
-			(which, after testing, I think is easy enough although I'm still thinking an optional auto-indent for writing dialogue would be great...haha)
 		- Button to provide the formatting
 		- Syntax highlighting? (maybe not with Showpony's code)
 		
@@ -436,8 +414,7 @@ M.editor = new function(){
 			} else {
 				switch(event.key){
 					case 'Tab':
-						console.log('Add tab');
-						
+						// CONVERT TO WASM (it's written in a way that will hopefully transfer easier)
 						var tabs = '\t';
 						
 						// Loop through it (writing in a way where we could convert to WASM later)
@@ -497,8 +474,6 @@ M.editor = new function(){
 							lineText = (lineText ? lineText[0] : '').replace(/\t/g,'1234');
 							
 							var length = Math.ceil((maxTabbedTo - lineText.length) / 4);
-							
-							console.log('MAX TABBED TO',maxTabbedTo,'LENGTH',length);
 							
 							for(var i = 1; i < length; i++){
 								tabs += '\t';
