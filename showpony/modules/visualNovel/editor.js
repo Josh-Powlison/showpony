@@ -98,8 +98,7 @@ M.editor = new function(){
 			
 			#content-sizing{
 				pointer-events:none;
-				visibility:visible;
-				opacity:.5;
+				visibility:hidden;
 				
 				white-space:-moz-pre-wrap;
 				white-space:pre-wrap;
@@ -188,7 +187,7 @@ M.editor = new function(){
 	
 	function saveStringToBuffer(str) {
 		// Need the right amount of null chars to initiate correctly; otherwise everything will be off
-		str = '\0engine\0textbox\0image\0audio\0content\0remove\0\0\0\0\0\0\0\0' + str + '\n\0';
+		str = '\0engine\0textbox\0image\0audio\0content\0remove\0mp3\0\0\0\0' + str + '\n\0';
 		for(var i = 0, l = str.length; i < l; i++) {
 			E.buffer[i] = str.charCodeAt(i);
 		}

@@ -76,6 +76,7 @@ const int CALL_IMAGE = 16;
 const int CALL_AUDIO = 22;
 const int CALL_CONTENT = 28;
 const int CALL_REMOVE = 36;
+const int CALL_MP3 = 43;
 const int FILE_START = 50;
 
 ///////////////////////
@@ -135,6 +136,9 @@ int isDelimiter(char a){
 		case '-':
 		case '+':
 		case '!':
+		case ',':
+		case '\/':
+		case '\\':
 		case '\0':
 			return 1;
 			break;
@@ -222,6 +226,7 @@ void readFile(int line){
 	int componentPosition	= CALL_TEXTBOX;
 	int commandPosition		= CALL_CONTENT;
 	int parameterPosition	= 0;
+	int extPosition			= 0;
 	int type				= TYPE_EMPTY;
 	
 	int commenting = 0;
@@ -312,8 +317,6 @@ void readFile(int line){
 				
 				// If not a variable
 				if(type != TYPE_SET && type != TYPE_GET){
-					// Test for audio
-					// if(/\.mp3/i.test(parameter)) type = 'audio';
 					
 					int id = 0;
 					// Look for a match from other pointers
@@ -341,13 +344,17 @@ void readFile(int line){
 						list[objPosition].active = 1;
 						
 						/// SET TYPE
-						// Engine
-						if(compareStrings(componentPosition,CALL_ENGINE)) type = TYPE_ENGINE;
-						// Textbox
-						else if(compareStrings(componentPosition,CALL_TEXTBOX)) type = TYPE_TEXTBOX;
-						
-						// If neither of the above are true, then if we haven't set a type, assume image
-						else if(type == TYPE_EMPTY) type = TYPE_IMAGE;
+						if(type == TYPE_EMPTY){
+							// Engine
+							if(compareStrings(componentPosition,CALL_ENGINE)) type = TYPE_ENGINE;
+							// Textbox
+							else if(compareStrings(componentPosition,CALL_TEXTBOX)) type = TYPE_TEXTBOX;
+							// Audio
+							else if(compareStrings(extPosition + 1,CALL_MP3)) type = TYPE_AUDIO;
+							
+							// If neither of the above are true, and if we haven't set a type, assume image
+							else type = TYPE_IMAGE;
+						}
 						
 						components[objPosition] = componentPosition;
 						list[objPosition].type = type;
@@ -460,7 +467,11 @@ void readFile(int line){
 		if(commenting == 1) continue;
 		
 		// Continue nonstop if we're reading a parameter
-		if(parameterPosition) continue;
+		if(parameterPosition){
+			// Track extension (if it is an extension), so we know what we're working with
+			if(data[i] == '.') extPosition = i;
+			continue;
+		}
 		
 		// Skip over tabs
 		if(data[i] == '\t'){
