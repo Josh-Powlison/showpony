@@ -252,12 +252,11 @@ if(!file_exists($language)){
 // Read the folder if it doesn't start with the hiding char or if we're an admin (this could be used for a sneaky way to access files otherwise)
 if($language[0] !== HIDING_CHAR || !empty($_SESSION['showpony_admin'])) readFolder($language);
 
-// Set them back in alphabetical order (HIDDEN_CHAR being removed can mess with order)
-sort($files);
-sort($upcomingFiles);
-
 // Add files and upcomingFiles together in order
 $files = array_merge($files,$upcomingFiles);
+
+// Set them back in alphabetical order (HIDDEN_CHAR being removed can mess with order)
+array_multisort(array_column($files,'path'),SORT_ASC,$files);
 
 // Load modules
 foreach(array_keys($media) as $moduleName){
