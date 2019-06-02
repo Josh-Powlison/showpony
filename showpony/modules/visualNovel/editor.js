@@ -44,7 +44,7 @@ M.editor = new function(){
 			
 			#thing{
 				width:100%;
-				height:300px;
+				height:90vh;
 				overflow:auto;
 				position:relative;
 			}
@@ -169,6 +169,8 @@ M.editor = new function(){
 		</style>
 	</head>
 	<body>
+		<button id="newFile">New File</button>
+		<button id="saveFile">Save File</button>
 		<div id="track"></div>
 		<div id="thing">
 			<div id="data"></div>
@@ -177,8 +179,6 @@ M.editor = new function(){
 			<textarea id="content" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">Loading...</textarea>
 			<div id="highlights"></div>
 		</div>
-		<button id="saveFile">Save File</button>
-		<button id="newFile">New File</button>
 		<h1>In Scene</h1>
 		<div id="assets"></div>
 	</body>
@@ -324,7 +324,7 @@ M.editor = new function(){
 		
 		/*
 		
-	X	4. Have a place showing the current objects and variables in the scene
+		4. Have a place showing the current objects and variables in the scene
 		5. Have a section where can upload resources (audio, images, video).
 			- In this section, can see/hear pieces stacked on
 			- Will figure out potential displays based on folder names, and allow toggling images (for example, will display sub-folders of characters in same section, and allow toggling between) (I should probably just allow layering as many as desired, since not everyone will follow that structure exactly)
@@ -335,7 +335,6 @@ M.editor = new function(){
 		- Auto-indents with sensitivity to context so you don't have to manually position
 			(which, after testing, I think is easy enough although I'm still thinking an optional auto-indent for writing dialogue would be great...haha)
 		- Button to provide the formatting
-	X	- Code suggestions as you type (including character names)
 		- Syntax highlighting? (maybe not with Showpony's code)
 		
 		*/
@@ -436,7 +435,69 @@ M.editor = new function(){
 				switch(event.key){
 					case 'Tab':
 						console.log('Add tab');
-						E.window.document.execCommand('insertText',false,'\t');
+						
+						var tabs = '\t';
+						
+						// Loop through it (writing in a way where we could convert to WASM later)
+						var dataD = content.value;
+						
+						var maxTabbedTo		= 0;
+						var lineStart		= 0;
+						var linePosition	= 0;
+						var tabbed			= 0;
+						
+						for(var i = 0; i < dataD.length; i ++){
+							switch(dataD[i]){
+								case '\n':
+								case '\r':
+									lineStart = 0;
+									linePosition = 0;
+									tabbed = 0;
+									continue;
+									break;
+								// Add tab spacing
+								case '\t':
+									// If we're tabbing in the parameter, ignore
+									if(tabbed < 2){
+										linePosition += (4 - (linePosition % 4)) || 4;
+										tabbed = 1;
+									}
+									continue;
+									break;
+								case '\0':
+									// Exit here
+									break;
+								default:
+									
+									break;
+							}
+							
+							// Move position if we haven't tabbed yet
+							if(!tabbed) linePosition++;
+							else tabbed = 2;
+							
+							// If we're further along, and we've tabbed
+							if(linePosition > maxTabbedTo && tabbed > 0) maxTabbedTo = linePosition;
+						}
+						
+						// Get the current line
+						var lineText = /[^\n\r]+$/.exec(dataD.substr(0,content.selectionStart));
+						
+						// Get the result, or an empty string
+						lineText = (lineText ? lineText[0] : '').replace(/\t/g,'1234');
+						
+						
+						var length = Math.ceil((maxTabbedTo - lineText.length) / 4);
+						
+						console.log('MAX TABBED TO',maxTabbedTo,'LENGTH',length);
+						
+						for(var i = 1; i < length; i++){
+							tabs += '\t';
+						}
+						
+						// Math: a tab takes us to the next spot divisible by 4
+						
+						E.window.document.execCommand('insertText',false,tabs);
 					break;
 					default:
 						return;
