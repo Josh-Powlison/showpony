@@ -1476,31 +1476,44 @@ view.addEventListener('blur',saveBookmark);
 view.addEventListener(
 	'keydown'
 	,function(event){
-		if(!active) return;
 		if(this!==event.target) return;
 		
-        // Disable keyboard when scrubbing
-		if(scrubbing) return;
-		if(event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) return;
-		
-		switch(event.key){
-			case ' ':				progress();			break;
-			case 'Enter':			progress();			break;
-			case 'ArrowLeft':		(readingDirection === 'right-to-left' ? progress : regress)();	break;
-			case 'ArrowRight':		(readingDirection === 'right-to-left' ? regress : progress)();	break;
-			// case 'Home':			to({time:'start'});	break;
-			// case 'End':				to({time:'end'});		break;
-			case 'MediaPrevious':	S.file--;		break;
-			case 'MediaNext':		S.file++;		break;
-			case 'MediaPlayPause':	S.paused = 'toggle';				break;
-			case 'f':				S.fullscreen = 'toggle';	break;
-			case 'm':				S.paused = 'toggle';				break;
-			default:				return;					break;
-		}
-		
-		event.preventDefault();
+		if(S.shortcutKeys(event,false)) event.preventDefault();
 	}
 );
+
+// Test for and run shortcut keys on the main Showpony
+// event is the keyboard event; alt is if alt held down is okay
+S.shortcutKeys = function(event,alt){
+	if(!active) return;
+	
+	// Disable keyboard when scrubbing
+	if(scrubbing) return false;
+	// Disable if alt shouldn't be held and is, or if alt should be held but isn't
+	if(event.altKey !== alt) return false;
+	// Disable on special keys
+	if(event.ctrlKey || event.shiftKey || event.metaKey) return false;
+	
+	switch(event.key){
+		case ' ':				progress();			break;
+		case 'Enter':			progress();			break;
+		case 'ArrowLeft':		(readingDirection === 'right-to-left' ? progress : regress)();	break;
+		case 'ArrowRight':		(readingDirection === 'right-to-left' ? regress : progress)();	break;
+		// case 'Home':			to({time:'start'});	break;
+		// case 'End':				to({time:'end'});		break;
+		case 'MediaPrevious':	S.file--;		break;
+		case 'MediaNext':		S.file++;		break;
+		case 'MediaPlayPause':	S.paused = 'toggle';				break;
+		case 'f':				S.fullscreen = 'toggle';	break;
+		case 'm':				S.paused = 'toggle';				break;
+		default:				return false;					break;
+	}
+	
+	event.preventDefault();
+	
+	// Keycode activated
+	return true;
+}
 
 // TODO: put this somewhere sensible, or decide that here is fine
 var buttonDown = null;

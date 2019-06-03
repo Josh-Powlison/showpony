@@ -665,6 +665,14 @@ M.editor = new function(){
 		});
 	}
 	
+	// Run shortcut keys on the player if alt is held down
+	E.window.addEventListener(
+		'keydown'
+		,function(event){
+			if(S.shortcutKeys(event,true)) event.preventDefault();
+		}
+	);
+	
 	// Close editor on closing showpony
 	window.addEventListener('beforeunload',function(){E.window.close();})
 }();
