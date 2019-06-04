@@ -149,6 +149,13 @@ M.editor = new function(){
 			}
 			
 			/* Components */
+			#assets div{
+				border:solid black 1px;
+			}
+			#assets div p{
+				margin:0;
+			}
+			
 			.component{
 				color:gray;
 			}
@@ -156,6 +163,7 @@ M.editor = new function(){
 			.component.active{
 				color:black;
 			}
+			
 		</style>
 	</head>
 	<body>
@@ -170,7 +178,16 @@ M.editor = new function(){
 			<div id="highlights"></div>
 		</div>
 		<h1>In Scene</h1>
-		<div id="assets"></div>
+		<div id="assets">
+			<div class="empty"></div>
+			<div class="engine"></div>
+			<div class="set"></div>
+			<div class="get"></div>
+			<div class="comment"></div>
+			<div class="textbox"></div>
+			<div class="image"></div>
+			<div class="audio"></div>
+		</div>
 	</body>
 	</html>
 	`);
@@ -292,10 +309,15 @@ M.editor = new function(){
 							// position returns the beginning of the array pointing to every component
 							
 							/// Clear Data
-							while(assets.firstChild) assets.removeChild(assets.firstChild);
+							for(var i = 0; i < assets.children.length; i++){
+								var el = assets.children[i];
+								while(el.firstChild) el.removeChild(el.firstChild);
+							}
 							
 							var objArray = new Uint32Array(M.wasm.exports.memory.buffer, position, 50);
 							// console.log(objArray);
+							
+							var fullData = prependString + content.value;
 							
 							// Test getting objects from WASM
 							// console.log('///////////');
@@ -311,8 +333,8 @@ M.editor = new function(){
 								// Show if the object's currently active in the scene
 								obj.className = 'component' + (objInfo[1] ? ' active' : '');
 								
-								obj.innerHTML = content.value.substr(objArray[i] - prependString.length,5) + ' (' + types[objInfo[0]] + ')';
-								assets.appendChild(obj);
+								obj.innerHTML = fullData.substr(objArray[i],5);
+								assets.children[objInfo[0]].appendChild(obj);
 							}
 							
 							// Get a list of all the objects
