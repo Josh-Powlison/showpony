@@ -34,7 +34,7 @@ Accessing linear memory: https://stackoverflow.com/questions/46748572/how-to-acc
 // STRUCTS
 struct Object{
 	int type;			// Object type
-	int active;			// If it's been removed
+	int active;			// If it is live on the currently selected line
 	char values[];		// The settings for the object such as style, class, content
 };
 
@@ -89,6 +89,7 @@ void jsLogInt(int input);
 float jsCreateLine(int fileLine, int type, char *position, int length);
 void jsCreateHighlight(float top, float height);
 void jsRecommendation(char *position, int length);
+void jsDisplayObjects(int *position);
 
 ///////////////////////
 ///// C FUNCTIONS /////
@@ -101,6 +102,10 @@ int main() {
 
 char* getData(int type){
 	return &data[0];
+}
+
+int* getObject(int id){
+	return &list[id];
 }
 
 int getLength(){
@@ -148,6 +153,16 @@ int isDelimiter(char a){
 			break;
 	}
 }
+/*
+int getStringUntilDelimiter(int a){
+	// Return true once we hit a delimiter
+	for(int i = 0; i < 50; i++){
+		if(isDelimiter(data[a + i]) return i;
+	}
+	
+	// Otherwise, return false if we never do
+	return 0;
+}*/
 
 // Gets two positions in the text file and sees if the strings from there are the same
 int compareStrings(int a, int b){
@@ -330,8 +345,8 @@ int readFile(int line){
 							// Set type to current component's type
 							type = list[id].type;
 							
-							// Update the struct
-							// if(compareStrings(commandPosition + 1, REMOVE_CALL + 1)) list[id].active = 0;
+							// If we're removing it, deactive it
+							if(parseLine < line && compareStrings(commandPosition + 1, CALL_REMOVE)) list[id].active = 0;
 							break;
 						}
 					}
@@ -341,8 +356,8 @@ int readFile(int line){
 						// jsLogString(&data[componentPosition],7);
 						// jsLogInt(fileLine);
 						
-						// Update the current struct
-						list[objPosition].active = 1;
+						// The element is active if it exists on the current line
+						if(parseLine < line) list[objPosition].active = 1;
 						
 						/// SET TYPE
 						
@@ -493,10 +508,14 @@ int readFile(int line){
 		}
 	}
 		
-	// Return the total number of linse
+	// Display all objects
+	jsDisplayObjects(&components[0]);
+	
+	// Return the total number of lines
 	return fileLine;
 		
 	// We've now got pointers for the beginning of each component, command, and parameter. w00t!
+	
 }
 
 // When the user is typing a value, recommend like ones to them

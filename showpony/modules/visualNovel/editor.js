@@ -147,6 +147,15 @@ M.editor = new function(){
 				background-image:url('showpony/modules/visualNovel/icons.svg');
 				background-size:cover;
 			}
+			
+			/* Components */
+			.component{
+				color:gray;
+			}
+			
+			.component.active{
+				color:black;
+			}
 		</style>
 	</head>
 	<body>
@@ -166,9 +175,11 @@ M.editor = new function(){
 	</html>
 	`);
 	
+	var prependString = '\0engine\0textbox\0image\0audio\0content\0remove\0mp3\0ogg\0';
+	
 	function saveStringToBuffer(str) {
 		// Need the right amount of null chars to initiate correctly; otherwise everything will be off
-		str = '\0engine\0textbox\0image\0audio\0content\0remove\0mp3\0ogg\0' + str + '\n\0';
+		str = prependString + str + '\n\0';
 		for(var i = 0, l = str.length; i < l; i++) {
 			E.buffer[i] = str.charCodeAt(i);
 		}
@@ -277,6 +288,46 @@ M.editor = new function(){
 								autocomplete.style.top = top + 'px';
 							}
 						}
+						,jsDisplayObjects: function(position){
+							// position returns the beginning of the array pointing to every component
+							
+							/// Clear Data
+							while(assets.firstChild) assets.removeChild(assets.firstChild);
+							
+							var objArray = new Uint32Array(M.wasm.exports.memory.buffer, position, 50);
+							// console.log(objArray);
+							
+							// Test getting objects from WASM
+							// console.log('///////////');
+							for(var i = 0; i < 50; i ++){
+								// Don't continue if we have no more objects
+								if(objArray[i] === 0) break;
+								
+								// console.log('starts with ',content.value[objArray[i] - prependString.length]);
+								var objInfo = new Uint32Array(M.wasm.exports.memory.buffer, M.wasm.exports.getObject(i), 2);
+								
+								/// ASSETS ///
+								var obj = document.createElement('p');
+								// Show if the object's currently active in the scene
+								obj.className = 'component' + (objInfo[1] ? ' active' : '');
+								
+								obj.innerHTML = content.value.substr(objArray[i] - prependString.length,5) + ' (' + types[objInfo[0]] + ')';
+								assets.appendChild(obj);
+							}
+							
+							// Get a list of all the objects
+							// Read them out
+							
+							/*
+							// Variables
+							var variableKeys = Object.keys(M.variables);
+							
+							for(var i = 0; i < variableKeys.length; i++){
+								var input = document.createElement('input');
+								input.value = M.variables[variableKeys[i]];
+								assets.appendChild(input);
+							}*/
+						}
 					}
 				}))
 				.then(instance => {
@@ -315,7 +366,7 @@ M.editor = new function(){
 		Josh ideas:
 		1. A shortcut to jump to the current line in the file
 		2. A shortcut to move the story to the currently selected line in the file
-		3. Shortcuts to control the KN in general? Like progress, regress, etc from within the editor?
+	X	3. Shortcuts to control the KN in general? Like progress, regress, etc from within the editor?
 			
 		Inkhana ideas:
 
@@ -323,29 +374,6 @@ M.editor = new function(){
 		- Syntax highlighting? (maybe not with Showpony's code)
 		
 		*/
-		
-		/// Clear Data
-		
-		/*while(assets.firstChild) assets.removeChild(assets.firstChild);
-		
-		
-		/// ASSETS ///
-		var objectKeys = Object.keys(objects);
-		
-		for(var i = 0; i < objectKeys.length; i++){
-			var obj = document.createElement('p');
-			obj.innerHTML = objectKeys[i] + ' (' + objects[objectKeys[i]].type + ')';
-			assets.appendChild(obj);
-		}
-		
-		// Variables
-		var variableKeys = Object.keys(M.variables);
-		
-		for(var i = 0; i < variableKeys.length; i++){
-			var input = document.createElement('input');
-			input.value = M.variables[variableKeys[i]];
-			assets.appendChild(input);
-		}*/
 		
 		dataFragment = document.createDocumentFragment();
 		highlightFragment = document.createDocumentFragment();
