@@ -714,6 +714,11 @@ new function(){
 	
 	// If a value's a number, return it as one
 	function ifParse(input){
+		// Check for true or false
+		if(input === 'true' || input === true) return true;
+		else if(input === 'false' || input === false) return false;
+		
+		// Check if it's a number, and parse it if it is (otherwise, it's a string)
 		return isNaN(input) ? input : parseFloat(input);
 	}
 	
