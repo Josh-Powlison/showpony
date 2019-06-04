@@ -668,7 +668,7 @@ new function(){
 					break;
 			}
 			
-			target[component][command] = parameter;
+			target[component][command] = ifParse(parameter);
 			
 			// Continue without creating objects- we'll look at THAT once we've run through and added all the info to the target
 			return true;
@@ -704,7 +704,7 @@ new function(){
 		}
 		// If a variable is passed, set to that instead
 		else if (typeof objects[component][command] !== 'undefined'){
-			objects[component][command] = parameter;
+			objects[component][command] = ifParse(parameter);
 			return true;
 		} else {
 			notice('"' + component + '" does not have a command called "' + command + '"');
