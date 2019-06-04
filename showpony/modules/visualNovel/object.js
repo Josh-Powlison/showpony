@@ -1104,6 +1104,8 @@ new function(){
 			
 			var l = input.length;
 			
+			var escaped = 0;
+			
 			// We check beyond the length of the text because that lets us place characters that allow text wrapping in Firefox; if it starts with '+' we skip that character though
 			for(let i = ((input[0] === '+') ? 1 : 0); i < l; i++){
 				
@@ -1279,8 +1281,16 @@ new function(){
 					continue;
 				// If letters
 				}else{
+					// If a recent character was escaped
+					if(escaped) escaped--;
+					
 					// Escape character
-					if(input[i] === '\\' && i + 1 < l) i++;
+					if(input[i] === '\\' && i + 1 < l){
+						i++;
+						
+						// This way it will last not just for this char, but for a potential upcoming space
+						escaped = 2;
+					}
 					
 					var waitTime;
 					// If skipping multiple lines of text, display immediately
@@ -1289,8 +1299,8 @@ new function(){
 					
 					letters += input[i];
 				
-					// Handle punctuation- at spaces we check, if constant isn't true
-					if(input[i] === ' ' && !constant[constant.length-1]){
+					// Handle punctuation- at spaces we check, if constant isn't true (and if the character wasn't escaped)
+					if(input[i] === ' ' && !constant[constant.length-1] && !escaped){
 						letterLoop:
 						for(var testLetter = letters.length - 2; testLetter > 0; testLetter--){
 							switch(letters[testLetter]){
