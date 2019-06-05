@@ -207,6 +207,30 @@ M.editor = new function(){
 	
 	content = E.window.document.getElementById('content');
 	
+	function isDelimiter(a){
+		switch(a){
+			case '\t':
+			case '\r':
+			case '\n':
+			case '.':
+			case '=':
+			case '<':
+			case '>':
+			case '-':
+			case '+':
+			case '!':
+			case ',':
+			case '\/':
+			case '\\':
+			case '\0':
+				return 1;
+				break;
+			default:
+				return 0;
+				break;
+		}
+	}
+	
 	E.update = function(input){
 		content.innerHTML = input;
 		// console.log('hello, set to ',M.currentFile);
@@ -333,7 +357,13 @@ M.editor = new function(){
 								// Show if the object's currently active in the scene
 								obj.className = 'component' + (objInfo[1] ? ' active' : '');
 								
-								obj.innerHTML = fullData.substr(objArray[i],5);
+								// Get the length of the name, and display it
+								var length = 0;
+								for(length; length < 50; length++){
+									if(isDelimiter(fullData[objArray[i] + length])) break;
+								}
+								
+								obj.innerHTML = fullData.substr(objArray[i],length);
 								assets.children[objInfo[0]].appendChild(obj);
 							}
 							
