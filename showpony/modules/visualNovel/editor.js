@@ -231,9 +231,13 @@ M.editor = new function(){
 		}
 	}
 	
+	var contentSizing = E.window.document.getElementById('content-sizing');
+	
 	E.update = function(input){
 		content.innerHTML = input;
 		// console.log('hello, set to ',M.currentFile);
+		
+		// console.log(contentSizing.getClientRects());
 		
 		new Promise((resolve, reject) => {
 			if(M.wasm === null){
@@ -257,12 +261,20 @@ M.editor = new function(){
 							/*
 							
 							Ways to speed up:
-								- Add new lines in the middle (but then would still have to change innerHTML for tons of lines...
-								- 
-							
+								**- Only calculate new strings**
+								- Anytime you type in something, it should just calculate new strings
+								- Unless we resize the window, then it's really slow still...
+								
+								- Figure out what line the change took place on (if new line or pre-existing one)
+									- If we're before that, ignore and respond with the default value
+									- If we're on that line, recalculate its size
+									- If we've added a line, update all lines based on previous value
+								
+								- Check line #(s, could be copy-paste to add or replace) where change(s) occurred
+								- Look to see if lines were added
+								- Just adjust those lines (and their highlights)
 							*/
 							
-							var contentSizing = M.editor.window.document.getElementById('content-sizing');
 							contentSizing.innerText = (string.length ? string : '_');
 							var height = contentSizing.clientHeight;
 							
@@ -380,6 +392,9 @@ M.editor = new function(){
 								assets.appendChild(input);
 							}*/
 						}
+						, jsTabLines: function(position, length){
+							content.value = ab2str(new Uint8Array(M.wasm.exports.memory.buffer, position, length));
+						}
 					}
 				}))
 				.then(instance => {
@@ -402,6 +417,7 @@ M.editor = new function(){
 	}
 	
 	E.resizeThis = function(){
+		
 		if(M.wasm === null) return;
 		
 		content.style.height = '';
@@ -414,11 +430,12 @@ M.editor = new function(){
 		5. Have a section where can upload resources (audio, images, video).
 			- In this section, can see/hear pieces stacked on
 			- Will figure out potential displays based on folder names, and allow toggling images (for example, will display sub-folders of characters in same section, and allow toggling between) (I should probably just allow layering as many as desired, since not everyone will follow that structure exactly)
+		6. Only update line height when we change those lines
+			
 			
 		Josh ideas:
 		1. A shortcut to jump to the current line in the file
 		2. A shortcut to move the story to the currently selected line in the file
-	X	3. Shortcuts to control the KN in general? Like progress, regress, etc from within the editor?
 			
 		Inkhana ideas:
 
@@ -503,164 +520,9 @@ M.editor = new function(){
 			} else {
 				switch(event.key){
 					case 'Tab':
-						// CONVERT TO WASM (it's written in a way that will hopefully transfer easier)
-						var tabs = '\t';
+						console.log(M.wasm.exports.tabLines(content.selectionStart,content.selectionEnd));
 						
-						// Loop through it (writing in a way where we could convert to WASM later)
-						var dataD = content.value;
-						
-						var maxTabbedTo		= 0;
-						var lineStart		= 0;
-						var linePosition	= 0;
-						var tabbed			= 0;
-						
-						for(var i = 0; i < dataD.length; i ++){
-							switch(dataD[i]){
-								case '\n':
-								case '\r':
-									lineStart = 0;
-									linePosition = 0;
-									tabbed = 0;
-									continue;
-									break;
-								// Add tab spacing
-								case '\t':
-									// If we're tabbing in the parameter, ignore
-									if(tabbed < 2){
-										linePosition += (4 - (linePosition % 4)) || 4;
-										tabbed = 1;
-									}
-									continue;
-									break;
-								case '\0':
-									// Exit here
-									break;
-								default:
-									
-									break;
-							}
-							
-							// Move position if we haven't tabbed yet
-							if(!tabbed) linePosition++;
-							else tabbed = 2;
-							
-							// If we're further along, and we've tabbed
-							if(linePosition > maxTabbedTo && tabbed > 0) maxTabbedTo = linePosition;
-						}
-						
-						// If we haven't selected a section, perform this action
-						if(content.selectionStart === content.selectionEnd){
-							// Default start to selection start
-							var start = content.selectionStart;
-							
-							// Skip forward if we're on a tab though; we want to calculate how much tabbing to add to this line
-							while(dataD[start] == '\t') start++;
-							
-							// Get the current line
-							var lineText = /[^\n\r]+$/.exec(dataD.substr(0,start));
-							
-							// Get the result, or an empty string
-							lineText = (lineText ? lineText[0] : '').replace(/\t/g,'1234');
-							
-							var length = Math.ceil((maxTabbedTo - lineText.length) / 4);
-							
-							for(var i = 1; i < length; i++){
-								tabs += '\t';
-							}
-							
-							E.window.document.execCommand('insertText',false,tabs);
-						// If we've selected a section
-						} else {
-							var multiline = 0;
-							
-							// Check if it spans multiple lines
-							for(var i = content.selectionStart; i < content.selectionEnd; i ++){
-								if(dataD[i] == '\n' || dataD[i] == '\r'){
-									multiline = 1;
-									break;
-								}
-							}
-							
-							// If it spans multiple lines, we'll fix tabbing for them all
-							if(multiline){
-								var s = content.selectionStart;
-								var e = content.selectionEnd;
-								
-								// console.log('text',dataD.substr(s,e-s));
-								
-								// Find the beginning of the first line
-								while(s > 0 && dataD[s - 1] !== '\r' && dataD[s - 1] !== '\n') s--; 
-								
-								// Find the end of the last line
-								while(e < dataD.length && dataD[e + 1] !== '\r' && dataD[e + 1] !== '\n') e++;
-								
-								linePosition = 0;
-								lineStart = 0;
-								tabbed = 0;
-								
-								// Get lines
-								for(var i = s; i < e; i ++){
-									switch(dataD[i]){
-										case '\n':
-										case '\r':
-											lineStart = 0;
-											linePosition = 0;
-											tabbed = 0;
-											continue;
-											break;
-										// Add tab spacing
-										case '\t':
-											// If we're tabbing in the parameter, ignore
-											if(tabbed < 2){
-												linePosition += (4 - (linePosition % 4)) || 4;
-												tabbed = 1;
-											}
-											continue;
-											break;
-										case '\0':
-											// Exit here
-											break;
-										default:
-											break;
-									}
-									
-									// Move position if we haven't tabbed yet
-									if(tabbed == 0) linePosition++;
-									else if(tabbed == 1){
-										tabbed = 2;
-										
-										// Consider how many more tabs we need. Add them in.
-										
-										var length = Math.ceil((maxTabbedTo - linePosition) / 4);
-										var tabsHere = '';
-										// continue;
-										
-										for(var j = 0; j < length; j++){
-											tabsHere += '\t';
-										}
-										
-										console.log('tabs needed:',length);
-										
-										// Add in the extra tabs
-										if(length > 0){
-											console.log('Tabbing...');
-											
-											dataD = dataD.slice(0,i) + tabsHere + dataD.slice(i);
-											// Skip ahead by the # of tabs we added
-											i += length;
-											e += length;
-										}
-									}
-								}
-								// E.window.document.execCommand('insertText',false,dataD);
-								content.value = dataD;
-							// Otherwise, just write a tab
-							} else {
-								E.window.document.execCommand('insertText',false,tabs);
-							}
-						}
-						
-						
+						// E.window.document.execCommand('insertText',false,'\t');
 					break;
 					default:
 						return;
