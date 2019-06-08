@@ -52,7 +52,7 @@ steph.style		transform:translateX(25%);z-index:6;
 
 ////// MUSIC & SFX //////
 
-silly		silly.mp3
+silly		silly.ogg
 silly.loop	true
 
 

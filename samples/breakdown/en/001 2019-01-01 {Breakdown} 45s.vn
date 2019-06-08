@@ -62,13 +62,13 @@ steph.content	pose-1,eyes/nervous00,mouth/nervous00
 
 ////// MUSIC & SFX //////
 
-happy		happy.mp3
+happy		happy.ogg
 happy.loop	true
 
-silly		silly.mp3
+silly		silly.ogg
 silly.loop	true
 
-static		static.mp3
+static		static.ogg
 static.loop		true
 static.volume	.1
 
