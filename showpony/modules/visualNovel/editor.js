@@ -392,7 +392,12 @@ M.editor = new function(){
 								assets.appendChild(input);
 							}*/
 						}
-						, jsTabLines: function(position, length){
+						, jsOverwriteText: function(position, length){
+							// Updates text while preserving undo/redo history
+							// content.focus();
+							// E.window.document.execCommand('selectAll',false);
+							// E.window.document.execCommand('insertText',false,ab2str(new Uint8Array(M.wasm.exports.memory.buffer, position, length)));
+							
 							content.value = ab2str(new Uint8Array(M.wasm.exports.memory.buffer, position, length));
 						}
 					}
@@ -401,7 +406,7 @@ M.editor = new function(){
 					M.wasm = instance;
 					
 					console.log('WASM LOADED');
-					M.editor.buffer = new Uint8Array(M.wasm.exports.memory.buffer, M.wasm.exports.getData(0), M.wasm.exports.getLength());
+					M.editor.buffer = new Uint8Array(M.wasm.exports.memory.buffer, M.wasm.exports.getData(0), M.wasm.exports.getBufferLength());
 					
 					resolve();
 				});
@@ -520,9 +525,18 @@ M.editor = new function(){
 			} else {
 				switch(event.key){
 					case 'Tab':
-						console.log(M.wasm.exports.tabLines(content.selectionStart,content.selectionEnd));
+						var start = content.selectionStart;
+						var end = content.selectionEnd;
+					
+						// Write the info in
+						if(M.wasm.exports.tabLines(content.selectionStart,content.selectionEnd)){
+							// Reset cursor position
+							content.selectionStart = content.selectionEnd = end;
+						// If a tab was not passed, write it
+						}else{
+							E.window.document.execCommand('insertText',false,'\t');
+						}
 						
-						// E.window.document.execCommand('insertText',false,'\t');
 					break;
 					default:
 						return;

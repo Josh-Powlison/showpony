@@ -90,7 +90,7 @@ float jsCreateLine(int fileLine, int type, char *position, int length);
 void jsCreateHighlight(float top, float height);
 void jsRecommendation(char *position, int length);
 void jsDisplayObjects(int *position);
-void jsTabLines(char *position, int length);
+void jsOverwriteText(char *position, int length);
 
 ///////////////////////
 ///// C FUNCTIONS /////
@@ -109,7 +109,7 @@ int* getObject(int id){
 	return &list[id];
 }
 
-int getLength(){
+int getBufferLength(){
 	return SIZE;
 }
 
@@ -520,9 +520,11 @@ int readFile(int line){
 }
 
 // Add tabs to the selection line
-int tabLine(int maxTabbedTo, int start){
+int tabLine(int maxTabbedTo, int start, int multiline){
 	// Get the number of chars in the line
-	while(data[start - 1] != '\n' && data[start - 1] != '\r' && data[start - 1] != '\0') start--;
+	while(data[start - 1] != '\n' && data[start - 1] != '\r' && data[start - 1] != '\0'){
+		start--;
+	}
 	
 	int count = 0;
 	int length = 0;
@@ -547,8 +549,12 @@ int tabLine(int maxTabbedTo, int start){
 			continue;
 		}
 		
-		// If we already tabbed, exit
-		if(tabbed) break;
+		// If we're already tabbed but we're reading another char, exit- the user just wants to add a regular tab
+		if(tabbed){
+			// If this isn't a multiline run, exit- the user just wants to add in a regular tab
+			// if(!multiline) return 0;
+			break;
+		}
 		
 		count++;
 		length++;
@@ -570,7 +576,7 @@ int tabLine(int maxTabbedTo, int start){
 			// Move all chars forward by the number of tabs we need to add
 			else data[i] = data[i - tabsToAdd];
 		}
-	}
+	} else tabsToAdd = 0;
 	
 	return tabsToAdd;
 }
@@ -581,9 +587,11 @@ int tabLines(int selectionStart, int selectionEnd){
 	int lineStart		= 0;
 	int linePosition	= 0;
 	int tabbed			= 0;
+	int tabsAdded		= 0;
 	
 	selectionStart		+= FILE_START;
 	selectionEnd		+= FILE_START;
+	
 	
 	// Loop through the file
 	for(int i = FILE_START; i < SIZE; i++){
@@ -624,12 +632,10 @@ int tabLines(int selectionStart, int selectionEnd){
 		
 	}
 	
-	// return maxTabbedTo;
-	
 	// If we haven't selected a section, perform this action
 	if(selectionStart == selectionEnd){
 		// Default start to selection start
-		tabLine(maxTabbedTo,selectionStart);
+		tabsAdded = tabLine(maxTabbedTo,selectionStart,0);
 	// If we've selected a section
 	} else {
 		int multiline = 0;
@@ -668,18 +674,28 @@ int tabLines(int selectionStart, int selectionEnd){
 				// If not a new line, add tabs to line if needed
 				if(newLine){
 					// Continue forward if needbe; the end of our selection has moved with the tabs
-					e += tabLine(maxTabbedTo,i);
+					e += tabLine(maxTabbedTo,i,1);
 					newLine = 0;
 				}
 			}
+			
+			tabsAdded = 1;
 		// Otherwise, just write a tab
 		} else {
-			return 1;
-			// E.window.document.execCommand('insertText',false,tabs);
+			tabsAdded = 0;
 		}
 	}
 	
-	jsTabLines(&data[FILE_START],1000);
+	// Overwrite the JS text if needbe
+	if(tabsAdded > 0) jsOverwriteText(&data[FILE_START],getLength());
+	return tabsAdded;
+}
+
+// Get the real length of the file
+int getLength(){
+	for(int i = FILE_START; i < SIZE; i ++){
+		if(data[i] == '\0') return (i - 1 - FILE_START);
+	}
 }
 
 // When the user is typing a value, recommend like ones to them
