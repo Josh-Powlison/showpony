@@ -519,16 +519,68 @@ int readFile(int line){
 	
 }
 
+// Add tabs to the selection line
+int tabLine(int maxTabbedTo, int start){
+	// Get the number of chars in the line
+	while(data[start - 1] != '\n' && data[start - 1] != '\r' && data[start - 1] != '\0') start--;
+	
+	int count = 0;
+	int length = 0;
+	int tabbed = 0;
+	
+	// Get the length of the line up until tab ends (or line end)
+	while(
+			data[start + count] != '\n'
+		&&	data[start + count] != '\r'
+		&&	data[start + count] != '\0'
+	){
+		
+		// Tabs count as 4
+		if(data[start + count] == '\t'){
+			// Calculate how much space the tab is taking up
+			int calc = (4 - (length % 4));
+			if(!calc) calc = 4;
+			length += calc;
+			
+			tabbed = 1;
+			count++;
+			continue;
+		}
+		
+		// If we already tabbed, exit
+		if(tabbed) break;
+		
+		count++;
+		length++;
+	}
+	
+	// Ceil value: https://stackoverflow.com/questions/2745074/fast-ceiling-of-an-integer-division-in-c-c#2745086
+	int tabsToAdd = ((maxTabbedTo - length) + 4 - 1) / 4;
+	
+	// Add any tabs we need to
+	if(tabsToAdd > 0){
+		// Loop back through and add in tabs
+		for(int i = SIZE - tabsToAdd; i >= start + count; i--){
+			// Skip null chars
+			if(data[i - tabsToAdd] == '\0') continue;
+			
+			// Add a tab here if we're at that spot
+			if(i < start + count + tabsToAdd) data[i] = '\t';
+			
+			// Move all chars forward by the number of tabs we need to add
+			else data[i] = data[i - tabsToAdd];
+		}
+	}
+	
+	return tabsToAdd;
+}
+
 int tabLines(int selectionStart, int selectionEnd){
 	// CONVERT TO WASM (it's written in a way that will hopefully transfer easier)
-	// var tabs = '\t';
-	
 	int maxTabbedTo		= 0;
 	int lineStart		= 0;
 	int linePosition	= 0;
 	int tabbed			= 0;
-	
-	int tabsToAdd		= 0;
 	
 	selectionStart		+= FILE_START;
 	selectionEnd		+= FILE_START;
@@ -577,62 +629,7 @@ int tabLines(int selectionStart, int selectionEnd){
 	// If we haven't selected a section, perform this action
 	if(selectionStart == selectionEnd){
 		// Default start to selection start
-		int start = selectionStart;
-		
-		// Get the number of chars in the line
-		while(data[start - 1] != '\n' && data[start - 1] != '\r' && data[start - 1] != '\0') start--;
-		
-		int count = 0;
-		int length = 0;
-		tabbed = 0;
-		
-		// Get the length of the line up until tab ends (or line end)
-		while(
-				data[start + count] != '\n'
-			&&	data[start + count] != '\r'
-			&&	data[start + count] != '\0'
-		){
-			
-			// Tabs count as 4
-			if(data[start + count] == '\t'){
-				// Calculate how much space the tab is taking up
-				int calc = (4 - (length % 4));
-				if(!calc) calc = 4;
-				length += calc;
-				
-				tabbed = 1;
-				count++;
-				continue;
-			}
-			
-			// If we already tabbed, exit
-			if(tabbed) break;
-			
-			count++;
-			length++;
-		}
-		
-		// Ceil value: https://stackoverflow.com/questions/2745074/fast-ceiling-of-an-integer-division-in-c-c#2745086
-		tabsToAdd = ((maxTabbedTo - length) + 4 - 1) / 4;
-			//+ 1; // One is always added to make it work, and we should always have at least 1
-		
-		// return tabs;
-		
-		if(tabsToAdd == 0) return 0;
-		
-		// Loop back through and add in tabs
-		for(int i = SIZE - tabsToAdd; i >= start + count; i--){
-			// Skip null chars
-			if(data[i - tabsToAdd] == '\0') continue;
-			
-			// Add a tab here if we're at that spot
-			if(i < start + count + tabsToAdd) data[i] = '\t';
-			
-			// Move all chars forward by the number of tabs we need to add
-			else data[i] = data[i - tabsToAdd];
-		}
-		
-		// return tabsToAdd;
+		tabLine(maxTabbedTo,selectionStart);
 	// If we've selected a section
 	} else {
 		int multiline = 0;
@@ -650,67 +647,31 @@ int tabLines(int selectionStart, int selectionEnd){
 			int s = selectionStart;
 			int e = selectionEnd;
 			
-			// Find the beginning of the first line
-			while(s > 0 && data[s - 1] != '\r' && data[s - 1] != '\n') s--; 
-			
-			// Find the end of the last line
-			while(e < SIZE && data[e + 1] != '\r' && data[e + 1] != '\n') e++;
-			
-			linePosition = 0;
-			lineStart = 0;
-			tabbed = 0;
+			int newLine = 1;
 			
 			// Get lines
 			for(int i = s; i < e; i ++){
 				switch(data[i]){
 					case '\n':
 					case '\r':
-						lineStart = 0;
-						linePosition = 0;
-						tabbed = 0;
-						continue;
-						break;
-					// Add tab spacing
-					case '\t':
-						// If we're tabbing in the parameter, ignore
-						if(tabbed < 2){
-							int calc = (4 - (linePosition % 4));
-							if(!calc) calc = 4;
-							linePosition += calc;
-							tabbed = 1;
-						}
+						newLine = 1;
 						continue;
 						break;
 					case '\0':
 						// Exit here
+						continue;
 						break;
 					default:
 						break;
 				}
 				
-				// Move position if we haven't tabbed yet
-				if(tabbed == 0) linePosition++;
-				else if(tabbed == 1){
-					tabbed = 2;
-					
-					// Consider how many more tabs we need. Add them in.
-					
-					int length = ((maxTabbedTo - linePosition) + 4 - 1) / 4;;
-					
-					if(!length) continue;
-					
-					int tabsHere = length - 1;
-					/*
-					
-					// Add in the extra tabs
-					data = data.slice(0,i) + tabsHere + data.slice(i);
-					// Skip ahead by the # of tabs we added
-					i += length;
-					e += length;*/
+				// If not a new line, add tabs to line if needed
+				if(newLine){
+					// Continue forward if needbe; the end of our selection has moved with the tabs
+					e += tabLine(maxTabbedTo,i);
+					newLine = 0;
 				}
 			}
-			
-			// Update this in JS
 		// Otherwise, just write a tab
 		} else {
 			return 1;
@@ -719,7 +680,6 @@ int tabLines(int selectionStart, int selectionEnd){
 	}
 	
 	jsTabLines(&data[FILE_START],1000);
-	return tabsToAdd;
 }
 
 // When the user is typing a value, recommend like ones to them
