@@ -90,6 +90,7 @@ M.editor = new function(){
 			}
 			
 			#content-autocomplete{
+				visibility:hidden;
 				pointer-events:none;
 				opacity:.5;
 				
@@ -146,23 +147,71 @@ M.editor = new function(){
 				color:black;
 			}
 			
+			header{
+				box-sizing:border-box;
+				border:1px solid black;
+				
+				display:flex;
+			}
+			
+			header p{
+				margin:0;
+			}
+			
+			header input{
+				margin:0;
+			}
+			
+			#file-duration{
+				width:5em;
+			}
+			
+			#file-quality{
+				width:2em;
+			}
+			
+			#resources{
+				position:absolute;
+				background-color:orange;
+				height:6em;
+				left:0;
+				right:0;
+				overflow:auto;
+				z-index:1;
+				
+				resize:vertical;
+				
+				visibility:hidden;
+			}
+			
+			#resources *{
+				display:block;
+				height:100%;
+				max-width:100%;
+				float:left;
+			}
 		</style>
 	</head>
 	<body>
 		<header>
-			<button id="newFile">New File</button>
-			<button id="saveFile">Save File</button>
+			<button id="newFile">N</button>
+			<button id="saveFile">S</button>
+			<p># <span id="file-number"></span></p>
+			<p>T <input type="text" placeholder="File Name" id="file-title"></p>
+			<p>R <input type="text" placeholder="YYYY-DD-MM HH-MM-SS" id="file-date"></p>
+			<p>D <input type="number" placeholder="Duration" id="file-duration"></p>
+			<p>Q <input type="number" placeholder="Quality" id="file-quality"></p>
 		</header>
-		
-		<input type="text" placeholder="File Name" id="file-title">
-		<input type="text" placeholder="YYYY-DD-MM HH-MM-SS" id="file-date">
-		<input type="number" placeholder="Duration" id="file-duration">
-		<input type="number" placeholder="Quality" id="file-quality">
 		<div id="track"></div>
 		<div id="thing">
 			<div id="data"></div>
 			<pre id="content-sizing" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">Loading...</pre>
 			<pre id="content-autocomplete" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></pre>
+			<div id="resources">
+				<img src="">
+				<div></div>
+				<button>Upload New</button>
+			</div>
 			<textarea id="content" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">Loading...</textarea>
 			<div id="highlights"></div>
 		</div>
@@ -204,22 +253,32 @@ M.editor = new function(){
 	var prependString = '\0engine\0textbox\0image\0audio\0content\0remove\0mp3\0ogg\0';
 	
 	var assets = E.window.document.getElementById('assets');
+	var resources = E.window.document.getElementById('resources');
 	var data = E.window.document.getElementById('data');
 	var content = E.window.document.getElementById('content');
 	var contentSizing = E.window.document.getElementById('content-sizing');
+	
+	var resourceList = [];
 	
 	///////////////////////////////////////
 	///////////PUBLIC FUNCTIONS////////////
 	///////////////////////////////////////
 	
 	E.update = function(input){
-		content.innerHTML = input;
+		content.value = input;
 		// console.log('hello, set to ',M.currentFile);
 		
 		// console.log(contentSizing.getClientRects());
 		
 		new Promise((resolve, reject) => {
 			if(M.wasm === null){
+				// Load resource list
+				fetch('showpony/fetch-resource-list.php?path=<?php echo $_GET['path'] ?? ''; ?>')
+				.then(response => response.text())
+				.then(text => {
+					resourceList = JSON.parse(text);
+				});
+				
 				// Load WASM
 				fetch('showpony/modules/visualNovel/script.wasm')
 				.then(response => response.arrayBuffer())
@@ -296,28 +355,104 @@ M.editor = new function(){
 							highlightFragment.appendChild(highlight);
 							// console.log(highlight);
 						}
-						,jsRecommendation: function(position,length){
+						,jsRecommendation: function(position,length,type,componentType){
 							var helpText = ab2str(new Uint8Array(M.wasm.exports.memory.buffer, position, length));
 							var autocomplete = M.editor.window.document.getElementById('content-autocomplete');
 							
 							// console.log('hey');
 							
+							// Get the line number
+							var line = content.value.substr(0,content.selectionStart).match(/\n/g);
+							// If no previous lines exist, get the first line.
+							line = (line ? line.length : 0);
+							// Get the top of the line number element
+							var top = data.children[line].offsetTop;
+							
+							// Make recommendation box follow us
+							resources.style.top = (top + 64) + 'px';
+							
+							console.log('INFO',type,helpText);
+							
+							/// Recommendation resources !!! TEMPORARY SOLUTION !!!
+							if(type === 3){
+								// Only update images if we need to
+								var searchingFor = 'images/' + helpText + '/';
+								if(resources.dataset.search !== searchingFor){
+									resources.innerHTML = '';
+									
+									resources.dataset.search = searchingFor;
+									
+									var searchRegex = new RegExp('^' + searchingFor);
+									// console.log(searchRegex);
+									
+									var frag = document.createDocumentFragment();
+									
+									var demo = document.createElement('div');
+									frag.appendChild(demo);
+									
+									var title = document.createElement('p');
+									title.innerHTML = helpText;
+									frag.appendChild(title);
+									
+									for(var i = 0; i < resourceList.length; i ++){
+										// Continue if it doesn't line up with what we're searching for
+										if(!searchRegex.test(resourceList[i])) continue;
+										
+										var resource;
+										
+										// Check the file type
+										switch(/[^\.]+$/.exec(resourceList[i])[0]){
+											case 'wav':
+											case 'mp3':
+											case 'ogg':
+												resource = document.createElement('audio');
+												resource.src = <?php echo json_encode($_GET['path']) ?? ''; ?> + '/resources/' + resourceList[i];
+												break;
+											case 'jpg':
+											case 'jpeg':
+											case 'png':
+											case 'svg':
+											case 'gif':
+												resource = document.createElement('img');
+												resource.src = <?php echo json_encode($_GET['path']) ?? ''; ?> + '/resources/' + resourceList[i];
+												break;
+											default:
+												break;
+										}
+										
+										// If it's a supported resource type
+										if(resource){
+											resource.dataset.path = resourceList[i].replace(searchRegex,'').replace(/\.png$/,'');
+											
+											resource.addEventListener('click',function(){
+												content.focus();
+												E.window.document.execCommand('insertHTML',false,this.dataset.path);
+												console.log('passed',this.dataset.path);
+											});
+											
+											frag.appendChild(resource);
+										}
+									}
+									
+									resources.appendChild(frag);
+								}
+								
+								resources.style.visibility = 'visible';
+							}else{
+								resources.style.visibility = 'hidden';
+							}
+							
+							
+							/// Recommendation text ///
+							
 							// If we got passed a null chars
-							if(helpText[0] === '\0'){
+							if(type !== 1 || helpText[0] === '\0'){
 								autocomplete.style.visibility = 'hidden';
 							// If there is text we can use
 							}else{
-								var content = M.editor.window.document.getElementById('content');
-								autocomplete.style.visibility = 'visible';
 								autocomplete.innerHTML = helpText;
-								
-								// Get the line number
-								var line = content.value.substr(0,content.selectionStart).match(/\n/g);
-								// If no previous lines exist, get the first line.
-								line = (line ? line.length : 0);
-								// Get the top of the line number element
-								var top = data.children[line].offsetTop;
 								autocomplete.style.top = top + 'px';
+								autocomplete.style.visibility = 'visible';
 							}
 						}
 						,jsDisplayObjects: function(position){
@@ -377,6 +512,8 @@ M.editor = new function(){
 							}*/
 						}
 						, jsOverwriteText: function(position, length){
+							// CHROME
+							/*
 							// Updates text while preserving undo/redo history
 							content.focus();
 							E.window.document.execCommand('selectAll',false);
@@ -386,8 +523,9 @@ M.editor = new function(){
 							
 							E.window.document.execCommand('insertHTML',false,el.innerHTML);
 							// E.window.document.execCommand('insertText',false,ab2str(new Uint8Array(M.wasm.exports.memory.buffer, position, length)));
-							
-							// content.value = ab2str(new Uint8Array(M.wasm.exports.memory.buffer, position, length));
+							*/
+							// FIREFOX
+							content.value = ab2str(new Uint8Array(M.wasm.exports.memory.buffer, position, length));
 						}
 					}
 				}))
@@ -405,6 +543,7 @@ M.editor = new function(){
 		// If we just finished loading WASM or already loaded it previously
 		.then(()=>{
 			// Update file info at top
+			E.window.document.getElementById('file-number').innerHTML = M.currentFile + 1;
 			E.window.document.getElementById('file-title').value = S.files[M.currentFile].title;
 			
 			var date = new Date(S.files[M.currentFile].release * 1000);
@@ -668,6 +807,10 @@ M.editor = new function(){
 				switch(event.key){
 					case 's':
 						E.saveFile();
+						break;
+					// Move to current line in story
+					case 'q':
+						//
 						break;
 					default:
 						return;

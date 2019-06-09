@@ -70,14 +70,14 @@ const int DEBUG_ARRAY	= 1;
 const int DEBUG_STRING	= 2;
 
 // String Positions
-const int CALL_ENGINE = 1;
-const int CALL_TEXTBOX = 8;
-const int CALL_IMAGE = 16;
-const int CALL_AUDIO = 22;
-const int CALL_CONTENT = 28;
-const int CALL_REMOVE = 36;
-const int CALL_MP3 = 43;
-const int CALL_OGG = 47;
+const int STRING_ENGINE = 1;
+const int STRING_TEXTBOX = 8;
+const int STRING_IMAGE = 16;
+const int STRING_AUDIO = 22;
+const int STRING_CONTENT = 28;
+const int STRING_REMOVE = 36;
+const int STRING_MP3 = 43;
+const int STRING_OGG = 47;
 const int FILE_START = 51;
 
 ///////////////////////
@@ -88,7 +88,7 @@ void jsLogString(char *position, int length);
 void jsLogInt(int input);
 float jsCreateLine(int fileLine, int type, char *position, int length);
 void jsCreateHighlight(float top, float height);
-void jsRecommendation(char *position, int length);
+void jsRecommendation(char *position, int length, int type, int componentType);
 void jsDisplayObjects(int *position);
 void jsOverwriteText(char *position, int length);
 
@@ -240,8 +240,8 @@ int readFile(int line){
 	varPosition = 0;
 	
 	// Chars are smaller, so we used them in this case
-	int componentPosition	= CALL_TEXTBOX;
-	int commandPosition		= CALL_CONTENT;
+	int componentPosition	= STRING_TEXTBOX;
+	int commandPosition		= STRING_CONTENT;
 	int parameterPosition	= 0;
 	int extPosition			= 0;
 	int type				= TYPE_EMPTY;
@@ -293,23 +293,23 @@ int readFile(int line){
 				int match = 0;
 				
 				// Some commands make new components, in which case the line type is really of the created component. Check type.
-				if(compareStrings(componentPosition,CALL_ENGINE)){
+				if(compareStrings(componentPosition,STRING_ENGINE)){
 					// Creating an image
-					if(compareStrings(commandPosition + 1,CALL_IMAGE)){
+					if(compareStrings(commandPosition + 1,STRING_IMAGE)){
 						type = TYPE_IMAGE;
 						componentPosition = parameterPosition;
 						parameterPosition = 0;
 					}
 					
 					// Creating audio
-					else if(compareStrings(commandPosition + 1,CALL_AUDIO)){
+					else if(compareStrings(commandPosition + 1,STRING_AUDIO)){
 						type = TYPE_AUDIO;
 						componentPosition = parameterPosition;
 						parameterPosition = 0;
 					}
 					
 					// Creating a textbox
-					else if(compareStrings(commandPosition + 1,CALL_TEXTBOX)){
+					else if(compareStrings(commandPosition + 1,STRING_TEXTBOX)){
 						type = TYPE_TEXTBOX;
 						componentPosition = parameterPosition;
 						parameterPosition = 0;
@@ -347,7 +347,7 @@ int readFile(int line){
 							type = list[id].type;
 							
 							// If we're removing it, deactive it
-							if(parseLine < line && compareStrings(commandPosition + 1, CALL_REMOVE)) list[id].active = 0;
+							if(parseLine < line && compareStrings(commandPosition + 1, STRING_REMOVE)) list[id].active = 0;
 							break;
 						}
 					}
@@ -363,11 +363,11 @@ int readFile(int line){
 						/// SET TYPE
 						
 						// Engine
-						if(compareStrings(componentPosition,CALL_ENGINE)) type = TYPE_ENGINE;
+						if(compareStrings(componentPosition,STRING_ENGINE)) type = TYPE_ENGINE;
 						// Textbox
-						else if(compareStrings(componentPosition,CALL_TEXTBOX)) type = TYPE_TEXTBOX;
+						else if(compareStrings(componentPosition,STRING_TEXTBOX)) type = TYPE_TEXTBOX;
 						// Audio
-						else if(compareStrings(extPosition + 1,CALL_MP3) || compareStrings(extPosition + 1,CALL_OGG)) type = TYPE_AUDIO;
+						else if(compareStrings(extPosition + 1,STRING_MP3) || compareStrings(extPosition + 1,STRING_OGG)) type = TYPE_AUDIO;
 						// If neither of the above are true, and if we haven't set a type, assume image
 						else if(type == TYPE_EMPTY) type = TYPE_IMAGE;
 						
@@ -384,7 +384,7 @@ int readFile(int line){
 			
 			if(commenting) type = TYPE_COMMENT;
 			// If the defaults are all the same, and the parameter is empty, we're empty
-			else if(componentPosition == CALL_TEXTBOX && commandPosition == CALL_CONTENT && parameterPosition == 0) type = TYPE_EMPTY;
+			else if(componentPosition == STRING_TEXTBOX && commandPosition == STRING_CONTENT && parameterPosition == 0) type = TYPE_EMPTY;
 			
 			// The styling of the highlight problem
 			// int style		= 0;
@@ -426,8 +426,8 @@ int readFile(int line){
 			if(commenting == 1) commenting = 0;
 			
 			// Reset settings for the new line
-			componentPosition	= CALL_TEXTBOX;
-			commandPosition		= CALL_CONTENT;
+			componentPosition	= STRING_TEXTBOX;
+			commandPosition		= STRING_CONTENT;
 			parameterPosition	= 0;
 			type				= TYPE_EMPTY;
 			extPosition			= 0;
@@ -504,7 +504,7 @@ int readFile(int line){
 		// If we're on a delimiter, and it's not a tab (tabs were already checked), this must be a command
 		if(isDelimiter(data[i])) commandPosition = i;
 		// If we're not on a delimiter, but are on defaults for componentPosition and commandPosition, we must be at the beginning of a component
-		else if(componentPosition == CALL_TEXTBOX && commandPosition == CALL_CONTENT){
+		else if(componentPosition == STRING_TEXTBOX && commandPosition == STRING_CONTENT){
 			componentPosition = i;
 		}
 	}
@@ -568,7 +568,7 @@ int tabLine(int maxTabbedTo, int start, int multiline){
 		// Loop back through and add in tabs
 		for(int i = SIZE - tabsToAdd; i >= start + count; i--){
 			// Skip null chars
-			if(data[i - tabsToAdd] == '\0') continue;
+			// if(data[i - tabsToAdd] == '\0') continue;
 			
 			// Add a tab here if we're at that spot
 			if(i < start + count + tabsToAdd) data[i] = '\t';
@@ -700,27 +700,37 @@ int getLength(){
 
 // When the user is typing a value, recommend like ones to them
 void autocomplete(int pos){
+	/*
+		1: Component
+		2: Command
+		3: Resource
+	*/
+	int searchType = 0;
+	int length = 1;
+	
 	int i = pos + FILE_START;
 	
 	// If we're on a delimiter, check if we're at the end of a line
-	if(isDelimiter(data[i])) i--;
+	if(data[i] == '\n' || data[i] == '\r' || data[i] == '\0') i--;
 	// But if we're still on a delimiter, don't bother
-	if(isDelimiter(data[i])){
-		jsRecommendation(&data[0],1);
+	if(data[i] == '\n' || data[i] == '\r' || data[i] == '\0'){
+		jsRecommendation(&data[0],length,searchType,0);
 		return;
 	}
 
 	// if(isDelimiter(data[i])) return &data[0];
 	
-	/*
-		1: Component
-		2: Command
-	*/
-	int searchType = 1;
-	
 	// Get the end position
 	int end = i;
 	while(!isDelimiter(data[end])) end++;
+	
+	searchType = 1;
+	
+	// Check where each piece starts
+	int componentStart	= 0;
+	int commandStart	= 0;
+	int parameterStart	= 0;
+	int tabbed			= 0;
 	
 	// We look back to see how this is called, to figure out if it's a component, command, or parameter
 	for(i; i > 0; i--){
@@ -730,17 +740,21 @@ void autocomplete(int pos){
 			case '\n':
 			case '\r':
 				i++;
+				componentStart = i;
 				goto endLoop;
 				break;
 			// We're working with the command
 			case '.':
+				commandStart = i;
 				searchType = 2;
 				break;
 			// Parameter (chars only allowed here)
 			case '\t':
-			case ' ':
-				jsRecommendation(&data[0],1);
-				return;
+				commandStart = i;
+				
+				// Set the parameter's start
+				if(!parameterStart) parameterStart = i + 1;
+				searchType = 3;
 				break;
 			default:
 				break;
@@ -748,26 +762,45 @@ void autocomplete(int pos){
 	}
 	endLoop: ;
 	
-	// For now, we'll just work with components
 	int match = 0;
-	int minBeyond = 50;
 	
-	// Loop through all components
-	for(int j = 0; j < objPosition; j++){
-		// Positive if a's longer than b and partially matches; negative if b's longer than a and partially matches; 0 if exact matches
-		int lengthBeyond = matchStringsPartial(components[j],i);
-
-		// jsLogInt(lengthMatched);
-		// jsLogString(&data[components[j]],10);
-		
-		if(lengthBeyond > 0 && lengthBeyond < minBeyond){
-			match = components[j];
-			minBeyond = lengthBeyond;
+	// Found parameter, component, and (maybe) command
+	if(parameterStart){
+		// We have resources to recommend! Because content is being searched for
+		if(data[commandStart] == '\t' || compareStrings(commandStart + 1,STRING_CONTENT)){
+			match = componentStart;
+			length = commandStart - componentStart;
+		}else{
+			// ???
 		}
 	}
+	// Found command and component
+	else if(commandStart){
+		
+	}
+	// Only found component
+	else if(componentStart){
+		int minBeyond = 50;
+		
+		// Loop through all components
+		for(int j = 0; j < objPosition; j++){
+			// Positive if a's longer than b and partially matches; negative if b's longer than a and partially matches; 0 if exact matches
+			int lengthBeyond = matchStringsPartial(components[j],i);
+
+			// jsLogInt(lengthMatched);
+			// jsLogString(&data[components[j]],10);
+			
+			if(lengthBeyond > 0 && lengthBeyond < minBeyond){
+				match = components[j];
+				minBeyond = lengthBeyond;
+			}
+		}
+		
+		length = end - i + minBeyond;
+	}
 	
+	jsRecommendation(&data[match],length,searchType,0);
 	
-	jsRecommendation(&data[match],end - i + minBeyond);
 	/*var contentToNow = content.value.substr(0, selectionEnd);
 	if(
 		selectionStart === selectionEnd
