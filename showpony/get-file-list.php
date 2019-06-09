@@ -256,7 +256,7 @@ if($language[0] !== HIDING_CHAR || !empty($_SESSION['showpony_admin'])) readFold
 $files = array_merge($files,$upcomingFiles);
 
 // Set them back in alphabetical order (HIDDEN_CHAR being removed can mess with order)
-array_multisort(array_column($files,'path'),SORT_ASC,$files);
+array_multisort(array_column($files,'release'),SORT_ASC,$files);
 
 // Load modules
 foreach(array_keys($media) as $moduleName){
