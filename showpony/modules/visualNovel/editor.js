@@ -521,7 +521,7 @@ M.editor = new function(){
 		fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang=' + S.language)
 		.then(response=>{return response.text();})
 		.then(text=>{
-			// console.log(text);
+			console.log(text);
 			
 			var oldDuration = S.files[M.currentFile].duration;
 			S.files = JSON.parse(text);
@@ -542,9 +542,12 @@ M.editor = new function(){
 					} else {
 						to({file: i, time: 0});
 					}
-					break;
+					return;
 				}
 			}
+			
+			// Otherwise, just go to the beginning of the replacing file
+			to({file: M.currentFile});
 			
 			// Update the text
 		})

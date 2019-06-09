@@ -36,10 +36,12 @@ if($_POST['type'] == 'new'){
 	$newName = preg_replace(
 		[
 			'/{[^}]*}/'
+			,'/\d{4}-\d\d-\d\d(?:-\d\d-\d\d-\d\d)?/'
 			,'/\d+s/'
 		]
 		,[
 			'{'.$_POST['title'].'}'
+			,$_POST['date']
 			,$_POST['duration'].'s'
 		]
 		,$name
