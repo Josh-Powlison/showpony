@@ -196,6 +196,7 @@ M.editor = new function(){
 		<header>
 			<button id="newFile">N</button>
 			<button id="saveFile">S</button>
+			<button id="autosave">AS</button>
 			<p># <span id="file-number"></span></p>
 			<p>T <input type="text" placeholder="File Name" id="file-title"></p>
 			<p>R <input type="text" placeholder="YYYY-DD-MM HH-MM-SS" id="file-date"></p>
@@ -257,6 +258,8 @@ M.editor = new function(){
 	var data = E.window.document.getElementById('data');
 	var content = E.window.document.getElementById('content');
 	var contentSizing = E.window.document.getElementById('content-sizing');
+	
+	var autosave = false;
 	
 	var resourceList = [];
 	
@@ -371,7 +374,7 @@ M.editor = new function(){
 							// Make recommendation box follow us
 							resources.style.top = (top + 64) + 'px';
 							
-							console.log('INFO',type,helpText);
+							// console.log('INFO',type,helpText);
 							
 							/// Recommendation resources !!! TEMPORARY SOLUTION !!!
 							if(type === 3){
@@ -660,7 +663,7 @@ M.editor = new function(){
 	///////////////////////////////////////
 
 	function reloadFiles(input){
-		console.log(input);
+		// console.log(input);
 		var editorJson = JSON.parse(input);
 
 		// console.log('WHERE WE GET IT','showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang=' + S.language);
@@ -669,7 +672,7 @@ M.editor = new function(){
 		fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang=' + S.language)
 		.then(response=>{return response.text();})
 		.then(text=>{
-			console.log(text);
+			// console.log(text);
 			
 			var oldDuration = S.files[M.currentFile].duration;
 			S.files = JSON.parse(text);
@@ -681,7 +684,7 @@ M.editor = new function(){
 					if(i === M.currentFile){
 						// If the duration changed, figure out where we should be
 						var newTime = (M.currentTime / oldDuration) * S.files[i].duration;
-						console.log('new time is ',newTime);
+						// console.log('new time is ',newTime);
 						
 						/// TODO: don't make this load twice. This, for now, reloads the keyframe, and updates the title
 						keyframes = parseFile(content.value);
@@ -763,6 +766,9 @@ M.editor = new function(){
 			
 			E.resizeThis();
 			jsAutocomplete();
+			
+			// If we're autosaving, save immediately
+			if(autosave) E.saveFile();
 		}
 	});
 	
@@ -843,4 +849,11 @@ M.editor = new function(){
 			event.preventDefault();
 		}
 	);
+	
+	// Toggle autosaving
+	E.window.document.getElementById('autosave').addEventListener('click',function(){
+		autosave = !autosave;
+		
+		this.style.backgroundColor = autosave ? 'green' : 'red';
+	});
 }();
