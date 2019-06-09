@@ -406,7 +406,16 @@ M.editor = new function(){
 		.then(()=>{
 			// Update file info at top
 			E.window.document.getElementById('file-title').value = S.files[M.currentFile].title;
-			E.window.document.getElementById('file-date').value = S.files[M.currentFile].date;
+			
+			var date = new Date(S.files[M.currentFile].release * 1000);
+			E.window.document.getElementById('file-date').value = String(date.getUTCFullYear()).padStart(2,'0')
+				+ '-' + String(date.getUTCMonth() + 1).padStart(2,'0')
+				+ '-' + String(date.getUTCDate()).padStart(2,'0')
+				+ '-' + String(date.getUTCHours()).padStart(2,'0')
+				+ '-' + String(date.getUTCMinutes()).padStart(2,'0')
+				+ '-' + String(date.getUTCSeconds()).padStart(2,'0')
+			;
+			
 			E.window.document.getElementById('file-duration').value = S.files[M.currentFile].duration;
 			E.window.document.getElementById('file-quality').value = S.files[M.currentFile].quality;
 			
