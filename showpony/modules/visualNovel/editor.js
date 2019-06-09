@@ -1,31 +1,13 @@
 // FROM GOOGLE: https://developers.google.com/web/updates/2012/06/How-to-convert-ArrayBuffer-to-and-from-String
 
-function ab2str(buf) {
-  return String.fromCharCode.apply(null, new Uint16Array(buf));
-}
-
-var types = [
-	''
-	,'engine'
-	,'set'
-	,'get'
-	,'comment'
-	,'textbox'
-	,'image'
-	,'audio'
-];
-
-var data;
-var dataFragment;
-var highlightFragment;
-
 M.wasm = null;
 
 M.editor = new function(){
-	var content;
-	var assets;
-	
 	const E = this;
+	
+	///////////////////////////////////////
+	///////////PUBLIC VARIABLES////////////
+	///////////////////////////////////////
 	
 	E.window = window.open('','','width=500,height=300,location=0,menubar=0,status=0,toolbar=0,titlebar=0');
 	//,left=' + S.window.offsetLeft + ',top=' + S.window.offsetTop
@@ -167,8 +149,15 @@ M.editor = new function(){
 		</style>
 	</head>
 	<body>
-		<button id="newFile">New File</button>
-		<button id="saveFile">Save File</button>
+		<header>
+			<button id="newFile">New File</button>
+			<button id="saveFile">Save File</button>
+		</header>
+		
+		<input type="text" placeholder="File Name" id="file-title">
+		<input type="text" placeholder="YYYY-DD-MM HH-MM-SS" id="file-date">
+		<input type="number" placeholder="Duration" id="file-duration">
+		<input type="number" placeholder="Quality" id="file-quality">
 		<div id="track"></div>
 		<div id="thing">
 			<div id="data"></div>
@@ -192,46 +181,36 @@ M.editor = new function(){
 	</html>
 	`);
 	
+	E.line = 0;
+	
+	///////////////////////////////////////
+	///////////PRIVATE VARIABLES///////////
+	///////////////////////////////////////
+	
+	var types = [
+		''
+		,'engine'
+		,'set'
+		,'get'
+		,'comment'
+		,'textbox'
+		,'image'
+		,'audio'
+	];
+
+	var dataFragment;
+	var highlightFragment;
+	
 	var prependString = '\0engine\0textbox\0image\0audio\0content\0remove\0mp3\0ogg\0';
 	
-	function saveStringToBuffer(str) {
-		// Need the right amount of null chars to initiate correctly; otherwise everything will be off
-		str = prependString + str + '\n\0';
-		for(var i = 0, l = str.length; i < l; i++) {
-			E.buffer[i] = str.charCodeAt(i);
-		}
-	}
-	
-	assets = E.window.document.getElementById('assets');
-	data = E.window.document.getElementById('data');
-	
-	content = E.window.document.getElementById('content');
-	
-	function isDelimiter(a){
-		switch(a){
-			case '\t':
-			case '\r':
-			case '\n':
-			case '.':
-			case '=':
-			case '<':
-			case '>':
-			case '-':
-			case '+':
-			case '!':
-			case ',':
-			case '\/':
-			case '\\':
-			case '\0':
-				return 1;
-				break;
-			default:
-				return 0;
-				break;
-		}
-	}
-	
+	var assets = E.window.document.getElementById('assets');
+	var data = E.window.document.getElementById('data');
+	var content = E.window.document.getElementById('content');
 	var contentSizing = E.window.document.getElementById('content-sizing');
+	
+	///////////////////////////////////////
+	///////////PUBLIC FUNCTIONS////////////
+	///////////////////////////////////////
 	
 	E.update = function(input){
 		content.innerHTML = input;
@@ -365,7 +344,12 @@ M.editor = new function(){
 								var objInfo = new Uint32Array(M.wasm.exports.memory.buffer, M.wasm.exports.getObject(i), 2);
 								
 								/// ASSETS ///
-								var obj = document.createElement('p');
+								var obj = document.createElement('button');
+								obj.addEventListener('click',function(){
+									console.log('start of selection',content.selectionStart);
+									content.focus();
+									E.window.document.execCommand('insertHTML',false,this.innerHTML);
+								});
 								// Show if the object's currently active in the scene
 								obj.className = 'component' + (objInfo[1] ? ' active' : '');
 								
@@ -420,6 +404,12 @@ M.editor = new function(){
 		})
 		// If we just finished loading WASM or already loaded it previously
 		.then(()=>{
+			// Update file info at top
+			E.window.document.getElementById('file-title').value = S.files[M.currentFile].title;
+			E.window.document.getElementById('file-date').value = S.files[M.currentFile].date;
+			E.window.document.getElementById('file-duration').value = S.files[M.currentFile].duration;
+			E.window.document.getElementById('file-quality').value = S.files[M.currentFile].quality;
+			
 			// Put into buffer for WASM to read
 			saveStringToBuffer(content.value);
 			E.resizeThis();
@@ -434,7 +424,6 @@ M.editor = new function(){
 		content.style.height = content.scrollHeight + 16 + 'px';
 		
 		/*
-		
 		
 		4. Have a place showing the current objects and variables in the scene
 		5. Have a section where can upload resources (audio, images, video).
@@ -474,7 +463,145 @@ M.editor = new function(){
 		E.window.document.getElementById('thing').appendChild(highlightFragment);
 	}
 	
-	E.line = 0;
+	E.saveFile = function(){
+		// Update the file and push the changes to the user
+		
+		var formdata = new FormData();
+		formdata.append('text',content.value);
+		formdata.append('path',S.files[M.currentFile].path);
+		formdata.append('type','save');
+		formdata.append('fileCount',S.files.length);
+		
+		formdata.append('title'		, E.window.document.getElementById('file-title').value);
+		formdata.append('date'		, E.window.document.getElementById('file-date').value);
+		formdata.append('duration'	, E.window.document.getElementById('file-duration').value);
+		formdata.append('quality'	, E.window.document.getElementById('file-quality').value);
+		
+		// Update the file
+		fetch('showpony/editor.php',{
+			method:'POST'
+			,body:formdata
+		})
+		.then(response => response.text())
+		.then(text => {
+			reloadFiles(text);
+		});
+	}
+	
+	E.newFile = function(){
+		// Update the file and push the changes to the user
+		
+		var formdata = new FormData();
+		formdata.append('type','new');
+		formdata.append('path',S.files[M.currentFile].path);
+		formdata.append('fileCount',S.files.length);
+		
+		// Update the file
+		fetch('showpony/editor.php',{
+			method:'POST'
+			,body:formdata
+		})
+		.then(response => response.text())
+		.then(text => {
+			reloadFiles(text);
+		});
+	}
+	
+	///////////////////////////////////////
+	///////////PRIVATE FUNCTIONS///////////
+	///////////////////////////////////////
+
+	function reloadFiles(input){
+		console.log(input);
+		var editorJson = JSON.parse(input);
+
+		// console.log('WHERE WE GET IT','showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang=' + S.language);
+		
+		// Load the new file list
+		fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang=' + S.language)
+		.then(response=>{return response.text();})
+		.then(text=>{
+			// console.log(text);
+			
+			var oldDuration = S.files[M.currentFile].duration;
+			S.files = JSON.parse(text);
+			S.duration = S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
+			
+			// Go to the newly created file
+			for(var i = 0; i < S.files.length; i ++){
+				if(S.files[i].name === editorJson.filename){
+					if(i === M.currentFile){
+						// If the duration changed, figure out where we should be
+						var newTime = (M.currentTime / oldDuration) * S.files[i].duration;
+						console.log('new time is ',newTime);
+						
+						/// TODO: don't make this load twice. This, for now, reloads the keyframe, and updates the title
+						keyframes = parseFile(content.value);
+						to({file: i, time: newTime});
+						M.src(i, newTime, M.window.dataset.filename, true);
+					} else {
+						to({file: i, time: 0});
+					}
+					break;
+				}
+			}
+			
+			// Update the text
+		})
+		.catch(error=>{
+			notice('Failed to reload file list. '+error);
+		});
+	}
+	
+	function ab2str(buf){
+	  return String.fromCharCode.apply(null, new Uint16Array(buf));
+	}
+	
+	function saveStringToBuffer(str) {
+		// Need the right amount of null chars to initiate correctly; otherwise everything will be off
+		str = prependString + str + '\n\0';
+		for(var i = 0, l = str.length; i < l; i++) {
+			E.buffer[i] = str.charCodeAt(i);
+		}
+	}
+	
+	function isDelimiter(a){
+		switch(a){
+			case '\t':
+			case '\r':
+			case '\n':
+			case '.':
+			case '=':
+			case '<':
+			case '>':
+			case '-':
+			case '+':
+			case '!':
+			case ',':
+			case '\/':
+			case '\\':
+			case '\0':
+				return 1;
+				break;
+			default:
+				return 0;
+				break;
+		}
+	}
+	
+	function jsAutocomplete(){
+		/// AUTOCOMPLETE
+		if(
+			content.selectionStart
+			&& content.selectionStart === content.selectionEnd
+		){
+			M.wasm.exports.autocomplete(content.selectionEnd);
+		}
+	}
+	
+	///////////////////////////////////////
+	////////////EVENT LISTENERS////////////
+	///////////////////////////////////////
 	
 	content.addEventListener('input',function(){
 		if(this.value.length > 28000){
@@ -488,18 +615,26 @@ M.editor = new function(){
 		}
 	});
 	
-	function jsAutocomplete(){
-		// console.log("SELECTION POSITION",content.selectionStart);
-		// console.log(E.buffer);
-		
-		/// AUTOCOMPLETE
-		if(
-			content.selectionStart
-			&& content.selectionStart === content.selectionEnd
-		){
-			M.wasm.exports.autocomplete(content.selectionEnd);
+	// Run shortcut keys on the player if alt is held down
+	E.window.addEventListener(
+		'keydown'
+		,function(event){
+			if(S.shortcutKeys(event,true)) event.preventDefault();
 		}
-	}
+	);
+	
+	// Close editor on closing showpony
+	window.addEventListener('beforeunload',function(){E.window.close();})
+	
+	// Save file
+	E.window.document.getElementById('saveFile').addEventListener('click',function(){
+		E.saveFile();
+	});
+	
+	// Create a new file
+	E.window.document.getElementById('newFile').addEventListener('click',function(){
+		E.newFile();
+	});
 	
 	content.addEventListener('click',jsAutocomplete);
 	
@@ -533,7 +668,7 @@ M.editor = new function(){
 						var start = content.selectionStart;
 						var end = content.selectionEnd;
 					
-						var tabsAdded = M.wasm.exports.tabLines(content.selectionStart,content.selectionEnd);
+						var tabsAdded = M.wasm.exports.tabLines(start,end);
 						
 						// Write the info in
 						if(tabsAdded){
@@ -553,89 +688,4 @@ M.editor = new function(){
 			event.preventDefault();
 		}
 	);
-	
-	// Save file
-	E.window.document.getElementById('saveFile').addEventListener('click',function(){
-		E.saveFile();
-	});
-	
-	// Create a new file
-	E.window.document.getElementById('newFile').addEventListener('click',function(){
-		E.newFile();
-	});
-	
-	E.saveFile = function(){
-		// Update the file and push the changes to the user
-		
-		var formdata = new FormData();
-		formdata.append('text',content.value);
-		formdata.append('path',S.files[M.currentFile].path);
-		formdata.append('type','save');
-		formdata.append('fileCount',S.files.length);
-		
-		// Update the file
-		fetch('showpony/editor.php',{
-			method:'POST'
-			,body:formdata
-		})
-		.then(response => response.text())
-		.then(text => {
-			// Update the text
-			keyframes = parseFile(content.value);
-			M.src(M.currentFile, M.currentTime, M.window.dataset.filename, true);
-		});
-	}
-	
-	E.newFile = function(){
-		// Update the file and push the changes to the user
-		
-		var formdata = new FormData();
-		formdata.append('type','new');
-		formdata.append('path',S.files[M.currentFile].path);
-		formdata.append('fileCount',S.files.length);
-		
-		// Update the file
-		fetch('showpony/editor.php',{
-			method:'POST'
-			,body:formdata
-		})
-		.then(response => response.text())
-		.then(text => {
-			var editorJson = JSON.parse(text);
-
-			// console.log('WHERE WE GET IT','showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang=' + S.language);
-			
-			// Load the new file list
-			fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang=' + S.language)
-			.then(response=>{return response.text();})
-			.then(text=>{
-				// console.log(text);
-				
-				S.files = JSON.parse(text);
-				S.duration = S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
-				
-				// Go to the newly created file
-				for(var i = 0; i < S.files.length; i ++){
-					if(S.files[i].name === editorJson.filename){
-						S.file = i;
-						break;
-					}
-				}
-			})
-			.catch(error=>{
-				notice('Failed to reload file list. '+error);
-			});
-		});
-	}
-	
-	// Run shortcut keys on the player if alt is held down
-	E.window.addEventListener(
-		'keydown'
-		,function(event){
-			if(S.shortcutKeys(event,true)) event.preventDefault();
-		}
-	);
-	
-	// Close editor on closing showpony
-	window.addEventListener('beforeunload',function(){E.window.close();})
 }();
