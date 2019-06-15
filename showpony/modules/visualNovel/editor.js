@@ -267,6 +267,8 @@ M.editor = new function(){
 	///////////PUBLIC FUNCTIONS////////////
 	///////////////////////////////////////
 	
+	E.searchRegex = '';
+	
 	E.update = function(input){
 		content.value = input;
 		// console.log('hello, set to ',M.currentFile);
@@ -280,6 +282,70 @@ M.editor = new function(){
 				.then(response => response.text())
 				.then(text => {
 					resourceList = JSON.parse(text);
+					
+					var frag = document.createDocumentFragment();
+					
+					var title = document.createElement('p');
+					// title.innerHTML = helpText;
+					title.innerHTML = 'Testing';
+					frag.appendChild(title);
+					
+					for(var i = 0; i < resourceList.length; i ++){
+						var resource;
+						
+						// Check the file type
+						switch(/[^\.]+$/.exec(resourceList[i])[0]){
+							case 'wav':
+							case 'mp3':
+							case 'ogg':
+								resource = document.createElement('audio');
+								resource.src = <?php echo json_encode($_GET['path']) ?? ''; ?> + '/resources/' + resourceList[i];
+								break;
+							case 'jpg':
+							case 'jpeg':
+							case 'png':
+							case 'svg':
+							case 'gif':
+								resource = document.createElement('img');
+								resource.src = <?php echo json_encode($_GET['path']) ?? ''; ?> + '/resources/' + resourceList[i];
+								break;
+							default:
+								resource = null;
+								break;
+						}
+						
+						// If it's a supported resource type
+						if(resource){
+							resource.dataset.path = resourceList[i].replace(/\.png$/,'');
+							
+							resource.addEventListener('click',function(){
+								content.focus();
+								
+								var value = '';
+								// Add a comma if needbe
+								if(content.selectionStart > 0
+									&& content.value[content.selectionStart - 1] !== ','
+									&& content.value[content.selectionStart - 1] !== '\t'
+								) value += ','
+								
+								value += this.dataset.path.replace(E.searchRegex,'');
+								
+								// Add a comma if needbe
+								if(content.selectionEnd < content.value.length - 1
+									&& content.value[content.selectionEnd] !== ','
+									&& content.value[content.selectionEnd] !== '\r'
+									&& content.value[content.selectionEnd] !== '\n'
+								) value += ','
+								
+								E.window.document.execCommand('insertHTML',false,value);
+								console.log('passed',this.dataset.path);
+							});
+							
+							frag.appendChild(resource);
+						}
+					}
+						
+					resources.appendChild(frag);
 				});
 				
 				// Load WASM
@@ -380,84 +446,24 @@ M.editor = new function(){
 							if(type === 3 &&
 								(componentType === 6
 								|| componentType === 7)
-								){
+							){
 								// Only update images if we need to
 								var searchingFor = 'images/' + helpText + '/';
+								
 								if(resources.dataset.search !== searchingFor){
-									resources.innerHTML = '';
-									
 									resources.dataset.search = searchingFor;
 									
-									var searchRegex = new RegExp('^' + searchingFor);
-									// console.log(searchRegex);
+									E.searchRegex = new RegExp('^' + searchingFor);
 									
-									var frag = document.createDocumentFragment();
-									
-									var demo = document.createElement('div');
-									frag.appendChild(demo);
-									
-									var title = document.createElement('p');
-									title.innerHTML = helpText;
-									frag.appendChild(title);
-									
-									for(var i = 0; i < resourceList.length; i ++){
-										// Continue if it doesn't line up with what we're searching for
-										if(!searchRegex.test(resourceList[i])) continue;
-										
-										var resource;
-										
-										// Check the file type
-										switch(/[^\.]+$/.exec(resourceList[i])[0]){
-											case 'wav':
-											case 'mp3':
-											case 'ogg':
-												resource = document.createElement('audio');
-												resource.src = <?php echo json_encode($_GET['path']) ?? ''; ?> + '/resources/' + resourceList[i];
-												break;
-											case 'jpg':
-											case 'jpeg':
-											case 'png':
-											case 'svg':
-											case 'gif':
-												resource = document.createElement('img');
-												resource.src = <?php echo json_encode($_GET['path']) ?? ''; ?> + '/resources/' + resourceList[i];
-												break;
-											default:
-												break;
-										}
-										
-										// If it's a supported resource type
-										if(resource){
-											resource.dataset.path = resourceList[i].replace(searchRegex,'').replace(/\.png$/,'');
-											
-											resource.addEventListener('click',function(){
-												content.focus();
-												
-												var value = '';
-												// Add a comma if needbe
-												if(content.selectionStart > 0
-													&& content.value[content.selectionStart - 1] !== ','
-													&& content.value[content.selectionStart - 1] !== '\t'
-												) value += ','
-												
-												value += this.dataset.path;
-												
-												// Add a comma if needbe
-												if(content.selectionEnd < content.value.length - 1
-													&& content.value[content.selectionEnd] !== ','
-													&& content.value[content.selectionEnd] !== '\r'
-													&& content.value[content.selectionEnd] !== '\n'
-												) value += ','
-												
-												E.window.document.execCommand('insertHTML',false,value);
-												console.log('passed',this.dataset.path);
-											});
-											
-											frag.appendChild(resource);
+									// Show and hide the elements as needed
+									var child = resources.children;
+									for(var i = 0; i < child.length; i++){
+										if(!E.searchRegex.test(child[i].dataset.path)) child[i].style.display = 'none';
+										else{
+											console.log('check',child[i].dataset.path,E.searchRegex);
+											child[i].style.display = 'block';
 										}
 									}
-									
-									resources.appendChild(frag);
 								}
 								
 								resources.style.visibility = 'visible';
