@@ -765,6 +765,8 @@ M.editor = new function(){
 			saveStringToBuffer(this.value);
 			
 			E.resizeThis();
+			
+			// TODO: prevent running twice, because changeselection event runs now too
 			jsAutocomplete();
 			
 			// If we're autosaving, save immediately
@@ -793,7 +795,10 @@ M.editor = new function(){
 		E.newFile();
 	});
 	
-	content.addEventListener('click',jsAutocomplete);
+	// On changing the selection, show input
+	E.window.document.addEventListener('selectionchange',function(event){
+		if(E.window.document.activeElement === content) jsAutocomplete();
+	});
 	
 	E.window.addEventListener('resize',function(){
 		E.resizeThis();
