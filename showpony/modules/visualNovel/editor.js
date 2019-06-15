@@ -170,7 +170,7 @@ M.editor = new function(){
 				width:2em;
 			}
 			
-			#resources{
+			#resource-window{
 				position:absolute;
 				background-color:orange;
 				height:6em;
@@ -184,7 +184,13 @@ M.editor = new function(){
 				visibility:hidden;
 			}
 			
-			#resources *{
+			#resource-list{
+				height: 100%;
+				clear: both;
+				width: 100%;
+			}
+			
+			#resource-list *{
 				display:block;
 				height:100%;
 				max-width:100%;
@@ -208,10 +214,10 @@ M.editor = new function(){
 			<div id="data"></div>
 			<pre id="content-sizing" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">Loading...</pre>
 			<pre id="content-autocomplete" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></pre>
-			<div id="resources">
-				<img src="">
-				<div></div>
+			<div id="resource-window">
+				<input id="resource-search" type="text">
 				<button>Upload New</button>
+				<div id="resource-list"></div>
 			</div>
 			<textarea id="content" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">Loading...</textarea>
 			<div id="highlights"></div>
@@ -254,20 +260,18 @@ M.editor = new function(){
 	var prependString = '\0engine\0textbox\0image\0audio\0content\0remove\0mp3\0ogg\0';
 	
 	var assets = E.window.document.getElementById('assets');
-	var resources = E.window.document.getElementById('resources');
+	var resourceWindow = E.window.document.getElementById('resource-window');
+	var resourceSearch = E.window.document.getElementById('resource-search');
+	var resourceList = E.window.document.getElementById('resource-list');
 	var data = E.window.document.getElementById('data');
 	var content = E.window.document.getElementById('content');
 	var contentSizing = E.window.document.getElementById('content-sizing');
 	
 	var autosave = false;
 	
-	var resourceList = [];
-	
 	///////////////////////////////////////
 	///////////PUBLIC FUNCTIONS////////////
 	///////////////////////////////////////
-	
-	E.searchRegex = '';
 	
 	E.update = function(input){
 		content.value = input;
@@ -281,7 +285,7 @@ M.editor = new function(){
 				fetch('showpony/fetch-resource-list.php?path=<?php echo $_GET['path'] ?? ''; ?>')
 				.then(response => response.text())
 				.then(text => {
-					resourceList = JSON.parse(text);
+					var resourceObj = JSON.parse(text);
 					
 					var frag = document.createDocumentFragment();
 					
@@ -290,16 +294,17 @@ M.editor = new function(){
 					title.innerHTML = 'Testing';
 					frag.appendChild(title);
 					
-					for(var i = 0; i < resourceList.length; i ++){
+					for(var i = 0; i < resourceObj.length; i ++){
 						var resource;
 						
 						// Check the file type
-						switch(/[^\.]+$/.exec(resourceList[i])[0]){
+						switch(/[^\.]+$/.exec(resourceObj[i])[0]){
 							case 'wav':
 							case 'mp3':
 							case 'ogg':
 								resource = document.createElement('audio');
-								resource.src = <?php echo json_encode($_GET['path']) ?? ''; ?> + '/resources/' + resourceList[i];
+								resource.src = <?php echo json_encode($_GET['path']) ?? ''; ?> + '/resources/' + resourceObj[i];
+								resource.controls = true;
 								break;
 							case 'jpg':
 							case 'jpeg':
@@ -307,7 +312,7 @@ M.editor = new function(){
 							case 'svg':
 							case 'gif':
 								resource = document.createElement('img');
-								resource.src = <?php echo json_encode($_GET['path']) ?? ''; ?> + '/resources/' + resourceList[i];
+								resource.src = <?php echo json_encode($_GET['path']) ?? ''; ?> + '/resources/' + resourceObj[i];
 								break;
 							default:
 								resource = null;
@@ -316,7 +321,7 @@ M.editor = new function(){
 						
 						// If it's a supported resource type
 						if(resource){
-							resource.dataset.path = resourceList[i].replace(/\.png$/,'');
+							resource.dataset.path = resourceObj[i].replace(/\.png$/,'');
 							
 							resource.addEventListener('click',function(){
 								content.focus();
@@ -328,7 +333,13 @@ M.editor = new function(){
 									&& content.value[content.selectionStart - 1] !== '\t'
 								) value += ','
 								
-								value += this.dataset.path.replace(E.searchRegex,'');
+								var regex = new RegExp('^' + resourceSearch.dataset.component);
+								
+								// Set either a relative or absolute path for the resource
+								var path = this.dataset.path.replace(regex,'');
+								if(path === this.dataset.path) value += '/';
+								
+								value += path;
 								
 								// Add a comma if needbe
 								if(content.selectionEnd < content.value.length - 1
@@ -345,7 +356,7 @@ M.editor = new function(){
 						}
 					}
 						
-					resources.appendChild(frag);
+					resourceList.appendChild(frag);
 				});
 				
 				// Load WASM
@@ -438,7 +449,7 @@ M.editor = new function(){
 							var top = data.children[line].offsetTop;
 							
 							// Make recommendation box follow us
-							resources.style.top = (top + 64) + 'px';
+							resourceWindow.style.top = (top + 64) + 'px';
 							
 							// console.log('INFO',type,helpText);
 							
@@ -448,27 +459,19 @@ M.editor = new function(){
 								|| componentType === 7)
 							){
 								// Only update images if we need to
-								var searchingFor = 'images/' + helpText + '/';
+								var searchingFor = (componentType === 6 ? 'images' : 'audio') + '/' + helpText + '/';
 								
-								if(resources.dataset.search !== searchingFor){
-									resources.dataset.search = searchingFor;
+								// We only want to overwrite the search if we haven't already started using something else
+								if(resourceSearch.dataset.component !== searchingFor){
+									resourceSearch.value = searchingFor;
+									resourceSearch.dataset.component = searchingFor;
 									
-									E.searchRegex = new RegExp('^' + searchingFor);
-									
-									// Show and hide the elements as needed
-									var child = resources.children;
-									for(var i = 0; i < child.length; i++){
-										if(!E.searchRegex.test(child[i].dataset.path)) child[i].style.display = 'none';
-										else{
-											console.log('check',child[i].dataset.path,E.searchRegex);
-											child[i].style.display = 'block';
-										}
-									}
+									resourceRunSearch();
 								}
 								
-								resources.style.visibility = 'visible';
+								resourceWindow.style.visibility = 'visible';
 							}else{
-								resources.style.visibility = 'hidden';
+								resourceWindow.style.visibility = 'hidden';
 							}
 							
 							
@@ -887,4 +890,20 @@ M.editor = new function(){
 		
 		this.style.backgroundColor = autosave ? 'green' : 'red';
 	});
+	
+	resourceSearch.addEventListener('input',resourceRunSearch);
+	
+	function resourceRunSearch(){
+		var regex = new RegExp('^' + resourceSearch.value);
+									
+		// Show and hide the elements as needed
+		var child = resourceList.children;
+		for(var i = 0; i < child.length; i++){
+			if(!regex.test(child[i].dataset.path)) child[i].style.display = 'none';
+			else{
+				console.log('check',child[i].dataset.path,E.searchRegex);
+				child[i].style.display = 'block';
+			}
+		}
+	}
 }();
