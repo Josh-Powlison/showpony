@@ -377,7 +377,10 @@ M.editor = new function(){
 							// console.log('INFO',type,helpText);
 							
 							/// Recommendation resources !!! TEMPORARY SOLUTION !!!
-							if(type === 3){
+							if(type === 3 &&
+								(componentType === 6
+								|| componentType === 7)
+								){
 								// Only update images if we need to
 								var searchingFor = 'images/' + helpText + '/';
 								if(resources.dataset.search !== searchingFor){
@@ -429,7 +432,24 @@ M.editor = new function(){
 											
 											resource.addEventListener('click',function(){
 												content.focus();
-												E.window.document.execCommand('insertHTML',false,this.dataset.path);
+												
+												var value = '';
+												// Add a comma if needbe
+												if(content.selectionStart > 0
+													&& content.value[content.selectionStart - 1] !== ','
+													&& content.value[content.selectionStart - 1] !== '\t'
+												) value += ','
+												
+												value += this.dataset.path;
+												
+												// Add a comma if needbe
+												if(content.selectionEnd < content.value.length - 1
+													&& content.value[content.selectionEnd] !== ','
+													&& content.value[content.selectionEnd] !== '\r'
+													&& content.value[content.selectionEnd] !== '\n'
+												) value += ','
+												
+												E.window.document.execCommand('insertHTML',false,value);
 												console.log('passed',this.dataset.path);
 											});
 											

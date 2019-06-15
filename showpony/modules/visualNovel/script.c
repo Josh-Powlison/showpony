@@ -335,9 +335,8 @@ int readFile(int line){
 				// If not a variable
 				if(type != TYPE_SET && type != TYPE_GET){
 					
-					int id = 0;
 					// Look for a match from other pointers
-					for(id = 0; id < objPosition; id++){
+					for(int id = 0; id < objPosition; id++){
 						// Found a match
 						if(compareStrings(components[id], componentPosition)){
 							// jsLogString(&data[components[objPosition]],1);
@@ -799,7 +798,22 @@ void autocomplete(int pos){
 		length = end - i + minBeyond;
 	}
 	
-	jsRecommendation(&data[match],length,searchType,0);
+	// Set defaults
+	if(!componentStart)	componentStart = STRING_TEXTBOX;
+	if(!commandStart)	commandStart = STRING_CONTENT;
+	
+	// Get the type of the selected component
+	int type = 0;
+	for(int id = 0; id < objPosition; id++){
+		// Found a match
+		if(compareStrings(components[id], componentStart)){
+			// Set type to current component's type
+			type = list[id].type;
+			break;
+		}
+	}
+	
+	jsRecommendation(&data[match],length,searchType,type);
 	
 	/*var contentToNow = content.value.substr(0, selectionEnd);
 	if(
