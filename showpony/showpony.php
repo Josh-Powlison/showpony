@@ -76,25 +76,39 @@ const DEBUG = <?php echo DEBUG ? 'true' : 'false'; ?>;
 const view			= document.createElement('div');
 view.tabIndex		= 0;
 view.innerHTML		= `
-	<div class="s-content"></div>
-	<?php if(file_exists('cover.jpg')) echo '<img class="s-cover" src="',STORIES_PATH,'cover.jpg">'; ?>
-	<div class="s-menu">
-		<button class="s-progress"></button>
-		<button class="s-regress"></button>
-		<button class="s-pause"></button>
-		<div class="s-scrubber" style="left:0%;"></div>
-		<canvas class="s-buffer" width="1000" height="1"></canvas>
-		<div class="s-info-text"></div>
-		<div class="s-upcoming-file"></div>
-		<div class="s-buttons s-hide-on-hold">
-			<button class="s-button s-button-bookmark" data-type="bookmark" alt="Bookmark" title="Bookmarks Toggle"></button>
+	<div class="content"></div>
+	<?php if(file_exists('cover.jpg')) echo '<img class="cover" src="',STORIES_PATH,'cover.jpg">'; ?>
+	<div class="menu">
+		<button class="progress"></button>
+		<button class="pause"></button>
+		<div class="scrubber" style="left:0%;"></div>
+		<canvas class="buffer" width="1000" height="1"></canvas>
+		<div class="info-text"></div>
+		<div class="upcoming-file"></div>
+		<div class="buttons hide-on-hold">
+			<button class="button button-regress" data-type="regress" alt="Regress" title="Regress">
+				<img src="showpony/icons/step-backward-solid.svg">
+				<p>Back</p>
+			</button>
+			<button class="button button-bookmark" data-type="bookmark" alt="Bookmark" title="Bookmarks Toggle">
+				<img src="showpony/icons/bookmark-solid.svg">
+				<p>Bookmark</p>
+			</button>
+			<button class="button button-language" data-type="language" alt="Language" title="Language Toggle">
+				<img src="showpony/icons/language-solid.svg">
+				<p>Lang / CC</p>
+			</button>
+			<button class="button button-share" data-type="language" alt="Share" title="Share">
+				<img src="showpony/icons/share-solid.svg">
+				<p>Share</p>
+			</button>
 		</div>
-		<div class="s-popups">
-			<div class="s-popup s-popup-bookmark"></div>
+		<div class="popups">
+			<div class="popup popup-bookmark"></div>
 		</div>
-		<div class="s-popup s-notice">
-			<div class="s-notice-text s-block-scrubbing"></div>
-			<button class="s-notice-close">Close Notice</button>
+		<div class="popup notice">
+			<div class="notice-text block-scrubbing"></div>
+			<button class="notice-close">Close Notice</button>
 		</div>
 	</div>
 `;
@@ -111,16 +125,16 @@ var active				= true;
 var data				= {};
 var debug				= <?php echo DEBUG ? 'true' : 'false'; ?>;
 
-const content			= view.getElementsByClassName('s-content')[0];
-content.classList.add('s-loading');
-const overlay			= view.getElementsByClassName('s-menu')[0];
-const buffer			= view.getElementsByClassName('s-buffer')[0];
-const infoText			= view.getElementsByClassName('s-info-text')[0];
-const pause				= view.getElementsByClassName('s-pause')[0];
-const scrubber			= view.getElementsByClassName('s-scrubber')[0];
-const progressEl		= view.getElementsByClassName('s-progress')[0];
-const regressEl			= view.getElementsByClassName('s-regress')[0];
-const noticeEl			= view.getElementsByClassName('s-notice')[0];
+const content			= view.getElementsByClassName('content')[0];
+content.classList.add('loading');
+const overlay			= view.getElementsByClassName('menu')[0];
+const buffer			= view.getElementsByClassName('buffer')[0];
+const infoText			= view.getElementsByClassName('info-text')[0];
+const pause				= view.getElementsByClassName('pause')[0];
+const scrubber			= view.getElementsByClassName('scrubber')[0];
+const progressEl		= view.getElementsByClassName('progress')[0];
+const regressEl			= view.getElementsByClassName('button-regress')[0];
+const noticeEl			= view.getElementsByClassName('notice')[0];
 
 const contentShadow		= content.attachShadow({mode:'open'});
 
@@ -226,13 +240,13 @@ Object.defineProperty(S, 'active', {
 		
 		if(input){
 			if(!paused && module && modules[module].pause) modules[module].play();
-			view.classList.remove('s-inactive');
+			view.classList.remove('inactive');
 			
 			S.dispatchEvent(new CustomEvent('active'));
 		}
 		else{
 			if(module && modules[module].pause) modules[module].pause();
-			view.classList.add('s-inactive');
+			view.classList.add('inactive');
 			
 			S.dispatchEvent(new CustomEvent('inactive'));
 		}
@@ -255,18 +269,18 @@ Object.defineProperty(S, 'subtitles', {
 		if(newSubtitles === false) newSubtitles = null;
 		
 		// Error handling
-		if(newSubtitles !== null && !view.querySelector('.s-popup-subtitles [data-value="'+newSubtitles+'"]')){
+		if(newSubtitles !== null && !view.querySelector('.popup-subtitles [data-value="'+newSubtitles+'"]')){
 			notice('Error: subtitles for "' + newSubtitles + '" not found');
 			return;
 		}
 		
 		// Remove selected class from previous selected item (if one was selected)
-		var previous = view.querySelector('.s-popup-subtitles .s-selected');
-		if(previous) previous.classList.remove('s-selected');
-		// console.log('hey','.s-popup-subtitles [data-value="'+newSubtitles+'"]');
-		if(newSubtitles) view.querySelector('.s-popup-subtitles [data-value="'+newSubtitles+'"]').classList.add('s-selected');
+		var previous = view.querySelector('.popup-subtitles .selected');
+		if(previous) previous.classList.remove('selected');
+		// console.log('hey','.popup-subtitles [data-value="'+newSubtitles+'"]');
+		if(newSubtitles) view.querySelector('.popup-subtitles [data-value="'+newSubtitles+'"]').classList.add('selected');
 		
-		// this.classList.add('s-selected');
+		// this.classList.add('selected');
 		subtitles = newSubtitles;
 		S.displaySubtitles(subtitles);
 	}
@@ -286,11 +300,11 @@ Object.defineProperty(S, 'quality', {
 			return;
 		}
 		
-		content.classList.add('s-loading');
+		content.classList.add('loading');
 		
 		// Remove selected class from previous selected item (if one was selected)
-		view.querySelector('.s-popup-quality .s-selected').classList.remove('s-selected');
-		view.querySelector('.s-popup-quality [data-value="'+newQuality+'"]').classList.add('s-selected');
+		view.querySelector('.popup-quality .selected').classList.remove('selected');
+		view.querySelector('.popup-quality [data-value="'+newQuality+'"]').classList.add('selected');
 		
 		quality = newQuality;
 		S.time = time;
@@ -306,16 +320,16 @@ Object.defineProperty(S, 'language', {
 		if(language === newLanguage) return;
 		
 		// Error handling
-		if(!view.querySelector('.s-popup-language [data-value="'+newLanguage+'"]')){
+		if(!view.querySelector('.popup-language [data-value="'+newLanguage+'"]')){
 			notice('Error: the language "'+newLanguage+'" is not supported.');
 			return;
 		}
 		
-		content.classList.add('s-loading');
+		content.classList.add('loading');
 		
 		// Remove selected class from previous selected item
-		view.querySelector('.s-popup-language .s-selected').classList.remove('s-selected');
-		view.querySelector('.s-popup-language [data-value="'+newLanguage+'"]').classList.add('s-selected');
+		view.querySelector('.popup-language .selected').classList.remove('selected');
+		view.querySelector('.popup-language [data-value="'+newLanguage+'"]').classList.add('selected');
 		
 		fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
 		.then(response=>{return response.json();})
@@ -419,10 +433,10 @@ else{
 			}
 			
 			if(input){
-				if(view.classList.contains('s-fullscreen-alt')) return;
+				if(view.classList.contains('fullscreen-alt')) return;
 				
-				view.classList.add('s-fullscreen-alt');
-				document.getElementsByTagName('html')[0].classList.add('s-fullscreen-control');
+				view.classList.add('fullscreen-alt');
+				document.getElementsByTagName('html')[0].classList.add('fullscreen-control');
 				
 				view.dataset.prevz=view.style.zIndex || 'initial';
 				
@@ -437,10 +451,10 @@ else{
 				S.dispatchEvent(new CustomEvent('fullscreenEnter'));
 			}
 			else{
-				if(!view.classList.contains('s-fullscreen-alt')) return;
+				if(!view.classList.contains('fullscreen-alt')) return;
 				
-				view.classList.remove('s-fullscreen-alt');
-				document.getElementsByTagName('html')[0].classList.remove('s-fullscreen-control');
+				view.classList.remove('fullscreen-alt');
+				document.getElementsByTagName('html')[0].classList.remove('fullscreen-control');
 				
 				// Get the original z-index value
 				view.style.zIndex=view.dataset.prevz;
@@ -485,9 +499,9 @@ Object.defineProperty(S, 'paused', {
 			if(paused===false) return;
 			
 			// Close popups
-			while(view.querySelector('.s-visible')) view.querySelector('.s-visible').classList.remove('s-visible');
+			while(view.querySelector('.visible')) view.querySelector('.visible').classList.remove('visible');
 			
-			view.classList.remove('s-paused');
+			view.classList.remove('paused');
 			paused=false;
 			if(modules[module].play) modules[module].play();
 			S.dispatchEvent(new CustomEvent('play'));
@@ -496,7 +510,7 @@ Object.defineProperty(S, 'paused', {
 		else{
 			if(paused===true) return;
 			
-			view.classList.add('s-paused');
+			view.classList.add('paused');
 			paused=true;
 			
 			if(module && modules[module].pause) modules[module].pause();
@@ -516,13 +530,13 @@ Object.defineProperty(S, 'paused', {
 function notice(input){
 	S.paused = true;
 
-	var noticeText=noticeEl.querySelector('.s-notice-text');
+	var noticeText=noticeEl.querySelector('.notice-text');
 	
 	// If a message is currently up, add new messages to the list rather than overwriting them
-	if(noticeEl.classList.contains('s-visible')) noticeText.innerHTML += '<hr class="s-block-scrubbing"><p class="s-block-scrubbing">'+input+'</p>';
-	else noticeText.innerHTML = '<p class="s-block-scrubbing">'+input+'</p>';
+	if(noticeEl.classList.contains('visible')) noticeText.innerHTML += '<hr class="block-scrubbing"><p class="block-scrubbing">'+input+'</p>';
+	else noticeText.innerHTML = '<p class="block-scrubbing">'+input+'</p>';
 	
-	noticeEl.classList.add('s-visible');
+	noticeEl.classList.add('visible');
 	
 	noticeEl.focus();
 	
@@ -815,7 +829,7 @@ async function getTotalBuffered(){
 	
 	if(buffered.length===1 && buffered[0][0]===0 && buffered[0][1]>=S.duration) buffered=true;
 	if(buffered.length===0) buffered=[];
-	
+	/* TODO: add back in buffer display
 	// Show buffer
 	var ctx = buffer.getContext('2d');
 	
@@ -832,7 +846,7 @@ async function getTotalBuffered(){
 				,1
 			);
 		}
-	}
+	} */
 	
 	currentBuffer = buffered;
 }
@@ -938,14 +952,16 @@ function scrub(inputPercent=null){
 	}
 	?>
     
-    var info = '<p>'+completed+'</p><p>';
+    // var info = '<p>'+completed+'</p><p>';
+	
+	var info = '';
 	
 	if(S.files[displayFile].title) info+=S.files[displayFile].title;
-	info+='</p><p>'+remaining+'</p>';
+	// info+='</p><p>'+remaining+'</p>';
 	
 	// Add info about upcoming parts if not added already //XXX
 	if(displayFile < S.files.length-1 && S.files[displayFile + 1].hidden
-		&& !view.querySelector('.s-upcoming-file').innerHTML){
+		&& !view.querySelector('.upcoming-file').innerHTML){
 		var upcoming = '';
 		for(var i = displayFile + 1; i < S.files.length; i++){
 			upcoming+='Next Update: '+new Intl.DateTimeFormat(
@@ -965,7 +981,7 @@ function scrub(inputPercent=null){
 			if(i < S.files.length - 1) upcoming += '<br>';
 		}
 		
-		view.querySelector('.s-upcoming-file').innerHTML = '<p>' + upcoming + '</p>';
+		view.querySelector('.upcoming-file').innerHTML = '<p>' + upcoming + '</p>';
 	}
 	
 	if(info !== infoText.innerHTML) infoText.innerHTML = info;
@@ -1010,9 +1026,9 @@ function userScrub(event){
 			actionInterval=null;
 			
 			// Remove active button, if one exists
-			while(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
+			while(overlay.querySelector('.active')) overlay.querySelector('.active').classList.remove('active');
 			
-			// view.classList.add('s-hold');
+			// view.classList.add('hold');
 			
 			scrubbing=true;
 			
@@ -1040,7 +1056,7 @@ function userScrub(event){
 		scrubbing = false;
 		
 		// Remove active button, if one exists
-		while(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
+		while(overlay.querySelector('.active')) overlay.querySelector('.active').classList.remove('active');
 		
 		// Don't let actions happen
 		clearTimeout(actionTimeout);
@@ -1051,7 +1067,7 @@ function userScrub(event){
 	};
 	
 	// Prevent scrolling on mobile
-	if(scrubbing === true || view.classList.contains('s-hold')){
+	if(scrubbing === true || view.classList.contains('hold')){
 		event.preventDefault();
 	}
 	
@@ -1263,17 +1279,17 @@ function gamepadButton(gamepad,number,type){
 ////////////
 
 // Toggle popups on clicking buttons
-view.getElementsByClassName('s-button-bookmark')[0].addEventListener('click',popupToggle);
+view.getElementsByClassName('button-bookmark')[0].addEventListener('click',popupToggle);
 
 function popupToggle(){
-	var closePopups = view.querySelectorAll('.s-visible:not(.s-popup-'+this.dataset.type+')');
-	for(var i = 0; i < closePopups.length; i++) closePopups[i].classList.remove('s-visible');
+	var closePopups = view.querySelectorAll('.visible:not(.popup-'+this.dataset.type+')');
+	for(var i = 0; i < closePopups.length; i++) closePopups[i].classList.remove('visible');
 	
-	view.querySelector('.s-popup-'+this.dataset.type).classList.toggle('s-visible');
+	view.querySelector('.popup-'+this.dataset.type).classList.toggle('visible');
 }
 
-view.querySelector('.s-notice-close').addEventListener('click',function(){
-	view.querySelector('.s-notice').classList.remove('s-visible');
+view.querySelector('.notice-close').addEventListener('click',function(){
+	view.querySelector('.notice').classList.remove('visible');
 });
 
 function buildButtons(call, array, onClick, nullPossible){
@@ -1284,7 +1300,7 @@ function buildButtons(call, array, onClick, nullPossible){
 		
 		// Add dropdown
 		var dropdown = document.createElement('div');
-		dropdown.className = 's-popup s-popup-'+call;
+		dropdown.className = 'popup popup-'+call;
 		
 		
 		for(var i = 0; i < array.length; i++){
@@ -1293,26 +1309,28 @@ function buildButtons(call, array, onClick, nullPossible){
 			buttonEl.dataset.value = array[i]['short'];
 			buttonEl.addEventListener('click',onClick);
 			
-			if(S[call] == array[i]['short']) buttonEl.className='s-selected';
+			if(S[call] == array[i]['short']) buttonEl.className='selected';
 			
 			dropdown.appendChild(buttonEl);
 		}
 		
-		view.querySelector('.s-popups').appendChild(dropdown);
+		view.querySelector('.popups').appendChild(dropdown);
 	}
 	
 	// Add button
 	var button = document.createElement('button');
-	button.className = 's-button s-button-'+call;
+	button.className = 'button button-'+call;
 	button.dataset.type = call;
 	button.dataset.alt = call;
 	button.dataset.title = call;
+	
+	button.innerHTML = '<img src="' + call + '-solid.svg"><p>' + call + '</p>';
 	
 	// Either toggle the popup, or the function directly if there's no popup
 	if(array !== null) button.addEventListener('click',popupToggle);
 	else button.addEventListener('click',onClick);
 	
-	view.querySelector('.s-buttons').appendChild(button);
+	view.querySelector('.buttons').appendChild(button);
 }
 
 <?php
@@ -1387,9 +1405,9 @@ buildButtons('fullscreen'
 // Bookmarks
 function toggleBookmark(){
 	// Remove selected class from previous selected item
-	var previous=view.querySelector('.s-popup-bookmark .s-selected');
+	var previous=view.querySelector('.popup-bookmark .selected');
 	if(previous){
-		previous.classList.remove('s-selected');
+		previous.classList.remove('selected');
 	}
 
 	// Set to null if clicking on the same item
@@ -1401,7 +1419,7 @@ function toggleBookmark(){
 		return;
 	}
 	
-	this.classList.add('s-selected');
+	this.classList.add('selected');
 	S.saves.system=this.dataset.system;
 	S.saves.currentSave=this.dataset.name;
 }
@@ -1410,10 +1428,10 @@ function toggleBookmark(){
 
 function addBookmark(obj){
 	var bookmarkEl=document.createElement('div');
-	bookmarkEl.className='s-bookmark';
+	bookmarkEl.className='bookmark';
 	
 	var nameEl=document.createElement('button');
-	nameEl.className='s-bookmark-name';
+	nameEl.className='bookmark-name';
 	nameEl.innerText=obj.name;
 	nameEl.dataset.name=obj.name;
 	nameEl.dataset.system=obj.system;
@@ -1425,7 +1443,7 @@ function addBookmark(obj){
 			if(
 				S.saves.currentSave===obj.name
 				&& S.saves.system===obj.system
-			) nameEl.classList.add('s-selected');
+			) nameEl.classList.add('selected');
 			break;
 		// Saving the page name in the URL/querystring
 		case 'url':
@@ -1452,7 +1470,7 @@ function addBookmark(obj){
 	
 	bookmarkEl.appendChild(nameEl);
 	
-	view.querySelector(".s-popup-bookmark").appendChild(bookmarkEl);
+	view.querySelector(".popup-bookmark").appendChild(bookmarkEl);
 }
 
 ///////////////////////////////////////
@@ -1522,6 +1540,8 @@ contentShadow.addEventListener('click',stop);
 contentShadow.addEventListener('mousedown',stop);
 contentShadow.addEventListener('touchdown',stop);
 
+regressEl.addEventListener('click',regress);
+
 function stop(event){
 	var pointer;
 	
@@ -1577,7 +1597,7 @@ function pointerDown(event){
 		actionInterval=null;
 		
 		// Get rid of any active coloring
-		while(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
+		while(overlay.querySelector('.active')) overlay.querySelector('.active').classList.remove('active');
 		
 		var prevScrubState = scrubbing;
 		scrubbing=false;
@@ -1608,9 +1628,9 @@ function pointerDown(event){
     clickStart = true;
 	
     // Do nothing if the user clicked certain elements
-	if(pointer.target.classList.contains('s-popup')) return;
-	if(pointer.target.classList.contains('s-notice')) return;
-	if(pointer.target.classList.contains('s-block-scrubbing')) return;
+	if(pointer.target.classList.contains('popup')) return;
+	if(pointer.target.classList.contains('notice')) return;
+	if(pointer.target.classList.contains('block-scrubbing')) return;
 	
 	// Look through the target and its parents; don't run anything further if we are or are inside a button, input, or anchor
 	var node = pointer.target;
@@ -1626,50 +1646,37 @@ function pointerDown(event){
     if(pointer.offsetX>pointer.target.clientWidth || pointer.offsetY>pointer.target.clientHeight) return;
 
     // Remove the cover image when this is the first time interacting with showpony
-    if(view.querySelector('.s-cover')){
-        view.querySelector('.s-cover').remove();
+    if(view.querySelector('.cover')){
+        view.querySelector('.cover').remove();
     }
     
 	// One event listener for all of the buttons
     // Pause
     if(checkCollision(pointer.clientX,pointer.clientY,pause)){
         buttonDown = 'pause';
-		pause.classList.add('s-active');
+		pause.classList.add('active');
         actionTimeout=setTimeout(function(){
 			// Don't let moving the cursor stop this function
 			pointerXStart = null;
 			pointerYStart = null;
 			
 			// Add the display class
-            view.classList.add('s-hold');
+            view.classList.add('hold');
         },500);
 	// Progress
     } else if(checkCollision(pointer.clientX,pointer.clientY,progressEl)){
         buttonDown = 'progress';
-		progressEl.classList.add('s-active');
+		progressEl.classList.add('active');
         actionTimeout=setTimeout(function(){
 			// Don't let moving the cursor stop this function
 			pointerXStart = null;
 			pointerYStart = null;
 			
 			// Add the display class
-            view.classList.add('s-hold');
+            view.classList.add('hold');
             actionInterval=setInterval(progress,50);
         },500);
-	// Regress
-    } else if(checkCollision(pointer.clientX,pointer.clientY,regressEl)){
-        buttonDown = 'regress';
-		regressEl.classList.add('s-active');
-        actionTimeout=setTimeout(function(){
-			// Don't let moving the cursor stop this function
-			pointerXStart = null;
-			pointerYStart = null;
-			
-			// Add the display class
-            view.classList.add('s-hold');
-            actionInterval=setInterval(regress,50);
-        },500);
-    }
+	}
 	
 	// Scrubbing will be considered here
 	scrubbing=pointer.clientX;
@@ -1719,7 +1726,7 @@ function pointerUp(event){
     actionInterval=null;
 	
 	// Get rid of any active coloring
-	while(overlay.querySelector('.s-active')) overlay.querySelector('.s-active').classList.remove('s-active');
+	while(overlay.querySelector('.active')) overlay.querySelector('.active').classList.remove('active');
 	
 	var prevScrubState = scrubbing;
     scrubbing=false;
@@ -1735,8 +1742,8 @@ function pointerUp(event){
     if(pointer.offsetX>pointer.target.clientWidth || pointer.offsetY>pointer.target.clientHeight) return;
     
 	// If we were holding the button, remove the class
-	if(view.classList.contains('s-hold')){
-		view.classList.remove('s-hold');
+	if(view.classList.contains('hold')){
+		view.classList.remove('hold');
 		
 		// Next and previous buttons shouldn't be activated again on release if they were held down
 		if(buttonDown !== 'pause' || paused === false) return;
@@ -1754,7 +1761,7 @@ function pointerUp(event){
 	// Some elements have pointer-events none, but their collisions still matter. We'll see if we're within those buttons here.
 
 	// Don't read clicks if the user's clicking an input or button
-	if(pointer.target.classList.contains('s-popup')) return;
+	if(pointer.target.classList.contains('popup')) return;
 	
 	// Look through the target and its parents; don't run anything further if we are or are inside a button, input, or anchor
 	var node = pointer.target;
@@ -1773,10 +1780,6 @@ function pointerUp(event){
 	// Progress
 	else if(checkCollision(pointer.clientX,pointer.clientY,progressEl) && buttonDown === 'progress'){
 		progress();
-	}
-	// Regress
-	else if(checkCollision(pointer.clientX,pointer.clientY,regressEl) && buttonDown === 'regress'){
-		regress();
 	}
     
     buttonDown = null;
@@ -1866,7 +1869,7 @@ history.replaceState(null,'',window.location.pathname + '?' + searchParams.toStr
 
 // Show we're paused
 view.className		= 's s-' + readingDirection;
-view.classList.add('s-paused');
+view.classList.add('paused');
 
 S.debug = <?php
 	if(DEBUG){
