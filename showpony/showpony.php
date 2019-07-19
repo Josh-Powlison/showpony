@@ -81,8 +81,11 @@ view.innerHTML		= `
 	<div class="menu">
 		<button class="progress"></button>
 		<button class="pause"></button>
-		<div class="scrubber" style="left:0%;"></div>
-		<canvas class="buffer" width="1000" height="1"></canvas>
+		<div class="progress-bar">
+			<canvas id="buffer" width="1000" height="1"></canvas>
+			<p id="timebox"></p>
+			<div class="scrubber" style="left:0%;"></div>
+		</div>
 		<div class="info-text"></div>
 		<div class="upcoming-file"></div>
 		<div class="buttons hide-on-hold">
@@ -112,6 +115,7 @@ view.innerHTML		= `
 		</div>
 	</div>
 `;
+shadow.appendChild(view);
 
 var file				= null;
 var time				= null;
@@ -128,16 +132,22 @@ var debug				= <?php echo DEBUG ? 'true' : 'false'; ?>;
 const content			= view.getElementsByClassName('content')[0];
 content.classList.add('loading');
 const overlay			= view.getElementsByClassName('menu')[0];
-const buffer			= view.getElementsByClassName('buffer')[0];
+const buffer			= shadow.getElementById('buffer');
+console.log('BUFFER',buffer,shadow);
 const infoText			= view.getElementsByClassName('info-text')[0];
 const pause				= view.getElementsByClassName('pause')[0];
-const scrubber			= view.getElementsByClassName('scrubber')[0];
+const scrubberEl		= view.getElementsByClassName('scrubber')[0];
 const progressEl		= view.getElementsByClassName('progress')[0];
 const regressEl			= view.getElementsByClassName('button-regress')[0];
 const noticeEl			= view.getElementsByClassName('notice')[0];
+const timeboxEl			= shadow.getElementById('timebox');
 
 const contentShadow		= content.attachShadow({mode:'open'});
 
+// Module styles
+contentShadow.appendChild(document.createElement('style'));
+
+// Custom styles
 var contentStyles = document.createElement('style');
 contentStyles.innerHTML = `<?php
 	// If the story has its own css file, add it in here
@@ -600,16 +610,15 @@ async function to(obj = {file:file, time:time}){
 	/// LOAD RIGHT MODULE AND SOURCE ///
 	
 	// If switching types, do some cleanup
-	if(module!==S.files[obj.file].module){
+	if(module !== S.files[obj.file].module){
 		// Replace the old styles with the new ones
 		// console.log(contentShadow,contentShadow.firstChild,contentShadow.firstChild.innerHTML);
 		contentShadow.firstChild.innerHTML = modules[S.files[obj.file].module].styles.innerHTML;
 		
 		// The second element is story styles, so keep that
 		
-		
 		// Empty and replace the third element's children
-		while(contentShadow.children[2]) contentShadow.removeChild(contentShadow.children[2]);
+		if(contentShadow.children[2]) contentShadow.removeChild(contentShadow.children[2]);
 
 		contentShadow.appendChild(modules[S.files[obj.file].module].window);
 		
@@ -829,9 +838,10 @@ async function getTotalBuffered(){
 	
 	if(buffered.length===1 && buffered[0][0]===0 && buffered[0][1]>=S.duration) buffered=true;
 	if(buffered.length===0) buffered=[];
-	/* TODO: add back in buffer display
+	/// TODO: add back in buffer display, adjusted based on loading at some point?
 	// Show buffer
-	var ctx = buffer.getContext('2d');
+	/*var ctx = buffer.getContext('2d');
+	ctx.fillStyle = '#ffffff';
 	
 	// Update info on popup
 	if(buffered === true){
@@ -846,7 +856,7 @@ async function getTotalBuffered(){
 				,1
 			);
 		}
-	} */
+	}*/
 	
 	currentBuffer = buffered;
 }
@@ -883,7 +893,7 @@ function scrub(inputPercent=null){
 	if(inputPercent>1) inputPercent=1;
 	
 	// Move the progress bar
-	scrubber.style.left=(inputPercent*100)+'%';
+	scrubberEl.style.left = (inputPercent * 100) + '%';
 	
 	// If scrubbing, estimate the new time
 	if(scrubbing===true){
@@ -959,6 +969,22 @@ function scrub(inputPercent=null){
 	if(S.files[displayFile].title) info+=S.files[displayFile].title;
 	// info+='</p><p>'+remaining+'</p>';
 	
+	// Adjust the timebox
+	timeboxEl.innerHTML = completed + ' / ' + remaining;
+	timeboxEl.style.left = (inputPercent * 100) + '%';
+	
+	// Update scrub amount
+	var ctx = buffer.getContext('2d');
+	ctx.fillStyle = '#ffffff';
+	
+	ctx.clearRect(0,0,buffer.width,1);
+	ctx.fillRect(
+		0
+		,0
+		,Math.floor(inputPercent * buffer.width)
+		,1
+	);
+	
 	// Add info about upcoming parts if not added already //XXX
 	if(displayFile < S.files.length-1 && S.files[displayFile + 1].hidden
 		&& !view.querySelector('.upcoming-file').innerHTML){
@@ -1007,7 +1033,7 @@ function userScrub(event){
 	// Don't scrub if touching with 2 or more fingers at once
 	// if(event.touches && event.touches.length>1) return;
 	
-	var percent = (pointer.clientX-view.getBoundingClientRect().left)/(view.getBoundingClientRect().width);
+	var percent = (pointer.clientX - buffer.getBoundingClientRect().left)/(buffer.getBoundingClientRect().width);
 	
 	// We give ourselves a little snap near the edges
 	const scrubSnap=.0025;
@@ -1892,7 +1918,6 @@ if(!loadBookmark()){
 
 // We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
 
-shadow.appendChild(view);
 S.dispatchEvent(new CustomEvent('built'));
 
 }();<?php
