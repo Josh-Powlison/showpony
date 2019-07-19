@@ -142,6 +142,23 @@ const regressEl			= view.getElementsByClassName('button-regress')[0];
 const noticeEl			= view.getElementsByClassName('notice')[0];
 const timeboxEl			= shadow.getElementById('timebox');
 
+if(document.getElementById('showpony-public-styles') === null){
+	var publicStyles = document.createElement('style');
+	publicStyles.id = 'showpony-public-styles';
+	publicStyles.innerHTML = `@font-face{
+	font-family:"Roboto Condensed";
+	src:url('showpony/roboto-condensed/RobotoCondensed-Light.ttf');
+	font-weight:normal;
+}
+
+@font-face{
+	font-family:"Roboto Condensed";
+	src:url('showpony/roboto-condensed/RobotoCondensed-Regular.ttf');
+	font-weight:bold;
+}`;
+	document.head.appendChild(publicStyles);
+}
+
 const contentShadow		= content.attachShadow({mode:'open'});
 
 // Module styles

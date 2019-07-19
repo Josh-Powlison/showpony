@@ -1,20 +1,4 @@
 /*/////////////////////////////////////
-/////////////////FONTS/////////////////
-/////////////////////////////////////*/
-
-@font-face{
-	font-family:"Roboto Condensed";
-	src:url('showpony/roboto-condensed/RobotoCondensed-Regular.ttf');
-	font-weight:normal;
-}
-
-@font-face{
-	font-family:"Roboto Condensed";
-	src:url('showpony/roboto-condensed/RobotoCondensed-Bold.ttf');
-	font-weight:bold;
-}
-
-/*/////////////////////////////////////
 ////////////////GENERAL////////////////
 /////////////////////////////////////*/
 
@@ -221,6 +205,7 @@
 	position:absolute;
 	width:100%;
 	
+	font-weight:bold;
 	display:flex;
 	justify-content:space-between;
 	text-align:center;
