@@ -366,7 +366,7 @@ M.editor = new function(){
 				.then(module => new WebAssembly.Instance(module, {
 					env:{
 						jsLogString: function(position, length){
-							var string = new Uint8Array(M.wasm.exports.memory.buffer, position, length);
+							var string = new Uint32Array(M.wasm.exports.memory.buffer, position, length);
 							
 							console.log('Log from WASM:','A:',string, 'B:',ab2str(string));
 						}
@@ -374,7 +374,7 @@ M.editor = new function(){
 							console.log('Log from WASM:',input);
 						}
 						,jsCreateLine: function(number,type,position,length){
-							var string = ab2str(new Uint8Array(M.wasm.exports.memory.buffer, position, length));
+							var string = ab2str(new Uint32Array(M.wasm.exports.memory.buffer, position, length));
 
 							/*
 							
@@ -436,7 +436,7 @@ M.editor = new function(){
 							// console.log(highlight);
 						}
 						,jsRecommendation: function(position,length,type,componentType){
-							var helpText = ab2str(new Uint8Array(M.wasm.exports.memory.buffer, position, length));
+							var helpText = ab2str(new Uint32Array(M.wasm.exports.memory.buffer, position, length));
 							var autocomplete = M.editor.window.document.getElementById('content-autocomplete');
 							
 							// console.log('hey');
@@ -551,13 +551,13 @@ M.editor = new function(){
 							E.window.document.execCommand('selectAll',false);
 							
 							var el = document.createElement('p');
-							el.innerText = ab2str(new Uint8Array(M.wasm.exports.memory.buffer, position, length));
+							el.innerText = ab2str(new Uint32Array(M.wasm.exports.memory.buffer, position, length));
 							
 							E.window.document.execCommand('insertHTML',false,el.innerHTML);
-							// E.window.document.execCommand('insertText',false,ab2str(new Uint8Array(M.wasm.exports.memory.buffer, position, length)));
+							// E.window.document.execCommand('insertText',false,ab2str(new Uint32Array(M.wasm.exports.memory.buffer, position, length)));
 							*/
 							// FIREFOX
-							content.value = ab2str(new Uint8Array(M.wasm.exports.memory.buffer, position, length));
+							content.value = ab2str(new Uint32Array(M.wasm.exports.memory.buffer, position, length));
 						}
 					}
 				}))
@@ -565,7 +565,7 @@ M.editor = new function(){
 					M.wasm = instance;
 					
 					console.log('WASM LOADED');
-					M.editor.buffer = new Uint8Array(M.wasm.exports.memory.buffer, M.wasm.exports.getData(0), M.wasm.exports.getBufferLength());
+					M.editor.buffer = new Uint32Array(M.wasm.exports.memory.buffer, M.wasm.exports.getData(0), M.wasm.exports.getBufferLength());
 					
 					resolve();
 				});
@@ -736,8 +736,9 @@ M.editor = new function(){
 		});
 	}
 	
+	// Char codes to string
 	function ab2str(buf){
-	  return String.fromCharCode.apply(null, new Uint16Array(buf));
+		return String.fromCharCode.apply(null, new Uint32Array(buf));
 	}
 	
 	function saveStringToBuffer(str) {

@@ -40,10 +40,12 @@ struct Object{
 
 // VARS
 
+typedef int char32;
+
 const int SIZE = 28000;
 
 // change to an int later to cover more characters?
-char data[SIZE] = {'\0'};
+char32 data[SIZE] = {'\0'};
 
 int objPosition = 0;
 
@@ -84,13 +86,13 @@ const int FILE_START = 51;
 //// JS FUNCTIONS /////
 ///////////////////////
 
-void jsLogString(char *position, int length);
+void jsLogString(char32 *position, int length);
 void jsLogInt(int input);
-float jsCreateLine(int fileLine, int type, char *position, int length);
+float jsCreateLine(int fileLine, int type, char32 *position, int length);
 void jsCreateHighlight(float top, float height);
-void jsRecommendation(char *position, int length, int type, int componentType);
+void jsRecommendation(char32 *position, int length, int type, int componentType);
 void jsDisplayObjects(int *position);
-void jsOverwriteText(char *position, int length);
+void jsOverwriteText(char32 *position, int length);
 
 ///////////////////////
 ///// C FUNCTIONS /////
@@ -101,7 +103,7 @@ int main() {
 	return 0;
 }
 
-char* getData(int type){
+char32* getData(int type){
 	return &data[0];
 }
 
@@ -131,7 +133,7 @@ int getBufferLength(){
 	But take it a step at a time.
 */
 
-int isDelimiter(char a){
+int isDelimiter(char32 a){
 	switch(a){
 		case '\t':
 		case '\r':

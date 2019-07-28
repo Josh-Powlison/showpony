@@ -50,6 +50,8 @@ if(!empty($_GET['export'])){
 }
 
 header('Content-type: application/javascript');
+header('Content-type: text/plain; charset=utf-8');
+
 ?>'use strict';
 
 new function(){
