@@ -360,7 +360,7 @@ M.editor = new function(){
 				});
 				
 				// Load WASM
-				fetch('showpony/modules/visualNovel/script.wasm')
+				fetch('showpony/script.wasm')
 				.then(response => response.arrayBuffer())
 				.then(bits => WebAssembly.compile(bits))
 				.then(module => new WebAssembly.Instance(module, {
