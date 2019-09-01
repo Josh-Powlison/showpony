@@ -242,8 +242,8 @@ new function(){
 		return keyframes;
 	}
 	
+	var srcId = 0;
 	M.src = async function(file = 0,time = 0,filename = null,refresh = false){
-		
 		// If this is the current file
 		if(M.window.dataset.filename === filename){
 			
@@ -258,14 +258,17 @@ new function(){
 				else keyframeSelect=keyframes[keyframeSelect];
 			}
 			
-			M.currentFile=file;
-			M.currentTime=time;
-			
 			// If this is the current keyframe, resolve
 			if(keyframeSelect === M.currentLine && !refresh){
 				content.classList.remove('loading');
 				return true;
 			}
+			
+			srcId ++;
+			if(srcId > 255) srcId = 0;
+			
+			M.currentFile=file;
+			M.currentTime=time;
 			
 			runTo = keyframeSelect;
 			
@@ -274,6 +277,9 @@ new function(){
 			S.displaySubtitles();
 			return true;
 		}
+		
+		srcId ++;
+		if(srcId > 255) srcId = 0;
 		
 		return fetch(filename,{credentials:'include'})
 		.then(response=>{if(response.ok) return response.text();})
@@ -393,11 +399,17 @@ new function(){
 	
 	// SLOW AS SIN
 	M.run = function(line = M.currentLine + 1){
+		var currentSrcId = srcId;
+		
 		timer.stop();
 		continueNotice.remove();
 		M.currentLine = line;
 
 		for(M.currentLine; M.currentLine < M.lines.length; M.currentLine++){
+			// Exit if we're loading something new now
+			if(currentSrcId !== srcId) return;
+			
+			// As long as the line returns true, use it
 			if(!M.readLine(M.currentLine, M.lines[M.currentLine])) break;
 		}
 		
