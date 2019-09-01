@@ -1603,7 +1603,7 @@ contentShadow.addEventListener('click',stop);
 contentShadow.addEventListener('mousedown',stop);
 contentShadow.addEventListener('touchdown',stop);
 
-regressEl.addEventListener('click',regress);
+// regressEl.addEventListener('click',regress);
 
 function stop(event){
 	var pointer;
@@ -1714,8 +1714,26 @@ function pointerDown(event){
     }
     
 	// One event listener for all of the buttons
+	
+	// Buffer
+	if(checkCollision(pointer.clientX,pointer.clientY,buffer)){
+		buttonDown = 'buffer';
+	}
+	// Regress
+	else if(checkCollision(pointer.clientX,pointer.clientY,regressEl)){
+        buttonDown = 'regress';
+		regressEl.classList.add('active');
+        actionTimeout=setTimeout(function(){
+			// Don't let moving the cursor stop this function
+			pointerXStart = null;
+			pointerYStart = null;
+			
+			// Add the display class
+            view.classList.add('hold');
+            actionInterval=setInterval(regress,50);
+        },500);
     // Pause
-    if(checkCollision(pointer.clientX,pointer.clientY,pause)){
+    } else if(checkCollision(pointer.clientX,pointer.clientY,pause)){
         buttonDown = 'pause';
 		pause.classList.add('active');
         actionTimeout=setTimeout(function(){
@@ -1801,8 +1819,12 @@ function pointerUp(event){
 		S.time = scrubLoadTime;
 	}
     
+	
+	console.log(pointer.target,'got to here');
+	var pointerTargetBox = pointer.target.getBoundingClientRect();
     // Ignore scrollbar
-    if(pointer.offsetX>pointer.target.clientWidth || pointer.offsetY>pointer.target.clientHeight) return;
+    // if(pointer.offsetX>pointerTargetBox.width || pointer.offsetY>pointerTargetBox.height) return;
+	
     
 	// If we were holding the button, remove the class
 	if(view.classList.contains('hold')){
@@ -1836,13 +1858,25 @@ function pointerUp(event){
 		node = node.parentNode;
 	}
 	
+	// Buffer
+	if(checkCollision(pointer.clientX,pointer.clientY,buffer) && buttonDown === 'buffer'){
+		scrubbing = true;
+		userScrub(event);
+		scrubbing = false;
+	}
+	// Regress
+	else if(checkCollision(pointer.clientX,pointer.clientY,regressEl) && buttonDown === 'regress'){
+		regress();
+	}
 	// Pause
-	if(checkCollision(pointer.clientX,pointer.clientY,pause) && buttonDown === 'pause'){
+	else if(checkCollision(pointer.clientX,pointer.clientY,pause) && buttonDown === 'pause'){
 		S.paused = 'toggle';
 	}
 	// Progress
 	else if(checkCollision(pointer.clientX,pointer.clientY,progressEl) && buttonDown === 'progress'){
-		progress();
+		// Unpause if we're paused; otherwise, play
+		if(S.paused) S.paused = false;
+		else progress();
 	}
     
     buttonDown = null;
