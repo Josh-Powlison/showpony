@@ -243,6 +243,7 @@ new function(){
 	}
 	
 	M.src = async function(file = 0,time = 0,filename = null,refresh = false){
+		
 		// If this is the current file
 		if(M.window.dataset.filename === filename){
 			
@@ -1106,6 +1107,9 @@ new function(){
 			var baseWaitTime	= [O.defaultWaitTime];
 			var constant		= [O.defaultConstant];
 			var animation		= [O.defaultAnimation];
+			
+			// Remove extra tabs at the end
+			input = input.replace(/\t+$/,'');
 			
 			var l = input.length;
 			
