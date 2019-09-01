@@ -78,20 +78,20 @@ const DEBUG = <?php echo DEBUG ? 'true' : 'false'; ?>;
 const view			= document.createElement('div');
 view.tabIndex		= 0;
 view.innerHTML		= `
-	<div class="content"></div>
-	<?php if(file_exists('cover.jpg')) echo '<img class="cover" src="',STORIES_PATH,'cover.jpg">'; ?>
-	<div class="menu">
-		<button class="progress"></button>
-		<button class="pause"></button>
-		<div class="progress-bar">
+	<div id="content"></div>
+	<?php if(file_exists('cover.jpg')) echo '<img id="cover" src="',STORIES_PATH,'cover.jpg">'; ?>
+	<div id="menu">
+		<button id="progress"></button>
+		<button id="pause"></button>
+		<div id="progress-bar">
 			<canvas id="buffer" width="1000" height="1"></canvas>
 			<p id="timebox"></p>
-			<div class="scrubber" style="left:0%;"></div>
+			<div id="scrubber"></div>
 		</div>
-		<div class="info-text"></div>
-		<div class="upcoming-file"></div>
-		<div class="buttons hide-on-hold">
-			<button class="button button-regress" data-type="regress" alt="Regress" title="Regress">
+		<div id="info-text"></div>
+		<div id="upcoming-file"></div>
+		<div id="buttons" class="hide-on-hold">
+			<button id="button-regress" class="button" data-type="regress" alt="Regress" title="Regress">
 				<img src="showpony/icons/step-backward-solid.svg">
 				<p>Back</p>
 			</button>
@@ -107,13 +107,18 @@ view.innerHTML		= `
 				<img src="showpony/icons/share-solid.svg">
 				<p>Share</p>
 			</button>
+			<button id="button-fullscreen" class="button button-fullscreen" data-type="fullscreen" data-alt="fullscreen" data-title="fullscreen">
+				<img id="icon-to-fullscreen" src="showpony/icons/expand-solid.svg">
+				<img id="icon-to-windowed" src="showpony/icons/compress-solid.svg">
+				<p>Fullscreen</p>
+			</button>
 		</div>
-		<div class="popups">
+		<div id="popups">
 			<div class="popup popup-bookmark"></div>
 		</div>
-		<div class="popup notice">
-			<div class="notice-text block-scrubbing"></div>
-			<button class="notice-close">Close Notice</button>
+		<div class="popup" id="notice">
+			<div id="notice-text block-scrubbing"></div>
+			<button id="notice-close">Close Notice</button>
 		</div>
 	</div>
 `;
@@ -131,17 +136,17 @@ var active				= true;
 var data				= {};
 var debug				= <?php echo DEBUG ? 'true' : 'false'; ?>;
 
-const content			= view.getElementsByClassName('content')[0];
+const content			= shadow.getElementById('content');
 content.classList.add('loading');
-const overlay			= view.getElementsByClassName('menu')[0];
+const overlay			= shadow.getElementById('menu');
 const buffer			= shadow.getElementById('buffer');
 console.log('BUFFER',buffer,shadow);
-const infoText			= view.getElementsByClassName('info-text')[0];
-const pause				= view.getElementsByClassName('pause')[0];
-const scrubberEl		= view.getElementsByClassName('scrubber')[0];
-const progressEl		= view.getElementsByClassName('progress')[0];
-const regressEl			= view.getElementsByClassName('button-regress')[0];
-const noticeEl			= view.getElementsByClassName('notice')[0];
+const infoText			= shadow.getElementById('info-text');
+const pause				= shadow.getElementById('pause');
+const scrubberEl		= shadow.getElementById('scrubber');
+const progressEl		= shadow.getElementById('progress');
+const regressEl			= shadow.getElementById('button-regress');
+const noticeEl			= shadow.getElementById('notice');
 const timeboxEl			= shadow.getElementById('timebox');
 
 if(document.getElementById('showpony-public-styles') === null){
@@ -395,13 +400,15 @@ if(view.requestFullscreen){
 			if(input){
 				if(document.fullscreenElement) return;
 				
-				fullscreen=true;
+				fullscreen = true;
+				shadow.getElementById('button-fullscreen').classList.add('fullscreen');
 				view.requestFullscreen();
 				S.dispatchEvent(new CustomEvent('fullscreenEnter'));
 			}
 			else{
 				if(!document.fullscreenElement) return;
 				
+				shadow.getElementById('button-fullscreen').classList.remove('fullscreen');
 				document.exitFullscreen();
 				S.dispatchEvent(new CustomEvent('fullscreenExit'));
 			}
@@ -559,7 +566,7 @@ Object.defineProperty(S, 'paused', {
 function notice(input){
 	S.paused = true;
 
-	var noticeText=noticeEl.querySelector('.notice-text');
+	var noticeText = noticeEl.querySelector('#notice-text');
 	
 	// If a message is currently up, add new messages to the list rather than overwriting them
 	if(noticeEl.classList.contains('visible')) noticeText.innerHTML += '<hr class="block-scrubbing"><p class="block-scrubbing">'+input+'</p>';
@@ -911,9 +918,6 @@ function scrub(inputPercent=null){
 	if(inputPercent<0) inputPercent=0;
 	if(inputPercent>1) inputPercent=1;
 	
-	// Move the progress bar
-	scrubberEl.style.left = (inputPercent * 100) + '%';
-	
 	// If scrubbing, estimate the new time
 	if(scrubbing===true){
 		var displayTime;
@@ -988,9 +992,24 @@ function scrub(inputPercent=null){
 	if(S.files[displayFile].title) info+=S.files[displayFile].title;
 	// info+='</p><p>'+remaining+'</p>';
 	
-	// Adjust the timebox
+	// Adjust the scrubber and timebox
+	var moveLeft = (buffer.clientWidth * inputPercent);
+	
+	scrubberEl.style.transform = 'translateX(' + moveLeft + 'px)';
+	
+	// Recalculate left for the timebox so it doesn't go off-screen
+	moveLeft -= (timeboxEl.clientWidth / 2);
+	
+	/// TODO: This may be poorly optimized because offsetWidth and offsetLeft may force redraws. It may be better to use client rects; look into this
+	if(moveLeft < buffer.offsetLeft){
+		moveLeft = buffer.offsetLeft;
+	}else if(moveLeft + (timeboxEl.clientWidth) > buffer.offsetLeft + buffer.offsetWidth){
+		moveLeft = buffer.offsetLeft + buffer.offsetWidth - timeboxEl.clientWidth;
+	}
+	
+	timeboxEl.style.transform = 'translateX(' + moveLeft + 'px)';
+	
 	timeboxEl.innerHTML = completed + ' / ' + remaining;
-	timeboxEl.style.left = (inputPercent * 100) + '%';
 	
 	// Update scrub amount
 	var ctx = buffer.getContext('2d');
@@ -1333,8 +1352,8 @@ function popupToggle(){
 	view.querySelector('.popup-'+this.dataset.type).classList.toggle('visible');
 }
 
-view.querySelector('.notice-close').addEventListener('click',function(){
-	view.querySelector('.notice').classList.remove('visible');
+shadow.getElementById('notice-close').addEventListener('click',function(){
+	shadow.getElementById('notice').classList.remove('visible');
 });
 
 function buildButtons(call, array, onClick, nullPossible){
@@ -1419,7 +1438,7 @@ function buildButtons(call, array, onClick, nullPossible){
 		];
 	}
 ?>;
-
+/*
 buildButtons('language'
 	,<?php echo json_encode($languages); ?>
 	,function(){S.language = this.dataset.value;}
@@ -1439,13 +1458,12 @@ buildButtons('quality'
 	,<?php echo json_encode($supportedQuality); ?>
 	,function(){S.quality = this.dataset.value;}
 	,false
-);
+);*/
 
-buildButtons('fullscreen'
-	,null
-	,function(){S.fullscreen = 'toggle';}
-	,false
-);
+shadow.getElementById('button-fullscreen').addEventListener('click',function(){
+	
+	S.fullscreen = 'toggle';
+});
 
 // Bookmarks
 function toggleBookmark(){
@@ -1913,7 +1931,8 @@ searchParams.delete(queryBookmark);
 history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
 
 // Show we're paused
-view.className		= 's s-' + readingDirection;
+view.id				= 's';
+view.className		= 's-' + readingDirection;
 view.classList.add('paused');
 
 S.debug = <?php

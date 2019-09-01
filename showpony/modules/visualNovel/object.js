@@ -391,7 +391,7 @@ new function(){
 	M['>=']	= function(a,b){return a >= b;}
 	M['!=']	= function(a,b){return a != b;}
 	
-	/// TO DO: stop filling up the stack so high; instead, keep running readLine() while it returns true. This way we aren't increasing the stack so heavily
+	// SLOW AS SIN
 	M.run = function(line = M.currentLine + 1){
 		timer.stop();
 		continueNotice.remove();
