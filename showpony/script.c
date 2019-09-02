@@ -44,7 +44,7 @@ typedef int char32;
 
 const int SIZE = 28000;
 
-// change to an int later to cover more characters?
+// Must use L in general, because we are using LONG (wide) letters. This also lets us use UTF-8 chars in here, like Japanese characters.
 char32 data[SIZE] = {'\0'};
 
 int objPosition = 0;
@@ -884,10 +884,11 @@ void autocomplete(int pos){
 ////////////// SHOWPONY ///////////////
 ///////////////////////////////////////
 
-// char note[] = "This is text";
+// This must be global, or else JS can't access it.
+char32 note[100] = L"すきすきすきすきすきすきすき";
 
 int checkCollision(float pointX,float pointY,float objX,float objY,float objW,float objH){
-	// jsLogString(&note[0],3);
+	// jsLogString(&note[0],15);
 	
 	// If element is collapsed or outside of x and y, return 0
 	if(objW == 0 || objH == 0
@@ -897,4 +898,77 @@ int checkCollision(float pointX,float pointY,float objX,float objY,float objW,fl
 	
 	// Otherwise, we are in collision
 	return 1;
+}
+
+/*void updateNote(){
+	for(int i = 100; i > 0; i--;){
+		note[i] = '\0';
+	}
+}*/
+
+char32* infoTime(float time,float duration){
+	int pos = 0;
+	
+	// Hours (10+)
+	if(duration > 36000){
+		note[pos++] = intToChar32((int)time / 36000 | 0);
+	}
+	
+	// Hours (1-9)
+	if(duration > 3600){
+		note[pos++] = intToChar32((int)time / 3600 % 10 | 0);
+		note[pos++] = L':';
+	}
+	
+	// Minutes (10+)
+	if(duration > 600){
+		note[pos++] = intToChar32((int)time / 60 % 60 / 10 | 0);
+	}
+	
+	// Minutes and seconds (always present)
+	note[pos++] = intToChar32((int)time / 60 % 10 | 0);
+	note[pos++] = L':';
+	note[pos++] = intToChar32((int)time % 60 / 10 | 0);
+	note[pos++] = intToChar32((int)time % 10);
+	note[pos++] = L'\0';
+	
+	return &note[0];
+}
+
+char32 intToChar32(int x){
+	switch(x){
+		case 0:
+			return L'0';
+			break;
+		case 1:
+			return L'1';
+			break;
+		case 2:
+			return L'2';
+			break;
+		case 3:
+			return L'3';
+			break;
+		case 4:
+			return L'4';
+			break;
+		case 5:
+			return L'5';
+			break;
+		case 6:
+			return L'6';
+			break;
+		case 7:
+			return L'7';
+			break;
+		case 8:
+			return L'8';
+			break;
+		case 9:
+			return L'9';
+			break;
+		default:
+			return L'X';
+			break;
+	}
 }

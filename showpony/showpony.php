@@ -888,9 +888,16 @@ var scrubLoad = null;
 var scrubLoadTime = null;
 
 function infoTime(time){
-	return (S.duration>3600 ? String(time / 3600|0).padStart(String((S.duration / 3600)|0).length,'0')+':' : '')
-		+String(time / 60 % 60|0).padStart(2,'0')+':'
-		+String(time % 60|0).padStart(2,'0');
+	
+	// Get the right length for the val
+	var timeLength = 4;
+	
+	if(S.duration > 36000)		timeLength = 8;
+	else if(S.duration > 3600)	timeLength = 7;
+	else if(S.duration > 600)	timeLength = 5;
+	
+	// Get time from WASM
+	return modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, S.wasm.exports.infoTime(time,S.duration), timeLength));
 }
 
 function infoFile(input){
