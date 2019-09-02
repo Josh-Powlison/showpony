@@ -369,7 +369,20 @@ Object.defineProperty(S, 'language', {
 		.then(response=>{return response.json();})
 		.then(json=>{
 			S.files = json;
-			S.duration = S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
+			
+			// Set filenames in WASM
+			var filenames = '';
+			for(var i = 0; i < S.files.length; i ++){
+				filenames += S.files[i].name;
+				filenames += '\0';
+			}
+			
+			filenames += '\0\0';
+			
+			saveStringToWASM(filenames);
+			
+			// Get duration from WASM function
+			S.duration = S.wasm.exports.infoTime();
 			
 			language = newLanguage;
 			
@@ -502,11 +515,6 @@ else{
 		}
 	});
 }
-
-S.duration				= S.files.map(function(e){
-	if(e.hidden) return 0;
-	return e.duration;
-}).reduce((a,b) => a+b,0);
 
 S.saves					= {
 	currentSave	:<?php echo json_encode(CURRENT_SAVE); ?>,
@@ -900,7 +908,7 @@ function infoTime(time){
 	timeLength += 3;
 	
 	// Get time from WASM
-	return modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, S.wasm.exports.infoTime(time,S.duration), timeLength));
+	return modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, S.wasm.exports.infoTime(time), timeLength));
 }
 
 function infoFile(input){
@@ -2141,7 +2149,10 @@ fetch('showpony/script.wasm',{headers:{'Content-Type':'application/wasm'}})
 	
 	saveStringToWASM(filenames);
 	
-	// console.log('Files estimated by WASM',S.wasm.exports.getFileCount());
+	console.log('Files estimated by WASM',S.wasm.exports.getFileCount());
+	console.log('Duration of first file estimated by WASM',S.wasm.exports.getDuration());
+	
+	S.duration = S.wasm.exports.getDuration();
 	
 	// Priority Saves: Newest > Default Start
 	if(localStorage.getItem(saveName)===null){

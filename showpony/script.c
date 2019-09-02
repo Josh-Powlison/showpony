@@ -918,8 +918,44 @@ int checkCollision(float pointX,float pointY,float objX,float objY,float objW,fl
 	}
 }*/
 
+int defaultDuration = 0;
+
 int getDuration(){
-	return 1;
+	int fileSeconds = 0;
+	int totalSeconds = 0;
+	int file = 0;
+	
+	/// Todo: add a check to make sure DDs or the like isn't inside of brackets for a title IE {100s Left!} 10s.vn
+	for(int i = 0; i < FILENAMES_SIZE; i ++){
+		// If we've hit the seconds marker, add them on to the total
+		if(fileSeconds > 0 && filenames[i] == L's'){
+			totalSeconds += fileSeconds;
+		}
+		
+		if(char32ToInt(filenames[i]) >= 0){
+			// If we hit another number, the previous number was in the 10s place. Multiple the current number by 10.
+			if(fileSeconds > 0) fileSeconds *= 10;
+			
+			// Add the int on to the current amount
+			fileSeconds += char32ToInt(filenames[i]);
+			continue;
+		}
+
+		// If we hit a null char, we're on the next file
+		if(filenames[i] == '\0'){
+			// Exit the loop if we hit 2 null chars- the end of things
+			if(filenames[i - 1] == '\0') break;
+			
+			// Add on the default duration if none has been set
+			if(!fileSeconds) totalSeconds += defaultDuration;
+			
+			file++;
+		}
+		
+		fileSeconds = 0;
+	}
+	
+	return totalSeconds;
 }
 
 int getFileCount(){
@@ -938,8 +974,10 @@ int getFileCount(){
 	return 0;
 }
 
-char32* infoTime(float time,float duration){
+char32* infoTime(float time){
 	int pos = 0;
+	
+	int duration = getDuration();
 	
 	// Hours (10+)
 	if(duration > 36000){
@@ -1027,6 +1065,44 @@ char32 intToChar32(int x){
 			break;
 		default:
 			return L'X';
+			break;
+	}
+}
+
+int char32ToInt(char32 x){
+	switch(x){
+		case L'0':
+			return 0;
+			break;
+		case L'1':
+			return 1;
+			break;
+		case L'2':
+			return 2;
+			break;
+		case L'3':
+			return 3;
+			break;
+		case L'4':
+			return 4;
+			break;
+		case L'5':
+			return 5;
+			break;
+		case L'6':
+			return 6;
+			break;
+		case L'7':
+			return 7;
+			break;
+		case L'8':
+			return 8;
+			break;
+		case L'9':
+			return 9;
+			break;
+		default:
+			return -1;
 			break;
 	}
 }
