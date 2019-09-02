@@ -1,6 +1,6 @@
 // FROM GOOGLE: https://developers.google.com/web/updates/2012/06/How-to-convert-ArrayBuffer-to-and-from-String
 
-M.wasm = null;
+S.wasm = null;
 
 M.editor = new function(){
 	const E = this;
@@ -254,37 +254,40 @@ M.editor = new function(){
 		,'audio'
 	];
 
-	var dataFragment;
-	var highlightFragment;
+	E.dataFragment = null;
+	E.highlightFragment = null;
 	
-	var prependString = '\0engine\0textbox\0image\0audio\0content\0remove\0mp3\0ogg\0';
+	E.prependString = '\0engine\0textbox\0image\0audio\0content\0remove\0mp3\0ogg\0';
 	
-	var assets = E.window.document.getElementById('assets');
-	var resourceWindow = E.window.document.getElementById('resource-window');
-	var resourceSearch = E.window.document.getElementById('resource-search');
+	E.assets = E.window.document.getElementById('assets');
+	E.resourceWindow = E.window.document.getElementById('resource-window');
+	E.resourceSearch = E.window.document.getElementById('resource-search');
 	var resourceList = E.window.document.getElementById('resource-list');
-	var data = E.window.document.getElementById('data');
-	var content = E.window.document.getElementById('content');
-	var contentSizing = E.window.document.getElementById('content-sizing');
+	E.data = E.window.document.getElementById('data');
+	E.content = E.window.document.getElementById('content');
+	E.contentSizing = E.window.document.getElementById('content-sizing');
 	
 	var autosave = false;
+	
+	var loadedAssets = false;
 	
 	///////////////////////////////////////
 	///////////PUBLIC FUNCTIONS////////////
 	///////////////////////////////////////
 	
 	E.update = function(input){
-		content.value = input;
+		E.content.value = input;
 		// console.log('hello, set to ',M.currentFile);
 		
 		// console.log(contentSizing.getClientRects());
 		
 		new Promise((resolve, reject) => {
-			if(M.wasm === null){
+			if(!loadedAssets){
 				// Load resource list
-				fetch('showpony/fetch-resource-list.php?path=<?php echo $_GET['path'] ?? ''; ?>')
+				fetch('showpony/fetch-resource-list.php?path=<?php echo STORIES_PATH; ?>')
 				.then(response => response.text())
 				.then(text => {
+					// console.log(text);
 					var resourceObj = JSON.parse(text);
 					
 					var frag = document.createDocumentFragment();
@@ -303,7 +306,7 @@ M.editor = new function(){
 							case 'mp3':
 							case 'ogg':
 								resource = document.createElement('audio');
-								resource.src = <?php echo json_encode($_GET['path']) ?? ''; ?> + '/resources/' + resourceObj[i];
+								resource.src =  '<?php echo STORIES_PATH; ?>/resources/' + resourceObj[i];
 								resource.controls = true;
 								break;
 							case 'jpg':
@@ -312,7 +315,7 @@ M.editor = new function(){
 							case 'svg':
 							case 'gif':
 								resource = document.createElement('img');
-								resource.src = <?php echo json_encode($_GET['path']) ?? ''; ?> + '/resources/' + resourceObj[i];
+								resource.src = '<?php echo STORIES_PATH; ?>/resources/' + resourceObj[i];
 								break;
 							default:
 								resource = null;
@@ -328,12 +331,12 @@ M.editor = new function(){
 								
 								var value = '';
 								// Add a comma if needbe
-								if(content.selectionStart > 0
-									&& content.value[content.selectionStart - 1] !== ','
-									&& content.value[content.selectionStart - 1] !== '\t'
+								if(E.content.selectionStart > 0
+									&& E.content.value[E.content.selectionStart - 1] !== ','
+									&& E.content.value[E.content.selectionStart - 1] !== '\t'
 								) value += ','
 								
-								var regex = new RegExp('^' + resourceSearch.dataset.component);
+								var regex = new RegExp('^' + E.resourceSearch.dataset.component);
 								
 								// Set either a relative or absolute path for the resource
 								var path = this.dataset.path.replace(regex,'');
@@ -342,14 +345,14 @@ M.editor = new function(){
 								value += path;
 								
 								// Add a comma if needbe
-								if(content.selectionEnd < content.value.length - 1
-									&& content.value[content.selectionEnd] !== ','
-									&& content.value[content.selectionEnd] !== '\r'
-									&& content.value[content.selectionEnd] !== '\n'
+								if(E.content.selectionEnd < E.content.value.length - 1
+									&& E.content.value[E.content.selectionEnd] !== ','
+									&& E.content.value[E.content.selectionEnd] !== '\r'
+									&& E.content.value[E.content.selectionEnd] !== '\n'
 								) value += ','
 								
 								E.window.document.execCommand('insertHTML',false,value);
-								console.log('passed',this.dataset.path);
+								// console.log('passed',this.dataset.path);
 							});
 							
 							frag.appendChild(resource);
@@ -357,219 +360,12 @@ M.editor = new function(){
 					}
 						
 					resourceList.appendChild(frag);
-				});
-				
-				// Load WASM
-				fetch('showpony/script.wasm')
-				.then(response => response.arrayBuffer())
-				.then(bits => WebAssembly.compile(bits))
-				.then(module => new WebAssembly.Instance(module, {
-					env:{
-						jsLogString: function(position, length){
-							var string = new Uint32Array(M.wasm.exports.memory.buffer, position, length);
-							
-							console.log('Log from WASM:','A:',string, 'B:',ab2str(string));
-						}
-						,jsLogInt: function(input){
-							console.log('Log from WASM:',input);
-						}
-						,jsCreateLine: function(number,type,position,length){
-							var string = ab2str(new Uint32Array(M.wasm.exports.memory.buffer, position, length));
-
-							/*
-							
-							Ways to speed up:
-								**- Only calculate new strings**
-								- Anytime you type in something, it should just calculate new strings
-								- Unless we resize the window, then it's really slow still...
-								
-								- Figure out what line the change took place on (if new line or pre-existing one)
-									- If we're before that, ignore and respond with the default value
-									- If we're on that line, recalculate its size
-									- If we've added a line, update all lines based on previous value
-								
-								- Check line #(s, could be copy-paste to add or replace) where change(s) occurred
-								- Look to see if lines were added
-								- Just adjust those lines (and their highlights)
-							*/
-							
-							contentSizing.innerText = (string.length ? string : '_');
-							var height = contentSizing.clientHeight;
-							
-							var target;
-							
-							// Create line if it doesn't exist
-							if(!data.children[number]){
-								target = document.createElement('p');
-								target.innerHTML = '<span class="icon"></span><span>' + (number + 1) + '</span>';
-								dataFragment.appendChild(target);
-							}
-							// Change line's class name if needbe
-							else{
-								target = data.children[number];
-							}
-							
-							// if(target.className !== types[type]) target.className = types[type];
-							target.children[0].style.backgroundPosition = '50% ' + type + '0%';
-							if(parseFloat(target.style.height) !== height) target.style.height = height + 'px';
-							
-							return height;
-						}
-						,jsCreateHighlight: function(top,height){
-							// console.log('HIGHLIGHT',top,height);
-							
-							var highlight = document.createElement('div');
-							highlight.className = 'highlight';
-							
-							highlight.style.top = top + 'px';
-							highlight.style.height = height + 'px';
-							// highlight.dataset.line = currentLine + '|' + i;
-
-							// Current Line
-							highlight.style.backgroundColor = 'rgba(0,255,0,.25)';
-							highlight.style.zIndex = '-1';
-							
-							// Error
-							// highlight.style.cssText = 'background-color:rgba(255,0,0,.25);z-index:-1;';
-							
-							highlightFragment.appendChild(highlight);
-							// console.log(highlight);
-						}
-						,jsRecommendation: function(position,length,type,componentType){
-							var helpText = ab2str(new Uint32Array(M.wasm.exports.memory.buffer, position, length));
-							var autocomplete = M.editor.window.document.getElementById('content-autocomplete');
-							
-							// console.log('hey');
-							
-							// Get the line number
-							var line = content.value.substr(0,content.selectionStart).match(/\n/g);
-							// If no previous lines exist, get the first line.
-							line = (line ? line.length : 0);
-							// Get the top of the line number element
-							var top = data.children[line].offsetTop;
-							
-							// Make recommendation box follow us
-							resourceWindow.style.top = (top + 64) + 'px';
-							
-							// console.log('INFO',type,helpText);
-							
-							/// Recommendation resources !!! TEMPORARY SOLUTION !!!
-							if(type === 3 &&
-								(componentType === 6
-								|| componentType === 7)
-							){
-								// Only update images if we need to
-								var searchingFor = (componentType === 6 ? 'images' : 'audio') + '/' + helpText + '/';
-								
-								// We only want to overwrite the search if we haven't already started using something else
-								if(resourceSearch.dataset.component !== searchingFor){
-									resourceSearch.value = searchingFor;
-									resourceSearch.dataset.component = searchingFor;
-									
-									resourceRunSearch();
-								}
-								
-								resourceWindow.style.visibility = 'visible';
-							}else{
-								resourceWindow.style.visibility = 'hidden';
-							}
-							
-							
-							/// Recommendation text ///
-							
-							// If we got passed a null chars
-							if(type !== 1 || helpText[0] === '\0'){
-								autocomplete.style.visibility = 'hidden';
-							// If there is text we can use
-							}else{
-								autocomplete.innerHTML = helpText;
-								autocomplete.style.top = top + 'px';
-								autocomplete.style.visibility = 'visible';
-							}
-						}
-						,jsDisplayObjects: function(position){
-							// position returns the beginning of the array pointing to every component
-							
-							/// Clear Data
-							for(var i = 0; i < assets.children.length; i++){
-								var el = assets.children[i];
-								while(el.firstChild) el.removeChild(el.firstChild);
-							}
-							
-							var objArray = new Uint32Array(M.wasm.exports.memory.buffer, position, 50);
-							// console.log(objArray);
-							
-							var fullData = prependString + content.value;
-							
-							// Test getting objects from WASM
-							// console.log('///////////');
-							for(var i = 0; i < 50; i ++){
-								// Don't continue if we have no more objects
-								if(objArray[i] === 0) break;
-								
-								// console.log('starts with ',content.value[objArray[i] - prependString.length]);
-								var objInfo = new Uint32Array(M.wasm.exports.memory.buffer, M.wasm.exports.getObject(i), 2);
-								
-								/// ASSETS ///
-								var obj = document.createElement('button');
-								obj.addEventListener('click',function(){
-									console.log('start of selection',content.selectionStart);
-									content.focus();
-									E.window.document.execCommand('insertHTML',false,this.innerHTML);
-								});
-								// Show if the object's currently active in the scene
-								obj.className = 'component' + (objInfo[1] ? ' active' : '');
-								
-								// Get the length of the name, and display it
-								var length = 0;
-								for(length; length < 50; length++){
-									if(isDelimiter(fullData[objArray[i] + length])) break;
-								}
-								
-								obj.innerHTML = fullData.substr(objArray[i],length);
-								assets.children[objInfo[0]].appendChild(obj);
-							}
-							
-							// Get a list of all the objects
-							// Read them out
-							
-							/*
-							// Variables
-							var variableKeys = Object.keys(M.variables);
-							
-							for(var i = 0; i < variableKeys.length; i++){
-								var input = document.createElement('input');
-								input.value = M.variables[variableKeys[i]];
-								assets.appendChild(input);
-							}*/
-						}
-						, jsOverwriteText: function(position, length){
-							// CHROME
-							/*
-							// Updates text while preserving undo/redo history
-							content.focus();
-							E.window.document.execCommand('selectAll',false);
-							
-							var el = document.createElement('p');
-							el.innerText = ab2str(new Uint32Array(M.wasm.exports.memory.buffer, position, length));
-							
-							E.window.document.execCommand('insertHTML',false,el.innerHTML);
-							// E.window.document.execCommand('insertText',false,ab2str(new Uint32Array(M.wasm.exports.memory.buffer, position, length)));
-							*/
-							// FIREFOX
-							content.value = ab2str(new Uint32Array(M.wasm.exports.memory.buffer, position, length));
-						}
-					}
-				}))
-				.then(instance => {
-					M.wasm = instance;
 					
-					console.log('WASM LOADED');
-					M.editor.buffer = new Uint32Array(M.wasm.exports.memory.buffer, M.wasm.exports.getData(0), M.wasm.exports.getBufferLength());
+					loadedAssets = true;
 					
 					resolve();
 				});
-			// We already loaded WASM
+			// We already loaded the asset list
 			} else resolve();
 		})
 		// If we just finished loading WASM or already loaded it previously
@@ -591,17 +387,17 @@ M.editor = new function(){
 			E.window.document.getElementById('file-quality').value = S.files[M.currentFile].quality;
 			
 			// Put into buffer for WASM to read
-			saveStringToBuffer(content.value);
+			saveStringToBuffer(E.content.value);
 			E.resizeThis();
 		});
 	}
 	
 	E.resizeThis = function(){
 		
-		if(M.wasm === null) return;
+		// if(S.wasm === null) return;
 		
-		content.style.height = '';
-		content.style.height = content.scrollHeight + 16 + 'px';
+		E.content.style.height = '';
+		E.content.style.height = E.content.scrollHeight + 16 + 'px';
 		
 		/*
 		
@@ -623,31 +419,31 @@ M.editor = new function(){
 		
 		*/
 		
-		dataFragment = document.createDocumentFragment();
-		highlightFragment = document.createDocumentFragment();
+		E.dataFragment = document.createDocumentFragment();
+		E.highlightFragment = document.createDocumentFragment();
 		
 		// Read the file in WASM
-		var totalLines = M.wasm.exports.readFile(M.currentLine);
+		var totalLines = S.wasm.exports.readFile(M.currentLine);
 		
 		// Remove extra line numbers
-		while(data.children[totalLines]) data.removeChild(data.children[totalLines]);
+		while(E.data.children[totalLines]) E.data.removeChild(E.data.children[totalLines]);
 		
 		// Add needed line numbers
-		data.appendChild(dataFragment);
+		E.data.appendChild(E.dataFragment);
 		
 		var els = E.window.document.getElementsByClassName('highlight');
 		for(var i = els.length - 1; i >= 0; i--){
 			els[i].remove();
 		}
 		
-		E.window.document.getElementById('thing').appendChild(highlightFragment);
+		E.window.document.getElementById('thing').appendChild(E.highlightFragment);
 	}
 	
 	E.saveFile = function(){
 		// Update the file and push the changes to the user
 		
 		var formdata = new FormData();
-		formdata.append('text',content.value);
+		formdata.append('text',E.content.value);
 		formdata.append('path',S.files[M.currentFile].path);
 		formdata.append('type','save');
 		formdata.append('fileCount',S.files.length);
@@ -695,10 +491,10 @@ M.editor = new function(){
 		// console.log(input);
 		var editorJson = JSON.parse(input);
 
-		// console.log('WHERE WE GET IT','showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang=' + S.language);
+		// console.log('WHERE WE GET IT','showpony/fetch-file-list.php?path=<?php echo STORIES_PATH; ?>&lang=' + S.language);
 		
 		// Load the new file list
-		fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang=' + S.language)
+		fetch('showpony/fetch-file-list.php?path=<?php echo STORIES_PATH; ?>&lang=' + S.language)
 		.then(response=>{return response.text();})
 		.then(text=>{
 			// console.log(text);
@@ -716,7 +512,7 @@ M.editor = new function(){
 						// console.log('new time is ',newTime);
 						
 						/// TODO: don't make this load twice. This, for now, reloads the keyframe, and updates the title
-						keyframes = parseFile(content.value);
+						keyframes = parseFile(E.content.value);
 						to({file: i, time: newTime});
 						M.src(i, newTime, M.window.dataset.filename, true);
 					} else {
@@ -737,19 +533,19 @@ M.editor = new function(){
 	}
 	
 	// Char codes to string
-	function ab2str(buf){
+	E.ab2str = function(buf){
 		return String.fromCharCode.apply(null, new Uint32Array(buf));
 	}
 	
 	function saveStringToBuffer(str) {
 		// Need the right amount of null chars to initiate correctly; otherwise everything will be off
-		str = prependString + str + '\n\0';
+		str = E.prependString + str + '\n\0';
 		for(var i = 0, l = str.length; i < l; i++) {
 			E.buffer[i] = str.charCodeAt(i);
 		}
 	}
 	
-	function isDelimiter(a){
+	E.isDelimiter = function(a){
 		switch(a){
 			case '\t':
 			case '\r':
@@ -773,13 +569,13 @@ M.editor = new function(){
 		}
 	}
 	
-	function jsAutocomplete(){
+	E.jsAutocomplete = function(){
 		/// AUTOCOMPLETE
 		if(
-			content.selectionStart
-			&& content.selectionStart === content.selectionEnd
+			E.content.selectionStart
+			&& E.content.selectionStart === E.content.selectionEnd
 		){
-			M.wasm.exports.autocomplete(content.selectionEnd);
+			S.wasm.exports.autocomplete(E.content.selectionEnd);
 		}
 	}
 	
@@ -787,7 +583,7 @@ M.editor = new function(){
 	////////////EVENT LISTENERS////////////
 	///////////////////////////////////////
 	
-	content.addEventListener('input',function(){
+	E.content.addEventListener('input',function(){
 		if(this.value.length > 28000){
 			alert('Maximum file character length exceeded! (28000)');
 		}else{
@@ -797,7 +593,7 @@ M.editor = new function(){
 			E.resizeThis();
 			
 			// TODO: prevent running twice, because changeselection event runs now too
-			jsAutocomplete();
+			E.jsAutocomplete();
 			
 			// If we're autosaving, save immediately
 			if(autosave) E.saveFile();
@@ -827,15 +623,15 @@ M.editor = new function(){
 	
 	// On changing the selection, show input
 	E.window.document.addEventListener('selectionchange',function(event){
-		if(E.window.document.activeElement === content) jsAutocomplete();
+		if(E.window.document.activeElement === E.content) E.jsAutocomplete();
 	});
 	
 	E.window.addEventListener('resize',function(){
-		E.resizeThis();
+		if(S.wasm) E.resizeThis();
 	});
 	
 	// Writing shortcut keys
-	content.addEventListener(
+	E.content.addEventListener(
 		'keydown'
 		,function(event){
 			
@@ -861,15 +657,15 @@ M.editor = new function(){
 			} else {
 				switch(event.key){
 					case 'Tab':
-						var start = content.selectionStart;
-						var end = content.selectionEnd;
+						var start = E.content.selectionStart;
+						var end = E.content.selectionEnd;
 					
-						var tabsAdded = M.wasm.exports.tabLines(start,end);
+						var tabsAdded = S.wasm.exports.tabLines(start,end);
 						
 						// Write the info in
 						if(tabsAdded){
 							// Reset cursor position
-							content.selectionStart = content.selectionEnd = end + tabsAdded;
+							E.content.selectionStart = E.content.selectionEnd = end + tabsAdded;
 						// If a tab was not passed, write it
 						}else{
 							E.window.document.execCommand('insertHTML',false,'\t');
@@ -892,17 +688,17 @@ M.editor = new function(){
 		this.style.backgroundColor = autosave ? 'green' : 'red';
 	});
 	
-	resourceSearch.addEventListener('input',resourceRunSearch);
+	E.resourceSearch.addEventListener('input',E.resourceRunSearch);
 	
-	function resourceRunSearch(){
-		var regex = new RegExp('^' + resourceSearch.value);
+	E.resourceRunSearch = function(){
+		var regex = new RegExp('^' + E.resourceSearch.value);
 									
 		// Show and hide the elements as needed
 		var child = resourceList.children;
 		for(var i = 0; i < child.length; i++){
 			if(!regex.test(child[i].dataset.path)) child[i].style.display = 'none';
 			else{
-				console.log('check',child[i].dataset.path,E.searchRegex);
+				// console.log('check',child[i].dataset.path,E.searchRegex);
 				child[i].style.display = 'block';
 			}
 		}

@@ -365,7 +365,7 @@ Object.defineProperty(S, 'language', {
 		view.querySelector('.popup-language .selected').classList.remove('selected');
 		view.querySelector('.popup-language [data-value="'+newLanguage+'"]').classList.add('selected');
 		
-		fetch('showpony/fetch-file-list.php?path=<?php echo $_GET['path'] ?? ''; ?>&lang='+newLanguage)
+		fetch('showpony/fetch-file-list.php?path=<?php echo json_encode(STORIES_PATH); ?>&lang='+newLanguage)
 		.then(response=>{return response.json();})
 		.then(json=>{
 			S.files = json;
@@ -773,15 +773,12 @@ function saveBookmark(){
 }
 
 function checkCollision(x=0,y=0,element){
-	var bounds=element.getBoundingClientRect();
+	var bounds = element.getBoundingClientRect();
 	
-	// If element is collapsed or outside of x and y, return
-	if(bounds.width===0 || bounds.height===0
-		|| y<bounds.top || y>bounds.bottom
-		|| x<bounds.left || x>bounds.right
-	) return false;
-	
-	return true;
+	return S.wasm.exports.checkCollision(
+		x,y
+		,bounds.left,bounds.top,bounds.width,bounds.height
+	);
 }
 
 async function timeUpdate(){
@@ -887,8 +884,8 @@ async function getTotalBuffered(){
 	currentBuffer = buffered;
 }
 
-var scrubLoad=null;
-var scrubLoadTime=null;
+var scrubLoad = null;
+var scrubLoadTime = null;
 
 function infoTime(time){
 	return (S.duration>3600 ? String(time / 3600|0).padStart(String((S.duration / 3600)|0).length,'0')+':' : '')
@@ -1938,59 +1935,269 @@ window.addEventListener('gamepaddisconnected',function(e){
 /////////////////START/////////////////
 ///////////////////////////////////////
 
-// Priority Saves: Newest > Default Start
-if(localStorage.getItem(saveName)===null){
-	// Set defaults
-	localStorage.setItem(saveName,JSON.stringify({
-		currentSave	:'Autosave',
-		language	:<?php echo json_encode($language); ?>,
-		local		:{},
-		system		:null,
-		timestamp	:Date.now()
-	}));
-}else{
-	S.saves=JSON.parse(localStorage.getItem(saveName));
-}
+// Load WASM
+fetch('showpony/script.wasm',{headers:{'Content-Type':'application/wasm'}})
+.then(response => response.arrayBuffer())
+.then(bits => WebAssembly.instantiate(bits,{
+	env:{
+		jsLogString: function(position, length){
+			var string = new Uint32Array(S.wasm.exports.memory.buffer, position, length);
+			
+			console.log('Log from WASM:','A:',string, 'B:',modules.visualNovel.editor.ab2str(string));
+		}
+		,jsLogInt: function(input){
+			console.log('Log from WASM:',input);
+		}
+		,jsCreateLine: function(number,type,position,length){
+			var string = modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length));
 
-// For now, we'll just support this bookmark
-// TODO: allow renaming bookmarks
-addBookmark({name:'Autosave',system:'local',type:'default'});
-addBookmark({name:'Get Link',system:'url',type:'get'});
+			/*
+			
+			Ways to speed up:
+				**- Only calculate new strings**
+				- Anytime you type in something, it should just calculate new strings
+				- Unless we resize the window, then it's really slow still...
+				
+				- Figure out what line the change took place on (if new line or pre-existing one)
+					- If we're before that, ignore and respond with the default value
+					- If we're on that line, recalculate its size
+					- If we've added a line, update all lines based on previous value
+				
+				- Check line #(s, could be copy-paste to add or replace) where change(s) occurred
+				- Look to see if lines were added
+				- Just adjust those lines (and their highlights)
+			*/
+			
+			modules.visualNovel.editor.contentSizing.innerText = (string.length ? string : '_');
+			var height = modules.visualNovel.editor.contentSizing.clientHeight;
+			
+			var target;
+			
+			// Create line if it doesn't exist
+			if(!modules.visualNovel.editor.data.children[number]){
+				target = document.createElement('p');
+				target.innerHTML = '<span class="icon"></span><span>' + (number + 1) + '</span>';
+				modules.visualNovel.editor.dataFragment.appendChild(target);
+			}
+			// Change line's class name if needbe
+			else{
+				target = modules.visualNovel.editor.data.children[number];
+			}
+			
+			// if(target.className !== types[type]) target.className = types[type];
+			target.children[0].style.backgroundPosition = '50% ' + type + '0%';
+			if(parseFloat(target.style.height) !== height) target.style.height = height + 'px';
+			
+			return height;
+		}
+		,jsCreateHighlight: function(top,height){
+			// console.log('HIGHLIGHT',top,height);
+			
+			var highlight = document.createElement('div');
+			highlight.className = 'highlight';
+			
+			highlight.style.top = top + 'px';
+			highlight.style.height = height + 'px';
+			// highlight.dataset.line = currentLine + '|' + i;
 
-// POWER: Hard Link > Bookmark > Soft Link > Default
-
-// Start with the URL Bookmark
-var start = searchParams.get(queryBookmark);
-searchParams.delete(queryBookmark);
-history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
-
-// Show we're paused
-view.id				= 's';
-view.className		= 's-' + readingDirection;
-view.classList.add('paused');
-
-S.debug = <?php
-	if(DEBUG){
-		echo json_encode($debugMessages);
+			// Current Line
+			highlight.style.backgroundColor = 'rgba(0,255,0,.25)';
+			highlight.style.zIndex = '-1';
+			
+			// Error
+			// highlight.style.cssText = 'background-color:rgba(255,0,0,.25);z-index:-1;';
+			
+			modules.visualNovel.editor.highlightFragment.appendChild(highlight);
+			// console.log(highlight);
+		}
+		,jsRecommendation: function(position,length,type,componentType){
+			var helpText = modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length));
+			var autocomplete = modules.visualNovel.editor.window.document.getElementById('content-autocomplete');
+			
+			// console.log('hey');
+			
+			// Get the line number
+			var line = modules.visualNovel.editor.content.value.substr(0,modules.visualNovel.editor.content.selectionStart).match(/\n/g);
+			// If no previous lines exist, get the first line.
+			line = (line ? line.length : 0);
+			// Get the top of the line number element
+			console.log('test',line,modules.visualNovel.editor.data);
+			
+			var top = modules.visualNovel.editor.data.children[line].offsetTop;
+			
+			// Make recommendation box follow us
+			modules.visualNovel.editor.resourceWindow.style.top = (top + 64) + 'px';
+			
+			// console.log('INFO',type,helpText);
+			
+			/// Recommendation resources !!! TEMPORARY SOLUTION !!!
+			if(type === 3 &&
+				(componentType === 6
+				|| componentType === 7)
+			){
+				// Only update images if we need to
+				var searchingFor = (componentType === 6 ? 'images' : 'audio') + '/' + helpText + '/';
+				
+				// We only want to overwrite the search if we haven't already started using something else
+				if(modules.visualNovel.editor.resourceSearch.dataset.component !== searchingFor){
+					modules.visualNovel.editor.resourceSearch.value = searchingFor;
+					modules.visualNovel.editor.resourceSearch.dataset.component = searchingFor;
+					
+					modules.visualNovel.editor.resourceRunSearch();
+				}
+				
+				modules.visualNovel.editor.resourceWindow.style.visibility = 'visible';
+			}else{
+				modules.visualNovel.editor.resourceWindow.style.visibility = 'hidden';
+			}
+			
+			
+			/// Recommendation text ///
+			
+			// If we got passed a null chars
+			if(type !== 1 || helpText[0] === '\0'){
+				autocomplete.style.visibility = 'hidden';
+			// If there is text we can use
+			}else{
+				autocomplete.innerHTML = helpText;
+				autocomplete.style.top = top + 'px';
+				autocomplete.style.visibility = 'visible';
+			}
+		}
+		,jsDisplayObjects: function(position){
+			// position returns the beginning of the array pointing to every component
+			
+			/// Clear Data
+			for(var i = 0; i < modules.visualNovel.editor.assets.children.length; i++){
+				var el = modules.visualNovel.editor.assets.children[i];
+				while(el.firstChild) el.removeChild(el.firstChild);
+			}
+			
+			var objArray = new Uint32Array(S.wasm.exports.memory.buffer, position, 50);
+			// console.log(objArray);
+			
+			var fullData = modules.visualNovel.editor.prependString + content.value;
+			
+			// Test getting objects from WASM
+			// console.log('///////////');
+			for(var i = 0; i < 50; i ++){
+				// Don't continue if we have no more objects
+				if(objArray[i] === 0) break;
+				
+				// console.log('starts with ',content.value[objArray[i] - modules.visualNovel.editor.prependString.length]);
+				var objInfo = new Uint32Array(S.wasm.exports.memory.buffer, S.wasm.exports.getObject(i), 2);
+				
+				/// ASSETS ///
+				var obj = document.createElement('button');
+				obj.addEventListener('click',function(){
+					// console.log('start of selection',content.selectionStart);
+					content.focus();
+					modules.visualNovel.editor.window.document.execCommand('insertHTML',false,this.innerHTML);
+				});
+				// Show if the object's currently active in the scene
+				obj.className = 'component' + (objInfo[1] ? ' active' : '');
+				
+				// Get the length of the name, and display it
+				var length = 0;
+				for(length; length < 50; length++){
+					if(modules.visualNovel.editor.isDelimiter(fullData[objArray[i] + length])) break;
+				}
+				
+				obj.innerHTML = fullData.substr(objArray[i],length);
+				modules.visualNovel.editor.assets.children[objInfo[0]].appendChild(obj);
+			}
+			
+			// Get a list of all the objects
+			// Read them out
+			
+			/*
+			// Variables
+			var variableKeys = Object.keys(M.variables);
+			
+			for(var i = 0; i < variableKeys.length; i++){
+				var input = document.createElement('input');
+				input.value = M.variables[variableKeys[i]];
+				assets.appendChild(input);
+			}*/
+		}
+		, jsOverwriteText: function(position, length){
+			// CHROME
+			/*
+			// Updates text while preserving undo/redo history
+			content.focus();
+			modules.visualNovel.editor.window.document.execCommand('selectAll',false);
+			
+			var el = document.createElement('p');
+			el.innerText = modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length));
+			
+			modules.visualNovel.editor.window.document.execCommand('insertHTML',false,el.innerHTML);
+			// modules.visualNovel.editor.window.document.execCommand('insertText',false,modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length)));
+			*/
+			// FIREFOX
+			modules.visualNovel.editor.content.value = modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length));
+		}
 	}
-	else{
-		echo json_encode('DEBUG = false. No PHP debug info will be passed.');
+}))
+.then(obj => {
+	S.wasm = obj.instance;
+	
+	console.log('WASM LOADED',modules);
+	modules.visualNovel.editor.buffer = new Uint32Array(S.wasm.exports.memory.buffer, S.wasm.exports.getData(0), S.wasm.exports.getBufferLength());
+	
+	// Priority Saves: Newest > Default Start
+	if(localStorage.getItem(saveName)===null){
+		// Set defaults
+		localStorage.setItem(saveName,JSON.stringify({
+			currentSave	:'Autosave',
+			language	:<?php echo json_encode($language); ?>,
+			local		:{},
+			system		:null,
+			timestamp	:Date.now()
+		}));
+	}else{
+		S.saves=JSON.parse(localStorage.getItem(saveName));
 	}
-?>;
 
-// Use the Save Bookmark if the URL Bookmark has nothing
-if(!loadBookmark()){
-	// Use the Default Bookmark if the Save Bookmark has nothing
-	if(start === null || isNaN(start)) start = <?php echo $_GET['start'] ?? DEFAULT_START; ?>;
+	// For now, we'll just support this bookmark
+	// TODO: allow renaming bookmarks
+	addBookmark({name:'Autosave',system:'local',type:'default'});
+	addBookmark({name:'Get Link',system:'url',type:'get'});
 
-	// Pause the Showpony
-	S.paused = true;
-	S.time = start;
-}
+	// POWER: Hard Link > Bookmark > Soft Link > Default
 
-// We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
+	// Start with the URL Bookmark
+	var start = searchParams.get(queryBookmark);
+	searchParams.delete(queryBookmark);
+	history.replaceState(null,'',window.location.pathname + '?' + searchParams.toString());
 
-S.dispatchEvent(new CustomEvent('built'));
+	// Show we're paused
+	view.id				= 's';
+	view.className		= 's-' + readingDirection;
+	view.classList.add('paused');
+
+	S.debug = <?php
+		if(DEBUG){
+			echo json_encode($debugMessages);
+		}
+		else{
+			echo json_encode('DEBUG = false. No PHP debug info will be passed.');
+		}
+	?>;
+
+	// Use the Save Bookmark if the URL Bookmark has nothing
+	if(!loadBookmark()){
+		// Use the Default Bookmark if the Save Bookmark has nothing
+		if(start === null || isNaN(start)) start = <?php echo $_GET['start'] ?? DEFAULT_START; ?>;
+
+		// Pause the Showpony
+		S.paused = true;
+		S.time = start;
+	}
+
+	// We don't remove the loading class here, because that should be taken care of when the file loads, not when Showpony finishes loading
+
+	S.dispatchEvent(new CustomEvent('built'));
+});
 
 }();<?php
 

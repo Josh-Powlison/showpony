@@ -310,7 +310,7 @@ new function(){
 			
 			// Update the editor
 			if(M.editor){
-				// console.log('update me');
+				console.log('updated the editor');
 				M.editor.update(text);
 			}
 			
