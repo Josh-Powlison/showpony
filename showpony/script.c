@@ -43,9 +43,11 @@ struct Object{
 typedef int char32;
 
 const int SIZE = 28000;
+const int FILENAMES_SIZE = 100 * 100;
 
 // Must use L in general, because we are using LONG (wide) letters. This also lets us use UTF-8 chars in here, like Japanese characters.
 char32 data[SIZE] = {'\0'};
+char32 filenames[FILENAMES_SIZE] = {'\0'};
 
 int objPosition = 0;
 
@@ -104,7 +106,17 @@ int main() {
 }
 
 char32* getData(int type){
-	return &data[0];
+	switch(type){
+		case 0:
+			return &data[0];
+			break;
+		case 1:
+			return &filenames[0];
+			break;
+		default:
+			return &data[0];
+			break;
+	}
 }
 
 int* getObject(int id){
@@ -906,6 +918,26 @@ int checkCollision(float pointX,float pointY,float objX,float objY,float objW,fl
 	}
 }*/
 
+int getDuration(){
+	return 1;
+}
+
+int getFileCount(){
+	int nulls = 0;
+	int files = 0;
+	
+	// Every null marks the end of a filename; if there are 2 nulls, we're at the end of the whole list
+	for(int i = 0; i < FILENAMES_SIZE; i ++){
+		if(filenames[i] == '\0') nulls++;
+		else nulls = 0;
+		
+		if(nulls > 1) return files;
+		if(nulls) files++;
+	}
+	
+	return 0;
+}
+
 char32* infoTime(float time,float duration){
 	int pos = 0;
 	
@@ -930,7 +962,33 @@ char32* infoTime(float time,float duration){
 	note[pos++] = L':';
 	note[pos++] = intToChar32((int)time % 60 / 10 | 0);
 	note[pos++] = intToChar32((int)time % 10);
-	note[pos++] = L'\0';
+	note[pos++] = L' ';
+	note[pos++] = L'/';
+	note[pos++] = L' ';
+	
+	float remaining = duration - time;
+	
+	// Hours (10+)
+	if(duration > 36000){
+		note[pos++] = intToChar32((int)remaining / 36000 | 0);
+	}
+	
+	// Hours (1-9)
+	if(duration > 3600){
+		note[pos++] = intToChar32((int)remaining / 3600 % 10 | 0);
+		note[pos++] = L':';
+	}
+	
+	// Minutes (10+)
+	if(duration > 600){
+		note[pos++] = intToChar32((int)remaining / 60 % 60 / 10 | 0);
+	}
+	
+	// Minutes and seconds (always present)
+	note[pos++] = intToChar32((int)remaining / 60 % 10 | 0);
+	note[pos++] = L':';
+	note[pos++] = intToChar32((int)remaining % 60 / 10 | 0);
+	note[pos++] = intToChar32((int)remaining % 10);
 	
 	return &note[0];
 }

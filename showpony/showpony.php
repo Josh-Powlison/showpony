@@ -896,6 +896,9 @@ function infoTime(time){
 	else if(S.duration > 3600)	timeLength = 7;
 	else if(S.duration > 600)	timeLength = 5;
 	
+	timeLength *= 2;
+	timeLength += 3;
+	
 	// Get time from WASM
 	return modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, S.wasm.exports.infoTime(time,S.duration), timeLength));
 }
@@ -961,33 +964,6 @@ function scrub(inputPercent=null){
 		var displayTime = time;
 		var displayFile = file;
 	}
-	
-	<?php
-	switch($_GET['progress'] ?? DEFAULT_PROGRESS){
-		case 'file':
-			?>
-	var completed = infoFile(displayFile + 1);
-	
-	var filesTotal = S.files.length;
-	while(S.files[filesTotal - 1].hidden) filesTotal--;
-	
-    var remaining = infoFile(filesTotal - (displayFile + 1));
-			<?php
-			break;
-		case 'time':
-			?>
-	var completed = infoTime(displayTime);
-	var remaining = infoTime(S.duration - displayTime);
-			<?php
-			break;
-		case 'percent':
-			?>
-	var completed = (Math.round(inputPercent * 100)) + '%';
-	var remaining = (Math.round((1 - inputPercent) * 100)) + '%';
-			<?php
-			break;
-	}
-	?>
     
     // var info = '<p>'+completed+'</p><p>';
 	
@@ -1013,7 +989,8 @@ function scrub(inputPercent=null){
 	
 	timeboxEl.style.transform = 'translateX(' + moveLeft + 'px)';
 	
-	timeboxEl.innerHTML = completed + ' / ' + remaining;
+	/// Todo: add back in option to set display based on file numbers, not time
+	timeboxEl.innerHTML = infoTime(displayTime);
 	
 	// Update scrub amount
 	var ctx = buffer.getContext('2d');
@@ -1055,7 +1032,7 @@ function scrub(inputPercent=null){
 	if(info !== infoText.innerHTML) infoText.innerHTML = info;
 	
 	// We don't want to over-update the title, so we stick with when we're not scrubbing.
-	if(info !== document.title) document.title=completed+' - '+remaining;
+	if(info !== document.title) document.title = info;
 }
 
 var pointerXStart = null;
@@ -2151,6 +2128,21 @@ fetch('showpony/script.wasm',{headers:{'Content-Type':'application/wasm'}})
 	console.log('WASM LOADED',modules);
 	modules.visualNovel.editor.buffer = new Uint32Array(S.wasm.exports.memory.buffer, S.wasm.exports.getData(0), S.wasm.exports.getBufferLength());
 	
+	// Save filenames to WASM
+	S.filesWASM = new Uint32Array(S.wasm.exports.memory.buffer, S.wasm.exports.getData(1), 100 * 100);
+	
+	var filenames = '';
+	for(var i = 0; i < S.files.length; i ++){
+		filenames += S.files[i].name;
+		filenames += '\0';
+	}
+	
+	filenames += '\0\0';
+	
+	saveStringToWASM(filenames);
+	
+	// console.log('Files estimated by WASM',S.wasm.exports.getFileCount());
+	
 	// Priority Saves: Newest > Default Start
 	if(localStorage.getItem(saveName)===null){
 		// Set defaults
@@ -2205,6 +2197,12 @@ fetch('showpony/script.wasm',{headers:{'Content-Type':'application/wasm'}})
 
 	S.dispatchEvent(new CustomEvent('built'));
 });
+
+function saveStringToWASM(str,type) {
+	for(var i = 0, l = str.length; i < l; i++) {
+		S.filesWASM[i] = str.charCodeAt(i);
+	}
+}
 
 }();<?php
 
