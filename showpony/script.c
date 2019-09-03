@@ -95,6 +95,7 @@ void jsCreateHighlight(float top, float height);
 void jsRecommendation(char32 *position, int length, int type, int componentType);
 void jsDisplayObjects(int *position);
 void jsOverwriteText(char32 *position, int length);
+void jsSetStyle(int element, char32 *typePos, int typeLength, char32 *valuePos, int valueLength);
 
 ///////////////////////
 ///// C FUNCTIONS /////
@@ -920,7 +921,8 @@ int checkCollision(float pointX,float pointY,float objX,float objY,float objW,fl
 
 int defaultDuration = 0;
 
-int getDuration(){
+// Get the duration of one or all files. Pass -1 to get the duration of all files, or a whole integer to get a specific one.
+int getDuration(int getFile){
 	int fileSeconds = 0;
 	int totalSeconds = 0;
 	int file = 0;
@@ -929,7 +931,7 @@ int getDuration(){
 	for(int i = 0; i < FILENAMES_SIZE; i ++){
 		// If we've hit the seconds marker, add them on to the total
 		if(fileSeconds > 0 && filenames[i] == L's'){
-			totalSeconds += fileSeconds;
+			if(getFile == -1 || getFile == file) totalSeconds += fileSeconds;
 		}
 		
 		if(char32ToInt(filenames[i]) >= 0){
@@ -947,7 +949,9 @@ int getDuration(){
 			if(filenames[i - 1] == '\0') break;
 			
 			// Add on the default duration if none has been set
-			if(!fileSeconds) totalSeconds += defaultDuration;
+			if(!fileSeconds
+				&& (getFile == -1 || getFile == file)
+			) totalSeconds += defaultDuration;
 			
 			file++;
 		}
@@ -956,6 +960,32 @@ int getDuration(){
 	}
 	
 	return totalSeconds;
+}
+
+// Set a CSS style in the DOM
+void setStyle(){
+	char32 type[] = L"opacity\0";
+	char32 value[] = L"0.1\0";
+	
+	// typeStart is always 0
+	int i = 0;
+	int valueStart = 0;
+	
+	// Go through the note, and set the start of type and value
+	for(i = 0; i < 100; i++){
+		// If we hit a null, we either start the value or exit
+		if(!valueStart && type[i] == L'\0') valueStart = i;
+		else if(valueStart && value[i - valueStart] == L'\0') break;
+		
+		// Change the right value, depending on if we've started reading the value yet
+		if(!valueStart){
+			note[i] = type[i];
+		}else{
+			note[i] = value[i - valueStart];
+		}
+	}
+	
+	jsSetStyle(0, &note[0], valueStart, &note[valueStart], i - valueStart);
 }
 
 int getFileCount(){
@@ -977,7 +1007,7 @@ int getFileCount(){
 char32* infoTime(float time){
 	int pos = 0;
 	
-	int duration = getDuration();
+	int duration = getDuration(-1);
 	
 	// Hours (10+)
 	if(duration > 36000){

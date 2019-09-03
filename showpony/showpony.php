@@ -382,7 +382,7 @@ Object.defineProperty(S, 'language', {
 			saveStringToWASM(filenames);
 			
 			// Get duration from WASM function
-			S.duration = S.wasm.exports.infoTime();
+			S.duration = S.wasm.exports.getDuration(-1);
 			
 			language = newLanguage;
 			
@@ -2128,6 +2128,21 @@ fetch('showpony/script.wasm',{headers:{'Content-Type':'application/wasm'}})
 			// FIREFOX
 			modules.visualNovel.editor.content.value = modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length));
 		}
+		, jsSetStyle: function(element, typePos, typeLength, valuePos, valueLength){
+			var type = modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, typePos, typeLength));
+			// var type = new Uint32Array(S.wasm.exports.memory.buffer, typePos, typeLength);
+			var value = modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, valuePos, valueLength));
+			// var value = new Uint32Array(S.wasm.exports.memory.buffer, valuePos, valueLength);
+			
+			console.log('WHAT WE GOT FROM C:',type,value);
+			
+			var element = content;
+			
+			// If the type doesn't exist, it's a style
+			if(typeof(element[type]) === 'undefined') element.style[type] = value;
+			// If it does, use it!
+			else element[type] = value;
+		}
 	}
 }))
 .then(obj => {
@@ -2147,12 +2162,16 @@ fetch('showpony/script.wasm',{headers:{'Content-Type':'application/wasm'}})
 	
 	filenames += '\0\0';
 	
+	console.log(filenames);
+	
 	saveStringToWASM(filenames);
 	
-	console.log('Files estimated by WASM',S.wasm.exports.getFileCount());
-	console.log('Duration of first file estimated by WASM',S.wasm.exports.getDuration());
+	// console.log('Files estimated by WASM',S.wasm.exports.getFileCount());
+	// console.log('Duration of first file estimated by WASM',S.wasm.exports.getDuration(0));
 	
-	S.duration = S.wasm.exports.getDuration();
+	// S.wasm.exports.setStyle();
+	
+	S.duration = S.wasm.exports.getDuration(-1);
 	
 	// Priority Saves: Newest > Default Start
 	if(localStorage.getItem(saveName)===null){
