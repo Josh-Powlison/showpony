@@ -239,8 +239,6 @@ new function(){
 			}
 		}
 		
-		console.log(keyframes,M.lines);
-		
 		return keyframes;
 	}
 	
@@ -519,9 +517,6 @@ new function(){
 		
 		// Run through if we're running to a point; if we're there or beyond though, stop running through
 		if(runTo !== false && lineNumber >= runTo){
-			console.log('RUNNING THROUGH TO',lineNumber,runTo);
-			console.log('OBJECTS',objects,target);
-			
 			M.loading++;
 			
 			// Reset the engine and delete unnecessary engine target info
@@ -798,9 +793,6 @@ new function(){
 	}
 
 	// STYLE and REMOVE are the same for every instance.
-	
-	// RELEVANT FOR USING MULTIPLE FILES (for characters): add in this support later
-	// var name=/^[^#]+/.exec(object)[0];
 	
 	// Pass new objects to this function to add common sub-functions
 	function objectAddCommonFunctions(O){
