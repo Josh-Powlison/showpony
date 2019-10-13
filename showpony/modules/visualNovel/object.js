@@ -189,7 +189,7 @@ new function(){
 			}
 			
 			// Look for keyframes
-			if(/^engine\.wait$/.test(M.lines[i])){
+			if(/^engine\.wait\s*$/.test(M.lines[i])){
 				keyframes.push(i);
 				continue;
 			}
@@ -216,7 +216,7 @@ new function(){
 				// See if it's part of a tag
 				// Anything with a space we'll ignore; you should only have self-closing tags or closing tags at the end of the line
 				
-				// See if the line ends with an unescaped >; if so, don't add the line
+				// See if the line ends with an unescaped >; if so, don't add the line. The reason: if you're trying to go back, rapid appending lines can keep you from doing so (because they'll happen faster than you press back)
 				if(M.lines[i][M.lines[i].length-1] === '>'){
 					//See if it's an ending tag
 					var test=document.createElement('div');
@@ -238,6 +238,8 @@ new function(){
 				keyframes.push(i);
 			}
 		}
+		
+		console.log(keyframes,M.lines);
 		
 		return keyframes;
 	}
@@ -305,6 +307,7 @@ new function(){
 				else keyframeSelect=keyframes[keyframeSelect];
 			}
 			
+			// Run to a keyframe if we need to
 			runTo = keyframeSelect;
 			
 			content.classList.remove('loading');
@@ -516,6 +519,8 @@ new function(){
 		
 		// Run through if we're running to a point; if we're there or beyond though, stop running through
 		if(runTo !== false && lineNumber >= runTo){
+			console.log('RUNNING THROUGH TO',lineNumber,runTo);
+			console.log('OBJECTS',objects,target);
 			
 			M.loading++;
 			
@@ -1376,7 +1381,7 @@ new function(){
 					totalWait += waitTime;
 					// Set the display time here- but if we're paused, or running through the text with runTo, no delay!
 					// console.log('Paused: ',paused,' runTo: ',runTo);
-					if(!paused && runTo === false) charAppearAnimation.style.animationDelay = totalWait + 's';
+					if(!paused && (runTo === false || runTo === 'ending')) charAppearAnimation.style.animationDelay = totalWait + 's';
 					
 					// Build the char and add it to the parent (which may be a document fragment)
 					charContainer.appendChild(charAppearAnimation);
