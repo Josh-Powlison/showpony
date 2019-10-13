@@ -895,6 +895,11 @@ async function getTotalBuffered(){
 var scrubLoad = null;
 var scrubLoadTime = null;
 
+// Char codes to string
+function ab2str(buf){
+	return String.fromCharCode.apply(null, new Uint32Array(buf));
+}
+
 function infoTime(time){
 	
 	// Get the right length for the val
@@ -908,7 +913,7 @@ function infoTime(time){
 	timeLength += 3;
 	
 	// Get time from WASM
-	return modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, S.wasm.exports.infoTime(time), timeLength));
+	return ab2str(new Uint32Array(S.wasm.exports.memory.buffer, S.wasm.exports.infoTime(time), timeLength));
 }
 
 function infoFile(input){
@@ -1935,13 +1940,13 @@ fetch('showpony/script.wasm',{headers:{'Content-Type':'application/wasm'}})
 		jsLogString: function(position, length){
 			var string = new Uint32Array(S.wasm.exports.memory.buffer, position, length);
 			
-			console.log('Log from WASM:','A:',string, 'B:',modules.visualNovel.editor.ab2str(string));
+			console.log('Log from WASM:','A:',string, 'B:',ab2str(string));
 		}
 		,jsLogInt: function(input){
 			console.log('Log from WASM:',input);
 		}
 		,jsCreateLine: function(number,type,position,length){
-			var string = modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length));
+			var string = ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length));
 
 			/*
 			
@@ -2003,7 +2008,7 @@ fetch('showpony/script.wasm',{headers:{'Content-Type':'application/wasm'}})
 			// console.log(highlight);
 		}
 		,jsRecommendation: function(position,length,type,componentType){
-			var helpText = modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length));
+			var helpText = ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length));
 			var autocomplete = modules.visualNovel.editor.window.document.getElementById('content-autocomplete');
 			
 			// console.log('hey');
@@ -2120,18 +2125,18 @@ fetch('showpony/script.wasm',{headers:{'Content-Type':'application/wasm'}})
 			modules.visualNovel.editor.window.document.execCommand('selectAll',false);
 			
 			var el = document.createElement('p');
-			el.innerText = modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length));
+			el.innerText = ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length));
 			
 			modules.visualNovel.editor.window.document.execCommand('insertHTML',false,el.innerHTML);
-			// modules.visualNovel.editor.window.document.execCommand('insertText',false,modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length)));
+			// modules.visualNovel.editor.window.document.execCommand('insertText',false,ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length)));
 			*/
 			// FIREFOX
-			modules.visualNovel.editor.content.value = modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length));
+			modules.visualNovel.editor.content.value = ab2str(new Uint32Array(S.wasm.exports.memory.buffer, position, length));
 		}
 		, jsSetStyle: function(element, typePos, typeLength, valuePos, valueLength){
-			var type = modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, typePos, typeLength));
+			var type = ab2str(new Uint32Array(S.wasm.exports.memory.buffer, typePos, typeLength));
 			// var type = new Uint32Array(S.wasm.exports.memory.buffer, typePos, typeLength);
-			var value = modules.visualNovel.editor.ab2str(new Uint32Array(S.wasm.exports.memory.buffer, valuePos, valueLength));
+			var value = ab2str(new Uint32Array(S.wasm.exports.memory.buffer, valuePos, valueLength));
 			// var value = new Uint32Array(S.wasm.exports.memory.buffer, valuePos, valueLength);
 			
 			console.log('WHAT WE GOT FROM C:',type,value);
@@ -2149,7 +2154,7 @@ fetch('showpony/script.wasm',{headers:{'Content-Type':'application/wasm'}})
 	S.wasm = obj.instance;
 	
 	console.log('WASM LOADED',modules);
-	modules.visualNovel.editor.buffer = new Uint32Array(S.wasm.exports.memory.buffer, S.wasm.exports.getData(0), S.wasm.exports.getBufferLength());
+	if(modules.visualNovel.editor) modules.visualNovel.editor.buffer = new Uint32Array(S.wasm.exports.memory.buffer, S.wasm.exports.getData(0), S.wasm.exports.getBufferLength());
 	
 	// Save filenames to WASM
 	S.filesWASM = new Uint32Array(S.wasm.exports.memory.buffer, S.wasm.exports.getData(1), 100 * 100);

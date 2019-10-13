@@ -394,8 +394,6 @@ M.editor = new function(){
 	
 	E.resizeThis = function(){
 		
-		// if(S.wasm === null) return;
-		
 		E.content.style.height = '';
 		E.content.style.height = E.content.scrollHeight + 16 + 'px';
 		
@@ -530,11 +528,6 @@ M.editor = new function(){
 		.catch(error=>{
 			notice('Failed to reload file list. '+error);
 		});
-	}
-	
-	// Char codes to string
-	E.ab2str = function(buf){
-		return String.fromCharCode.apply(null, new Uint32Array(buf));
 	}
 	
 	function saveStringToBuffer(str) {

@@ -246,6 +246,7 @@ new function(){
 	M.src = async function(file = 0,time = 0,filename = null,refresh = false){
 		// If this is the current file
 		if(M.window.dataset.filename === filename){
+			// return true;
 			
 			// Get the last keyframe based on 'end'
 			if(time === 'end'){
@@ -281,9 +282,13 @@ new function(){
 		srcId ++;
 		if(srcId > 255) srcId = 0;
 		
+		var currentSrcId = srcId;
+		
 		return fetch(filename,{credentials:'include'})
 		.then(response=>{if(response.ok) return response.text();})
 		.then(text=>{
+			if(currentSrcId !== srcId) return true;
+			
 			M.window.dataset.filename = filename;
 			
 			keyframes = parseFile(text);
@@ -399,6 +404,10 @@ new function(){
 	
 	// SLOW AS SIN
 	M.run = function(line = M.currentLine + 1){
+		// This function either needs to be so fast that scrubbing is no issue, or to stop midway
+		
+		// return true;
+		
 		var currentSrcId = srcId;
 		
 		timer.stop();
@@ -412,11 +421,13 @@ new function(){
 			// As long as the line returns true, use it
 			if(!M.readLine(M.currentLine, M.lines[M.currentLine])) break;
 		}
+		// return true;
 		
 		// Update editor
 		if(M.editor){
 			M.editor.resizeThis();
 		}
+		
 		
 		if(runTo === 'ending') runTo = false;
 
@@ -424,6 +435,7 @@ new function(){
 	}
 	
 	M.readLine = function(lineNumber, text){
+		
 		// Replace all variables (including variables inside variables) with the right component
 		var match;
 		while(match = /[^\[]+(?=\])/g.exec(text)) text = text.replace('[' + match[0] + ']', M.variables[match[0]]);
@@ -501,6 +513,7 @@ new function(){
 			}
 		}
 		
+		
 		// Run through if we're running to a point; if we're there or beyond though, stop running through
 		if(runTo !== false && lineNumber >= runTo){
 			
@@ -522,6 +535,7 @@ new function(){
 			};
 			
 			// Go through each target; add nonexisting elements and update styles
+			/// Todo: speed up this block
 			for(var compTarget in target){
 				// Make the remaining objects
 				if(typeof(objects[compTarget])==='undefined'){
@@ -551,11 +565,14 @@ new function(){
 					
 					// If it's a function to run
 					if(typeof(objects[compTarget][commTarget])==='function'){
+						// console.log('Target: ' + compTarget + ', Function: ' + commTarget);
+						// console.time('function');
 						if(typeof(target[compTarget][commTarget])==='undefined'){
 							objects[compTarget][commTarget]();
 						}else{
 							objects[compTarget][commTarget](target[compTarget][commTarget]);
 						}
+						// console.timeEnd('function');
 					// If it's a value to set
 					}else if(typeof objects[compTarget][commTarget] !== 'undefined'){
 						objects[compTarget][commTarget]=target[compTarget][commTarget];
@@ -1056,17 +1073,17 @@ new function(){
 		O.preload();
 	}
 	
-	M.textbox=function(input){
-		objects[input]=this;
-		const O=this;
-		O.type='textbox';
-		O.name=input;
+	M.textbox = function(input){
+		objects[input] = this;
+		const O = this;
+		O.type = 'textbox';
+		O.name = input;
 		
-		O.el=document.createElement('form');
-		O.el.className='m-vn-textbox';
-		O.el.dataset.name=input;
-		O.el.dataset.state='hidden';
-		O.el.dataset.done='true';
+		O.el = document.createElement('form');
+		O.el.className = 'm-vn-textbox';
+		O.el.dataset.name = input;
+		O.el.dataset.state = 'hidden';
+		O.el.dataset.done = 'true';
 		O.target = null;
 		
 		O.el.addEventListener('submit',function(event){ 
@@ -1087,7 +1104,7 @@ new function(){
 		
 		M.window.appendChild(O.el);
 		
-		O.empty=function(){
+		O.empty = function(){
 			O.el.dataset.state = 'hidden';
 			O.el.dataset.done = 'true';
 			while(O.el.firstChild) O.el.removeChild(O.el.firstChild);
@@ -1104,7 +1121,7 @@ new function(){
 		
 		var lastLetter;
 		
-		O.content=function(input = 'NULL: No text was passed.'){
+		O.content = function(input = 'NULL: No text was passed.'){
 			O.el.dataset.state = 'normal';
 			O.el.dataset.done = 'false';
 			
@@ -1355,36 +1372,36 @@ new function(){
 					charAppearAnimation.className = 'm-vn-letter';
 					var charPositioning = document.createElement('span');		// Hidden char for positioning
 					charPositioning.className='m-vn-letter-placeholder';
-					var charPerpetualAnimation = document.createElement('span') // Perpetual animation character (singing, shaking...)
-					charPerpetualAnimation.className = 'm-vn-letter-animation';
 					
 					totalWait += waitTime;
 					// Set the display time here- but if we're paused, or running through the text with runTo, no delay!
-					if(!paused && runTo === false) charAppearAnimation.style.animationDelay = totalWait+'s';
+					// console.log('Paused: ',paused,' runTo: ',runTo);
+					if(!paused && runTo === false) charAppearAnimation.style.animationDelay = totalWait + 's';
 					
 					// Build the char and add it to the parent (which may be a document fragment)
-					charAppearAnimation.appendChild(charPerpetualAnimation);
 					charContainer.appendChild(charAppearAnimation);
 					charContainer.appendChild(charPositioning);
 					currentParent.appendChild(charContainer);
 					
-					// Set animation timing for charPerpetualAnimation, based on the type of animation
-					var thisAnimation = animation[animation.length-1];
-					
-					if(!isNaN(thisAnimation)){
-						charPerpetualAnimation.style.animationDelay=-(letters.length/parseFloat(thisAnimation))+'s';
+					// Perpetual animation character (singing, shaking...), not always needed
+					if(!isNaN(animation[animation.length-1])){
+						var charPerpetualAnimation = document.createElement('span');
+						charPerpetualAnimation.className = 'm-vn-letter-animation';
+						charPerpetualAnimation.style.animationDelay = -(letters.length/parseFloat(animation[animation.length-1])) + 's';
+						charPerpetualAnimation.innerText = input[i];
+						
+						charAppearAnimation.appendChild(charPerpetualAnimation);
 					}
-					
 					
 					// Spaces
 					if(input[i] === ' '){
 						charContainer.style.whiteSpace = 'pre-line';
-						charPositioning.innerHTML= ' <wbr>';
+						charPositioning.innerHTML = ' <wbr>';
 						
-						if(runTo !== false) charAppearAnimation.style.visibility = 'visible';
+						// if(runTo !== false) charAppearAnimation.style.visibility = 'visible';
 					// Regular characters
 					}else{
-						charPositioning.innerText = charPerpetualAnimation.innerText = input[i];
+						charPositioning.innerText = input[i];
 						
 						charAppearAnimation.addEventListener('animationstart',scrollText);
 					}
@@ -1459,5 +1476,6 @@ new function(){
 	}
 	
 	// Load editor
+	/// Todo: get working without the editor attached
 	<?php include 'editor.js'; ?>
 }()
