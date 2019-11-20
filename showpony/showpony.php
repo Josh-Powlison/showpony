@@ -1814,7 +1814,7 @@ function pointerUp(event){
 	}
     
 	
-	console.log(pointer.target,'got to here');
+	// console.log(pointer.target,'got to here');
 	var pointerTargetBox = pointer.target.getBoundingClientRect();
     // Ignore scrollbar
     // if(pointer.offsetX>pointerTargetBox.width || pointer.offsetY>pointerTargetBox.height) return;
