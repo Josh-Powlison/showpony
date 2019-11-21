@@ -574,6 +574,10 @@ Object.defineProperty(S, 'paused', {
 function notice(input){
 	S.paused = true;
 
+	alert(input);
+	
+	return;
+
 	var noticeText = noticeEl.querySelector('#notice-text');
 	
 	// If a message is currently up, add new messages to the list rather than overwriting them
@@ -2018,7 +2022,7 @@ fetch('showpony/script.wasm',{headers:{'Content-Type':'application/wasm'}})
 			// If no previous lines exist, get the first line.
 			line = (line ? line.length : 0);
 			// Get the top of the line number element
-			console.log('test',line,modules.visualNovel.editor.data);
+			// console.log('test',line,modules.visualNovel.editor.data);
 			
 			var top = modules.visualNovel.editor.data.children[line].offsetTop;
 			

@@ -298,6 +298,10 @@
 	justify-content:center;
 }
 
+.choices button, .choices input{
+	font-size:1em;
+}
+
 /* CUSTOM LETTER ANIMATIONS */
 
 .shout .m-vn-letter{

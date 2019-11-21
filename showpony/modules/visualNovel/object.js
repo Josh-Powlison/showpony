@@ -383,12 +383,17 @@ new function(){
 	M['+']	= function(a,b){return a + b;}
 	M['-']	= function(a,b){return a - b;}
 	M['==']	= function(a,b){
+		// Use the variable if it's a variable (and not a value)
+		var preValue = a;
+		// console.log(a,b,M.variables,typeof(M.variables[a]) !== 'undefined');
+		if(typeof(M.variables[a]) !== 'undefined') preValue = M.variables[a];
+		
 		// Test regex, if a regex was passed
 		var regexTest = /^\/([^\/]+)\/(.)*$/.exec(b);
-		console.log(regexTest,a,b);
+		// console.log(regexTest,a,b);
 		if(regexTest !== null){
-			console.log("Regular expression ",a,b,regexTest);
-			console.log(M.variables);
+			// console.log("Regular expression ",a,b,regexTest);
+			// console.log(M.variables);
 			if(regexTest[2] != null){
 				var regex = new RegExp(regexTest[1],regexTest[2]);
 			}else{
@@ -397,10 +402,10 @@ new function(){
 			
 			// console.log('TEST THIS',regex,a,regex.test(String(a)));
 			
-			return regex.test(String(a));
+			return regex.test(String(preValue));
 		}
 		
-		return a == b;
+		return preValue == b;
 	}
 	M['<']	= function(a,b){return a < b;}
 	M['>']	= function(a,b){return a > b;}
@@ -1471,29 +1476,36 @@ new function(){
 					
 					// We're closing the element
 					if(values[0]==='/'){
-						switch(values.substr(1)){
-							case 'animation':
-								// Revert the attributes to their previous values
-								animation.pop();
-								break;
-							case 'speed':
-								// Revert the attributes to their previous values
-								baseWaitTime.pop();
-								constant.pop();
-								break;
-							default:
-								// If the parent doesn't have a parent (it's top-level)
-								if(currentParent.parentElement == null){
-									fragment.appendChild(currentParent);
-									currentParent = fragment;
-								// If a parent element exists, it's the new parent
-								} else {
-									currentParent = currentParent.parentElement;
-								}
-								break;
+						// Remove animation values if we need to
+						if(currentParent.hasAttribute('animationoffset')){
+							console.log('We found animationoffset!');
+							animation.pop();
+						}
+						
+						// Remove rate values if we need to
+						if(currentParent.hasAttribute('rate') || currentParent.hasAttribute('basetime')){
+							console.log('We found rate/basetime!');
+							baseWaitTime.pop();
+						}
+						
+						// Remove constant values if we need to
+						if(currentParent.hasAttribute('constant')){
+							console.log('We found constant!');
+							constant.pop();
+						}
+						
+						// If the parent doesn't have a parent (it's top-level)
+						if(currentParent.parentElement == null){
+							fragment.appendChild(currentParent);
+							currentParent = fragment;
+						// If a parent element exists, it's the new parent
+						} else {
+							currentParent = currentParent.parentElement;
 						}
 					// We're creating the element
 					}else{
+						/// TODO: improve this regex: remove field 4, and take into account escaped quotes
+						
 						// Get the element's tag and attributes
 						var regex=/(\S+)=(['"]?)(.+?)\2(?=\s|$)|(\S+)/g;
 						// Capture groups: 4 is attribute name if no value is given. 1 is attribute name if a value is given, and 3 is that value.
@@ -1508,13 +1520,101 @@ new function(){
 							else tag=match[0];
 						}
 						
-						switch(tag){
-							case 'animation':
-								if(attributes[0][1]==='offset'){
-									animation.push(parseFloat(attributes[0][3]));
+						/// TODO: allow attributes on <br> tags
+						
+						// If it's a line break
+						if(tag === 'br'){
+							var lineBreak = document.createElement('span');
+							lineBreak.style.whiteSpace='pre-line';
+							lineBreak.innerHTML=' <wbr>';
+							currentParent.appendChild(lineBreak);
+							// wbr fixes missing lines breaks in Firefox
+							currentParent.appendChild(document.createElement('br'));
+						}
+						// Otherwise, we create the element, read through it, and add the attributes
+						else {
+							var newElement = document.createElement(tag);
+							
+							for(let ii = 0; ii < attributes.length; ii++){
+								let attributeVal	= null;
+								let attributeName	= null;
+								
+								// See if it has an attributed listed for it; if so, get the attribute
+								if(attributes[ii][4]){
+									newElement.setAttribute(attributes[ii][4],true);
+									
+									attributeName	= attributes[ii][4];
+									attributeVal	= true;
 								}
-								break;
-							case 'speed':
+								else{
+									newElement.setAttribute(attributes[ii][1],attributes[ii][3]);
+									
+									attributeName	= attributes[ii][1];
+									attributeVal	= attributes[ii][3];
+								}
+								
+								// Set the attribute
+								newElement.setAttribute(attributeName,attributeVal);
+								
+								// Perform special functions for special attributes
+								switch(attributeName){
+									// Offset the animation in the element
+									case 'animationoffset':
+										animation.push(parseFloat(attributeVal));
+										break;
+									// Set the base time of a letter's speed
+									case 'basetime':
+										// We're adding to a baseWaitTime array, so we can have nested values
+										baseWaitTime.push(
+											attributeVal === 'default'
+											? defaultBaseWaitTime
+											: parseFloat(attributeVal)
+										);
+										break;
+									// Set the speed of the text to constant
+									case 'constant':
+										constant.push(attributeVal === 'false' ? false : true);
+										break;
+									// When click on this element, go to the specified line (based on comments in the code)
+									case 'goto':
+										O.el.dataset.done = 'form';
+										
+										newElement.addEventListener('click',function(event){
+											M.go(attributeVal);
+											
+											event.stopPropagation();
+											// Form submits
+										});
+										break;
+									// Save the value of this input
+									case 'name':
+										M.variables[newElement.name] = newElement.value;
+										
+										newElement.addEventListener('change',function(){
+											M.variables[this.name] = this.value;
+											
+											if(debug){
+												console.log('Set variable ' + this.name + ' to ' + this.value);
+											}
+										});
+										break;
+									// Set the rate of the text (a multiplier)
+									case 'rate':
+										baseWaitTime.push(baseWaitTime[baseWaitTime.length - 1] * attributeVal);
+										break;
+									default:
+										break;
+								}
+							}
+							
+							currentParent.appendChild(newElement);
+								
+							// If it's not a self-closing tag, make it the new parent
+							if(!/^(area|br|col|embed|hr|img|input|link|meta|param|wbr)$/i.test(tag)){
+								currentParent = newElement;
+							}
+						}
+						/*
 								var setConstant = false;
 								var setRate = null;
 								var setBaseTime = null;
@@ -1535,7 +1635,7 @@ new function(){
 									}
 								}
 								
-								var setWaitTime = baseWaitTime[baseWaitTime.length-1];
+								var setWaitTime = baseWaitTime[baseWaitTime.length - 1];
 								
 								if(setBaseTime!==null){
 									if(setBaseTime==='default') setWaitTime = defaultBaseWaitTime;
@@ -1543,78 +1643,11 @@ new function(){
 								}
 								
 								if(setRate!==null){
-									setWaitTime*=setRate;
+									baseWaitTime.push(baseWaitTime[baseWaitTime.length - 1] * setRate);
 								}
 								
 								constant.push(setConstant);
-								baseWaitTime.push(setWaitTime);
-								break;
-							case 'br':
-								var lineBreak = document.createElement('span');
-								lineBreak.style.whiteSpace='pre-line';
-								lineBreak.innerHTML=' <wbr>';
-								currentParent.appendChild(lineBreak);
-								// wbr fixes missing lines breaks in Firefox
-								currentParent.appendChild(document.createElement('br'));
-								break;
-							default:
-								var newElement = document.createElement(tag);
-								
-								for(let ii = 0; ii < attributes.length; ii++){
-									if(attributes[ii][4]) newElement.setAttribute(attributes[ii][4],true);
-									else newElement.setAttribute(attributes[ii][1],attributes[ii][3]);
-								}
-								
-								currentParent.appendChild(newElement);
-								
-								// If it's not a self-closing tag, make it the new parent
-								if(!/^(area|br|col|embed|hr|img|input|link|meta|param|wbr)$/i.test(tag)){
-									currentParent = newElement;
-								}
-								
-								// If an input type, wait until input is set and stuff
-								if(tag === 'input' || tag === 'button'){
-									// Update data based on this
-									if(tag === 'button' || newElement.type === 'button' || newElement.type === 'submit'){
-										O.el.dataset.done = 'form';
-										
-										newElement.addEventListener('click',function(event){
-											if(typeof(this.dataset.var) !== 'undefined'){
-												M.variables[this.dataset.var] = this.dataset.val;
-												
-												if(debug){
-													console.log('Set variable ' + this.dataset.var + ' to ' + this.dataset.val);
-												}
-											}
-											
-											// This might just be a continue button, so we need to check
-											if(typeof(this.dataset.go) !== 'undefined'){
-												O.target = M.lines.indexOf(this.dataset.go);
-												
-												if(typeof(O.target) === 'undefined' || O.target === null){
-													notice('Error: tried to go to a nonexistent line labeled ' + this.dataset.go);
-													O.target = null;
-												}
-											}
-											
-											event.stopPropagation();
-											// Form submits
-										});
-									}else{
-										// Set data to the defaults of these, in case the user just clicks through
-										if(newElement.dataset.var) M.variables[newElement.dataset.var] = newElement.value;
-										
-										newElement.addEventListener('change',function(){
-											M.variables[this.dataset.var] = this.value;
-											
-											if(debug){
-												console.log('Set variable ' + this.dataset.var + ' to ' + this.value);
-											}
-										});
-									}
-								}
-							break;
-						}
+								baseWaitTime.push(setWaitTime);*/
 					}
 					
 					// Pass over the closing bracket, and read the next character
