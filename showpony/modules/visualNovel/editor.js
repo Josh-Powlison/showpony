@@ -499,7 +499,20 @@ M.editor = new function(){
 			
 			var oldDuration = S.files[M.currentFile].duration;
 			S.files = JSON.parse(text);
-			S.duration = S.files.map(function(e){return e.duration;}).reduce((a,b) => a+b,0);
+			
+			// Set filenames in WASM
+			var filenames = '';
+			for(var i = 0; i < S.files.length; i ++){
+				filenames += S.files[i].name;
+				filenames += '\0';
+			}
+			
+			filenames += '\0\0';
+			
+			saveStringToWASM(filenames);
+			
+			// Get duration from WASM function
+			S.duration = S.wasm.exports.getDuration(-1);
 			
 			// Go to the newly created file
 			for(var i = 0; i < S.files.length; i ++){

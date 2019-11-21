@@ -27,7 +27,7 @@ if($_POST['type'] == 'new'){
 	$files = glob($path .'*');
 	if($files) $fileCount = count($files);
 	
-	$newName = str_pad($fileCount,3,'0',STR_PAD_LEFT) . ' ' . gmdate('Y-m-d-G-i-s') . ' {File ' . $fileCount . '} 10s.vn';
+	$newName = str_pad($fileCount,3,'0',STR_PAD_LEFT) . ' ' . gmdate('Y-m-d-H-i-s') . ' {File ' . $fileCount . '} 10s.vn';
 	
 	$_POST['text']		= '	This is File ' . $fileCount . '. Ah, a fresh start!';
 // Existing paths
