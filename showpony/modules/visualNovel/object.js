@@ -1,18 +1,18 @@
 new function(){
-	const M=this;
+	const M			= this;
 	
-	M.currentTime=null;
-	M.currentFile=null;
-	M.currentLine=null;
-	M.lines=null;
-	M.loading=0; // Tracks how many items are currently loading
-	M.variables = {};
-	M.editor = null;
+	M.currentTime	= null;
+	M.currentFile	= null;
+	M.currentLine	= null;
+	M.lines			= null;
+	M.loading		= 0; // Tracks how many items are currently loading
+	M.variables		= {};
+	M.editor		= null;
 	
-	M.window=document.createElement('div');
+	M.window = document.createElement('div');
 	console.log('START UP');
 	// M.class (function call for the user) is based on the initial class name, set here.
-	M.window.className='m-vn';
+	M.window.className = 'm-vn';
 	M.window.dataset.filename = null;
 	
 	M.styles = document.createElement('style');
@@ -20,8 +20,8 @@ new function(){
 		addslashes(readfile(__DIR__.'/styles.css'));
 	?>`;
 	
-	M.subtitles=document.createElement('p');
-	M.subtitles.className='m-vn-subtitles';
+	M.subtitles = document.createElement('p');
+	M.subtitles.className = 'm-vn-subtitles';
 	M.window.appendChild(M.subtitles);
 	
 	var runTo=false;
@@ -72,7 +72,6 @@ new function(){
 		M.window.classList.remove('paused');
 		// Go through audio elements that were playing- unpause them
 		for(var name in objects){
-			if(name === 'silly') console.log(name,objects[name]);
 			if(objects[name].playing){
 				objects[name].play(true);
 			}
@@ -94,9 +93,6 @@ new function(){
 		
 		// Go through objects that can be played- pause them, and track that
 		for(var name in objects){
-			if(name === 'silly') console.log(name,objects[name]);
-			
-			// If it can play, and it is playing
 			if(objects[name].playing){
 				objects[name].pause(true);
 			}
@@ -893,15 +889,17 @@ new function(){
 		O.playing = false;
 		
 		O.content = function(input){
-			// Character level
-			// Get the image names passed (commas separate layers)
+			// Audio level
+			// Get the audio names passed (commas separate layers)
 			var fileNames = input.split(',');
 			
 			// If no extension is specified, assume mp3
-			// if(!/\..+/.test(input)) input+='.mp3';
 			var name = input;
 			
 			if(O.el.dataset.file === name) return true;
+			
+			// layersUpdated is an array of promises 
+			var layersUpdated = [];
 			
 			//Convert string to an array that Looper can use
 			var layers = input.split(',');
@@ -924,95 +922,150 @@ new function(){
 					if(!/\./.test(files[ii])) files[ii] += '.mp3';
 				}
 				
-				//Update layer(s)
-				O.adjustLayer(i,files);
+				// Update layer(s)
+				layersUpdated.push(adjustLayer(i,files));
 			}
+			
+			console.log('STATE OF PLAY',O.playing,O.autoplay,loopDuration);
+			// Wait on all updates to load
+			Promise.all(layersUpdated).then(()=>{
+			// If we're supposed to be playing, but aren't, try using play again
+				if(O.autoplay){
+				console.log('We should tryy playing');
+					O.play();
+				}
+			});
 			
 			O.el.dataset.file = name;
 			
 			return true;
 		}
 		
+		function adjustLayer(layer,files){
+			// If layer doesn't exist, add it
+			if(!O.track[layer]) O.track[layer] = [];
+			
+			// Which item in the layer we're getting
+			var item = O.currentBar % files.length;
+			
+			// Pause current layer
+			for(var i = 0; i < O.track[layer].length; i++){
+				
+				// If the file currently playing won't change, don't pause it!
+				let getOld = O.currentBar % O.track[layer].length;
+				
+				if(O.track[layer][getOld] === files[item]) continue;
+				
+				// If the source exists and isn't the same as the one that it's being set to, stop the old source
+				var oldSource = sources[O.track[layer][i]];
+				if(oldSource){
+					try{ oldSource.stop(0); }
+					catch { console.log('Dunno what Safari is doing, but this should keep things from breaking'); }
+				}
+			}
+			
+			console.log('WHAT FILES ARE WE LOADING',files,layer);
+			
+			// Once successfully load any not-loaded files, continue
+			return O.load(files).then((values) => {
+				console.log('LOOP DURATION',layer,values[0]);
+				// If this is the first layer, then update the duration based on its first item
+				if(!layer) loopDuration = values[0].duration * 1000;
+				
+				// Update the layer to match the files passed
+				O.track[layer] = files;
+				
+				// Get the right filename to play
+				console.log('PLAY ITEM',files,item);
+				
+				// Get the file to play
+				var fileName = files[item];
+				if(fileName == 'null') fileName = null;
+				
+				var offset = ((new Date().getTime() - timeStartedLoop)/1000) || 0;
+				
+				// Play the buffer midway (as long as we're not supposed to have a gap here)
+				if(O.playing && fileName !== null) playBuffer(fileName,offset);
+				
+				return true;
+			});
+		}
+		
 		O.play = function(fromMenu){
-			console.log(fromMenu,paused,O.playing)
+			if(fromMenu) return;
 			
-			// State we were playing if the menu didn't try to play us
-			if(!fromMenu) O.playing = true;
+			// The menu tried to play us
 			
-			console.log('Looper trying to play');
+			// If we came from the menu and aren't actually set to be playing
+			// if(fromMenu && O.playing !== true){
+				// return;
+			// }
 			
-			if(!O.playing) return true; 
+			// We were paused
 			
-			console.log('ON PLAYING',O);
+			// We were stopped
 			
-			stopping=false;
+			// Ignore this if we came from the menu; the menu pauses and plays, but doesn't track things the same way
+			// if(S.paused) return;
 			
-			if(loopDuration===0){
-				O.autoplay=true;
-				//console.log('Setting autoplay to true so will start once loaded...');
+			if(loopDuration === 0){
+				O.autoplay = true;
+				console.log('Setting autoplay to true so will start once loaded...');
 				return true;
 			}
 			
-			console.log('Looping playing',paused,loopDuration,loopTimeout);
+			O.playing	= true;
+			O.autoplay	= false;
 			
-			//If we're paused start playing again
-			if(paused>0){
+			console.log('PAUSED?',paused);
+			
+			// If we're paused start playing again
+			if(paused > 0){
 				
-				//Start up the interval based on pause time
+				// Start up the interval based on pause time
 				O.context.resume().then(()=>{
-					console.log('Resuming context',paused,loopDuration,loopTimeout);
-					
-					startTimeout(loopDuration-paused);
+					startTimeout(loopDuration - paused);
 					// startTimeout(O.context.currentTime % O.duration);
 					
-					//Estimate how far into the loop we are
-					timeStartedLoop=new Date().getTime()-paused;
+					// Estimate how far into the loop we are
+					timeStartedLoop = new Date().getTime() - paused;
 					
-					paused=0;
-					O.paused=false;
+					paused = 0;
 				});
 				return true;
 			}
-			
-			O.paused=false;
-			
 			
 			//If we're playing, exit
 			if(loopTimeout!==null){
 				return;
 			}
 			
+			console.log('ABOUT TO CALL STARTTIMEOUT');
 			startTimeout();
-			O.currentBar=0;
-			
+			O.currentBar = 0;
 			playLoop();
 			
 			return true;
 		}
 		
 		O.pause = function(fromMenu){
-			// State we weren't playing if the menu didn't pause us
-			if(!fromMenu) O.playing = false;
+			if(fromMenu) return;
 			
 			//If we're already paused, don't do it!
-			if(paused!==0) return;
+			if(paused > 0) return;
 			
-			//In the process of pausing
-			paused=-1;
-			O.paused=true;
+			// Paused is set based on how far into the loop we are, so we start the next timeout in good time
+			paused = 0;
 			
-			//Paused is set based on how far into the loop we are, so we start the next timeout in good time
-			O.context.suspend().then(()=>{
-				paused+=new Date().getTime()-timeStartedLoop;
+			O.context.suspend().then(() => {
+				paused = new Date().getTime() - timeStartedLoop;
 				clearTimeout(loopTimeout);
 			});
 			
 			return true;
 		}
 		
-		var stopping=false;
-		O.stop=function(){
-			console.log('stopped');
+		O.stop = function(){
 			O.playing = false;
 			
 			for(var file in sources){
@@ -1021,30 +1074,9 @@ new function(){
 			}
 			
 			clearTimeout(loopTimeout);
-			loopTimeout = null;
-			O.currentBar = 0;
-			O.paused = true;
-			paused = 0;
-			stopping=true;
-			
-			return true;
-		}
-		
-		/// TODO: get volume working
-		O.volume=function(input=1){
-			O.el.volume=input;
-			
-			return true;
-		}
-		
-		O.speed=function(input=1){
-			O.el.playbackRate=input;
-			
-			return true;
-		}
-		
-		O.time=function(input=0){
-			O.el.currentTime=input;
+			loopTimeout		= null;
+			O.currentBar	= 0;
+			paused			= 0;
 			
 			return true;
 		}
@@ -1053,28 +1085,24 @@ new function(){
 		
 		O.preload = function(){}
 		
-		// O.el.addEventListener('load',function(){});
+		// O.el.addEventListener('ended',function(){
+			// if(!O.el.loop) O.playing = false;
+		// });
 		
-		// O.el.addEventListener('error',loadingError);
+		// O.el.addEventListener('timeupdate',function(){
+			// S.displaySubtitles();
+		// });
 		
-		O.el.addEventListener('ended',function(){
-			if(!O.el.loop) O.playing = false;
-		});
-		
-		O.el.addEventListener('timeupdate',function(){
-			S.displaySubtitles();
-		});
-		
-		function loadingError(e){
-			notice('Error loading ' + e.target.dataset.file);
-		}
+		// function loadingError(e){
+			// notice('Error loading ' + e.target.dataset.file);
+		// }
 		
 		// We don't add objectAddCommonFunctions(O) because we don't need it. We do need placeholders though.
 		
-		O.style=function(){};
-		O.class=function(){};
+		O.style = function(){};
+		O.class = function(){};
 		
-		O.remove=function(){
+		O.remove = function(){
 			clearTimeout(loopTimeout);
 			O.context.close();
 			O.stop();
@@ -1087,62 +1115,64 @@ new function(){
 		
 		//// LOOPER CODE
 		
-		// Looper isn't recommended for audio files >45 seconds
+		// Looper isn't recommended for audio files >45 seconds.
+		// Except I've changed latencyHint, and we can change sampleRate to see how this goes!
 
 		//Test from https://stackoverflow.com/questions/29373563/audiocontext-on-safari
 		var AudioContext = window.AudioContext // Default
 		|| window.webkitAudioContext;
 		
-		O.context=new AudioContext();
-		O.currentBar=0;
+		O.context = new AudioContext({
+			latencyHint:	'playback'//, // "interactive" for more power consumption but more on-point; "balanced" is in the middle. I'm prioritizing low resource consumption here.
+			// sampleRate:		44100	// We can lower this for increased performance at the cost of audio quality. If it's off, the best sampleRate will be decided based on the device.
+		});
+		
+		O.currentBar = 0;
 		
 		// User values
-		O.bars = 1;					// How many bars the Looper has (a bar is the length of the first element in the first layer)
-		// O.bars = input.bars || 1;					// How many bars the Looper has (a bar is the length of the first element in the first layer)
-		// O.repeatFrom = input.repeatFrom || 0;		// Where to repeat from once finish
-		O.repeatFrom = 0;		// Where to repeat from once finish
-		// O.track = input.track;						// The track info
-		O.loop = false;								// Whether to loop
-		O.autoplay = input.autoplay || false;		// Whether to automatically play on loading
+		O.bars = 1;								// How many bars the Looper has (a bar is the length of the first element in the first layer)
+		O.repeatFrom = 0;						// Where to repeat from once finish
+		O.loop = false;							// Whether to loop
+		O.autoplay = input.autoplay || false;	// Whether to automatically play on loading
 		
 		var loopTimeout = null;
 		var buffer = {};
 		var sources = {};
 		var loopDuration = 0;
 		var paused = 0;							// 0 if unpaused; a number of how far into the loop we are; -1 if in the process of pausing
-		O.paused = false;
 		var timeStartedLoop;
 		
 		// Load files from an array
-		O.load=function(files){
-			var promises=[];
+		O.load = function(files){
+			var promises = [];
 			
 			// BUFFER FILES //
-			for(var i=0;i<files.length;i++){
+			for(var i = 0; i < files.length; i++){
 				//Skip null
-				if(files[i]===null) continue;
+				if(files[i] === null) continue;
 				
 				// Get all listed files (if we have random choices)
-				var fileChoices=files[i].split('||');
-				for(var ii=0;ii<fileChoices.length;ii++){
+				var fileChoices = files[i].split('||');
+				for(var ii = 0; ii < fileChoices.length; ii++){
 					// Skip null files
-					if(fileChoices[ii]===null) continue;
+					if(fileChoices[ii] === null) continue;
 					
 					// Get all the files
-					let fileName=fileChoices[ii];
+					let fileName = fileChoices[ii];
 				
 					// Skip over buffered and buffering tracks
 					if(buffer[fileName]) continue;
 
-					buffer[fileName]='LOADING';
+					buffer[fileName] = 'LOADING';
 				
 					promises.push(
 						new Promise(function(resolve,reject){
 							fetch(fileName)
-							.then(response=>response.arrayBuffer())
-							.then(file=>{
+							.then(response => response.arrayBuffer())
+							.then(file => {
 								O.context.decodeAudioData(file,function(info){
-									buffer[fileName]=info;
+									buffer[fileName] = info;
+									console.log('WE HAVE LOADED:',fileName);
 									resolve(info);
 								},reject);
 							})
@@ -1157,8 +1187,8 @@ new function(){
 		
 		// Removing baseLatency is important
 		function startTimeout(waitFor = (loopDuration - O.context.baseLatency)){
-			console.log('Going to play the loop',O.currentBar,O.bars,waitFor,loopDuration);
-			loopTimeout=setTimeout(function(){
+			console.log('Going to play the loop',O.currentBar,O.bars,waitFor,loopDuration,O.name);
+			loopTimeout = setTimeout(function(){
 				O.currentBar++;
 				playLoop();
 				startTimeout();
@@ -1166,110 +1196,57 @@ new function(){
 		}
 		
 		function playLoop(){
-			timeStartedLoop=new Date().getTime();
+			timeStartedLoop = new Date().getTime();
 			
-			//See if we've passed the number of bars
-			if(O.currentBar>=O.bars){
-				//If we're not looping, stop
-				if(O.loop===false){
+			console.log('LOOP STARTED',timeStartedLoop,O.currentBar,O.bars,O.loop,O.track);
+			
+			console.log('Checking our loops',O.loop,O.currentBar,O.bars);
+			// See if we've passed the number of bars
+			if(O.currentBar >= O.bars){
+				// If we're not looping, stop
+				if(!O.loop){
 					O.stop();
 					return;
 				}
 				
-				//If we're looping, go back to repeatFrom
-				O.currentBar=O.repeatFrom;
+				// If we're looping, go back to repeatFrom
+				O.currentBar = O.repeatFrom;
 			}
 			
-			//Play all layers
-			for(var i=0;i<O.track.length;i++){
+			// Play all layers
+			for(var i = 0 , l = O.track.length; i < l; i++){
 				
-				var get=O.currentBar % O.track[i].length;
+				var get = O.currentBar % O.track[i].length;
 				
-				//Skip null items
-				if(O.track[i][get]===null) continue;
+				var item = O.track[i][get];
 				
-				//If we have a file list, get one of the listed files
-				var files=O.track[i][get].split('||');
-				var fileNum=Math.floor(files.length*Math.random());
-				//Don't go beyond the last file (there's a miniscule chance this can happen)
-				if(fileNum>=files.length) fileNum=files.length-1;
-				let fileName=files[fileNum];
-				
-				//Skip null items
-				if(fileName===null) continue;
-				
-				//Add the path on
-				fileName=fileName;
-				
+				// Skip null items
+				if(item === null) continue;
+								
 				//Skip over unbuffered files as a safeguard
-				if(!buffer[fileName] || buffer[fileName]==='LOADING'){
+				if(!buffer[item] || buffer[item] === 'LOADING'){
+					console.log('CONTINUING');
 					continue;
 				}
 				
-				playBuffer(fileName);
+				playBuffer(item);
 			}
 		}
 		
-		// O.paused = false;
-		// var timeStartedLoop;
+		O.volume = function(){};
 		
-		O.adjustLayer=function(layer,input){
-			//Append layer if requested
-			if(layer==='new') layer=O.track.length;
-			
-			//If layer doesn't exist, add it
-			if(!O.track[layer]) O.track[layer]=[];
-			
-			let playThis=null;
-			
-			//Pause current layer
-			for(var i=0;i<O.track[layer].length;i++){
-				let source=sources[O.track[layer][i]];
-				
-				//If the file currently playing won't change, don't pause it!
-				let getOld = O.currentBar % O.track[layer].length;
-				let getNew = O.currentBar % input.length;
-				if(O.track[layer][getOld]===input[getNew]) continue;
-				
-				//If the source exists and isn't the same as the one that it's being set to
-				if(source){
-					try{ source.stop(0); }
-					catch { console.log('Dunno what Safari is doing, but this should keep things from breaking'); }
-					
-					//Remember item to play
-					playThis=input[getNew];
-				}
-			}
-			
-			//Once successfully load any not-loaded files, continue
-			O.load(input).then((values)=>{
-				// If we're getting a list of items and updating loop time based on them, update the loop's duration
-				if(values.length == input.length) loopDuration = Math.floor(values[0].duration*1000);
-				
-				O.track[layer] = input;
-				
-				//Don't continue if paused
-				//if(O.paused) return;
-				
-				if(stopping) return;
-				
-				playBuffer(playThis,(new Date().getTime()-timeStartedLoop)/1000);
-			});
-			
-			return true;
-		}
-		
-		function playBuffer(fileName,offset=0){
+		function playBuffer(fileName,offset = 0){
 			if(buffer[fileName]){
-				var source=O.context.createBufferSource();
-				source.buffer=buffer[fileName];
+				var source			= O.context.createBufferSource();
+				source.buffer		= buffer[fileName];
 				source.connect(O.context.destination);
+				console.log('FILE',fileName,offset);
 				source.start(0,offset);
 				
-				//Track sources
-				sources[fileName]=source;
+				// Track sources
+				sources[fileName]	= source;
 			}else{
-				console.log("Sought buffer doesn't exist! Likely a song tried to be played before loading.");
+				console.log("Sought buffer doesn't exist! Likely a song tried to be played before loading.",fileName);
 			}
 		}
 	}
@@ -1810,7 +1787,8 @@ new function(){
 		}
 	}
 	
-	// Load editor
-	/// Todo: get working without the editor attached
-	<?php include 'editor.js'; ?>
+	// Load editor if we're in admin mode
+	<?php //if(!empty($_SESSION['showpony_admin']))
+		include 'editor.js';
+	?>
 }()
