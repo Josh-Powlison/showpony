@@ -2245,6 +2245,72 @@ function saveStringToWASM(str,type) {
 
 }();<?php
 
-if(!empty($_GET['export'])) file_put_contents('showpony-export.js',ob_get_clean());
+# Just copy-pasted from StackOverflow for now: https://stackoverflow.com/a/2050909/5006449
+
+function recurse_copy($src,$dst) { 
+    $dir = opendir($src); 
+    @mkdir($dst); 
+    while(false !== ( $file = readdir($dir)) ) { 
+        if (( $file != '.' ) && ( $file != '..' )) { 
+            if ( is_dir($src . '/' . $file) ) { 
+                recurse_copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+            else { 
+                copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+        } 
+    } 
+    closedir($dir); 
+}
+
+if(!empty($_GET['export'])){
+	// Put the files into one place
+	$destination = dirname(__DIR__).'/showpony-export';
+	
+	if(!file_exists($destination))					mkdir($destination);
+	if(!file_exists($destination . '/showpony'))	mkdir($destination . '/showpony');
+	file_put_contents($destination . '/showpony/showpony.js',ob_get_clean());
+	file_put_contents($destination . '/COPY YOUR STORY FOLDER INTO HERE','Otherwise it won\'t work.');
+	
+	// Copy the necessary files
+	recurse_copy(__DIR__.'/icons'				,$destination . '/showpony/icons');
+	recurse_copy(__DIR__.'/roboto-condensed'	,$destination . '/showpony/roboto-condensed');
+	copy(__DIR__.'/script.wasm'			,$destination . '/showpony/script.wasm');
+	copy(__DIR__.'/LICENSE'				,$destination . '/showpony/LICENSE');
+	
+	/// TODO: get whatever folder is passed, not just the /story folder
+	// mkdir($destination . '/story');
+	// recurse_copy('story'				,$destination . '/story');
+	// recurse_copy(STORIES_PATH			,$destination . '/' . STORIES_PATH);
+
+	/// BUILD HTML PAGE ///
+	file_put_contents(
+		$destination . '/index.html'
+,'<!DOCTYPE html>
+<html>
+	<head>
+		<title>Story</title>
+		<meta charset="utf-8">
+		<meta name="description" content="Description text.">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		
+		<style>
+			#showpony{
+				position:fixed;
+				left:0;
+				top:0;
+				width:100%;
+				height:100%;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="showpony">
+			<script src="showpony/showpony.js"></script>
+		</div>
+	</body>
+</html>'
+	);
+}
 
 ?>

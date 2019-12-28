@@ -1,5 +1,6 @@
 <?php
 
+session_start();
 const DEFAULT_PATH			= 'story/';			// The path to the files we'll play
 const DEFAULT_LANGUAGE		= 'en';				// If a language isn't set by the user, assume this one
 const DEFAULT_SUBTITLES		= null;				// If subtitles aren't set by the user, assume this one

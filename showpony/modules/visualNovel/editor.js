@@ -200,6 +200,7 @@ M.editor = new function(){
 	</head>
 	<body>
 		<header>
+			<button id="export">Export</button>
 			<button id="newFile">N</button>
 			<button id="saveFile">S</button>
 			<button id="autosave">AS</button>
@@ -709,4 +710,14 @@ M.editor = new function(){
 			}
 		}
 	}
+	
+	E.window.document.getElementById('export').addEventListener('click',function(){
+		// Update the file
+		fetch('showpony/showpony.php?export=1&path=<?php echo STORIES_PATH; ?>')
+		.then(response => response.text())
+		.then(text => {
+			console.log(text);
+			E.window.alert('Export appears successful! (This feature is in beta)');
+		});
+	});
 }();
