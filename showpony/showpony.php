@@ -115,6 +115,7 @@ view.innerHTML		= `
 		</div>
 		<div id="popups">
 			<div class="popup popup-bookmark"></div>
+			<div class="popup popup-language"></div>
 		</div>
 		<div class="popup" id="notice">
 			<div id="notice-text block-scrubbing"></div>
@@ -1342,6 +1343,8 @@ function gamepadButton(gamepad,number,type){
 
 // Toggle popups on clicking buttons
 view.getElementsByClassName('button-bookmark')[0].addEventListener('click',popupToggle);
+view.getElementsByClassName('button-share')[0].addEventListener('click',getBookmarkLink);
+view.getElementsByClassName('button-language')[0].addEventListener('click',popupToggle);
 
 function popupToggle(){
 	var closePopups = view.querySelectorAll('.visible:not(.popup-'+this.dataset.type+')');
@@ -1506,24 +1509,6 @@ function addBookmark(obj){
 				&& S.saves.system===obj.system
 			) nameEl.classList.add('selected');
 			break;
-		// Saving the page name in the URL/querystring
-		case 'url':
-			nameEl.addEventListener('click',function(){
-				searchParams.set(queryBookmark,time|0);
-				
-				var url = location.host + location.pathname + '?' + searchParams.toString() + location.hash;
-				var temporaryInput = document.createElement('textarea');
-				temporaryInput.value = url;
-				
-				this.insertAdjacentElement('afterend',temporaryInput);
-				
-				temporaryInput.select();
-				document.execCommand('copy');
-				temporaryInput.remove();
-				
-				notice('Copied the link to your clipboard!');
-			});
-			break;
 		default:
 			notice('Save system not recognized!');
 			break;
@@ -1532,6 +1517,22 @@ function addBookmark(obj){
 	bookmarkEl.appendChild(nameEl);
 	
 	view.querySelector(".popup-bookmark").appendChild(bookmarkEl);
+}
+
+function getBookmarkLink(){
+	searchParams.set(queryBookmark,time|0);
+				
+	var url					= location.host + location.pathname + '?' + searchParams.toString() + location.hash;
+	var temporaryInput		= document.createElement('textarea');
+	temporaryInput.value	= url;
+	
+	this.insertAdjacentElement('afterend',temporaryInput);
+	
+	temporaryInput.select();
+	document.execCommand('copy');
+	temporaryInput.remove();
+	
+	notice('Copied the shareable link to your clipboard! This link will take people you share it with right to your current spot.');
 }
 
 ///////////////////////////////////////
@@ -2199,7 +2200,6 @@ fetch('showpony/script.wasm',{headers:{'Content-Type':'application/wasm'}})
 	// For now, we'll just support this bookmark
 	// TODO: allow renaming bookmarks
 	addBookmark({name:'Autosave',system:'local',type:'default'});
-	addBookmark({name:'Get Link',system:'url',type:'get'});
 
 	// POWER: Hard Link > Bookmark > Soft Link > Default
 

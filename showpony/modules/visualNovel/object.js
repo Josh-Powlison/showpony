@@ -10,7 +10,6 @@ new function(){
 	M.editor		= null;
 	
 	M.window = document.createElement('div');
-	console.log('START UP');
 	// M.class (function call for the user) is based on the initial class name, set here.
 	M.window.className = 'm-vn';
 	M.window.dataset.filename = null;
@@ -926,12 +925,10 @@ new function(){
 				layersUpdated.push(adjustLayer(i,files));
 			}
 			
-			console.log('STATE OF PLAY',O.playing,O.autoplay,loopDuration);
 			// Wait on all updates to load
 			Promise.all(layersUpdated).then(()=>{
 			// If we're supposed to be playing, but aren't, try using play again
 				if(O.autoplay){
-				console.log('We should tryy playing');
 					O.play();
 				}
 			});
@@ -964,19 +961,13 @@ new function(){
 				}
 			}
 			
-			console.log('WHAT FILES ARE WE LOADING',files,layer);
-			
 			// Once successfully load any not-loaded files, continue
 			return O.load(files).then((values) => {
-				console.log('LOOP DURATION',layer,values[0]);
 				// If this is the first layer, then update the duration based on its first item
 				if(!layer) loopDuration = values[0].duration * 1000;
 				
 				// Update the layer to match the files passed
 				O.track[layer] = files;
-				
-				// Get the right filename to play
-				console.log('PLAY ITEM',files,item);
 				
 				// Get the file to play
 				var fileName = files[item];
@@ -1040,7 +1031,6 @@ new function(){
 				return;
 			}
 			
-			console.log('ABOUT TO CALL STARTTIMEOUT');
 			startTimeout();
 			O.currentBar = 0;
 			playLoop();
@@ -1172,7 +1162,6 @@ new function(){
 							.then(file => {
 								O.context.decodeAudioData(file,function(info){
 									buffer[fileName] = info;
-									console.log('WE HAVE LOADED:',fileName);
 									resolve(info);
 								},reject);
 							})
@@ -1187,7 +1176,6 @@ new function(){
 		
 		// Removing baseLatency is important
 		function startTimeout(waitFor = (loopDuration - O.context.baseLatency)){
-			console.log('Going to play the loop',O.currentBar,O.bars,waitFor,loopDuration,O.name);
 			loopTimeout = setTimeout(function(){
 				O.currentBar++;
 				playLoop();
@@ -1198,9 +1186,6 @@ new function(){
 		function playLoop(){
 			timeStartedLoop = new Date().getTime();
 			
-			console.log('LOOP STARTED',timeStartedLoop,O.currentBar,O.bars,O.loop,O.track);
-			
-			console.log('Checking our loops',O.loop,O.currentBar,O.bars);
 			// See if we've passed the number of bars
 			if(O.currentBar >= O.bars){
 				// If we're not looping, stop
@@ -1225,7 +1210,6 @@ new function(){
 								
 				//Skip over unbuffered files as a safeguard
 				if(!buffer[item] || buffer[item] === 'LOADING'){
-					console.log('CONTINUING');
 					continue;
 				}
 				
@@ -1240,7 +1224,6 @@ new function(){
 				var source			= O.context.createBufferSource();
 				source.buffer		= buffer[fileName];
 				source.connect(O.context.destination);
-				console.log('FILE',fileName,offset);
 				source.start(0,offset);
 				
 				// Track sources
@@ -1455,19 +1438,16 @@ new function(){
 					if(values[0]==='/'){
 						// Remove animation values if we need to
 						if(currentParent.hasAttribute('animationoffset')){
-							console.log('We found animationoffset!');
 							animation.pop();
 						}
 						
 						// Remove rate values if we need to
 						if(currentParent.hasAttribute('rate') || currentParent.hasAttribute('basetime')){
-							console.log('We found rate/basetime!');
 							baseWaitTime.pop();
 						}
 						
 						// Remove constant values if we need to
 						if(currentParent.hasAttribute('constant')){
-							console.log('We found constant!');
 							constant.pop();
 						}
 						
