@@ -926,7 +926,7 @@ function infoFile(input){
 }
 
 // This updates the scrub bar's position
-function scrub(inputPercent=null){
+function scrub(inputPercent = null){
 	// inputPercent will always be from left-to-right; remember that for display reading from right-to-left
 	
 	// If no inputPercent was set, get it!
@@ -990,22 +990,10 @@ function scrub(inputPercent=null){
 	if(S.files[displayFile].title) info+=S.files[displayFile].title;
 	// info+='</p><p>'+remaining+'</p>';
 	
-	// Adjust the scrubber and timebox
-	var moveLeft = (buffer.clientWidth * inputPercent);
+	scrubberEl.style.left = (inputPercent * 100) + '%';
 	
-	scrubberEl.style.transform = 'translateX(' + moveLeft + 'px)';
-	
-	// Recalculate left for the timebox so it doesn't go off-screen
-	moveLeft -= (timeboxEl.clientWidth / 2);
-	
-	/// TODO: This may be poorly optimized because offsetWidth and offsetLeft may force redraws. It may be better to use client rects; look into this
-	if(moveLeft < buffer.offsetLeft){
-		moveLeft = buffer.offsetLeft;
-	}else if(moveLeft + (timeboxEl.clientWidth) > buffer.offsetLeft + buffer.offsetWidth){
-		moveLeft = buffer.offsetLeft + buffer.offsetWidth - timeboxEl.clientWidth;
-	}
-	
-	timeboxEl.style.transform = 'translateX(' + moveLeft + 'px)';
+	timeboxEl.style.left = (inputPercent * 100) + '%';
+	var timeBoxBox = timeboxEl.getBoundingClientRect();
 	
 	/// Todo: add back in option to set display based on file numbers, not time
 	timeboxEl.innerHTML = infoTime(displayTime);
@@ -1906,8 +1894,40 @@ S.addEventListener('contextmenu',function(event){
 
 // Gamepad support
 
+// Checks the size of the current Showpony window
+var showponySize = [0,0];
+
+// A loop that runs regularly
+setInterval(function(){
+	// Check gamepad controls
+	if(currentGamepad !== null){
+		gamepadControls();
+	}
+	
+	
+	// See if we've resized Showpony
+	var newShowponySize;
+	
+	// Regular width checks don't work on elements that are fullscreen; it takes the element in the dom, not the fullscreen element's real width. So we have to have a separate check if we're in fullscreen mode.
+	if(S.fullscreen) newShowponySize = [window.innerWidth, window.innerHeight];
+	else newShowponySize = [S.clientWidth, S.clientHeight];
+
+	if(
+		showponySize[0] !== newShowponySize[0]
+		|| showponySize[1] !== newShowponySize[1]
+	){
+		// Run resize functions
+		if(showponySize[0] !== newShowponySize[0]) scrub();
+		
+		// Adjust resize values
+		showponySize		= newShowponySize;
+		S.dataset.width		= showponySize[0];
+		S.dataset.height	= showponySize[1];
+	}
+},Math.floor(1000/framerate));
+
 window.addEventListener('gamepadconnected',function(e){
-	currentGamepad={
+	currentGamepad = {
 		id:e.gamepad.index
 		,menu:-1
 		,input:-1
@@ -1920,16 +1940,14 @@ window.addEventListener('gamepadconnected',function(e){
 		,axisMax:1
 	};
 	
-	if(checkGamepad===null){
-		checkGamepad=setInterval(gamepadControls,Math.floor(1000/framerate));
-	}
+	
 });
 
 window.addEventListener('gamepaddisconnected',function(e){
 	// Ignore if it's not the same gamepad
-	if(e.gamepad.index!==currentGamepad.id) return;
+	if(e.gamepad.index !== currentGamepad.id) return;
 	
-	currentGamepad=null;
+	currentGamepad = null;
 	clearInterval(checkGamepad);
 	checkGamepad=null;
 });

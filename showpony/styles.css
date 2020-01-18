@@ -122,15 +122,15 @@
 }
 
 #scrubber{
-	position:absolute;
-	width:1.5em;
-	height:1.5em;
-	left:-.75em;
-	bottom:8.5em;
-	border-radius:50%;
+	position		: absolute;
+	width			: 1.5em;
+	height			: 1.5em;
+	left			: 0em;
+	bottom			: 8.5em;
+	border-radius	: 50%;
+	transform		: translate(-.75em,0);
 	
 	background-color:#fff;
-	/* transform:translate(-.75em,.75em); */
 	
 	pointer-events:none;
 }
