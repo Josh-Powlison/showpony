@@ -44,3 +44,29 @@ Name box: 	600x200 px 		(15%, 9.25925...%)
 .character{
 	height:100%;
 }
+
+/* Showpony Queries */
+@showpony (max-width: 800px) .m-vn-textbox:not(.name){
+	left:0;
+	right:0;
+	bottom:0;
+	min-height:2.5em;
+}
+
+@showpony (max-width: 800px) .name{
+	left:0;
+	bottom:3.25em;
+}
+
+@showpony (max-width: 600px) .character{
+	height:46%;
+	bottom:12em;
+}
+
+@showpony (max-width: 600px) .m-vn-textbox:not(.name){
+	min-height:6em;
+}
+
+@showpony (max-width: 600px) .name{
+	bottom:5.25em;
+}

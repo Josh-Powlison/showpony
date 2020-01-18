@@ -175,17 +175,10 @@ contentShadow.appendChild(document.createElement('style'));
 // Custom styles
 var contentStyles = document.createElement('style');
 contentStyles.innerHTML = `<?php
-	// If the story has its own css file, add it in here
-	if(file_exists('styles.css')){
-		addslashes(readfile('styles.css'));
-	} else {
-		echo '/* styles.css not found in story folder */';
-	}
-
-	// If the story has any media queries, add them in here
+	// If the story has its own css file, add it in here (and get any showpony queries)
 	$mediaQueries = '';
-	if(file_exists('media-queries.css')){
-		$mediaQueries = file_get_contents('media-queries.css');
+	if(file_exists('styles.css')){
+		$mediaQueries = file_get_contents('styles.css');
 		
 		// Replace queries with classes we can call
 		$mediaQueries = preg_replace('/@showpony\s*\(([^:]+):\s*([^)\s]*)\)/i','.query-$1-$2',$mediaQueries);
