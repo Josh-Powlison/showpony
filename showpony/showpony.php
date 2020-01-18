@@ -181,6 +181,19 @@ contentStyles.innerHTML = `<?php
 	} else {
 		echo '/* styles.css not found in story folder */';
 	}
+
+	// If the story has any media queries, add them in here
+	$mediaQueries = '';
+	if(file_exists('media-queries.css')){
+		$mediaQueries = file_get_contents('media-queries.css');
+		
+		// Replace queries with classes we can call
+		$mediaQueries = preg_replace('/@showpony\s*\(([^:]+):\s*([^)\s]*)\)/i','.query-$1-$2',$mediaQueries);
+		
+		echo "\n\n",$mediaQueries;
+	} else {
+		echo '/* styles.css not found in story folder */';
+	}
 ?>`;
 contentShadow.appendChild(contentStyles);
 
@@ -1923,6 +1936,58 @@ setInterval(function(){
 		showponySize		= newShowponySize;
 		S.dataset.width		= showponySize[0];
 		S.dataset.height	= showponySize[1];
+		
+		var mediaQueries = [<?php
+			// Get all media queries and put them into a JavaScript array
+			if(preg_match_all('/.query-([^\s]+)-([^\s{\.]+)/',$mediaQueries,$queryList,PREG_SET_ORDER)){
+				for($i = 0, $l = count($queryList); $i < $l; $i++){
+					if($i) echo ',';
+					echo '{type:"',$queryList[$i][1],'",val:"',$queryList[$i][2],'"}';
+				}
+			}
+		?>];
+		
+		var applyClasses	= [];
+		var removeClasses	= [];
+		
+		// Go through each media query and test it
+		for(var i = 0, l = mediaQueries.length; i < l; i ++){
+			var val		= mediaQueries[i].val;
+			var numVal	= val;
+			
+			// Check value type
+			if(/px/.test(numVal))	numVal = parseFloat(numVal);
+			// else
+			
+			switch(mediaQueries[i].type){
+				case 'min-width':
+					if(showponySize[0] >= numVal) applyClasses.push('query-max-width-' + val);
+					else removeClasses.push('query-max-width-' + val);
+					break;
+				case 'max-width':
+					if(showponySize[0] <= numVal) applyClasses.push('query-max-width-' + val);
+					else removeClasses.push('query-max-width-' + val);
+					break;
+				// Media query not recognized- alert the user and remove it
+				default:
+					alert('Showpony query "' + mediaQueries[i].type + '" not recognized.');
+					mediaQueries.splice(i,1);
+					i--;
+					break;
+			}
+		}
+		
+		console.log('REMOVE THESE',removeClasses);
+		
+		// Apply all the classes as necessary
+		for(var i = 0, l = applyClasses.length; i < l; i ++){
+			modules[module].window.classList.add(applyClasses[i]);
+		}
+		
+		// Remove all the classes as necessary
+		for(var i = 0, l = removeClasses.length; i < l; i ++){
+			modules[module].window.classList.remove(removeClasses[i]);
+		}
 	}
 },Math.floor(1000/framerate));
 
