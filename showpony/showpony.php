@@ -1575,18 +1575,19 @@ S.shortcutKeys = function(event,alt){
 	if(event.ctrlKey || event.shiftKey || event.metaKey) return false;
 	
 	switch(event.key){
-		case ' ':				progress();			break;
-		case 'Enter':			progress();			break;
+		case ' ':				progress();					break;
+		case 'Enter':			progress();					break;
+		case 'Backspace':		regress();					break;
 		case 'ArrowLeft':		(readingDirection === 'right-to-left' ? progress : regress)();	break;
 		case 'ArrowRight':		(readingDirection === 'right-to-left' ? regress : progress)();	break;
 		// case 'Home':			to({time:'start'});	break;
 		// case 'End':				to({time:'end'});		break;
-		case 'MediaPrevious':	S.file--;		break;
-		case 'MediaNext':		S.file++;		break;
-		case 'MediaPlayPause':	S.paused = 'toggle';				break;
+		case 'MediaPrevious':	S.file--;					break;
+		case 'MediaNext':		S.file++;					break;
+		case 'MediaPlayPause':	S.paused = 'toggle';		break;
 		case 'f':				S.fullscreen = 'toggle';	break;
-		case 'm':				S.paused = 'toggle';				break;
-		default:				return false;					break;
+		case 'm':				S.paused = 'toggle';		break;
+		default:				return false;				break;
 	}
 	
 	event.preventDefault();

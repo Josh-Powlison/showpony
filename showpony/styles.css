@@ -247,7 +247,7 @@ button{
 	pointer-events:none;
 }
 
-#buttons button{
+.button{
 	width:10em;
 	height:9em;
 	
@@ -266,7 +266,7 @@ button{
 	/* box-shadow:0 0 3px white; */
 }
 
-#buttons img{
+.button img{
 	height:4em;
 	width:4em;
 }
@@ -285,9 +285,12 @@ button{
 	text-align:center;
 }
 
+.button:hover{
+	opacity:.8;
+}
 
-#buttons button:active{
-	filter:invert(1);
+.button:active{
+	opacity:.6;
 }
 
 .popup{
