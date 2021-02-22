@@ -1,0 +1,9 @@
+node_modules
+package-lock.json
+minigames/standalone/*.zip
+clang.exe
+wasm-ld.exe
+php.exe
+php7.dll
+devkit.7z
+/php/

@@ -1,0 +1,193 @@
+////// VARIABLES //////
+
+instant=	<speed rate="0">
+/instant=	</speed>
+
+me=		name	[instant]<span style="color:#000000;">Me</span>[/instant]>
+?james=	name	[instant]<span style="color:#48737a;">???</span>[/instant]>
+james=	name	[instant]<span style="color:#48737a;">James</span>[/instant]>
+?sly=	name	[instant]<span style="color:#624a46;">???</span>[/instant]>
+sly=	name	[instant]<span style="color:#624a46;">Sly</span>[/instant]>
+steph=	name	[instant]<span style="color:#799877;">Steph</span>[/instant]>
+
+shout=			<span class="shout">
+/shout=			</span>
+sing=			<span class="sing" animationoffset="10">
+/sing=			</span>
+shake=			<span class="shake" animationoffset="3">
+/shake=			</span>
+
+
+
+////// SPECIAL OBJECTS //////
+
+engine.textbox	name
+name.class		name
+
+
+
+////// BACKGROUNDS, CGs, & ICONS //////
+
+hallway.class	background
+hallway.content	/backgrounds/hallway.jpg
+
+black.class		background
+black.style		opacity:0;background-color:black;z-index:12;
+
+logo.content	/logo.svg
+logo.class		character
+logo.style		height:100%;
+
+mother			/cgs/mother.jpg
+mother.class	cg
+mother.style	opacity:0;z-index:12;filter:brightness(0.1);background-size:300%;background-position:0% 50%;
+
+
+
+////// CHARACTERS //////
+
+james.class		character
+james.style		opacity:0;z-index:5;
+james.content	pose-1,eyes/smile00,mouth/smile00
+
+sly.class		character
+sly.style		transform:translateX(-100%);z-index:6;
+sly.content		pose-1,eyes/wow00,mouth/soft01
+
+steph.class		character
+steph.style		transform:translateX(-100%) scale(-1,1);z-index:4;
+steph.content	pose-1,eyes/nervous00,mouth/nervous00
+
+
+
+////// MUSIC & SFX //////
+
+engine.audio	happy
+//happy			null&null&null&happy/melody/guitar&null&happy/melody/woodwinds&null&null,happy/drums/simple,happy/bass,happy/harmony/piano-guitar,null
+happy			happy/drums/simple,happy/bass,happy/harmony/piano-guitar
+
+//happy/drums/simple,happy/bass,happy/harmony/piano-guitar,null&null&null&happy/melody/guitar&null&happy/melody/woodwinds&null&null,null
+happy.loop		true
+
+silly			silly.ogg
+silly.loop		true
+
+static			static.ogg
+static.loop		true
+static.volume	.1
+
+
+
+////// START //////
+
+engine.wait
+
+happy.play
+logo.style		time:1s;opacity:0;
+
+engine.wait		1.5s
+logo.remove
+james.style		time:.5s;opacity:1;
+engine.wait		1s
+
+[?james]
+james	pose-1,eyes/smile00,mouth/neutral01
+		Test
+
+//happy			happy/drums/full-a.mp3,happy/bass.mp3,happy/harmony/piano-guitar.mp3,happy/harmony/strings-heavy.mp3
+		
+james	pose-1,eyes/grin00,mouth/smile01
+		Don't worry, you don't have much to live up to. Just don't use heroin like the last guy,>
+
+//Trigger
+static.play
+mother.style	opacity:.01;filter:brightness(0.01);
+engine.wait		.1s
+mother.style	filter:brightness(1);background-position:0% 100%;
+engine.wait		.1s
+mother.style	filter:brightness(0.01);
+engine.wait		.1s
+// In the demo, we don't need the static or cg anymore
+static.remove
+mother.remove
+
+		+ and you'll be fine!
+		
+james	pose-1,eyes/smile00,mouth/grin00
+
+[me]
+		...
+		
+//happy			happy/drums/full-a.mp3,happy/bass.mp3,happy/harmony/piano-guitar.mp3,happy/harmony/strings-medium.mp3
+		
+name.empty
+		He thrusts out his hand.
+
+[?james]
+james	pose-1,eyes/grin00,mouth/smile01
+		James!
+
+james	pose-1,eyes/grin00,mouth/grin00
+
+[me]
+		...Peter.
+
+james	pose-1,eyes/wow00,mouth/cry00
+
+name.empty
+		Test
+
+[james]
+james	pose-1,eyes/wow00,mouth/wow01
+		Ooh, Peter! Nice, firm handshake! >
+james	pose-1,eyes/annoy00,mouth/annoy01
+		+The last guy always gave me the dead fish. >
+james	pose-1,eyes/smile00,mouth/smile01
+		+I already think we're gonna get along fine.
+
+james	pose-1,eyes/grin00,mouth/smile01
+		Come on in and...
+
+// We don't need this music any more for the demo
+happy.remove
+
+james	pose-1,eyes/annoy00,mouth/smile01
+		...
+james	pose-1,eyes/annoy00,mouth/annoy01
+		[shout]I know you're both watching, come on out already![/shout]
+
+silly.play
+
+james		pose-1,eyes/annoy00,mouth/annoy00
+sly.style	time:1s;transform:translateX(-25%);
+steph.style	time:1.4s;transform:translateX(25%) scale(-1,1);
+
+[?sly]
+		I just wanted to see what the new guy was >
+steph.style	transform:translateX(25%) scale(1,1);z-index:6;
+		+like. >
+sly		pose-1,eyes/upset00,mouth/smile01
+		+[shout]Hey, you, Peter-[/shout] be nice to our little brother, >
+sly		pose-1,eyes/smile00,mouth/grin00
+		+or you'll have to deal with <em>us</em>.
+
+james	pose-1,eyes/smile00,mouth/neutral00
+sly		pose-1,eyes/grin00,mouth/grin00
+steph	pose-1,eyes/nervous00,mouth/smile00
+
+[me]
+		...
+
+james	pose-1,eyes/smile00,mouth/smile01
+sly		pose-1,eyes/smile00,mouth/smile00
+
+[james]
+		Peter, this is Sly. >
+sly		pose-1,eyes/upset00,mouth/smile00
+steph	pose-1,eyes/joy00,mouth/smile00
+		+Yes, that is her real name.
+
+james	pose-1,eyes/grin00,mouth/smile00
+
+name.empty
+		I put out my hand.

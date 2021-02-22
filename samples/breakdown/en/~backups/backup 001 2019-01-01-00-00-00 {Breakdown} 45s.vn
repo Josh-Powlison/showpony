@@ -10,12 +10,12 @@ james=	name	[instant]<span style="color:#48737a;">James</span>[/instant]>
 sly=	name	[instant]<span style="color:#624a46;">Sly</span>[/instant]>
 steph=	name	[instant]<span style="color:#799877;">Steph</span>[/instant]>
 
-shout=	<span class="shout">
-/shout=	</span>
-sing=			<span class="sing"><animation offset="10">
-/sing=			</animation></span>
-shake=			<span class="shake"><animation offset="3">
-/shake=			</animation></span>
+shout=			<span class="shout">
+/shout=			</span>
+sing=			<span class="sing" animationoffset="10">
+/sing=			</span>
+shake=			<span class="shake" animationoffset="3">
+/shake=			</span>
 
 
 
@@ -62,13 +62,17 @@ steph.content	pose-1,eyes/nervous00,mouth/nervous00
 
 ////// MUSIC & SFX //////
 
-happy		happy.ogg
-happy.loop	true
+engine.audio	happy
+//happy			null&null&null&happy/melody/guitar&null&happy/melody/woodwinds&null&null,happy/drums/simple,happy/bass,happy/harmony/piano-guitar,null
+happy			happy/drums/simple,happy/bass,happy/harmony/piano-guitar
 
-silly		silly.ogg
-silly.loop	true
+//happy/drums/simple,happy/bass,happy/harmony/piano-guitar,null&null&null&happy/melody/guitar&null&happy/melody/woodwinds&null&null,null
+happy.loop		true
 
-static		static.ogg
+silly			silly.ogg
+silly.loop		true
+
+static			static.ogg
 static.loop		true
 static.volume	.1
 
@@ -76,10 +80,10 @@ static.volume	.1
 
 ////// START //////
 
+happy.play
 engine.wait
 
 logo.style		time:1s;opacity:0;
-happy.play
 
 engine.wait		1.5s
 logo.remove
@@ -88,7 +92,9 @@ engine.wait		1s
 
 [?james]
 james	pose-1,eyes/smile00,mouth/neutral01
-		You're my roommate's replacement, huh?
+		Test
+
+//happy			happy/drums/full-a.mp3,happy/bass.mp3,happy/harmony/piano-guitar.mp3,happy/harmony/strings-heavy.mp3
 		
 james	pose-1,eyes/grin00,mouth/smile01
 		Don't worry, you don't have much to live up to. Just don't use heroin like the last guy,>
@@ -112,6 +118,8 @@ james	pose-1,eyes/smile00,mouth/grin00
 [me]
 		...
 		
+//happy			happy/drums/full-a.mp3,happy/bass.mp3,happy/harmony/piano-guitar.mp3,happy/harmony/strings-medium.mp3
+		
 name.empty
 		He thrusts out his hand.
 
@@ -124,10 +132,10 @@ james	pose-1,eyes/grin00,mouth/grin00
 [me]
 		...Peter.
 
-james	pose-1,eyes/smile00,mouth/grin00
+james	pose-1,eyes/wow00,mouth/cry00
 
 name.empty
-		I take his hand and shake.
+		Test
 
 [james]
 james	pose-1,eyes/wow00,mouth/wow01
@@ -159,7 +167,7 @@ steph.style	time:1.4s;transform:translateX(25%) scale(-1,1);
 steph.style	transform:translateX(25%) scale(1,1);z-index:6;
 		+like. >
 sly		pose-1,eyes/upset00,mouth/smile01
-		+Hey, you, Peter- be nice to our little brother, >
+		+[shout]Hey, you, Peter-[/shout] be nice to our little brother, >
 sly		pose-1,eyes/smile00,mouth/grin00
 		+or you'll have to deal with <em>us</em>.
 

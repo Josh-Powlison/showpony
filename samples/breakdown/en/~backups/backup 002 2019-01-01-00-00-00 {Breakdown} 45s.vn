@@ -1,0 +1,145 @@
+////// VARIABLES //////
+
+instant=	<speed rate="0">
+/instant=	</speed>
+
+me=		name	[instant]<span style="color:#000000;">Me</span>[/instant]>
+?james=	name	[instant]<span style="color:#48737a;">???</span>[/instant]>
+james=	name	[instant]<span style="color:#48737a;">James</span>[/instant]>
+?sly=	name	[instant]<span style="color:#624a46;">???</span>[/instant]>
+sly=	name	[instant]<span style="color:#624a46;">Sly</span>[/instant]>
+steph=	name	[instant]<span style="color:#799877;">Steph</span>[/instant]>
+
+shout=	<span class="shout">
+/shout=	</span>
+sing=			<span class="sing"><animation offset="10">
+/sing=			</animation></span>
+shake=			<span class="shake"><animation offset="3">
+/shake=			</animation></span>
+
+
+
+////// SPECIAL OBJECTS //////
+
+engine.textbox	name
+name.class		name
+
+
+
+////// BACKGROUNDS, CGs, & ICONS //////
+
+hallway.class	background
+hallway.content	/backgrounds/hallway.jpg
+
+black.class		background
+black.style		opacity:0;background-color:black;z-index:12;
+
+
+////// CHARACTERS //////
+
+james.class		character
+james.style		z-index:5;
+james			pose-1,eyes/grin00,mouth/grin00
+
+sly.class		character
+sly				pose-1,eyes/upset00,mouth/upset01
+sly.style		transform:translateX(-25%);z-index:6;
+
+steph.class		character
+steph			pose-1,eyes/wow00,mouth/nervous00
+steph.style		transform:translateX(25%);z-index:6;
+
+
+////// MUSIC & SFX //////
+
+silly		silly.ogg
+silly.loop	true
+
+
+////// START //////
+
+silly.play
+
+[sly]
+		<span>I'm not shakin' your hand until I decide you're an all-right dude. </span>>
+
+sly		pose-1,eyes/grin00,mouth/serious01
+steph	pose-1,eyes/nervous00,mouth/nervous00
+		+Sorry, policy.
+
+james	pose-1,eyes/grin00,mouth/grin00
+sly		pose-1,eyes/upset00,mouth/smile00
+
+[me]
+		Fair enough, I'm a pretty scary guy, or so I've been told.
+
+james	pose-1,eyes/smile00,mouth/smile01
+sly		pose-1,eyes/smile00,mouth/serious01
+steph	pose-1,eyes/nervous00,mouth/smile00
+
+[james]
+		The redhead behind her is Stephanie.
+
+james	pose-1,eyes/grin00,mouth/grin00
+sly		pose-1,eyes/smile00,mouth/serious00
+steph	pose-1,eyes/joy00,mouth/smile01
+
+[steph]
+		[sing]Hey![/sing] Everyone calls me Steph. I'll shake your hand.
+
+james	pose-1,eyes/smile00,mouth/smile00
+sly		pose-1,eyes/upset00,mouth/serious00
+steph	pose-1,eyes/smile00,mouth/smile00
+
+name.empty
+		She puts out her hand, and I take it.
+
+sly		pose-1,eyes/upset00,mouth/serious00
+steph	pose-1,eyes/wow00,mouth/nervous00
+
+[me]
+		Thanks, good to meet you, Stephanie.
+
+james	pose-1,eyes/wow00,mouth/smile00
+sly		pose-1,eyes/wow00,mouth/serious00
+steph	pose-1,eyes/wow00,mouth/wow01
+[steph]
+		[shout]WOW[/shout], that is, like, the most [shout]perfect[/shout] handshake I've ever had! Firm, but also gentle. >
+
+sly		pose-1,eyes/upset00,mouth/upset00
+		+Sly, you <em>gotta</em> shake his hand!
+
+james	pose-1,eyes/grin00,mouth/grin00
+sly		pose-1,eyes/upset00,mouth/serious01
+steph	pose-1,eyes/wow00,mouth/nervous00
+
+[sly]
+		<div style="font-size:.5em;">It's just a handshake...</div>
+
+james	pose-1,eyes/smile00,mouth/grin00
+sly		pose-1,eyes/upset00,mouth/serious00
+steph	pose-1,eyes/upset00,mouth/upset01
+
+[steph]
+		[sing]Then just give it to him![/sing]
+
+james	pose-1,eyes/concern00,mouth/smile01
+sly		pose-1,eyes/smile00,mouth/serious00
+steph	pose-1,eyes/upset00,mouth/upset00
+
+black.style		time:1s;opacity:1;
+engine.wait		1.5s
+
+// Remove characters and pieces
+james.remove
+sly.remove
+steph.remove
+name.remove
+
+// Credits
+textbox.style		border:none;top:1rem;left:1rem;right:1rem;bottom:1rem;height:auto;text-align:center;background:none;max-height:none;padding:0;font-size:1.5rem;
+		[instant]<img style="max-width:100%;width:20em;" src="samples/breakdown/resources/logo.svg"><br>Thank you for reading!<br><a href="https://joshpowlison.itch.io/breakdown" target="_blank">Check out the full version of Breakdown here!</a><br><br><strong>Writer, Programmer:</strong> Josh Powlison<br><br><strong>Character Art, Background Art:</strong> Puppetbomb<br><br><strong>CGs: </strong> Inkhana<br><br><strong>Music: </strong> Joshua "Mussar" Nussbaum<br><br><em>Read below for more info on Showpony!</em>[/instant]>
+		
+black.style		time:1s;opacity:0;
+engine.wait
+black.remove

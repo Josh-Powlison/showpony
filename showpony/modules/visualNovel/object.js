@@ -1769,6 +1769,6 @@ new function(){
 	
 	// Load editor if we're in admin mode
 	<?php //if(!empty($_SESSION['showpony_admin']))
-		include 'editor.js';
+		// include 'editor.js';
 	?>
 }()
